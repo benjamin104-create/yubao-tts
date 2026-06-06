@@ -74,23 +74,25 @@ def lang_by_key(key):
 # ── 上游 provider ───────────────────────────────────────────
 async def synth_ithuan(text: str, accent: str) -> bytes:
     """
-    意傳「鬥拍字」台語/客語語音合成。
-    ⚠️ 待確認：鬥拍字內部端點未公開文件。請開 https://suisiann.ithuan.tw
-       按 F12 → Network，輸入字按播放，確認真正的「合成端點 / 參數 / 回傳」，
-       並把下面這段對應修正（accent 對應台語=閩南語、客語=四縣腔等腔口）。
+    意傳「鬥拍字／媠聲」台語語音合成（開源、免費）。
+    端點：GET https://hapsing.ithuan.tw/bangtsam?taibun=<台羅>
+    輸入需為「台羅(KIP)拼音」；台語卡片的 tl 欄位正是台羅，直接對應。
+    （注意：此端點是台語/閩南語系統，客語是另一套，不支援。）
     """
     async with httpx.AsyncClient(timeout=40, follow_redirects=True) as c:
-        r = await c.get(
-            f"{ITHUAN_BASE}/Hおおき",  # ← 端點待確認
-            params={"taibun": text, "腔口": accent},  # ← 參數名待確認
-        )
+        r = await c.get(f"{ITHUAN_BASE}/bangtsam", params={"taibun": text})
         r.raise_for_status()
-        if "audio" in r.headers.get("content-type", ""):
+        ctype = r.headers.get("content-type", "").lower()
+        if "audio" in ctype or "octet-stream" in ctype or "mpeg" in ctype:
             return r.content
-        data = r.json()
+        # 萬一回傳 JSON，嘗試取出音檔網址再抓一次
+        try:
+            data = r.json()
+        except Exception:
+            return r.content  # 沒有 JSON 就當作直接是音檔
         url = data.get("音檔") or data.get("audio_url") or data.get("url")
         if not url:
-            raise RuntimeError("回傳中找不到音檔網址，請用 Network tab 確認欄位")
+            raise RuntimeError("意傳回傳非預期內容（前120字）：" + r.text[:120])
         if url.startswith("/"):
             url = ITHUAN_BASE + url
         a = await c.get(url)
