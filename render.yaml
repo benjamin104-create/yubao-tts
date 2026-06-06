@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: yubao-tts
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn tts_gateway:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY   # 拍照辨識用；部署時 Render 會請你填
+        sync: false
+      - key: ADMIN_TOKEN         # 後台密碼；自己設一組
+        sync: false

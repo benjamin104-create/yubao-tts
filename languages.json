@@ -1,0 +1,104 @@
+{
+  "languages": [
+    {
+      "key": "zh",
+      "label": "中文",
+      "flag": "🇹🇼",
+      "provider": "browser",
+      "code": "zh-TW",
+      "accent": "",
+      "field": "zh",
+      "enabled": true
+    },
+    {
+      "key": "en",
+      "label": "English",
+      "flag": "🔤",
+      "provider": "browser",
+      "code": "en-US",
+      "accent": "",
+      "field": "en",
+      "enabled": true
+    },
+    {
+      "key": "ja",
+      "label": "日本語",
+      "flag": "🗾",
+      "provider": "browser",
+      "code": "ja-JP",
+      "accent": "",
+      "field": "ja",
+      "enabled": true
+    },
+    {
+      "key": "ko",
+      "label": "한국어",
+      "flag": "🇰🇷",
+      "provider": "browser",
+      "code": "ko-KR",
+      "accent": "",
+      "field": "ko",
+      "enabled": true
+    },
+    {
+      "key": "ind",
+      "label": "Indonesia",
+      "flag": "🇮🇩",
+      "provider": "browser",
+      "code": "id-ID",
+      "accent": "",
+      "field": "ind",
+      "enabled": true
+    },
+    {
+      "key": "vi",
+      "label": "Tiếng Việt",
+      "flag": "🇻🇳",
+      "provider": "browser",
+      "code": "vi-VN",
+      "accent": "",
+      "field": "vi",
+      "enabled": true
+    },
+    {
+      "key": "th",
+      "label": "ไทย",
+      "flag": "🇹🇭",
+      "provider": "browser",
+      "code": "th-TH",
+      "accent": "",
+      "field": "th",
+      "enabled": true
+    },
+    {
+      "key": "tl",
+      "label": "台語",
+      "flag": "🌺",
+      "provider": "ithuan",
+      "code": "",
+      "accent": "閩南語",
+      "field": "tl",
+      "enabled": true
+    },
+    {
+      "key": "hak",
+      "label": "客語",
+      "flag": "🛖",
+      "provider": "ithuan",
+      "code": "",
+      "accent": "四縣腔",
+      "field": "zh",
+      "enabled": true
+    },
+    {
+      "key": "yue",
+      "label": "粵語",
+      "flag": "🇭🇰",
+      "provider": "cloud",
+      "code": "yue-HK",
+      "accent": "",
+      "field": "yue",
+      "enabled": true
+    }
+  ]
+}
