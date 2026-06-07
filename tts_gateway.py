@@ -254,15 +254,19 @@ async def scan(request: Request):
         async with httpx.AsyncClient(timeout=60) as cli:
             r = await cli.post(url, json=payload)
     except Exception as e:
+        print(f"[SCAN] 連線 Gemini 失敗：{e}", flush=True)
         return JSONResponse({"error": f"連線 Gemini 失敗：{e}", "member": is_member}, status_code=502)
     if r.status_code != 200:
+        print(f"[SCAN] Gemini 回應 {r.status_code}: {r.text[:500]}", flush=True)
         return JSONResponse({"error": f"Gemini 回應 {r.status_code}: {r.text[:200]}", "member": is_member}, status_code=502)
 
     data = r.json()
     try:
         raw = data["candidates"][0]["content"]["parts"][0]["text"]
     except Exception:
+        print(f"[SCAN] 解析回應失敗，原始內容：{str(data)[:500]}", flush=True)
         raw = '{"zh":"???"}'
+    print(f"[SCAN] OK member={is_member} raw={raw[:120]}", flush=True)
     return JSONResponse({"raw": raw, "member": is_member})
 
 # ---------------------------------------------------------------------------
