@@ -48,16 +48,23 @@ GOOGLE_TTS_KEY = os.environ.get("GOOGLE_TTS_KEY", "")
 GOOGLE_TRANSLATE_KEY = os.environ.get("GOOGLE_TRANSLATE_KEY", "") or GOOGLE_TTS_KEY
 ITHUAN_BASE = os.environ.get("ITHUAN_BASE", "https://hapsing.ithuan.tw")
 
-# 拍照辨識代理用（金鑰只放後端，絕不放前端）
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-SCAN_MODEL = os.environ.get("SCAN_MODEL", "claude-sonnet-4-20250514")
+# 拍照辨識（Gemini 視覺）＋ 會員碼驗證用（金鑰只放後端，絕不放前端）
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+# 會員碼清單（逗號分隔，例：JAMINE2026,VIP-AAA,VIP-BBB）。在這份清單內＝無限使用、不扣免費次數。
+MEMBER_CODES = set(c.strip().upper() for c in os.environ.get("MEMBER_CODES", "").split(",") if c.strip())
 SCAN_PROMPT = (
     "你是兒童語言學習 App 的辨識助手。請辨識照片中「最主要的一個」物品，"
     "只回傳一個 JSON 物件，不要 markdown、不要反引號、不要任何多餘文字。"
     "鍵值：zh(繁體中文名), en(English), ja(日本語), tl(台羅拼音), "
-    "emoji(一個最貼切的 emoji), cat(類別)。"
+    "emoji(一個最貼切的 emoji), cat(類別), level(固定填 \"幼兒\"), type(固定填 \"名詞\")。"
     "若無法辨識，zh 回傳 \"???\"。"
 )
+
+
+def verify_member(code: str) -> bool:
+    """會員碼是否有效（不分大小寫、去空白）。MEMBER_CODES 為空時一律非會員。"""
+    return bool(code) and code.strip().upper() in MEMBER_CODES
 
 
 def load_langs():
@@ -212,47 +219,51 @@ load();
 </script>"""
 
 # ---------------------------------------------------------------------------
-# 拍照辨識代理：前端把照片(base64)送來，後端用你的金鑰呼叫 Anthropic，
-# 回傳模型產生的 JSON 字串(raw)。金鑰只存在後端環境變數，永不外露。
+# 拍照辨識代理：前端把照片(base64)送來，後端用你的 Gemini 金鑰辨識，
+# 並驗證會員碼。回傳 {raw: <JSON文字>, member: true/false}。
+# 金鑰只存在後端環境變數，永不外露。
 # ---------------------------------------------------------------------------
 @app.post("/scan")
 async def scan(request: Request):
-    if not ANTHROPIC_API_KEY:
-        raise HTTPException(503, "尚未設定 ANTHROPIC_API_KEY 環境變數")
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(400, "請傳 JSON")
     image = body.get("image", "")
     media_type = body.get("media_type", "image/jpeg")
+    code = body.get("code", "") or ""
+    is_member = verify_member(code)
+
+    if not GEMINI_API_KEY:
+        return JSONResponse({"error": "尚未設定 GEMINI_API_KEY", "member": is_member}, status_code=500)
     if not image:
-        raise HTTPException(400, "缺少 image (base64)")
+        return JSONResponse({"error": "缺少 image (base64)", "member": is_member}, status_code=400)
+
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+           + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY)
     payload = {
-        "model": SCAN_MODEL,
-        "max_tokens": 1000,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image}},
-                {"type": "text", "text": SCAN_PROMPT},
-            ],
+        "contents": [{
+            "parts": [
+                {"text": SCAN_PROMPT},
+                {"inline_data": {"mime_type": media_type, "data": image}},
+            ]
         }],
-    }
-    headers = {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 256},
     }
     try:
         async with httpx.AsyncClient(timeout=60) as cli:
-            r = await cli.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
+            r = await cli.post(url, json=payload)
     except Exception as e:
-        raise HTTPException(502, f"連線 Anthropic 失敗：{e}")
+        return JSONResponse({"error": f"連線 Gemini 失敗：{e}", "member": is_member}, status_code=502)
     if r.status_code != 200:
-        raise HTTPException(502, f"Anthropic 回應 {r.status_code}: {r.text[:200]}")
+        return JSONResponse({"error": f"Gemini 回應 {r.status_code}: {r.text[:200]}", "member": is_member}, status_code=502)
+
     data = r.json()
-    raw = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
-    return JSONResponse({"raw": raw})
+    try:
+        raw = data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception:
+        raw = '{"zh":"???"}'
+    return JSONResponse({"raw": raw, "member": is_member})
 
 # ---------------------------------------------------------------------------
 # 線上翻譯：把裝置端辨識到的英文標籤，翻成各語言（Google Cloud Translation v2）。
