@@ -45,6 +45,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "changeme")
 GOOGLE_TTS_KEY = os.environ.get("GOOGLE_TTS_KEY", "")
+GOOGLE_TRANSLATE_KEY = os.environ.get("GOOGLE_TRANSLATE_KEY", "") or GOOGLE_TTS_KEY
 ITHUAN_BASE = os.environ.get("ITHUAN_BASE", "https://hapsing.ithuan.tw")
 
 # 拍照辨識代理用（金鑰只放後端，絕不放前端）
@@ -252,3 +253,29 @@ async def scan(request: Request):
     data = r.json()
     raw = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
     return JSONResponse({"raw": raw})
+
+# ---------------------------------------------------------------------------
+# 線上翻譯：把裝置端辨識到的英文標籤，翻成各語言（Google Cloud Translation v2）。
+# 用於「拍照辨識」命名正確化。免費額度每月 50 萬字元，幾乎用不完。
+# 需在 Google Cloud 開啟「Cloud Translation API」，並讓金鑰可使用該 API。
+# ---------------------------------------------------------------------------
+TRANSLATE_TARGETS = {"zh": "zh-TW", "ja": "ja", "ko": "ko", "ind": "id", "vi": "vi", "th": "th"}
+
+@app.get("/translate")
+async def translate(text: str, targets: str = "zh,ja,ko,ind,vi,th"):
+    if not GOOGLE_TRANSLATE_KEY:
+        raise HTTPException(503, "未設定 GOOGLE_TRANSLATE_KEY / GOOGLE_TTS_KEY")
+    want = [t.strip() for t in targets.split(",") if t.strip() in TRANSLATE_TARGETS]
+    out = {}
+    async with httpx.AsyncClient(timeout=20) as c:
+        for k in want:
+            try:
+                r = await c.post(
+                    f"https://translation.googleapis.com/language/translate/v2?key={GOOGLE_TRANSLATE_KEY}",
+                    json={"q": text, "source": "en", "target": TRANSLATE_TARGETS[k], "format": "text"},
+                )
+                if r.status_code == 200:
+                    out[k] = r.json()["data"]["translations"][0]["translatedText"]
+            except Exception:
+                pass
+    return JSONResponse(out)
