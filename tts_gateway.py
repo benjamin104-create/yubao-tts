@@ -248,7 +248,7 @@ async def scan(request: Request):
                 {"inline_data": {"mime_type": media_type, "data": image}},
             ]
         }],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 256},
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 2048, "thinkingConfig": {"thinkingBudget": 0}},
     }
     try:
         async with httpx.AsyncClient(timeout=60) as cli:
@@ -262,9 +262,16 @@ async def scan(request: Request):
 
     data = r.json()
     try:
-        raw = data["candidates"][0]["content"]["parts"][0]["text"]
-    except Exception:
-        print(f"[SCAN] 解析回應失敗，原始內容：{str(data)[:500]}", flush=True)
+        cand = data["candidates"][0]
+        parts = cand.get("content", {}).get("parts", [])
+        raw = "".join(p.get("text", "") for p in parts if isinstance(p, dict))
+        finish = cand.get("finishReason", "")
+        if finish and finish != "STOP":
+            print(f"[SCAN] finishReason={finish}", flush=True)
+        if not raw.strip():
+            raise ValueError("empty text parts: " + str(data)[:300])
+    except Exception as e:
+        print(f"[SCAN] 解析回應失敗（{e}）：{str(data)[:600]}", flush=True)
         raw = '{"zh":"???"}'
     print(f"[SCAN] OK member={is_member} raw={raw[:120]}", flush=True)
     return JSONResponse({"raw": raw, "member": is_member})
