@@ -1,0 +1,3 @@
+# 長期記憶 DB 與素材快取不進版控（屬於本機個人資料）
+memory/assets.db
+memory/assets.db-*
