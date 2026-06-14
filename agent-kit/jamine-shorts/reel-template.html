@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- 潔米爸短影音模板（版型A 暖黑底人物版）。範例內容＝Day1 心流。
+     需要：同資料夾放 gsap.min.js 與 bg.png（潔米爸黑白人物照，當 30% 襯底）。
+     改 6 段 .scene 的文字即可換主題；composition-id 與 window.__timelines["root"] 必須一致。 -->
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden;
+        background: radial-gradient(120% 90% at 50% 38%, #1a1610 0%, #0c0a07 70%);
+        font-family: "PingFang TC","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC",sans-serif; color: #F5EFE6; }
+      #root { position: relative; width: 1080px; height: 1920px; }
+      #bgfig { position: absolute; inset: 0; opacity: 0; }
+      #scrim { position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(10,9,7,.30) 0%, rgba(10,9,7,.10) 30%, rgba(10,9,7,.45) 70%, rgba(10,9,7,.60) 100%); }
+      .brand { position: absolute; top: 96px; left:0; right:0; text-align:center; font-size:34px; letter-spacing:6px; color:#c9bea9; z-index:3; }
+      .brand b { color:#E0A24E; font-weight:600; }
+      .sign { position: absolute; bottom:120px; left:0; right:0; text-align:center; font-size:32px; letter-spacing:8px; color:#a59a85; z-index:3; }
+      .scene { position:absolute; left:110px; right:110px; top:0; bottom:0; z-index:3; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; opacity:0; }
+      .kic { font-size:34px; letter-spacing:4px; color:#E0A24E; margin-bottom:40px; }
+      .big { font-size:96px; font-weight:800; line-height:1.34; letter-spacing:2px; text-shadow:0 4px 24px rgba(0,0,0,.6); }
+      .big .hl { color:#E0A24E; }
+      .small { font-size:46px; line-height:1.7; color:#e7ddcc; margin-top:44px; text-shadow:0 3px 18px rgba(0,0,0,.6); }
+      #s4 { align-items:center; text-align:center; } #s4 .big { font-size:110px; }
+      #s5 { align-items:center; text-align:center; }
+      #s5 .cta { margin-top:56px; font-size:40px; color:#14110b; background:#E0A24E; padding:22px 46px; border-radius:18px; font-weight:700; letter-spacing:4px; }
+      #bar { position:absolute; top:0; left:0; height:8px; width:1080px; z-index:4; transform-origin:left center; background:linear-gradient(90deg,#E0A24E,#f3d29a); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="root" data-start="0" data-duration="21" data-width="1080" data-height="1920">
+      <div id="bgfig"><img src="bg.png" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center 22%;" /></div>
+      <div id="scrim"></div><div id="bar"></div>
+      <div class="brand">潔米爸的書房筆記 · <b>@jamine_pa</b></div>
+
+      <div class="scene" id="s0"><div class="kic">心流 ｜ Day 1</div><div class="big">你有多久，<br>沒有<span class="hl">忘記時間</span>了？</div><div class="small">那可能不是小事，<br>是你靠近自己的入口。</div></div>
+      <div class="scene" id="s1"><div class="kic">先接住你</div><div class="big">你不是<br><span class="hl">沒有熱情</span></div><div class="small">你只是太久沒有碰到，<br>那個會發光的自己。</div></div>
+      <div class="scene" id="s2"><div class="kic">把壓力放輕</div><div class="big">心流，<br>不是<span class="hl">上課</span></div><div class="small">它比較像一種感覺──<br>「我好像，回到自己了。」</div></div>
+      <div class="scene" id="s3"><div class="kic">回到生活</div><div class="big">忘記時間的時刻，<br><span class="hl">不是偶然</span></div><div class="small">畫畫、打球、整理東西⋯<br>那些忘我，都是線索。</div></div>
+      <div class="scene" id="s4"><div class="big">你不是沒熱情，<br>是太久沒回到<br><span class="hl">那種感覺</span>。</div></div>
+      <div class="scene" id="s5"><div class="big">今天，只想起<br>一個<span class="hl">時刻</span>就好</div><div class="small">什麼事，曾讓你忘記時間？</div><div class="cta">留言「心流」· 領心流線索小卡</div></div>
+
+      <div class="sign">潔米爸陪你慢慢看</div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.to("#bgfig", { opacity:0.3, duration:1.3, ease:"power1.out" }, 0);
+      tl.to("#bgfig", { opacity:0, duration:1.5, ease:"power1.in" }, 19.5);
+      tl.fromTo("#bgfig", { scale:1.0 }, { scale:1.08, duration:21, ease:"none", transformOrigin:"60% 42%" }, 0);
+      tl.fromTo("#bar", { scaleX:0 }, { scaleX:1, duration:21, ease:"none" }, 0);
+      const scenes=["#s0","#s1","#s2","#s3","#s4","#s5"], starts=[0.4,3.6,7.0,10.4,13.8,17.2], hold=3.0;
+      scenes.forEach((s,i)=>{ const t=starts[i];
+        tl.to(s,{opacity:1,duration:0.7,ease:"power2.out"},t);
+        tl.from(s+" .big",{y:40,duration:0.8,ease:"power3.out"},t);
+        if(s!=="#s5") tl.to(s,{opacity:0,duration:0.6,ease:"power2.in"},t+hold);
+      });
+      tl.to("#s4 .big",{scale:1.05,duration:1.6,yoyo:true,repeat:1,ease:"sine.inOut"},13.9);
+      tl.from("#s5 .cta",{opacity:0,scale:0.8,duration:0.6,ease:"back.out(1.7)"},18.4);
+      tl.to("#s5",{opacity:0,duration:1.2,ease:"power1.in"},19.8);
+      window.__timelines = window.__timelines || {}; window.__timelines["root"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1350" />
+    <script src="gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1350px; overflow: hidden;
+        background: radial-gradient(120% 100% at 50% 36%, #1a1610 0%, #0c0a07 72%);
+        font-family: "PingFang TC","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC",sans-serif; color: #F5EFE6; }
+      #card { position: relative; width: 1080px; height: 1350px; opacity: 0; }
+      .top { position:absolute; top:80px; left:0; right:0; text-align:center; font-size: 30px; letter-spacing: 5px; color: #c9bea9; }
+      .top b { color: #E0A24E; }
+      .mid { position:absolute; top:0; bottom:0; left:96px; right:96px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+      .hook { font-size: 58px; font-weight: 800; line-height: 1.4; color:#f1e8d8; }
+      .hook .hl { color:#E0A24E; }
+      .kwbox { margin-top: 60px; font-size: 50px; font-weight: 700; color:#f1e8d8; }
+      .kw { display:inline-block; margin-left:18px; background:#E0A24E; color:#14110b; padding:14px 44px; border-radius:16px; font-weight:800; font-size:58px; letter-spacing:4px; }
+      .give { margin-top: 50px; font-size: 40px; line-height: 1.6; color:#cfc6b6; }
+      .give b { color:#f1e8d8; }
+      .arrow { margin-top: 26px; font-size: 64px; color:#E0A24E; }
+      .foot { position: absolute; left:0; right:0; bottom: 70px; text-align:center; font-size: 30px; letter-spacing: 4px; color:#a59a85; }
+    </style>
+  </head>
+  <body>
+    <div id="card" data-composition-id="root" data-start="0" data-duration="2" data-width="1080" data-height="1350">
+      <div class="top">潔米爸的書房筆記 · <b>@jamine_pa</b></div>
+      <div class="mid">
+        <div class="hook">低潮，<br>其實是<span class="hl">入口</span></div>
+        <div class="kwbox">留言 <span class="kw">入口</span></div>
+        <div class="give">追蹤 @jamine_pa，<br>我把<b>「低潮整理小卡」</b>私訊給你</div>
+        <div class="arrow">↓</div>
+      </div>
+      <div class="foot">潔米爸陪你慢慢看</div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.to("#card", { opacity: 1, duration: 0.6, ease: "power2.out" }, 0);
+      window.__timelines = window.__timelines || {}; window.__timelines["root"] = tl;
+    </script>
+  </body>
+</html>
