@@ -23,7 +23,8 @@ loudnorm I=-14:TP=-1.5:LRA=10         # 響度
 
 ## 混音
 - 人聲延遲 0.5s 起（對齊第一段字幕）。
-- 音樂 `volume=0.40` + `lowpass=3600` + 淡入1.8s/淡出尾段，壓在人聲底下。
+- 音樂 `volume=0.55` + `lowpass=3600` + 淡入1.8s/淡出尾段。
+- **sidechain 自動閃避**：`sidechaincompress=threshold=0.03:ratio=6:attack=15:release=350`（人聲一出現音樂自動微降，停頓回來）→ 音樂大聲也不蓋人聲。
 - `amix=normalize=0`（保住人聲音量）+ `alimiter=0.97`（防爆）。
 
 ## 注意

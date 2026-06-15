@@ -21,9 +21,13 @@ ffmpeg -y -i /tmp/_voice_trim.m4a -af \
 VLEN=$(ffprobe -v error -show_entries format=duration -of default=nw=1 "$SILENT")
 python3 "$HERE/genmusic.py" "$VLEN" /tmp/_music.wav
 
-# 4) 混音：人聲延遲0.5s + 音樂(大聲版 volume=0.40)壓底，淡入淡出，限幅防爆
+# 4) 混音：人聲延遲0.5s + 音樂(volume=0.55)壓底 + sidechain自動閃避(說話時音樂微降) + 限幅防爆
 FADEOUT=$(python3 -c "print(max(0,$VLEN-2.2))")
 ffmpeg -y -i "$SILENT" -i /tmp/_voice_enh.m4a -i /tmp/_music.wav \
- -filter_complex "[1:a]adelay=500|500,apad[v];[2:a]volume=0.40,lowpass=f=3600,afade=t=in:st=0:d=1.8,afade=t=out:st=${FADEOUT}:d=2.2[m];[v][m]amix=inputs=2:normalize=0,alimiter=limit=0.97[a]" \
+ -filter_complex "\
+[1:a]adelay=500|500,apad,asplit=2[v1][vsc];\
+[2:a]volume=0.55,lowpass=f=3600,afade=t=in:st=0:d=1.8,afade=t=out:st=${FADEOUT}:d=2.2[mraw];\
+[mraw][vsc]sidechaincompress=threshold=0.03:ratio=6:attack=15:release=350[mduck];\
+[v1][mduck]amix=inputs=2:normalize=0,alimiter=limit=0.97[a]" \
  -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -t "$VLEN" "$OUT"
 echo "✅ 完成：$OUT"
