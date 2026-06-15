@@ -1,6 +1,14 @@
 # 標準音訊配方（潔米爸短影音）
 
-定案版 v2：**美化人聲 + 柔和鋼琴墊底（大聲版）**。零版權、自己合成，IG/TikTok 不會被消音。
+定案版 **v3**：**切開口前雜音 + 強去低頻 + 降噪 + 美化人聲 + 1.2 倍速 + 柔和鋼琴墊底(0.55) + 自動閃避**。
+零版權、自己合成，IG/TikTok 不會被消音。影片以 `setpts` 自動配速貼合語速（免重渲染）。
+
+## v3 額外處理（相對 v2）
+- `silenceremove`：切掉開口前 / 結尾的環境雜音。
+- `highpass=120 (×2) + equalizer=90 g=-12`：強力去低頻「轟」聲。
+- `afftdn nt=w + agate`：noise tracking 降噪 + 雜訊閘。
+- `atempo=1.2`：語速 1.2 倍（保音高），更有精神。
+- 影片 `setpts=PTS/factor` 自動配速。
 
 ## 檔案
 - `genmusic.py` — 生成墊底音樂（C–G–Am–F 溫柔琶音）。`python3 genmusic.py <秒數> music.wav`
