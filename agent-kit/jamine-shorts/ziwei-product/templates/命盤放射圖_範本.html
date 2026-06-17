@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=1450, height=1450" />
+    <script src="gsap.min.js"></script>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      html,body{width:1450px;height:1450px;overflow:hidden;
+        background:radial-gradient(120% 120% at 50% 45%,#1a1610 0%,#0b0907 78%);
+        font-family:"PingFang TC","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC",sans-serif;color:#F5EFE6}
+      #root{position:relative;width:1450px;height:1450px;opacity:0}
+      #svg{position:absolute;inset:0}
+      .title{position:absolute;top:50px;left:0;right:0;text-align:center;font-size:52px;font-weight:800;letter-spacing:3px}
+      .title .hl{color:#E0A24E}
+      .sub{position:absolute;top:120px;left:0;right:0;text-align:center;font-size:26px;color:#a59a85;letter-spacing:3px}
+      .center{position:absolute;width:300px;height:300px;border-radius:50%;
+        background:radial-gradient(circle at 50% 38%,#E0A24E,#b9802f);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        left:575px;top:575px;box-shadow:0 0 80px rgba(224,162,78,.4)}
+      .center b{font-size:100px;font-weight:800;color:#1a120a;letter-spacing:6px;line-height:1}
+      .center span{font-size:25px;color:#3a2a12;margin-top:8px;letter-spacing:2px}
+      .node{position:absolute;width:250px;transform:translate(-50%,-50%);text-align:center}
+      .node .s{font-size:42px;font-weight:800;color:#E0A24E;letter-spacing:2px}
+      .node .j{font-size:25px;line-height:1.35;color:#e7ddcc;margin-top:4px}
+      .aux{position:absolute;left:58px;bottom:58px;font-size:24px;color:#cfc6b6;line-height:1.6;
+        border-left:3px solid #E0A24E;padding-left:18px}
+      .aux b{color:#E0A24E}
+      .note{position:absolute;left:0;right:0;top:835px;text-align:center;font-size:25px;color:#E0A24E;letter-spacing:2px}
+      .foot{position:absolute;right:58px;bottom:58px;font-size:26px;letter-spacing:3px;color:#a59a85;text-align:right}
+      .ipfloat{position:absolute;left:28px;top:30px;width:228px;text-align:center}
+      .ipfloat img{width:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.55))}
+      .ipfloat .cap{font-size:23px;color:#cfc6b6;letter-spacing:2px;margin-top:2px}
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="root" data-start="0" data-duration="2" data-width="1450" data-height="1450">
+      <svg id="svg" width="1450" height="1450"></svg>
+      <div class="title">財帛宮 · <span class="hl">主星 × 賺錢理財</span></div>
+      <div class="sub">中央為財帛宮，四周主星即「你的賺錢方式」</div>
+      <div class="ipfloat"><img src="ip_haoye_clean.png" alt=""/><div class="cap">潔米爸陪你算財</div></div>
+      <div class="center"><b>財帛</b><span>賺錢・理財・財路</span></div>
+      <div class="note">＊更多細節，詳見下方「主星×財運」表格</div>
+      <div class="aux">輔星補充：<br><b>擎羊</b>屬金主財　<b>魁鉞</b>籌借調動財<br><b>昌曲</b>寫作出版·細水長流　<b>四煞</b>是非/訴訟財不留</div>
+      <div class="foot">潔米爸的書房筆記<br>@jamine_pa</div>
+      <div id="nodes"></div>
+    </div>
+    <script>
+      const stars=[
+        ["紫微","收入穩定·消費高"],["天機","投機·股票期貨"],
+        ["太陽","旺地富貴·辛勞財"],["武曲","財星·善資金調度"],
+        ["天同","輕鬆財·繼承家產"],["廉貞","公門財·要懂存"],
+        ["天府","財庫·富裕擅理財"],["太陰","財星·不動產佳"],
+        ["貪狼","玩樂財·避險周轉"],["巨門","口才財·守財不易"],
+        ["天相","服務銀行財·懂理財"],["天梁","賭博/長輩·宗教財"],
+        ["七殺","一夜致富或毀一旦"],["破軍","變賣橫財·難守成"]
+      ];
+      const cx=725, cy=735, R=525;
+      const svg=document.getElementById("svg"), wrap=document.getElementById("nodes");
+      stars.forEach((st,i)=>{
+        const ang=(-90 + i*(360/stars.length))*Math.PI/180;
+        const x=cx+R*Math.cos(ang), y=cy+R*Math.sin(ang);
+        const x2=cx+155*Math.cos(ang), y2=cy+155*Math.sin(ang);
+        const xn=x-150*Math.cos(ang), yn=y-110*Math.sin(ang);
+        svg.insertAdjacentHTML("beforeend",
+          `<line x1="${x2}" y1="${y2}" x2="${xn}" y2="${yn}" stroke="#4a3f2c" stroke-width="2"/>`+
+          `<circle cx="${x2}" cy="${y2}" r="5" fill="#E0A24E"/>`);
+        const d=document.createElement("div");
+        d.className="node"; d.style.left=x+"px"; d.style.top=y+"px";
+        d.innerHTML=`<div class="s">${st[0]}</div><div class="j">${st[1]}</div>`;
+        wrap.appendChild(d);
+      });
+      const tl=gsap.timeline({paused:true});
+      tl.to("#root",{opacity:1,duration:0.6,ease:"power2.out"},0);
+      window.__timelines=window.__timelines||{};window.__timelines["root"]=tl;
+    </script>
+  </body>
+</html>
