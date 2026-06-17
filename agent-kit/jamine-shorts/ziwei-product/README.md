@@ -23,3 +23,8 @@
 
 ## 依賴
 Node22 + HyperFrames + ffmpeg-static/ffprobe-static（render）；Python：rembg、Pillow、img2pdf。
+
+## ⚠️ 字型（重要）
+PDF 詳表頁**必須用正版繁體中文字型 Noto Sans TC**，不可用系統的日文 Gothic（會缺字「內哪娛懂歲產說闆」等→變方框怪字）。
+下載：`curl -L -o NotoSansTC.ttf "https://github.com/google/fonts/raw/main/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf"`
+`build_book.py` 內 `FONT` 指向該檔；標題用變數字型 wght=700 加粗。

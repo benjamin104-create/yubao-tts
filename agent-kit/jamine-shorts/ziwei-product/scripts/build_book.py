@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from PIL import Image, ImageDraw, ImageFont
 import img2pdf
-FONT="/etc/alternatives/fonts-japanese-gothic.ttf"
+FONT="/tmp/NotoSansTC.ttf"
 W,H=1450,2050
 BG=(13,10,7); CREAM=(231,221,204); GOLD=(224,162,78); MUT=(165,154,133); WHITE=(245,239,230)
 MX=120; TOP=150; BOT=H-150
-def F(sz): return ImageFont.truetype(FONT,sz)
+def F(sz,bold=False):
+    f=ImageFont.truetype(FONT,sz)
+    if bold:
+        try: f.set_variation_by_axes([700])
+        except Exception: pass
+    return f
 _d=ImageDraw.Draw(Image.new("RGB",(10,10)))
 def tw(t,f): return _d.textlength(t,font=f)
 def wrap(text,font,maxw):
@@ -35,9 +40,9 @@ def newpage():
 def ensure(extra):
     if cur[0] is None or cur[0].y+extra>BOT: newpage()
 def H1(t):
-    ensure(120); p=cur[0]; p.d.text((MX,p.y),t,font=F(60),fill=GOLD); p.y+=106
+    ensure(120); p=cur[0]; p.d.text((MX,p.y),t,font=F(60,1),fill=GOLD); p.y+=106
 def H2(t):
-    ensure(86); p=cur[0]; p.d.rectangle((MX,p.y+6,MX+10,p.y+50),fill=GOLD); p.d.text((MX+28,p.y),t,font=F(42),fill=WHITE); p.y+=82
+    ensure(86); p=cur[0]; p.d.rectangle((MX,p.y+6,MX+10,p.y+50),fill=GOLD); p.d.text((MX+28,p.y),t,font=F(42,1),fill=WHITE); p.y+=82
 def P(t):
     f=F(34)
     for ln in wrap(t,f,W-2*MX):
@@ -52,7 +57,7 @@ def B(t):
     cur[0].y+=6
 def KV(k,v):
     f=F(33); kf=F(34); vx=MX+330; vw=W-MX-vx; vls=wrap(v,f,vw); need=max(1,len(vls))*52
-    ensure(need+14); p=cur[0]; p.d.text((MX,p.y),k,font=kf,fill=GOLD)
+    ensure(need+14); p=cur[0]; p.d.text((MX,p.y),k,font=F(34,1),fill=GOLD)
     for ln in vls: p.d.text((vx,p.y),ln,font=f,fill=CREAM); p.y+=52
     p.d.line((MX,p.y+4,W-MX,p.y+4),fill=(40,34,24),width=1); p.y+=16
 def NOTE(t):
