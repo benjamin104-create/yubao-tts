@@ -60,18 +60,28 @@ def group_card(idx, total, title, items):
     # title
     y=176
     d.text((PAD,y),title,font=F(52,True),fill=GOLD)
-    y+=92
+    y+=104
     n=len(items)
-    avail=H-90-y
-    slot=avail/n
-    qf=F(40 if n>=4 else 43,True); sf=F(31)
-    for i,(sit,line) in enumerate(items):
-        top=y+i*slot
-        rr(d,[PAD,top,W-PAD,top+slot-22],24,fill=CARDBG,outline=(54,42,26),width=2)
-        iy=top+30
-        d.text((PAD+38,iy),"情境 · "+sit,font=sf,fill=MUT); iy+=50
-        for ln in wrap(d,"「"+line+"」",qf,W-2*PAD-76):
-            d.text((PAD+38,iy),ln,font=qf,fill=CREAM); iy+=58
+    qf=F(40 if n>=4 else 41,True); sf=F(31)
+    QW=W-2*PAD-50
+    GAP=38; PADT=30; PADB=30; SIT_H=52; Q_H=58
+    # measure box heights (compact, hug content)
+    heights=[]
+    for sit,line in items:
+        qlines=wrap(d,"「"+line+"」",qf,QW)
+        heights.append(PADT+SIT_H+Q_H*len(qlines)+PADB)
+    total=sum(heights)+GAP*(n-1)
+    avail_top=y; avail_bot=H-110
+    # top-align under title, but nudge down a little if lots of slack
+    slack=avail_bot-avail_top-total
+    top=avail_top+min(60,max(0,slack/2))
+    for (sit,line),bh in zip(items,heights):
+        rr(d,[PAD,top,W-PAD,top+bh],24,fill=CARDBG,outline=(54,42,26),width=2)
+        iy=top+PADT
+        d.text((PAD+38,iy),"情境 · "+sit,font=sf,fill=MUT); iy+=SIT_H
+        for ln in wrap(d,"「"+line+"」",qf,QW):
+            d.text((PAD+38,iy),ln,font=qf,fill=CREAM); iy+=Q_H
+        top+=bh+GAP
     foot="不傷人，也不傷自己 · @jamine_pa"; fw=tw(d,foot,F(30))[0]
     d.text(((W-fw)/2,H-70),foot,font=F(30),fill=MUT)
     img.save(f"{OUT}/p{idx}.png")
