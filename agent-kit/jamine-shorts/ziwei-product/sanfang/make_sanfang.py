@@ -145,22 +145,21 @@ def takeaway():
     img,d=base()
     ct(d,W/2,196,"潔米爸怎麼看",F(38,True),BODY)
     ct(d,W/2,250,"它更像「磁場關係學」",F(58,True),INK)
-    y=358
-    for ln in ["紫微斗數，","不是單一宮位就能看出全貌。","它講的是「關係」──","相關的宮，怎麼互相影響一件事。"]:
-        y=ct(d,W/2,y,ln,F(38),BODY); y+=14
-    y+=34
-    # three points
+    y=350
+    for ln in ["紫微斗數，不是單一宮位就能看出全貌。","它講的是「關係」──","相關的宮，怎麼互相影響一件事。"]:
+        y=ct(d,W/2,y,ln,F(33),BODY); y+=16
+    y+=36
+    # three points (centered)
     pts=[("看得到「助力」與要「小心」的地方","哪邊有人事物在幫你，哪邊要多留意。"),
-         ("看得到你心裡更在乎什麼","同一件事，你真正放不下的，往往會浮出來。"),
+         ("看得到你心裡更在乎什麼","你真正放不下的，往往會浮出來。"),
          ("看得到事情可能怎麼發展","不是定死的結局，是幾種走向與機會。")]
-    PAD=84; bh=148; gap=22; bf=F(32)
+    PAD=84; bh=146; gap=22
     for t,s in pts:
         rr(d,[PAD,y,W-PAD,y+bh],20,fill=(250,247,240),outline=CELL_LINE,width=2)
-        d.text((PAD+34,y+28),"｜ "+t,font=F(35,True),fill=INK)
-        for i,ln in enumerate(wrap(d,s,bf,W-2*PAD-68)):
-            d.text((PAD+34,y+86+i*42),ln,font=bf,fill=BODY)
+        ct(d,W/2,y+30,t,F(35,True),INK)
+        ct(d,W/2,y+88,s,F(31),BODY)
         y+=bh+gap
-    y+=10
+    y+=12
     ct(d,W/2,y,"所以別用一格定生死──",F(36,True),GOLDT)
     ct(d,W/2,y+50,"看「關係」，才看得到全貌。",F(36,True),GOLDT)
     ct(d,W/2,H-150,"用更明亮的方式看命盤",F(32,True),BODY)
