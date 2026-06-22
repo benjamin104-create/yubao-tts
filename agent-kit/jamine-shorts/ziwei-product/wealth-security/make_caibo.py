@@ -29,8 +29,8 @@ def base():
     img=Image.new("RGB",(W,H),CBG); d=ImageDraw.Draw(img)
     rr(d,[26,26,W-26,H-26],28,outline=FRAME,width=3)
     rr(d,[40,40,W-40,H-40],22,outline=(220,200,160),width=1)
-    ct(d,W/2,86,"# 潔米爸的書房筆記",F(30),MUT)
-    ct(d,W/2,128,"紫微斗數筆記",F(30,True),GOLDT)
+    ct(d,W/2,90,"# 潔米爸的書房筆記",F(25),MUT)
+    ct(d,W/2,128,"紫微斗數筆記",F(28,True),GOLDT)
     return img,d
 
 # (num,標題,內文)
@@ -65,7 +65,7 @@ def card(idx,total,title,group):
         for ln in wrap(d,body,bf,QW):
             ct(d,W/2,iy,ln,bf,BODY); iy+=B_LH
         top+=bh+30
-    ct(d,W/2,H-118,"錢的背後，是安全感 · @jamine_pa",F(30),MUT)
+    ct(d,W/2,H-112,"錢的背後，是安全感 · @jamine_pa",F(25),MUT)
     img.save(f"{OUT}/p{idx}.png")
 
 def cover():
