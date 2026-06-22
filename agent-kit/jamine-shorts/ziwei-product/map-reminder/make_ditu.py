@@ -47,24 +47,23 @@ def card(idx,total,title,group):
     img,d=base()
     ct(d,W/2,196,title,F(50,True),INK)
     d.line([W/2-130,272,W/2+130,272],fill=FRAME,width=3)
-    tf=F(38,True); bf=F(33); QW=W-2*84-76
-    PADT=30; THG=10; TIT_H=88; B_LH=46; PADB=30
+    tf=F(38,True); bf=F(33); PAD=84; QW=W-2*PAD-60
+    PADT=28; NUM_H=44; TIT_LH=54; THG=8; B_LH=46; PADB=30
     heights=[]
     for n_,h_,body in group:
-        th=len(wrap(d,h_,tf,QW))*54
-        heights.append(PADT+th+THG+B_LH*len(wrap(d,body,bf,QW))+PADB)
+        tl=len(wrap(d,h_,tf,QW)); bl=len(wrap(d,body,bf,QW))
+        heights.append(PADT+NUM_H+tl*TIT_LH+THG+bl*B_LH+PADB)
     tot=sum(heights)+30*(len(group)-1)
     y=320; slack=(H-130)-y-tot; top=y+min(150,max(0,slack/2))
-    PAD=84
     for (n_,h_,body),bh in zip(group,heights):
         rr(d,[PAD,top,W-PAD,top+bh],22,fill=CELL,outline=CELL_LINE,width=2)
-        d.text((PAD+34,top+PADT+2),n_,font=F(30,True),fill=GOLDT)
-        ty=top+PADT-4
-        for ln in wrap(d,h_,tf,QW-70):
-            d.text((PAD+34+60,ty),ln,font=tf,fill=INK); ty+=54
-        iy=top+PADT+(ty-(top+PADT-4))+THG-4
+        iy=top+PADT
+        ct(d,W/2,iy,n_,F(28,True),GOLDT); iy+=NUM_H
+        for ln in wrap(d,h_,tf,QW):
+            ct(d,W/2,iy,ln,tf,INK); iy+=TIT_LH
+        iy+=THG
         for ln in wrap(d,body,bf,QW):
-            d.text((PAD+34,iy),ln,font=bf,fill=BODY); iy+=B_LH
+            ct(d,W/2,iy,ln,bf,BODY); iy+=B_LH
         top+=bh+30
     ct(d,W/2,H-118,"命盤是地圖，不是算命 · @jamine_pa",F(30),MUT)
     img.save(f"{OUT}/p{idx}.png")
