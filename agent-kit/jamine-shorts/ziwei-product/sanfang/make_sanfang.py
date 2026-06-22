@@ -43,9 +43,10 @@ def dash(d,p1,p2,col,w=5,da=22,gap=14):
 
 def diagram():
     img,d=base()
-    ct(d,W/2,196,"一張圖看懂",F(38,True),BODY)
-    ct(d,W/2,244,"三方四正",F(80,True),INK)
-    ct(d,W/2,348,"一宮不單看，要連著相關的宮一起看",F(32),GOLDT)
+    ct(d,W/2,188,"一張圖看懂",F(36,True),BODY)
+    ct(d,W/2,232,"三方四正",F(76,True),INK)
+    ct(d,W/2,338,"一宮不單看，要連著相關的宮一起看",F(31),GOLDT)
+    ct(d,W/2,388,"三方＝兩個三合宮　｜　四正＝再加對宮",F(28,True),(150,118,52))
 
     # grid
     cell=166; gx=(W-cell*4)//2; gy=452
@@ -62,36 +63,33 @@ def diagram():
         fill=CELL
         if (r,c) in hi: fill=hi[(r,c)][1]
         rr(d,[x0+4,y0+4,x0+cell-4,y0+cell-4],14,fill=fill,outline=CELL_LINE,width=2)
-    # pass2: connecting lines
+    # center: empty light panel (no text, so lines stay clear)
+    rr(d,cb,18,fill=CENTER,outline=FRAME,width=2)
+    # pass2: non-highlighted labels (drawn before lines; lines barely touch them)
+    for (r,c),pal in pos2pal.items():
+        if (r,c) in hi: continue
+        cx,cy=cen(r,c); ct(d,cx,cy-24,pal,F(44,True),(120,110,96))
+    # pass3: connecting lines ON TOP (always visible over the empty center)
     A=cen(3,3); Bp=cen(2,0); Cp=cen(0,2); Dp=cen(0,0)
     for p,q in [(A,Bp),(Bp,Cp),(Cp,A)]:
-        d.line([p[0],p[1],q[0],q[1]],fill=LINE_SAN,width=5)
-    dash(d,A,Dp,LINE_DUI,w=5)
-    # pass3: center chip
-    rr(d,cb,18,fill=CENTER,outline=FRAME,width=2)
-    midx,midy=(cb[0]+cb[2])//2,(cb[1]+cb[3])//2
-    ct(d,midx,midy-66,"紫微命盤",F(38,True),INK)
-    ct(d,midx,midy-14,"十二宮",F(32),BODY)
-    ct(d,midx,midy+42,"三方＝兩三合",F(26),GOLDT)
-    ct(d,midx,midy+78,"四正＝再加對宮",F(26),GOLDT)
-    # pass4: text labels
-    for (r,c),pal in pos2pal.items():
-        x0,y0=gx+c*cell,gy+r*cell; cx,cy=cen(r,c)
-        if (r,c) in hi:
-            role=hi[(r,c)][0]; ben=(role=='本宮')
-            rw,_=tw(d,role,F(24,True))
-            rr(d,[cx-rw/2-13,y0+16,cx+rw/2+13,y0+16+36],11,fill=(60,42,16) if ben else (255,255,255))
-            ct(d,cx,y0+19,role,F(24,True),(255,238,205) if ben else GOLDT)
-            ct(d,cx,cy+4,pal,F(48,True),(54,36,12) if ben else INK)
-        else:
-            ct(d,cx,cy-24,pal,F(44,True),(120,110,96))
-    # legend
-    ly=gy+cell*4+30
-    items=[("本宮 你要看的那件事",H_BEN),("三方 兩個三合宮",H_SAN),("對宮 正對面那一宮",H_DUI)]
-    lx=gx+6
-    for txt,col in items:
-        rr(d,[lx,ly,lx+34,ly+34],8,fill=col,outline=CELL_LINE,width=2)
-        d.text((lx+46,ly-1),txt,font=F(29,True),fill=BODY); ly+=50
+        d.line([p[0],p[1],q[0],q[1]],fill=LINE_SAN,width=7)
+    dash(d,A,Dp,LINE_DUI,w=7,da=24,gap=14)
+    # pass4: highlighted role chips + names (on top of lines, stay readable)
+    for (r,c),(role,col) in hi.items():
+        x0,y0=gx+c*cell,gy+r*cell; cx,cy=cen(r,c); ben=(role=='本宮'); pal=pos2pal[(r,c)]
+        rw,_=tw(d,role,F(24,True))
+        rr(d,[cx-rw/2-13,y0+16,cx+rw/2+13,y0+16+36],11,fill=(60,42,16) if ben else (255,255,255))
+        ct(d,cx,y0+19,role,F(24,True),(255,238,205) if ben else GOLDT)
+        ct(d,cx,cy+4,pal,F(48,True),(54,36,12) if ben else INK)
+    # legend: left = color swatches, right = line styles
+    ly0=gy+cell*4+32; lf=F(28,True)
+    lx=gx+6; ly=ly0
+    for txt,col in [("本宮 你要看的那件事",H_BEN),("三方 兩個三合宮",H_SAN),("對宮 正對面那一宮",H_DUI)]:
+        rr(d,[lx,ly,lx+32,ly+32],8,fill=col,outline=CELL_LINE,width=2)
+        d.text((lx+44,ly-1),txt,font=lf,fill=BODY); ly+=52
+    rx=gx+cell*2+40; ry=ly0+8
+    d.line([rx,ry+16,rx+58,ry+16],fill=LINE_SAN,width=7); d.text((rx+72,ry),"三合連線",font=lf,fill=BODY)
+    dash(d,(rx,ry+90),(rx+58,ry+90),LINE_DUI,w=7,da=16,gap=10); d.text((rx+72,ry+74),"對宮連線",font=lf,fill=BODY)
     img.save(f"{OUT}/p1.png")
 
 def cover():
@@ -131,22 +129,28 @@ def example():
 
 def takeaway():
     img,d=base()
-    ct(d,W/2,210,"所以，別只看一宮",F(62,True),INK)
-    ct(d,W/2,308,"嚇自己",F(62,True),INK)
-    y=440
-    for ln in ["只看一格，","容易把「局部」當成「全部」。","","看到一個壓力點，","旁邊可能也有撐住你的力量。","","看懂了牽動，","才知道可以從哪裡，輕輕鬆開。"]:
-        if ln=="": y+=28; continue
-        y=ct(d,W/2,y,ln,F(42),BODY); y+=16
-    y+=40
-    bx=92; bw=W-2*92
-    lines=["一件事，","常常有好幾條線。"]
-    cf=F(50,True); boxh=64+sum(70 for _ in lines)
-    rr(d,[bx,y,bx+bw,y+boxh],26,fill=(250,247,240),outline=FRAME,width=3)
-    iy=y+36
-    for i,ln in enumerate(lines):
-        iy=ct(d,W/2,iy,ln,cf,GOLDT if i==1 else INK); iy+=18
-    ct(d,W/2,H-150,"用更明亮的方式看命盤",F(34,True),BODY)
-    ct(d,W/2,H-104,"@jamine_pa",F(34,True),GOLDT)
+    ct(d,W/2,196,"潔米爸怎麼看",F(38,True),BODY)
+    ct(d,W/2,250,"它更像「磁場關係學」",F(58,True),INK)
+    y=358
+    for ln in ["紫微斗數，","不是單一宮位就能看出全貌。","它講的是「關係」──","相關的宮，怎麼互相影響一件事。"]:
+        y=ct(d,W/2,y,ln,F(38),BODY); y+=14
+    y+=34
+    # three points
+    pts=[("看得到「助力」與要「小心」的地方","哪邊有人事物在幫你，哪邊要多留意。"),
+         ("看得到你心裡更在乎什麼","同一件事，你真正放不下的，往往會浮出來。"),
+         ("看得到事情可能怎麼發展","不是定死的結局，是幾種走向與機會。")]
+    PAD=84; bh=148; gap=22; bf=F(32)
+    for t,s in pts:
+        rr(d,[PAD,y,W-PAD,y+bh],20,fill=(250,247,240),outline=CELL_LINE,width=2)
+        d.text((PAD+34,y+28),"｜ "+t,font=F(35,True),fill=INK)
+        for i,ln in enumerate(wrap(d,s,bf,W-2*PAD-68)):
+            d.text((PAD+34,y+86+i*42),ln,font=bf,fill=BODY)
+        y+=bh+gap
+    y+=10
+    ct(d,W/2,y,"所以別用一格定生死──",F(36,True),GOLDT)
+    ct(d,W/2,y+50,"看「關係」，才看得到全貌。",F(36,True),GOLDT)
+    ct(d,W/2,H-150,"用更明亮的方式看命盤",F(32,True),BODY)
+    ct(d,W/2,H-106,"@jamine_pa",F(34,True),GOLDT)
     img.save(f"{OUT}/p3.png")
 
 cover()
