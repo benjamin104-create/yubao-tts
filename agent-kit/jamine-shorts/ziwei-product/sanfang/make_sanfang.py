@@ -41,6 +41,13 @@ def dash(d,p1,p2,col,w=5,da=22,gap=14):
     while s<dist:
         e=min(s+da,dist);d.line([x1+ux*s,y1+uy*s,x1+ux*e,y1+uy*e],fill=col,width=w);s+=da+gap
 
+FAINT=(188,170,138)
+def arrow(d,p1,p2,col,w=4,hl=15):
+    d.line([p1[0],p1[1],p2[0],p2[1]],fill=col,width=w)
+    ang=math.atan2(p2[1]-p1[1],p2[0]-p1[0])
+    for da in (math.radians(148),math.radians(-148)):
+        d.line([p2[0],p2[1],p2[0]+hl*math.cos(ang+da),p2[1]+hl*math.sin(ang+da)],fill=col,width=w)
+
 def diagram():
     img,d=base()
     ct(d,W/2,188,"一張圖看懂",F(36,True),BODY)
@@ -66,9 +73,16 @@ def diagram():
     # center: empty light panel (no text, so lines stay clear)
     rr(d,cb,18,fill=CENTER,outline=FRAME,width=2)
     # pass2: non-highlighted labels (drawn before lines; lines barely touch them)
+    jia={(2,3),(3,2)}  # 夾宮：緊貼本宮(命宮,3,3)兩側的父母、兄弟
     for (r,c),pal in pos2pal.items():
         if (r,c) in hi: continue
         cx,cy=cen(r,c); ct(d,cx,cy-24,pal,F(44,True),(120,110,96))
+        if (r,c) in jia:
+            ct(d,cx,cy+30,"夾宮",F(26,True),FAINT)
+    # 夾宮 faint arrows pointing into 本宮(命宮)
+    bx0,by0=gx+3*cell,gy+3*cell  # 命宮 top-left corner
+    arrow(d,(gx+3*cell+cell//2, by0-34),(gx+3*cell+cell//2, by0+24),FAINT,w=4)   # 父母↓命
+    arrow(d,(bx0-34, gy+3*cell+cell//2),(bx0+24, gy+3*cell+cell//2),FAINT,w=4)   # 兄弟→命
     # pass3: connecting lines ON TOP (always visible over the empty center)
     A=cen(3,3); Bp=cen(2,0); Cp=cen(0,2); Dp=cen(0,0)
     for p,q in [(A,Bp),(Bp,Cp),(Cp,A)]:
