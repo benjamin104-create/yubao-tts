@@ -24,8 +24,8 @@ Instagram Reels 數據審計引擎  —  透過 Windsor.ai 串接 IG Insights
 
 環境變數：
   WINDSOR_API_KEY     必填。Windsor.ai 後台 → onboarding/Account 取得。
-  WINDSOR_CONNECTOR   來源連接器，預設 "instagram_insights"。
-                      （若你連的是 "Instagram Business"，可改成 instagram_business）
+  WINDSOR_CONNECTOR   來源連接器，預設 "instagram"。
+                      （Windsor 的 IG 連接器在 API 路徑上就叫 instagram）
   WINDSOR_FIELDS      可選。覆寫要抓的欄位（逗號分隔）。不填用內建預設。
   WINDSOR_BASE        可選。預設 https://connectors.windsor.ai
 """
@@ -48,7 +48,7 @@ except ImportError:  # 與專案一致用 httpx；沒裝就退回標準庫
 # 設定
 # ─────────────────────────────────────────────────────────────────────────
 WINDSOR_BASE = os.environ.get("WINDSOR_BASE", "https://connectors.windsor.ai").rstrip("/")
-WINDSOR_CONNECTOR = os.environ.get("WINDSOR_CONNECTOR", "instagram_insights")
+WINDSOR_CONNECTOR = os.environ.get("WINDSOR_CONNECTOR", "instagram")
 WINDSOR_API_KEY = os.environ.get("WINDSOR_API_KEY", "").strip()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -57,33 +57,37 @@ OUT_DIR = os.path.join(HERE, "audit_output")
 # 向 Windsor 要的欄位。不同帳號/連接器命名會有差異，所以這裡要「寬」，
 # 後面再用別名表把它收斂。多要欄位不會報錯，少要才會漏資料。
 DEFAULT_FIELDS = [
-    "date", "account_name",
-    "post_id", "post_caption", "post_permalink", "post_created_time",
-    "post_media_type", "post_media_product_type",
-    "video_views", "reels_plays", "plays", "impressions", "reach",
-    "likes", "comments", "shares", "saved", "saves", "total_interactions",
-    "ig_reels_avg_watch_time", "ig_reels_video_view_total_time",
-    "follows", "profile_visits",
+    "date", "user_name", "account_id", "timestamp",
+    "media_id", "media_caption", "media_permalink", "media_url",
+    "media_type", "media_product_type",
+    "media_reel_video_views", "media_views", "media_plays",
+    "media_impressions", "media_reach",
+    "media_like_count", "media_comments_count",
+    "media_shares", "media_saved",
+    "media_reel_total_interactions", "media_total_interactions",
+    "media_reel_avg_watch_time",
 ]
 
 # 別名表：把 Windsor 可能回的各種欄名，對應到我們內部統一的鍵。
 # 取值時會「依序」嘗試這些候選，命中第一個有數字的就用。
 FIELD_ALIASES = {
-    "post_id":       ["post_id", "id", "media_id"],
-    "caption":       ["post_caption", "caption", "title", "message"],
-    "permalink":     ["post_permalink", "permalink", "post_link", "link"],
-    "created_time":  ["post_created_time", "created_time", "timestamp", "date"],
-    "media_type":    ["post_media_type", "media_type"],
-    "product_type":  ["post_media_product_type", "media_product_type", "product_type"],
-    "views":         ["video_views", "reels_plays", "plays", "ig_reels_plays", "views", "impressions"],
-    "reach":         ["reach"],
-    "impressions":   ["impressions"],
-    "likes":         ["likes", "like_count"],
-    "comments":      ["comments", "comments_count", "comment_count"],
-    "shares":        ["shares", "share_count"],
-    "saves":         ["saved", "saves", "save_count"],
-    "interactions":  ["total_interactions", "engagement", "post_engagements"],
-    "avg_watch_time":["ig_reels_avg_watch_time", "avg_watch_time"],
+    "post_id":       ["media_id", "post_id", "id"],
+    "caption":       ["media_caption", "post_caption", "caption", "title", "message"],
+    "permalink":     ["media_permalink", "media_url", "post_permalink", "permalink", "link"],
+    "created_time":  ["timestamp", "media_timestamp", "post_created_time", "created_time", "date"],
+    "media_type":    ["media_type", "post_media_type"],
+    "product_type":  ["media_product_type", "post_media_product_type", "product_type"],
+    "views":         ["media_reel_video_views", "media_views", "media_plays",
+                      "video_views", "reels_plays", "plays", "views", "media_impressions", "impressions"],
+    "reach":         ["media_reach", "reach"],
+    "impressions":   ["media_impressions", "impressions"],
+    "likes":         ["media_like_count", "likes", "like_count"],
+    "comments":      ["media_comments_count", "comments", "comments_count", "comment_count"],
+    "shares":        ["media_shares", "shares", "share_count"],
+    "saves":         ["media_saved", "saved", "saves", "save_count"],
+    "interactions":  ["media_reel_total_interactions", "media_total_interactions",
+                      "total_interactions", "engagement", "post_engagements"],
+    "avg_watch_time":["media_reel_avg_watch_time", "ig_reels_avg_watch_time", "avg_watch_time"],
     "total_watch_time":["ig_reels_video_view_total_time", "video_view_total_time"],
     "follows":       ["follows", "follower_count", "new_followers"],
 }

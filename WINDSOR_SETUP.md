@@ -18,15 +18,14 @@
 1. 後台找 **API / "Get data"**（通常在 onboarding 或 Account 頁）。
 2. 複製你的 `api_key`。它會出現在一條長得像這樣的網址裡：
    ```
-   https://connectors.windsor.ai/instagram_insights?api_key=XXXXXXXX&fields=...
+   https://connectors.windsor.ai/instagram?api_key=XXXXXXXX&date_preset=last_7d&fields=...
    ```
    你要的就是 `api_key=` 後面那串。
 
 ### 步驟 3：設環境變數
 ```bash
 export WINDSOR_API_KEY="把你的金鑰貼這裡"
-# 如果你連的是 Instagram Business 連接器，再加這行：
-# export WINDSOR_CONNECTOR="instagram_business"
+# 連接器預設就是 instagram，一般不用改。
 ```
 > 想長期保存可寫進 `.env` 或 shell profile。**金鑰不要 commit 進 git**（本 repo 的 `.gitignore` 已幫你擋掉 `.env`）。
 
