@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>十四主星性格名鑑</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:1200px; height:1714px; background:#05070f; font-family:'Noto Sans TC',sans-serif; }
+.page{position:relative;width:1200px;height:1714px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 30%, rgba(64,50,118,.45), transparent 70%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(20,28,60,.55), transparent 70%),
+    linear-gradient(180deg,#070a16 0%,#0a0e1f 45%,#05070f 100%);}
+.stars{position:absolute;inset:0;background-image:
+  radial-gradient(1.5px 1.5px at 12% 12%,rgba(255,255,255,.7),transparent),
+  radial-gradient(1px 1px at 30% 8%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1.5px 1.5px at 49% 16%,rgba(214,196,140,.7),transparent),
+  radial-gradient(1px 1px at 68% 6%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1.5px 1.5px at 86% 13%,rgba(255,255,255,.6),transparent),
+  radial-gradient(1px 1px at 92% 28%,rgba(214,196,140,.6),transparent),
+  radial-gradient(1px 1px at 7% 36%,rgba(255,255,255,.45),transparent),
+  radial-gradient(1.5px 1.5px at 16% 88%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1px 1px at 80% 92%,rgba(214,196,140,.5),transparent),
+  radial-gradient(1.5px 1.5px at 95% 82%,rgba(255,255,255,.5),transparent);}
+.hdr{position:absolute;top:34px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 54px;}
+.hdr .chap{font-family:'Noto Serif TC',serif;font-weight:700;color:#e8d8a8;font-size:30px;letter-spacing:4px;}
+.hdr .pg{font-family:'Noto Serif TC',serif;font-weight:500;color:#9aa2c0;font-size:26px;letter-spacing:2px;}
+.title{position:absolute;top:104px;left:0;right:0;text-align:center;}
+.title .main{font-family:'Noto Serif TC',serif;font-weight:900;font-size:70px;letter-spacing:8px;white-space:nowrap;
+  background:linear-gradient(180deg,#fdf3c8 0%,#e8c873 38%,#c79a3a 72%,#a9802a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 18px rgba(214,170,80,.25);}
+.title .sub{margin-top:8px;color:#aeb6d4;font-size:25px;letter-spacing:8px;font-weight:400;}
+.title .rule{width:560px;height:2px;margin:14px auto 0;background:linear-gradient(90deg,transparent,#c79a3a,transparent);}
+/* roster grid */
+.roster{position:absolute;top:286px;left:54px;width:1092px;height:1182px;
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(7,1fr);
+  grid-auto-flow:column;gap:12px 20px;}
+.card{position:relative;display:flex;align-items:center;gap:18px;padding:12px 18px;
+  border:1px solid rgba(199,154,58,.34);border-radius:10px;
+  background:linear-gradient(100deg,rgba(20,18,40,.65),rgba(10,12,26,.5));
+  box-shadow:0 0 22px rgba(90,76,170,.1) inset;}
+.card .em{flex:0 0 96px;width:96px;height:96px;border-radius:50%;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(199,154,58,.6);
+  background:radial-gradient(circle at 50% 38%,rgba(70,58,130,.6),rgba(8,11,24,.6) 72%);
+  box-shadow:0 0 18px rgba(140,120,220,.22);}
+.card .em::after{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(199,154,58,.32);}
+.card .em b{font-family:'Noto Serif TC',serif;font-weight:900;font-size:46px;
+  background:linear-gradient(180deg,#fdf3c8,#e0b85e 60%,#bb8c34);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.card .body{flex:1;min-width:0;}
+.card .row1{display:flex;align-items:baseline;gap:12px;}
+.card .nm{font-family:'Noto Serif TC',serif;font-weight:900;font-size:34px;color:#f1e2ad;letter-spacing:2px;line-height:1;}
+.card .badge{font-size:16px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;line-height:1;white-space:nowrap;}
+.bN{color:#bcd0ff;border:1px solid rgba(120,150,235,.6);background:rgba(60,80,160,.22);}
+.bS{color:#ffd9a0;border:1px solid rgba(214,170,80,.6);background:rgba(150,110,40,.22);}
+.card .kw{margin-top:7px;color:#d9def0;font-size:18px;font-weight:400;letter-spacing:.5px;}
+.card .qt{margin-top:6px;color:#e8c873;font-size:17px;font-weight:500;}
+.card .qt::before{content:'「';}.card .qt::after{content:'」';}
+.card .pole{position:absolute;top:10px;right:14px;font-size:14px;letter-spacing:2px;color:#7c84a6;font-weight:700;}
+.foot{position:absolute;left:54px;right:54px;bottom:88px;}
+.foot .gold{background:linear-gradient(90deg,rgba(199,154,58,.15),rgba(199,154,58,.85),rgba(199,154,58,.15));
+  border-top:1px solid rgba(214,170,80,.6);border-bottom:1px solid rgba(214,170,80,.6);
+  padding:15px 24px;text-align:center;}
+.foot .gold b{font-family:'Noto Serif TC',serif;font-weight:900;color:#1a1305;font-size:28px;letter-spacing:3px;}
+.foot .hook{margin-top:16px;text-align:center;color:#c3cae4;font-size:20px;letter-spacing:1px;}
+.foot .hook em{color:#e8c873;font-style:normal;font-weight:700;}
+.stamp{position:absolute;right:60px;bottom:26px;width:58px;height:58px;border:2px solid #b13b2e;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;background:rgba(150,40,30,.18);}
+.stamp span{font-family:'Noto Serif TC',serif;color:#e06a52;font-weight:900;font-size:20px;line-height:1;text-align:center;letter-spacing:1px;}
+.brand{position:absolute;left:60px;bottom:32px;color:#7d85a6;font-size:18px;letter-spacing:3px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stars"></div>
+  <div class="hdr"><div class="chap">第 1 話　命盤開門</div><div class="pg">館藏典籍 · 其二</div></div>
+  <div class="title">
+    <div class="main">十四主星 · 性格名鑑</div>
+    <div class="sub">住在你命宮裡的　十四種人</div>
+    <div class="rule"></div>
+  </div>
+
+  <div class="roster">
+    <!-- 北斗 紫微星系 -->
+    <div class="card"><div class="em"><b>紫</b></div><div class="body"><div class="row1"><div class="nm">紫微</div><div class="badge bN">帝王星</div></div><div class="kw">尊貴 · 領導 · 要面子</div><div class="qt">跟我走，不要質疑。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>機</b></div><div class="body"><div class="row1"><div class="nm">天機</div><div class="badge bN">智多星</div></div><div class="kw">聰明 · 善謀 · 思慮多</div><div class="qt">等等，我先算一步。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>陽</b></div><div class="body"><div class="row1"><div class="nm">太陽</div><div class="badge bN">博愛星</div></div><div class="kw">熱情 · 付出 · 照亮人</div><div class="qt">我來扛，你別怕。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>曲</b></div><div class="body"><div class="row1"><div class="nm">武曲</div><div class="badge bN">財將星</div></div><div class="kw">果決 · 務實 · 重效率</div><div class="qt">廢話少說，做就對了。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>同</b></div><div class="body"><div class="row1"><div class="nm">天同</div><div class="badge bN">福　星</div></div><div class="kw">隨和 · 童心 · 會享受</div><div class="qt">開心最重要啦。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>廉</b></div><div class="body"><div class="row1"><div class="nm">廉貞</div><div class="badge bN">囚星·次桃花</div></div><div class="kw">複雜 · 原則 · 有魅力</div><div class="qt">我有我的底線。</div></div><div class="pole">北斗</div></div>
+    <div class="card"><div class="em"><b>府</b></div><div class="body"><div class="row1"><div class="nm">天府</div><div class="badge bS">庫　星</div></div><div class="kw">穩重 · 保守 · 會管理</div><div class="qt">先存起來，安全第一。</div></div><div class="pole">南斗</div></div>
+    <!-- 南斗 天府星系 -->
+    <div class="card"><div class="em"><b>陰</b></div><div class="body"><div class="row1"><div class="nm">太陰</div><div class="badge bS">富星·母性</div></div><div class="kw">溫柔 · 敏感 · 直覺強</div><div class="qt">我懂你沒說出口的。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>貪</b></div><div class="body"><div class="row1"><div class="nm">貪狼</div><div class="badge bS">桃花星</div></div><div class="kw">多才 · 慾望 · 人緣好</div><div class="qt">人生，要玩得盡興。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>巨</b></div><div class="body"><div class="row1"><div class="nm">巨門</div><div class="badge bS">暗星·口才</div></div><div class="kw">善辯 · 求真 · 靠嘴吃飯</div><div class="qt">這件事，沒那麼簡單。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>相</b></div><div class="body"><div class="row1"><div class="nm">天相</div><div class="badge bS">印星·宰相</div></div><div class="kw">忠誠 · 公正 · 輔佐型</div><div class="qt">交給我，我替你打理。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>梁</b></div><div class="body"><div class="row1"><div class="nm">天梁</div><div class="badge bS">蔭星·長者</div></div><div class="kw">庇蔭 · 智慧 · 愛說理</div><div class="qt">聽老人言，不吃虧。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>殺</b></div><div class="body"><div class="row1"><div class="nm">七殺</div><div class="badge bS">將　星</div></div><div class="kw">獨立 · 果敢 · 敢冒險</div><div class="qt">路，我自己殺出來。</div></div><div class="pole">南斗</div></div>
+    <div class="card"><div class="em"><b>軍</b></div><div class="body"><div class="row1"><div class="nm">破軍</div><div class="badge bS">耗星·先鋒</div></div><div class="kw">破舊立新 · 變動 · 開創</div><div class="qt">不破不立，重來。</div></div><div class="pole">南斗</div></div>
+  </div>
+
+  <div class="foot">
+    <div class="gold"><b>沒有最好的星，只有最懂得用自己的人。</b></div>
+    <div class="hook">知道了自己是誰——可是占驗派，<em>從這裡才真正開始</em>。</div>
+  </div>
+  <div class="brand">潔米爸的占驗派紫微斗數　VOL.1</div>
+  <div class="stamp"><span>占驗</span></div>
+</div>
+</body>
+</html>

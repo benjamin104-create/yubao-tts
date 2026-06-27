@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>十二宮人生地圖</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:1200px; height:1714px; background:#05070f; font-family:'Noto Sans TC',sans-serif; }
+.page{
+  position:relative; width:1200px; height:1714px; overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 38%, rgba(60,52,120,.45), transparent 70%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(20,28,60,.6), transparent 70%),
+    linear-gradient(180deg,#070a16 0%,#0a0e1f 45%,#05070f 100%);
+}
+/* star specks */
+.stars{position:absolute;inset:0;background-image:
+  radial-gradient(1.5px 1.5px at 12% 14%,rgba(255,255,255,.7),transparent),
+  radial-gradient(1px 1px at 28% 9%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1.5px 1.5px at 47% 18%,rgba(214,196,140,.7),transparent),
+  radial-gradient(1px 1px at 66% 7%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1.5px 1.5px at 84% 15%,rgba(255,255,255,.6),transparent),
+  radial-gradient(1px 1px at 91% 30%,rgba(214,196,140,.6),transparent),
+  radial-gradient(1px 1px at 8% 40%,rgba(255,255,255,.45),transparent),
+  radial-gradient(1.5px 1.5px at 18% 86%,rgba(255,255,255,.5),transparent),
+  radial-gradient(1px 1px at 78% 90%,rgba(214,196,140,.5),transparent),
+  radial-gradient(1.5px 1.5px at 94% 80%,rgba(255,255,255,.5),transparent);}
+/* header */
+.hdr{position:absolute;top:34px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 54px;}
+.hdr .chap{font-family:'Noto Serif TC',serif;font-weight:700;color:#e8d8a8;font-size:30px;letter-spacing:4px;}
+.hdr .pg{font-family:'Noto Serif TC',serif;font-weight:500;color:#9aa2c0;font-size:26px;letter-spacing:2px;}
+/* title ribbon */
+.title{position:absolute;top:104px;left:0;right:0;text-align:center;}
+.title .kick{color:#c7a23a;}
+.title .main{font-family:'Noto Serif TC',serif;font-weight:900;font-size:70px;letter-spacing:8px;white-space:nowrap;
+  background:linear-gradient(180deg,#fdf3c8 0%,#e8c873 38%,#c79a3a 72%,#a9802a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 18px rgba(214,170,80,.25);}
+.title .sub{margin-top:6px;color:#aeb6d4;font-size:25px;letter-spacing:8px;font-weight:400;}
+.title .rule{width:560px;height:2px;margin:16px auto 0;
+  background:linear-gradient(90deg,transparent,#c79a3a,transparent);}
+/* chart */
+.chart{position:absolute;top:300px;left:60px;width:1080px;height:1080px;
+  border:2px solid rgba(199,154,58,.55);
+  box-shadow:0 0 0 8px rgba(10,14,31,.6),0 0 60px rgba(120,100,200,.18) inset;
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);
+  grid-template-areas:
+    "p1 p2 p3 p4"
+    "p12 seal seal p5"
+    "p11 seal seal p6"
+    "p10 p9 p8 p7";
+  background:rgba(8,11,24,.55);}
+.cell{border:1px solid rgba(199,154,58,.28);padding:16px 16px 14px;position:relative;display:flex;flex-direction:column;}
+.cell .ic{position:absolute;top:12px;right:14px;width:34px;height:34px;opacity:.85;}
+.cell .gong{font-family:'Noto Serif TC',serif;font-weight:900;font-size:33px;letter-spacing:2px;
+  color:#f1e2ad;line-height:1.05;}
+.cell .gong small{font-size:18px;font-weight:500;color:#c8a55a;}
+.cell .area{margin-top:9px;color:#d9def0;font-size:18.5px;line-height:1.5;font-weight:400;flex:1;}
+.cell .say{margin-top:8px;color:#e8c873;font-size:17px;font-weight:500;letter-spacing:.5px;
+  border-top:1px dashed rgba(199,154,58,.3);padding-top:7px;}
+.cell .say::before{content:'「';}.cell .say::after{content:'」';}
+.p1{grid-area:p1}.p2{grid-area:p2}.p3{grid-area:p3}.p4{grid-area:p4}
+.p5{grid-area:p5}.p6{grid-area:p6}.p7{grid-area:p7}.p8{grid-area:p8}
+.p9{grid-area:p9}.p10{grid-area:p10}.p11{grid-area:p11}.p12{grid-area:p12}
+/* center seal */
+.seal{grid-area:seal;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid rgba(199,154,58,.4);
+  background:radial-gradient(ellipse at center,rgba(60,52,120,.5),rgba(8,11,24,.2) 70%);}
+.seal .ring{width:230px;height:230px;border-radius:50%;border:2px solid rgba(199,154,58,.5);
+  display:flex;align-items:center;justify-content:center;position:relative;
+  box-shadow:0 0 40px rgba(140,120,220,.25) inset;}
+.seal .ring::before{content:'';position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(199,154,58,.3);}
+.seal .zw{font-family:'Noto Serif TC',serif;font-weight:900;font-size:46px;letter-spacing:3px;
+  background:linear-gradient(180deg,#fdf3c8,#d6aa50 60%,#b98a30);
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.1;}
+.seal .cn{margin-top:20px;color:#aeb6d4;font-size:20px;letter-spacing:6px;}
+/* footer gold line */
+.foot{position:absolute;left:60px;right:60px;bottom:96px;}
+.foot .gold{background:linear-gradient(90deg,rgba(199,154,58,.15),rgba(199,154,58,.85),rgba(199,154,58,.15));
+  border-top:1px solid rgba(214,170,80,.6);border-bottom:1px solid rgba(214,170,80,.6);
+  padding:16px 24px;text-align:center;}
+.foot .gold b{font-family:'Noto Serif TC',serif;font-weight:900;color:#1a1305;font-size:29px;letter-spacing:3px;}
+.foot .hook{margin-top:18px;text-align:center;color:#c3cae4;font-size:20px;letter-spacing:1px;}
+.foot .hook em{color:#e8c873;font-style:normal;font-weight:700;}
+/* corner stamp */
+.stamp{position:absolute;right:64px;bottom:30px;width:60px;height:60px;border:2px solid #b13b2e;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;background:rgba(150,40,30,.18);}
+.stamp span{font-family:'Noto Serif TC',serif;color:#e06a52;font-weight:900;font-size:21px;line-height:1;text-align:center;letter-spacing:1px;}
+.brand{position:absolute;left:64px;bottom:36px;color:#7d85a6;font-size:18px;letter-spacing:3px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stars"></div>
+  <div class="hdr"><div class="chap">第 1 話　命盤開門</div><div class="pg">館藏典籍 · 其一</div></div>
+  <div class="title">
+    <div class="main">十二宮 · 人生地圖</div>
+    <div class="sub">命盤十二宮　照見人生十二個房間</div>
+    <div class="rule"></div>
+  </div>
+
+  <div class="chart">
+    <!-- top row -->
+    <div class="cell p1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z"/></svg><div class="gong">命宮</div><div class="area">你是誰、核心性格、人生的主旋律</div><div class="say">這是你的主角設定</div></div>
+    <div class="cell p2"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 20c0-3 2.5-5 5-5s5 2 5 5M13 20c0-3 2.5-5 5-5"/></svg><div class="gong">兄弟宮</div><div class="area">手足、同輩、貼身的助力</div><div class="say">誰會跟你並肩</div></div>
+    <div class="cell p3"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M12 21s-7-4.6-9.2-9C1 8.5 3 5 6.5 5 9 5 11 7 12 8.5 13 7 15 5 17.5 5 21 5 23 8.5 21.2 12 19 16.4 12 21 12 21z"/></svg><div class="gong">夫妻宮</div><div class="area">婚姻、伴侶、親密關係</div><div class="say">你會被什麼樣的人吸引</div></div>
+    <div class="cell p4"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M12 14v3"/></svg><div class="gong">子女宮</div><div class="area">子女、創造力、下屬</div><div class="say">你親手養大的東西</div></div>
+    <!-- right col -->
+    <div class="cell p5"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.5 9.5h4a1.8 1.8 0 010 3.5h-4M9.5 13h4.2a1.8 1.8 0 010 3.5h-4.2"/></svg><div class="gong">財帛宮</div><div class="area">金錢、賺錢方式、現金流</div><div class="say">錢從哪來、怎麼留</div></div>
+    <div class="cell p6"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M3 12h4l2-5 3 10 2-6 2 3h5"/></svg><div class="gong">疾厄宮</div><div class="area">身體、健康、情緒壓力</div><div class="say">你的身體在說什麼</div></div>
+    <!-- bottom row R->L -->
+    <div class="cell p7"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20"/></svg><div class="gong">遷移宮</div><div class="area">外出、際遇、舞台</div><div class="say">離開家門後的運氣</div></div>
+    <div class="cell p8"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><circle cx="7" cy="8" r="2.6"/><circle cx="13" cy="8" r="2.6"/><circle cx="18.5" cy="9" r="2.2"/><path d="M2.5 19c0-3 2-4.5 4.5-4.5S11.5 16 11.5 19M11 19c0-2.6 1.8-4 4-4s4 1.4 4 4"/></svg><div class="gong">僕役宮</div><div class="area">朋友、人脈、下屬團隊　<small style="color:#c8a55a">交友宮</small></div><div class="say">誰圍在你身邊</div></div>
+    <div class="cell p9"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M4 21V9l8-5 8 5v12M9 21v-6h6v6"/><circle cx="12" cy="9.5" r="1.4"/></svg><div class="gong">官祿宮</div><div class="area">事業、職涯、成就　<small style="color:#c8a55a">事業宮</small></div><div class="say">你這輩子在做什麼</div></div>
+    <div class="cell p10"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><div class="gong">田宅宮</div><div class="area">房產、家、根據地</div><div class="say">你從哪來、往哪安身</div></div>
+    <!-- left col D->U -->
+    <div class="cell p11"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/><circle cx="12" cy="9" r="2"/></svg><div class="gong">福德宮</div><div class="area">精神、享受、內在安定</div><div class="say">你快不快樂的開關</div></div>
+    <div class="cell p12"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e8c873" stroke-width="1.6"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.6"/><path d="M3 20c0-3.5 2.7-6 6-6 1.6 0 3 .6 4 1.6M12.5 20c.4-2.6 2.2-4.2 4.5-4.2"/></svg><div class="gong">父母宮</div><div class="area">父母、長輩、上司、相貌</div><div class="say">誰在你頭上、給你資源</div></div>
+
+    <div class="seal">
+      <div class="ring"><div class="zw">紫微<br>斗數</div></div>
+      <div class="cn">命 盤 照 見 人 生</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="gold"><b>地圖在手，先看見全貌，才不會在人生裡迷路。</b></div>
+    <div class="hook">看懂了地圖——下一步，看清楚住在「命宮」裡的，是<em>哪一號人物</em>。</div>
+  </div>
+  <div class="brand">潔米爸的占驗派紫微斗數　VOL.1</div>
+  <div class="stamp"><span>占驗</span></div>
+</div>
+</body>
+</html>
