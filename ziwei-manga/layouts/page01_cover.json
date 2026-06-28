@@ -1,0 +1,31 @@
+{
+  "_note": "封面後製字。座標以 1024x1536 為基準；實際生圖後依留白位置微調。",
+  "boxes": [
+    {
+      "text": "潔米爸的",
+      "xy": [70, 110], "size": 70, "color": "#f3e7c9",
+      "stroke": 5, "stroke_color": "#10142b", "align": "left"
+    },
+    {
+      "text": "占驗派\n紫微斗數",
+      "xy": [70, 200], "size": 130, "color": "#e8c06a",
+      "line_spacing": 1.05, "stroke": 7, "stroke_color": "#3a2a10", "align": "left"
+    },
+    {
+      "text": "命盤照見人生",
+      "xy": [80, 540], "size": 46, "color": "#f3e7c9",
+      "stroke": 4, "stroke_color": "#10142b",
+      "bubble": {"pad": 18, "radius": 8, "fill": "#5a1f1f", "outline": "#d8b061", "outline_w": 2}
+    },
+    {
+      "text": "一盤在手 ‧ 洞悉先機 ‧ 掌握命運 ‧ 改寫未來",
+      "xy": [120, 1380], "size": 34, "color": "#e8c06a",
+      "stroke": 3, "stroke_color": "#10142b", "align": "center", "max_width": 800
+    },
+    {
+      "text": "VOL.1",
+      "xy": [840, 1420], "size": 56, "color": "#e8c06a",
+      "stroke": 4, "stroke_color": "#10142b"
+    }
+  ]
+}

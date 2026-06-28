@@ -1,0 +1,23 @@
+{
+  "_note": "十四主星名牌後製。座標為佔位示意，生圖後依各角色位置對齊。星名↔原型見 prompts/page05_fourteen_stars.md。",
+  "boxes": [
+    {"text": "十四主星", "xy": [380, 90], "size": 56, "color": "#e8c06a", "stroke": 5, "stroke_color": "#10142b", "align": "center"},
+
+    {"text": "紫微", "xy": [120, 520], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "天機", "xy": [300, 520], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "太陽", "xy": [480, 520], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "武曲", "xy": [660, 520], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "天同", "xy": [840, 520], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+
+    {"text": "廉貞", "xy": [120, 880], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "天府", "xy": [300, 880], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "太陰", "xy": [480, 880], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "貪狼", "xy": [660, 880], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "巨門", "xy": [840, 880], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+
+    {"text": "天相", "xy": [210, 1240], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "天梁", "xy": [400, 1240], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "七殺", "xy": [590, 1240], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"},
+    {"text": "破軍", "xy": [780, 1240], "size": 30, "color": "#f3e7c9", "stroke": 3, "stroke_color": "#10142b", "align": "center"}
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "_note": "十二宮示意圖宮位名後製。★順序硬規則★ 命宮起、命兄夫子財疾遷僕官田福父。",
+  "_layout_rule": "4x4 外圈 12 格：命宮置頂列中央，順時針：父母(左上) 命(上中) 兄弟(右上) / 右欄上→下：夫妻 子女 財帛 / 底列右→左：疾厄 遷移 僕役 / 左欄下→上：官祿 田宅 福德。座標以 1024x1536、命盤約佔中央區為基準，生圖後再對位微調。",
+  "boxes": [
+    {"text": "十二宮示意圖", "xy": [360, 150], "size": 40, "color": "#e8c06a", "stroke": 4, "stroke_color": "#10142b"},
+
+    {"text": "父母宮", "xy": [250, 470], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "命宮",   "xy": [470, 430], "size": 38, "color": "#7a1414", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "兄弟宮", "xy": [660, 470], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+
+    {"text": "夫妻宮", "xy": [740, 620], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "子女宮", "xy": [760, 770], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "財帛宮", "xy": [740, 920], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+
+    {"text": "疾厄宮", "xy": [660, 1010], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "遷移宮", "xy": [470, 1050], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "僕役宮\n（交友宮）", "xy": [250, 1010], "size": 28, "color": "#1a1024", "align": "center", "line_spacing": 1.05, "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+
+    {"text": "官祿宮\n（事業宮）", "xy": [180, 920], "size": 28, "color": "#1a1024", "align": "center", "line_spacing": 1.05, "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "田宅宮", "xy": [170, 770], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}},
+    {"text": "福德宮", "xy": [180, 620], "size": 34, "color": "#1a1024", "align": "center", "bubble": {"pad": 12, "radius": 8, "fill": "#f3e7c9", "outline": "#b9882f", "outline_w": 2}}
+  ]
+}
