@@ -94,9 +94,24 @@ def generate(page: str, n: int = DEFAULT_N, size: str = SIZE,
             for f in files:
                 f.close()
     else:
-        result = client.images.generate(
-            model=model, prompt=prompt, size=size, quality=quality, n=n,
-        )
+        try:
+            result = client.images.generate(
+                model=model, prompt=prompt, size=size, quality=quality, n=n,
+            )
+        except Exception as e:
+            msg = str(e).lower()
+            # 若 gpt-image-2 對此帳號未開通／不存在，自動退回 gpt-image-1
+            if model != "gpt-image-1" and (
+                "model" in msg and ("not found" in msg or "does not exist"
+                in msg or "unsupported" in msg or "invalid" in msg or "404" in msg)
+            ):
+                print(f"  ! 模型 {model} 無法使用，自動改用 gpt-image-1 重試…")
+                result = client.images.generate(
+                    model="gpt-image-1", prompt=prompt, size=size,
+                    quality=quality, n=n,
+                )
+            else:
+                raise
 
     saved = []
     for i, item in enumerate(result.data, 1):
