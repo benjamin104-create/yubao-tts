@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>占驗星格 ‧ 四象人格｜潔米爸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1130; --navy2:#10193f; --gold:#e3b54e; --gold2:#f6e3a8;
+  --cream:#f3e7c9; --ink:#0a0e22; --red:#7a1414;
+  --wood:#5bbf8a; --fire:#e0533d; --earth:#e0b94e; --metal:#dfe6f0; --water:#5aa6e0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Noto Sans TC","WenQuanYi Zen Hei",sans-serif;
+  background:radial-gradient(120% 90% at 50% 18%,#1a2350 0%,#0c1334 45%,#070a1e 100%);
+  color:var(--cream); overflow:hidden; position:relative;
+}
+.serif{font-family:"Noto Serif TC","WenQuanYi Zen Hei",serif}
+#app{position:relative;width:100%;max-width:480px;margin:0 auto;height:100dvh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;overflow:hidden}
+#stars,#dust{position:fixed;inset:0;pointer-events:none;z-index:0}
+.star{position:absolute;background:#cdd6f5;border-radius:50%;animation:tw 3s infinite ease-in-out}
+@keyframes tw{0%,100%{opacity:.25}50%{opacity:.9}}
+.mote{position:absolute;width:3px;height:3px;border-radius:50%;
+  background:radial-gradient(circle,#ffe9a8,rgba(255,210,120,0));animation:rise linear infinite}
+@keyframes rise{from{transform:translateY(20px);opacity:0}10%{opacity:.9}90%{opacity:.6}to{transform:translateY(-110vh);opacity:0}}
+.scene{position:relative;z-index:2;width:100%;display:none;flex-direction:column;align-items:center;text-align:center}
+.scene.on{display:flex;animation:fadeUp .6s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* frame */
+.frame{position:fixed;inset:12px;border:2px solid rgba(227,181,78,.55);border-radius:14px;z-index:1;pointer-events:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4) inset,0 0 60px rgba(227,181,78,.12) inset}
+.corner{position:fixed;width:34px;height:34px;border:2px solid var(--gold);z-index:1;pointer-events:none}
+.corner.tl{top:12px;left:12px;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.corner.tr{top:12px;right:12px;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
+.corner.bl{bottom:12px;left:12px;border-right:0;border-top:0;border-radius:0 0 0 8px}
+.corner.br{bottom:12px;right:12px;border-left:0;border-top:0;border-radius:0 0 8px 0}
+
+/* jie-mi-ba avatar */
+.jie{width:96px;height:96px;border-radius:50%;background:
+  radial-gradient(circle at 50% 35%,#1c2a5a,#0c1330);
+  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 26px rgba(227,181,78,.35);margin-bottom:14px}
+.jie svg{width:64px;height:64px}
+.kicker{letter-spacing:6px;font-size:12px;color:var(--gold);opacity:.9}
+h1{font-size:34px;font-weight:900;letter-spacing:4px;margin:6px 0 2px;
+  background:linear-gradient(#fff3cf,#e3b54e 60%,#b9822f);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.sub{font-size:13px;letter-spacing:3px;color:#cbd0e6;opacity:.85;margin-bottom:18px}
+.bubble{background:linear-gradient(#f3e7c9,#e7d4a8);color:#221608;border-radius:16px;
+  padding:14px 18px;font-size:15px;line-height:1.7;max-width:340px;position:relative;
+  box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.bubble:after{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+  border:9px solid transparent;border-bottom-color:#f3e7c9;border-top:0}
+.btn{margin-top:22px;padding:14px 34px;border:none;border-radius:40px;cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:16px;letter-spacing:2px;color:#241704;
+  background:linear-gradient(#f6e3a8,#e3b54e);box-shadow:0 6px 20px rgba(227,181,78,.4);transition:.2s}
+.btn:active{transform:translateY(2px)}
+.btn.ghost{background:transparent;color:var(--gold);border:1.5px solid var(--gold);box-shadow:none}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+/* cards */
+.deck{display:flex;justify-content:center;align-items:flex-end;gap:-30px;margin-top:8px;height:230px;position:relative;width:100%}
+.card{width:118px;height:178px;border-radius:14px;cursor:pointer;position:relative;
+  transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.7,.3,1.3);margin:0 -14px;
+  animation:floatc 3.6s ease-in-out infinite}
+.card .face{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;overflow:hidden}
+.card .back{background:
+  radial-gradient(circle at 50% 30%,#243463,#101a33 70%),linear-gradient(#16204a,#0c1330);
+  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset}
+.card .back .glyph{font-size:40px;color:var(--gold);text-shadow:0 0 16px rgba(227,181,78,.7)}
+.card .label{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:var(--gold);font-weight:700;letter-spacing:2px}
+.card:hover{transform:translateY(-16px)}
+.card.dealing{animation:deal .6s ease both}
+@keyframes floatc{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes deal{from{transform:translateY(120px) rotate(8deg) scale(.6);opacity:0}to{opacity:1}}
+.card.chosen{animation:none;transform:translateY(-26px) scale(1.12);z-index:9}
+.card.gone{animation:none;opacity:0;transform:translateY(30px) scale(.7);pointer-events:none;transition:.5s}
+.shuffling .card{animation:shf .5s ease}
+@keyframes shf{0%{transform:translateX(0) rotate(0)}25%{transform:translateX(40px) rotate(6deg)}50%{transform:translateX(-30px) rotate(-5deg)}75%{transform:translateX(20px) rotate(3deg)}100%{transform:translateX(0)}}
+
+/* result */
+.rcard{width:100%;max-width:360px;background:linear-gradient(160deg,rgba(22,30,64,.92),rgba(10,16,40,.95));
+  border:2px solid var(--gold);border-radius:20px;padding:20px 18px 24px;
+  box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05) inset}
+.badge{font-size:46px;filter:drop-shadow(0 0 18px currentColor)}
+.tname{font-size:30px;font-weight:900;letter-spacing:3px;margin-top:2px}
+.tsub{font-size:12px;letter-spacing:4px;opacity:.8;margin-bottom:6px}
+.stars-line{font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:12px}
+.jline{background:rgba(243,231,201,.95);color:#221608;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.7;text-align:left;position:relative;margin-bottom:14px}
+.jtag{position:absolute;top:-10px;left:14px;background:var(--red);color:var(--cream);font-size:11px;padding:2px 10px;border-radius:10px;letter-spacing:1px}
+.sectitle{font-size:12px;letter-spacing:3px;color:var(--gold);text-align:left;margin:10px 0 6px}
+.radar-wrap{display:flex;justify-content:center;margin:4px 0}
+.bars{text-align:left}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.bar .bn{width:42px;color:#cfd6ee}
+.bar .bt{flex:1;height:9px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden}
+.bar .bf{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#e3b54e,#f6e3a8);transition:width 1s ease}
+.blind{font-size:13px;line-height:1.6;text-align:left;color:#f0d9a0;background:rgba(122,20,20,.28);border:1px solid rgba(227,181,78,.4);border-radius:12px;padding:10px 12px;margin:12px 0 6px}
+.cta{font-size:13px;color:#cbd0e6;margin:14px 0 8px;line-height:1.6}
+.foot{margin-top:14px;font-size:11px;letter-spacing:2px;opacity:.5}
+.prog{position:fixed;top:22px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:4px;color:var(--gold);opacity:.7;z-index:3}
+</style>
+</head>
+<body>
+<div id="stars"></div><div id="dust"></div>
+<div class="frame"></div><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="prog serif">占驗星格 ‧ 四象人格</div>
+
+<div id="app">
+  <!-- SCENE 1: intro -->
+  <section class="scene on" id="s1">
+    <div class="jie" id="jieAvatar"></div>
+    <div class="kicker">潔米爸 ‧ 占驗派紫微斗數</div>
+    <h1 class="serif">四象人格</h1>
+    <div class="sub serif">命理版 MBTI ‧ 你是哪一路星宿？</div>
+    <div class="bubble">在心裡，默念一個關於你自己的問題……<br>然後憑直覺，洗牌、抽一張命星之牌。</div>
+    <button class="btn" onclick="goDeck()">開始洗牌抽牌 ✦</button>
+  </section>
+
+  <!-- SCENE 2: deck -->
+  <section class="scene" id="s2">
+    <div class="sub serif" id="deckHint">默念問題後，憑直覺點選一張牌</div>
+    <div class="deck" id="deck"></div>
+    <button class="btn ghost" id="shuffleBtn" onclick="shuffleDeck()">🔀 再洗一次</button>
+  </section>
+
+  <!-- SCENE 3: result -->
+  <section class="scene" id="s3">
+    <div class="rcard" id="rcard"></div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn ghost" onclick="restart()">↺ 再抽一次</button>
+      <button class="btn" onclick="alert('在貼文留言「角色卡」，潔米爸私訊你的專屬星曜卡 🎴')">領取角色卡</button>
+    </div>
+    <div class="foot serif">© 潔米爸 ‧ 占驗派紫微斗數</div>
+  </section>
+</div>
+
+<script>
+/* ---------- Jie-mi-ba SVG (glasses + robe bust) ---------- */
+const JIE = `<svg viewBox="0 0 64 64" fill="none">
+  <path d="M12 60c2-13 9-18 20-18s18 5 20 18z" fill="#16204a" stroke="#e3b54e" stroke-width="1.5"/>
+  <path d="M20 44c0-6 5-10 12-10s12 4 12 10" fill="#1c2a5a"/>
+  <circle cx="32" cy="26" r="13" fill="#f0d3a8"/>
+  <path d="M19 22c0-9 6-14 13-14s13 5 13 14c-3-4-7-6-13-6s-10 2-13 6z" fill="#1a1330"/>
+  <rect x="22" y="24" width="8" height="6" rx="3" stroke="#23314f" stroke-width="1.5"/>
+  <rect x="34" y="24" width="8" height="6" rx="3" stroke="#23314f" stroke-width="1.5"/>
+  <path d="M30 27h4" stroke="#23314f" stroke-width="1.5"/>
+  <path d="M26 33c2 1.6 4 1.6 6 0" stroke="#7a5a3a" stroke-width="1.3" stroke-linecap="round"/>
+</svg>`;
+document.getElementById('jieAvatar').innerHTML = JIE;
+
+/* ---------- data ---------- */
+const TYPES = {
+ pioneer:{name:'拓荒者',sub:'先鋒型 ‧ 動 × 理',glyph:'⚔',color:'#e0533d',
+   stars:'七殺 ‧ 破軍 ‧ 武曲（殺破狼）',
+   five:{木:3,火:5,土:2,金:4,水:2},
+   bars:{衝勁:96,謀略:66,共情:44,穩定:40},
+   jie:'你天生坐不住、討厭一成不變。別人求穩，你求變——卡住的時候，你不是停下，是換條路再衝。你的人生，注定大開大闔。',
+   blind:'⚠ 盲點：你最容易在衝刺時，把身邊的人落在身後。記得偶爾回頭。',
+   line:'你是天生的開創者。'},
+ charmer:{name:'舞台者',sub:'魅力型 ‧ 動 × 情',glyph:'✦',color:'#d98cc0',
+   stars:'貪狼 ‧ 廉貞 ‧ 太陽 ‧ 巨門',
+   five:{木:5,火:4,土:2,金:2,水:4},
+   bars:{衝勁:72,謀略:58,共情:80,穩定:42},
+   jie:'你有魅力、有表達、天生會發光，靠人脈與創意把舞台點亮。人群裡，你總是那個被記住的人。',
+   blind:'⚠ 盲點：你想要的太多、容易分心。把火力收在一件事上，你會更不可擋。',
+   line:'你是天生的魅力連結者。'},
+ strategist:{name:'謀士者',sub:'軍師型 ‧ 靜 × 理',glyph:'☵',color:'#5aa6e0',
+   stars:'天機 ‧ 天府 ‧ 巨門 ‧ 武曲',
+   five:{木:3,火:2,土:3,金:4,水:5},
+   bars:{衝勁:48,謀略:95,共情:55,穩定:78},
+   jie:'你冷靜、會算、看得遠，靠策略與累積取勝。當別人憑衝動，你已經算到第三步——穩穩贏。',
+   blind:'⚠ 盲點：你想太多、太保守，常常錯過該出手的時機。有時候，先做再修。',
+   line:'你是被低估的長線贏家。'},
+ guardian:{name:'守護者',sub:'月光型 ‧ 靜 × 情',glyph:'☾',color:'#7fc7a8',
+   stars:'太陰 ‧ 天同 ‧ 天梁 ‧ 天相',
+   five:{木:3,火:2,土:4,金:2,水:5},
+   bars:{衝勁:42,謀略:58,共情:96,穩定:80},
+   jie:'你細膩、可靠、最懂照亮別人，靠同理與服務贏得信任。你在的地方，人就安心。',
+   blind:'⚠ 盲點：你常常照亮了所有人，卻忘了自己也需要光。先把自己顧好。',
+   line:'你是溫柔的守護者。'},
+ emperor:{name:'王者',sub:'帝王座 ‧ 稀有 👑',glyph:'♛',color:'#e8c14e',
+   stars:'紫微',
+   five:{木:3,火:4,土:5,金:4,水:3},
+   bars:{衝勁:80,謀略:78,共情:66,穩定:88},
+   jie:'眾星拱繞，你天生站在中央，扛得起責任，也擔得起人心。尊貴不是命令別人，是讓人願意跟隨。',
+   blind:'⚠ 盲點：你最大的坎，是「不肯低頭」——小心把貴人燙跑。',
+   line:'★ 你抽到了隱藏的稀有人格！'},
+};
+const ORDER=['pioneer','charmer','strategist','guardian'];
+
+/* ---------- starfield + motes ---------- */
+(function(){
+  const s=document.getElementById('stars');
+  for(let i=0;i<120;i++){const d=document.createElement('div');d.className='star';
+    const r=Math.random()<.85?1:2;d.style.width=r+'px';d.style.height=r+'px';
+    d.style.left=Math.random()*100+'%';d.style.top=Math.random()*100+'%';
+    d.style.animationDelay=(Math.random()*3)+'s';s.appendChild(d);}
+  const du=document.getElementById('dust');
+  for(let i=0;i<18;i++){const m=document.createElement('div');m.className='mote';
+    m.style.left=Math.random()*100+'%';m.style.bottom='-10px';
+    m.style.animationDuration=(7+Math.random()*9)+'s';m.style.animationDelay=(Math.random()*9)+'s';
+    du.appendChild(m);}
+})();
+
+/* ---------- flow ---------- */
+function show(id){document.querySelectorAll('.scene').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');}
+
+function buildDeck(){
+  const deck=document.getElementById('deck');deck.innerHTML='';
+  const labels=['A','B','C','D'];
+  // map each visible card to a type, shuffled
+  const pool=[...ORDER].sort(()=>Math.random()-.5);
+  labels.forEach((lb,i)=>{
+    const c=document.createElement('div');c.className='card dealing';
+    c.style.animationDelay=(i*.12)+'s';
+    c.innerHTML=`<div class="face back"><span class="glyph">✦</span><span class="label">${lb}</span></div>`;
+    let t=pool[i];
+    // 8% 稀有：升級成王者
+    if(Math.random()<0.08) t='emperor';
+    c.onclick=()=>pick(c,t);
+    deck.appendChild(c);
+  });
+}
+function goDeck(){show('s2');buildDeck();}
+function shuffleDeck(){const d=document.getElementById('deck');d.classList.add('shuffling');
+  setTimeout(()=>{d.classList.remove('shuffling');buildDeck();},520);}
+
+function pick(card,typeKey){
+  [...document.querySelectorAll('.card')].forEach(c=>{if(c!==card)c.classList.add('gone');});
+  card.classList.add('chosen');
+  // flip the chosen card
+  const back=card.querySelector('.back');
+  const T=TYPES[typeKey];
+  setTimeout(()=>{
+    back.style.transition='transform .5s';back.style.transform='rotateY(90deg)';
+    setTimeout(()=>{
+      back.innerHTML=`<span class="glyph" style="color:${T.color}">${T.glyph}</span><span class="label" style="color:${T.color}">${T.name}</span>`;
+      back.style.transform='rotateY(0)';
+    },260);
+  },200);
+  setTimeout(()=>renderResult(typeKey),1150);
+}
+
+function radarSVG(five,color){
+  const keys=['木','火','土','金','水'];
+  const colors={木:'#5bbf8a',火:'#e0533d',土:'#e0b94e',金:'#dfe6f0',水:'#5aa6e0'};
+  const cx=110,cy=104,R=78,n=5;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return[cx+Math.cos(a)*r,cy+Math.sin(a)*r];};
+  let grid='';
+  for(let g=1;g<=4;g++){let p='';for(let i=0;i<n;i++){const[x,y]=pt(i,R*g/4);p+=`${x},${y} `;}
+    grid+=`<polygon points="${p}" fill="none" stroke="rgba(227,181,78,.25)" stroke-width="1"/>`;}
+  let axes='',labels='';
+  for(let i=0;i<n;i++){const[x,y]=pt(i,R);axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(227,181,78,.25)"/>`;
+    const[lx,ly]=pt(i,R+16);labels+=`<text x="${lx}" y="${ly+5}" fill="${colors[keys[i]]}" font-size="15" font-weight="700" text-anchor="middle">${keys[i]}</text>`;}
+  let poly='';for(let i=0;i<n;i++){const v=five[keys[i]]/5;const[x,y]=pt(i,R*v);poly+=`${x},${y} `;}
+  let dots='';for(let i=0;i<n;i++){const v=five[keys[i]]/5;const[x,y]=pt(i,R*v);dots+=`<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;}
+  return `<svg width="220" height="220" viewBox="0 0 220 220">
+    ${grid}${axes}
+    <polygon class="rpoly" points="${poly}" fill="${color}33" stroke="${color}" stroke-width="2"
+      style="transform-origin:${cx}px ${cy}px;transform:scale(0);animation:pop .8s .15s ease forwards"/>
+    ${dots}${labels}
+    <style>@keyframes pop{to{transform:scale(1)}}</style>
+  </svg>`;
+}
+
+function renderResult(key){
+  const T=TYPES[key];
+  let barsHTML='';
+  for(const[k,v]of Object.entries(T.bars)){
+    barsHTML+=`<div class="bar"><span class="bn">${k}</span><span class="bt"><span class="bf" data-w="${v}"></span></span></div>`;
+  }
+  document.getElementById('rcard').innerHTML=`
+    <div class="badge" style="color:${T.color}">${T.glyph}</div>
+    <div class="tname serif" style="color:${T.color}">${T.name}</div>
+    <div class="tsub serif">${T.sub}</div>
+    <div class="stars-line">命格星群：${T.stars}</div>
+    <div class="jline"><span class="jtag">潔米爸說</span>${T.jie}</div>
+    <div class="sectitle">五行能量 ‧ 命盤雷達</div>
+    <div class="radar-wrap">${radarSVG(T.five,T.color)}</div>
+    <div class="sectitle">人格特質 ‧ 四維</div>
+    <div class="bars">${barsHTML}</div>
+    <div class="blind">${T.blind}</div>
+    <div class="cta">${T.line}<br>想知道你<b>細分是哪兩顆主星</b>？留言「<b>精算</b>」解鎖你的專屬命盤 ✦</div>
+  `;
+  show('s3');
+  setTimeout(()=>{document.querySelectorAll('.bf').forEach(b=>b.style.width=b.dataset.w+'%');},120);
+}
+function restart(){show('s1');}
+
+/* preview hook: ?type=pioneer  jumps straight to a result (for screenshots) */
+(function(){const q=new URLSearchParams(location.search);const t=q.get('type');
+  if(t&&TYPES[t]){renderResult(t);}})();
+</script>
+</body>
+</html>
