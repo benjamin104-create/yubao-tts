@@ -1,0 +1,5 @@
+# Netlify 設定：這是純靜態網站，不需要建置指令，直接發佈 index.html。
+# （repo 內的 Python 檔是後端，部署在 Render，與 Netlify 無關，這裡不會執行到。）
+[build]
+  publish = "."
+  command = ""
