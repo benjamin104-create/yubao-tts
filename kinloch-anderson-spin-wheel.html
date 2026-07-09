@@ -1,0 +1,646 @@
+<title>Kinloch Anderson 25週年 · 幸運格紋轉盤</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --cream:#F4EFE5;
+    --ivory:#FBF8F1;
+    --khaki:#B3987A;
+    --khaki-deep:#99805F;
+    --tan:#C08A50;
+    --charcoal:#3B3831;
+    --ink:#1E1C18;
+    --stitch:rgba(59,56,49,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    color:var(--charcoal);
+    /* 45° 斜向卡其格紋:炭灰粗帶 × 駝棕細線,織喺米白布上 */
+    background:
+      repeating-linear-gradient(45deg,
+        transparent 0 18px, rgba(59,56,49,.20) 18px 34px, transparent 34px 52px),
+      repeating-linear-gradient(-45deg,
+        transparent 0 18px, rgba(59,56,49,.20) 18px 34px, transparent 34px 52px),
+      repeating-linear-gradient(45deg,
+        transparent 0 7px, rgba(192,138,80,.38) 7px 9px, transparent 9px 43px),
+      repeating-linear-gradient(-45deg,
+        transparent 0 7px, rgba(192,138,80,.38) 7px 9px, transparent 9px 43px),
+      var(--cream);
+    display:flex;
+    justify-content:center;
+    padding:clamp(14px,4vw,40px) clamp(10px,3vw,24px);
+  }
+  .label-card{
+    width:min(560px,100%);
+    background:var(--ivory);
+    border:1px solid var(--charcoal);
+    box-shadow:0 14px 40px rgba(59,56,49,.22);
+    padding:clamp(20px,5vw,36px) clamp(16px,5vw,40px) clamp(24px,5vw,36px);
+    position:relative;
+    align-self:flex-start;
+  }
+  /* 織嘜「車線」:內圈虛線框 */
+  .label-card::before{
+    content:"";
+    position:absolute;
+    inset:9px;
+    border:1.5px dashed var(--stitch);
+    pointer-events:none;
+  }
+  .brand{
+    text-align:center;
+    padding-bottom:18px;
+    border-bottom:1px solid rgba(59,56,49,.18);
+    margin-bottom:22px;
+  }
+  .wordmark{
+    font-family:Georgia,"Times New Roman","Noto Serif TC",serif;
+    font-weight:700;
+    font-size:clamp(26px,7vw,34px);
+    letter-spacing:.01em;
+    color:var(--ink);
+  }
+  .scotland{
+    font-size:12px;
+    letter-spacing:.42em;
+    text-indent:.42em;
+    margin-top:4px;
+    color:var(--charcoal);
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+    padding:7px 16px;
+    background:var(--ink);
+    color:var(--ivory);
+    font-size:11px;
+    letter-spacing:.22em;
+    text-indent:.22em;
+  }
+  .badge::before,.badge::after{
+    content:"";
+    width:22px;height:1px;
+    background:var(--tan);
+  }
+  h1{
+    font-family:Georgia,"Times New Roman","Noto Serif TC",serif;
+    font-size:clamp(22px,6vw,28px);
+    text-align:center;
+    color:var(--ink);
+    text-wrap:balance;
+    margin-bottom:8px;
+  }
+  .lede{
+    text-align:center;
+    font-size:14.5px;
+    line-height:1.75;
+    color:#5C574C;
+    max-width:34em;
+    margin:0 auto 22px;
+  }
+  /* ── 轉盤 ── */
+  .wheel-wrap{
+    position:relative;
+    width:min(78vw,380px);
+    margin:6px auto 24px;
+  }
+  .wheel-svg{display:block;width:100%;height:auto}
+  #wheelDisc{
+    transform-origin:200px 200px;
+    will-change:transform;
+  }
+  /* 黑緞帶指針(呼應相中膊頭蝴蝶結絲帶) */
+  .pointer{
+    position:absolute;
+    top:-6px;left:50%;
+    transform:translateX(-50%);
+    width:34px;height:44px;
+    z-index:3;
+    pointer-events:none;
+    filter:drop-shadow(0 3px 4px rgba(30,28,24,.35));
+  }
+  .sector-label{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    font-weight:600;
+    letter-spacing:.06em;
+  }
+  .hub-mark{
+    font-family:Georgia,"Times New Roman","Noto Serif TC",serif;
+    font-weight:700;
+    letter-spacing:.08em;
+  }
+
+  /* ── Email 表單 ── */
+  .gate{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:0 auto 20px;
+    max-width:400px;
+  }
+  .gate-row{display:flex;gap:8px}
+  .gate input[type=email]{
+    flex:1;
+    min-width:0;
+    font:inherit;
+    font-size:15px;
+    padding:12px 14px;
+    border:1px solid var(--khaki);
+    background:#fff;
+    color:var(--ink);
+  }
+  .gate input[type=email]:focus{
+    outline:2px solid var(--tan);
+    outline-offset:1px;
+  }
+  .btn{
+    font:inherit;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.14em;
+    text-indent:.14em;
+    padding:12px 22px;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--ivory);
+    cursor:pointer;
+    transition:background .2s,transform .15s;
+  }
+  .btn:hover:not(:disabled){background:#3B3831}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .btn:focus-visible{outline:2px solid var(--tan);outline-offset:2px}
+  .btn:disabled{
+    background:#C9C0AE;
+    border-color:#C9C0AE;
+    color:#F4EFE5;
+    cursor:not-allowed;
+  }
+  .btn-spin{
+    display:block;
+    width:min(100%,320px);
+    margin:0 auto 8px;
+    font-size:16.5px;
+    padding:14px 22px;
+  }
+  .consent{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    font-size:12px;
+    line-height:1.6;
+    color:#6D675A;
+  }
+  .consent input{margin-top:3px;accent-color:var(--charcoal)}
+  .gate-error{
+    display:none;
+    font-size:12.5px;
+    color:#9A3B22;
+  }
+  .gate-error.show{display:block}
+  .gate-done{
+    display:none;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin:0 auto 18px;
+    padding:9px 18px;
+    width:fit-content;
+    max-width:100%;
+    border:1px solid var(--khaki);
+    background:#F1E9DA;
+    font-size:13px;
+    color:var(--charcoal);
+    word-break:break-all;
+  }
+  .gate-done.show{display:flex}
+  .gate-done::before{content:"✓";color:var(--tan);font-weight:700}
+  .hint{
+    text-align:center;
+    font-size:12.5px;
+    color:#8A8375;
+    min-height:1.6em;
+  }
+
+  /* ── 結果彈窗 ── */
+  .overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    background:rgba(30,28,24,.55);
+    z-index:20;
+  }
+  .overlay.show{display:flex}
+  .modal{
+    width:min(400px,100%);
+    background:var(--ivory);
+    border:1px solid var(--charcoal);
+    box-shadow:0 18px 50px rgba(30,28,24,.4);
+    padding:30px 26px 26px;
+    position:relative;
+    text-align:center;
+    animation:pop .35s cubic-bezier(.2,1.4,.4,1);
+  }
+  .modal::before{
+    content:"";
+    position:absolute;
+    inset:8px;
+    border:1.5px dashed var(--stitch);
+    pointer-events:none;
+  }
+  @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal .eyebrow{
+    font-size:10.5px;
+    letter-spacing:.3em;
+    text-indent:.3em;
+    color:var(--tan);
+    margin-bottom:10px;
+  }
+  .modal h2{
+    font-family:Georgia,"Times New Roman","Noto Serif TC",serif;
+    font-size:30px;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .modal .note{font-size:13.5px;color:#6D675A;margin-bottom:18px}
+  .code-box{
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:16px;
+    position:relative;
+    z-index:1;
+  }
+  .code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:17px;
+    letter-spacing:.06em;
+    padding:11px 14px;
+    border:1.5px dashed var(--khaki-deep);
+    background:#F1E9DA;
+    color:var(--ink);
+    user-select:all;
+  }
+  .btn-copy{padding:11px 16px;letter-spacing:.05em;text-indent:0}
+  .modal .small{font-size:11px;color:#8A8375;line-height:1.7}
+  .modal .btn-again{margin-top:4px;position:relative;z-index:1}
+
+  #confettiCanvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:30;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .modal{animation:none}
+  }
+  footer{
+    margin-top:22px;
+    padding-top:14px;
+    border-top:1px solid rgba(59,56,49,.18);
+    font-size:11px;
+    line-height:1.7;
+    color:#8A8375;
+    text-align:center;
+  }
+</style>
+
+<main class="label-card">
+  <header class="brand">
+    <div class="wordmark">Kinloch Anderson</div>
+    <div class="scotland">SCOTLAND</div>
+    <div class="badge">25TH ANNIVERSARY・代理 25 週年回饋</div>
+  </header>
+
+  <h1>幸運格紋轉盤</h1>
+  <p class="lede">為答謝一路支持嘅你,留低 email 轉一轉經典格紋轉盤,即場抽出 25 週年專屬優惠。</p>
+
+  <form class="gate" id="gate" novalidate>
+    <div class="gate-row">
+      <input type="email" id="email" name="email" placeholder="你嘅 email 地址"
+             autocomplete="email" inputmode="email" required aria-label="Email 地址">
+      <button type="submit" class="btn">解鎖轉盤</button>
+    </div>
+    <label class="consent">
+      <input type="checkbox" id="consent">
+      <span>我同意 Kinloch Anderson 台灣代理以 email 通知我優惠碼及 25 週年活動訊息。</span>
+    </label>
+    <p class="gate-error" id="gateError" role="alert"></p>
+  </form>
+  <p class="gate-done" id="gateDone"></p>
+
+  <div class="wheel-wrap">
+    <!-- 黑緞帶指針 -->
+    <svg class="pointer" viewBox="0 0 34 44" aria-hidden="true">
+      <path d="M2 0 H32 V20 L17 42 L2 20 Z" fill="#1E1C18"/>
+      <path d="M17 42 L9 26 H25 Z" fill="#C08A50"/>
+    </svg>
+    <svg class="wheel-svg" viewBox="0 0 400 400" role="img" aria-label="25週年幸運格紋轉盤">
+      <!-- 外圈:皮帶感黑框 + 駝棕刻度 -->
+      <circle cx="200" cy="200" r="198" fill="#1E1C18"/>
+      <g id="rimTicks"></g>
+      <circle cx="200" cy="200" r="184" fill="#FBF8F1"/>
+      <!-- 會旋轉嘅盤面 -->
+      <g id="wheelDisc"></g>
+      <!-- 中軸 -->
+      <circle cx="200" cy="200" r="52" fill="#1E1C18"/>
+      <circle cx="200" cy="200" r="46" fill="none" stroke="#C08A50" stroke-width="1.5"/>
+      <text class="hub-mark" x="200" y="194" text-anchor="middle" font-size="22" fill="#FBF8F1">KA</text>
+      <text class="hub-mark" x="200" y="219" text-anchor="middle" font-size="15" fill="#C08A50">25th</text>
+    </svg>
+  </div>
+
+  <button class="btn btn-spin" id="spinBtn" disabled>先留低 EMAIL 解鎖</button>
+  <p class="hint" id="hint">每個 email 限抽一次,抽到「再轉一次」可以即刻加碼再抽。</p>
+
+  <footer>
+    優惠碼適用於 Kinloch Anderson 台灣代理指定門市及網店,每個 email 限抽一次,不得與其他優惠併用。<br>
+    活動截止日期以官方公告為準。
+  </footer>
+</main>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="prizeTitle">
+  <div class="modal">
+    <p class="eyebrow">KINLOCH ANDERSON・25TH ANNIVERSARY</p>
+    <h2 id="prizeTitle"></h2>
+    <p class="note" id="prizeNote"></p>
+    <div class="code-box" id="codeBox">
+      <span class="code" id="codeText"></span>
+      <button class="btn btn-copy" id="copyBtn">複製</button>
+    </div>
+    <button class="btn btn-again" id="againBtn" hidden>再轉一次</button>
+    <button class="btn btn-again" id="closeBtn">完成</button>
+    <p class="small" id="modalSmall" style="margin-top:14px"></p>
+  </div>
+</div>
+<canvas id="confettiCanvas" hidden></canvas>
+
+<script>
+/* ── 獎項設定(weight = 抽中機率比重)── */
+const PRIZES = [
+  {label:"95折",        tag:"95OFF",    weight:22, note:"全單 95 折"},
+  {label:"免運費",      tag:"FREESHIP", weight:16, note:"單筆訂單免運"},
+  {label:"85折",        tag:"85OFF",    weight:12, note:"全單 85 折"},
+  {label:"再轉一次",    tag:null,       weight:12, note:""},
+  {label:"9折",         tag:"90OFF",    weight:20, note:"全單 9 折"},
+  {label:"格紋小禮",    tag:"GIFT25",   weight:8,  note:"消費滿額送 25 週年格紋小物"},
+  {label:"8折",         tag:"80OFF",    weight:7,  note:"全單 8 折"},
+  {label:"75折",        tag:"75OFF",    weight:3,  note:"全單 75 折(大獎!)"},
+];
+const SEG = 360 / PRIZES.length;
+
+/* 盤面四色循環:米白/淡卡其/炭灰/淺駝 —— 對應深淺字色 */
+const SECTOR_FILL = ["#F1E9DA", "#B3987A", "#43403A", "#DCCAAB"];
+const SECTOR_TEXT = ["#3B3831", "#FBF8F1", "#F1E9DA", "#3B3831"];
+
+function polar(cx, cy, r, deg){
+  const rad = (deg - 90) * Math.PI / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+}
+
+/* 畫盤面:8 個扇形 + 沿半徑外側嘅獎項文字 */
+(function drawWheel(){
+  const disc = document.getElementById("wheelDisc");
+  let svg = "";
+  PRIZES.forEach((p, i) => {
+    const a0 = i * SEG, a1 = (i + 1) * SEG, mid = a0 + SEG / 2;
+    const [x0, y0] = polar(200, 200, 184, a0);
+    const [x1, y1] = polar(200, 200, 184, a1);
+    svg += `<path d="M200 200 L${x0} ${y0} A184 184 0 0 1 ${x1} ${y1} Z"
+             fill="${SECTOR_FILL[i % 4]}" stroke="#1E1C18" stroke-width="1"/>`;
+    const fs = p.label.length > 3 ? 17 : 21;
+    svg += `<text class="sector-label" x="200" y="86" font-size="${fs}"
+             text-anchor="middle" fill="${SECTOR_TEXT[i % 4]}"
+             transform="rotate(${mid} 200 200)">${p.label}</text>`;
+  });
+  disc.innerHTML = svg;
+})();
+
+/* 外圈駝棕刻度(皮帶孔) */
+(function drawTicks(){
+  const g = document.getElementById("rimTicks");
+  let svg = "";
+  for (let i = 0; i < 24; i++){
+    const [x, y] = polar(200, 200, 191, i * 15);
+    svg += `<circle cx="${x}" cy="${y}" r="2.4" fill="#C08A50"/>`;
+  }
+  g.innerHTML = svg;
+})();
+
+/* ══════════ 遊戲邏輯 ══════════ */
+/* 上線時將 LEAD_ENDPOINT 換成你嘅表單後端(如 Google Apps Script / Mailchimp webhook),
+   每次登記同中獎都會 POST 一筆 JSON 過去;留空則只存喺瀏覽器 localStorage。 */
+const LEAD_ENDPOINT = "";
+const STORE_KEY = "ka25_entries";
+
+const $ = id => document.getElementById(id);
+const gate = $("gate"), emailInput = $("email"), gateError = $("gateError"),
+      gateDone = $("gateDone"), spinBtn = $("spinBtn"), hint = $("hint"),
+      overlay = $("overlay"), disc = $("wheelDisc");
+
+let playerEmail = null;
+let spinning = false;
+let rotation = 0;
+let finished = false;
+
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function loadEntries(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+function saveEntry(entry){
+  const all = loadEntries();
+  all.push(entry);
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(all)); } catch {}
+  if (LEAD_ENDPOINT){
+    fetch(LEAD_ENDPOINT, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(entry)
+    }).catch(()=>{});
+  }
+}
+function findWin(email){
+  return loadEntries().find(e => e.email === email && e.code);
+}
+
+/* ── Email 解鎖 ── */
+gate.addEventListener("submit", e => {
+  e.preventDefault();
+  const email = emailInput.value.trim().toLowerCase();
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  if (!ok){
+    gateError.textContent = "請輸入有效嘅 email 地址。";
+    gateError.classList.add("show");
+    emailInput.focus();
+    return;
+  }
+  if (!$("consent").checked){
+    gateError.textContent = "請剔選同意收取優惠通知,先可以參加抽獎。";
+    gateError.classList.add("show");
+    return;
+  }
+  gateError.classList.remove("show");
+  playerEmail = email;
+  saveEntry({ email, code:null, prize:null, ts:new Date().toISOString(), type:"signup" });
+
+  gate.style.display = "none";
+  gateDone.textContent = email + " 已登記";
+  gateDone.classList.add("show");
+
+  const prev = findWin(email);
+  if (prev){
+    finished = true;
+    spinBtn.disabled = true;
+    spinBtn.textContent = "呢個 EMAIL 已抽過";
+    showResult(PRIZES.find(p => p.tag === prev.tag) || {label:prev.prize, note:""}, prev.code);
+  } else {
+    spinBtn.disabled = false;
+    spinBtn.textContent = "轉出我嘅優惠";
+  }
+});
+
+/* ── 加權抽獎 ── */
+function pickPrize(){
+  const total = PRIZES.reduce((s,p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (const p of PRIZES){
+    if ((r -= p.weight) < 0) return p;
+  }
+  return PRIZES[0];
+}
+function makeCode(tag){
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let suffix = "";
+  for (let i = 0; i < 4; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return `KA25-${tag}-${suffix}`;
+}
+
+/* ── 轉動 ── */
+spinBtn.addEventListener("click", () => {
+  if (spinning || finished || !playerEmail) return;
+  spinning = true;
+  spinBtn.disabled = true;
+  spinBtn.textContent = "轉緊⋯";
+  hint.textContent = "";
+
+  const prize = pickPrize();
+  const idx = PRIZES.indexOf(prize);
+  const mid = idx * SEG + SEG / 2;
+  const jitter = (Math.random() - 0.5) * (SEG - 14);
+  /* 目標:該扇形中心停喺頂部指針位置 */
+  const target = Math.ceil(rotation / 360) * 360 + 5 * 360 + (360 - mid) + jitter;
+  const duration = reduceMotion ? 0.6 : 4.6;
+
+  disc.style.transition = `transform ${duration}s cubic-bezier(.12,.65,.08,1)`;
+  disc.style.transform = `rotate(${target}deg)`;
+  rotation = target;
+
+  setTimeout(() => {
+    spinning = false;
+    if (prize.tag){
+      const code = makeCode(prize.tag);
+      finished = true;
+      saveEntry({ email:playerEmail, prize:prize.label, tag:prize.tag, code,
+                  ts:new Date().toISOString(), type:"win" });
+      spinBtn.textContent = "多謝參與!";
+      showResult(prize, code);
+      fireConfetti();
+    } else {
+      spinBtn.disabled = false;
+      spinBtn.textContent = "再轉一次!";
+      showResult(prize, null);
+    }
+  }, duration * 1000 + 150);
+});
+
+/* ── 結果彈窗 ── */
+function showResult(prize, code){
+  $("prizeTitle").textContent = code ? `恭喜!${prize.label}` : "再轉一次!";
+  $("prizeNote").textContent = code
+    ? (prize.note || "")
+    : "手氣未完 — 指針話你知,仲有一次機會。";
+  $("codeBox").style.display = code ? "flex" : "none";
+  if (code) $("codeText").textContent = code;
+  $("againBtn").hidden = !!code;
+  $("closeBtn").hidden = !code;
+  $("modalSmall").textContent = code
+    ? `優惠碼已同步登記至 ${playerEmail},結帳時輸入即可使用。`
+    : "";
+  overlay.classList.add("show");
+}
+$("closeBtn").addEventListener("click", () => overlay.classList.remove("show"));
+$("againBtn").addEventListener("click", () => {
+  overlay.classList.remove("show");
+  spinBtn.focus();
+});
+overlay.addEventListener("click", e => {
+  if (e.target === overlay && !$("closeBtn").hidden) overlay.classList.remove("show");
+});
+
+$("copyBtn").addEventListener("click", async () => {
+  const code = $("codeText").textContent;
+  try {
+    await navigator.clipboard.writeText(code);
+    $("copyBtn").textContent = "已複製 ✓";
+  } catch {
+    const range = document.createRange();
+    range.selectNodeContents($("codeText"));
+    const sel = getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+    $("copyBtn").textContent = "請手動複製";
+  }
+  setTimeout(() => $("copyBtn").textContent = "複製", 2000);
+});
+
+/* ── 品牌色彩紙 ── */
+function fireConfetti(){
+  if (reduceMotion) return;
+  const canvas = $("confettiCanvas");
+  canvas.hidden = false;
+  const ctx = canvas.getContext("2d");
+  const dpr = devicePixelRatio || 1;
+  canvas.width = innerWidth * dpr;
+  canvas.height = innerHeight * dpr;
+  ctx.scale(dpr, dpr);
+
+  const colors = ["#B3987A", "#C08A50", "#3B3831", "#F1E9DA", "#1E1C18"];
+  const parts = Array.from({length:110}, () => ({
+    x: innerWidth / 2 + (Math.random() - 0.5) * 160,
+    y: innerHeight * 0.35,
+    vx: (Math.random() - 0.5) * 11,
+    vy: -(4 + Math.random() * 9),
+    w: 5 + Math.random() * 6,
+    h: 8 + Math.random() * 7,
+    rot: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.3,
+    c: colors[Math.floor(Math.random() * colors.length)]
+  }));
+
+  let frames = 0;
+  (function tick(){
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      p.vy += 0.22; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (++frames < 170) requestAnimationFrame(tick);
+    else { ctx.clearRect(0, 0, innerWidth, innerHeight); canvas.hidden = true; }
+  })();
+}
+</script>
