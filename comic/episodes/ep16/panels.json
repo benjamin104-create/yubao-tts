@@ -1,0 +1,176 @@
+{
+  "episode": 16,
+  "title": "被判死刑的命盤",
+  "series_header": "潔米爸占驗紫微",
+  "cast": {
+    "JAMIE_DAD": "a Taiwanese man in his mid-40s, fortune teller and master of Zi Wei Dou Shu astrology; slightly messy short wavy black hair, rimless rectangular glasses, short goatee and light stubble, gentle knowing smile, calm scholarly presence; wearing a deep indigo-blue Chinese mandarin-collar changshan jacket with subtle woven damask pattern and knot buttons",
+    "AKAI": "a 28-year-old Taiwanese food-delivery man, short black hair damp from rain, thick eyebrows, large anxious eyes, wearing a dark navy hooded rain jacket over a grey t-shirt"
+  },
+  "scene": {
+    "STUDY": "inside Zi Wei Tang, a dark wooden Chinese scholar study filled with antique bookshelves of thread-bound books, a large wall chart of golden star maps and the Purple Forbidden enclosure constellation, a brass armillary sphere, glowing paper lanterns and an oil lamp, a wooden desk with astrology chart paper, ink brush and blue-and-white porcelain teacups"
+  },
+  "pages": [
+    {
+      "page": 1,
+      "panels": [
+        {
+          "id": "p1a", "h": 0.40,
+          "art": "exterior of Zi Wei Tang on a rainy night in Taipei, a traditional wooden Chinese storefront with curved tiled eaves, a wet vertical wooden signboard, glowing lanterns haloed by falling rain, Taipei 101 tower faint in the misty night skyline behind, wet stone street reflecting golden lamplight",
+          "texts": [
+            { "kind": "caption", "anchor": "tl", "orient": "v", "text": "第三部﹁命格眾生相﹂\n每一張盤後面，\n都站著一個人。" }
+          ]
+        },
+        {
+          "id": "p1b", "h": 0.32,
+          "art": "{AKAI} pushing open the wooden door and stepping in from the rain, soaked and clutching a smartphone with both hands, frightened expression; {JAMIE_DAD} looking up from behind his desk in the warm lamplight, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "老師……\n網路上的老師說，\n我這張盤是\n﹁破格﹂。" }
+          ]
+        },
+        {
+          "id": "p1c", "h": 0.28,
+          "art": "close-up of a trembling hand holding a smartphone showing a blank glowing screen, dramatic contrast between cold blue phone light and warm candlelight, rain drops still on the jacket sleeve, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "廉貞化忌坐命——\n他說我，\n一輩子敗局。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "panels": [
+        {
+          "id": "p2a", "h": 0.45,
+          "art": "{JAMIE_DAD} calmly pouring hot tea from a small teapot into a blue-and-white porcelain cup and sliding it across the wooden desk, steam rising through candlelight, unhurried gentle gesture, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "先喝茶。\n沒有人應該淋著雨，\n聽自己的判決。" }
+          ]
+        },
+        {
+          "id": "p2b", "h": 0.55,
+          "art": "{JAMIE_DAD} unrolling a fresh sheet of astrology chart paper and lifting an ink brush, his eyes turning sharp and focused behind his glasses, candle flame reflected on the lenses, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "占驗派的規矩——\n盤，要先對過\n你的人生，\n才有資格開口。" },
+            { "kind": "caption", "anchor": "bl", "orient": "v", "text": "堂訓：\n未驗之盤，\n不論吉凶。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "panels": [
+        {
+          "id": "p3a", "h": 0.55,
+          "art": "top-down view of the wooden desk: a freshly inked Zi Wei Dou Shu twelve-palace square chart on paper, brush tip hovering over one palace, teacup and oil lamp at the edge of frame, ink stone nearby, intricate hand-drawn chart lines",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "二十二歲那年，\n你是不是離開了\n一個很想留下\n的地方？" }
+          ]
+        },
+        {
+          "id": "p3b", "h": 0.45,
+          "art": "close-up of {AKAI} eyes widening in shock, his hand frozen around the warm teacup, steam curling, candlelight on his stunned face, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "……我休學那年。\n你怎麼會知道。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "panels": [
+        {
+          "id": "p4a", "h": 0.40,
+          "art": "{JAMIE_DAD} moving his brush tip to another palace on the chart, speaking calmly without looking up, lamplight steady, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "前年，家裡為錢的事，\n你一個人\n扛了很久。" }
+          ]
+        },
+        {
+          "id": "p4b", "h": 0.60,
+          "art": "{AKAI} head bowed low, eyes rimmed red, a drop of water sliding along his jaw, hands clenched on his knees, warm light from the side leaving half his face in shadow, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "連我自己都不敢講的事……\n盤上有。" },
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "盤沒有要嚇你。\n它只是，\n記得你。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "panels": [
+        {
+          "id": "p5a", "h": 0.55,
+          "art": "{JAMIE_DAD} tapping the life palace of the chart gently with the end of his brush, candle flame reflected in his rimless glasses, the huge golden star map wall chart filling the background, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "化忌，不是詛咒。\n是這一世\n欠收的功課。" }
+          ]
+        },
+        {
+          "id": "p5b", "h": 0.45,
+          "art": "{JAMIE_DAD} opening his palm upward as if holding something invisible and precious above the desk, soft golden dust of lamplight, gentle smile, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "廉貞化忌的人，\n情執重、對自己狠——\n但也最肯，\n把事做到底。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "panels": [
+        {
+          "id": "p6a", "h": 0.42,
+          "art": "{JAMIE_DAD} gently sliding the smartphone back across the desk toward {AKAI}, the phone face-down on the wood, a quiet decisive gesture, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "﹁破格﹂這兩個字，\n是把活人講死。" }
+          ]
+        },
+        {
+          "id": "p6b", "h": 0.58,
+          "art": "wide shot of the two men sitting across the desk from each other, tea steam rising between them like a thin thread, rain easing outside the lattice window, lanterns glowing, {STUDY}",
+          "texts": [
+            { "kind": "bubble", "anchor": "right", "orient": "v", "text": "格局是骨架，\n日子才是血肉。\n骨架論強弱，\n血肉——由你長。" },
+            { "kind": "caption", "anchor": "bl", "orient": "v", "text": "占是問天，\n驗是問人。" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "panels": [
+        {
+          "id": "p7a", "h": 0.55,
+          "art": "{AKAI} standing and bowing deeply in farewell at the wooden doorway, his back straighter than when he arrived; {JAMIE_DAD} smiling and seeing him off from inside the warm doorway light, a raindrop hanging from the eaves about to fall, night street outside",
+          "texts": [
+            { "kind": "caption", "anchor": "tl", "orient": "v", "text": "客人走的時候，\n背影直了一點。\n這是紫微堂\n最常見的療效。" }
+          ]
+        },
+        {
+          "id": "p7b", "h": 0.45,
+          "art": "{AKAI} on a delivery scooter on the wet street after rain, turning his head back to look at the lit windows of Zi Wei Tang, reflections of golden lantern light on the wet asphalt, Taipei night sky clearing with a few stars",
+          "texts": [
+            { "kind": "bubble", "anchor": "left", "orient": "v", "text": "老師，半年後……\n我可以再來\n對盤嗎？" }
+          ]
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "panels": [
+        {
+          "id": "p8a", "h": 0.58,
+          "art": "{JAMIE_DAD} under the oil lamp opening a very thick ledger book bound with thread, writing small regular script with a fine brush, shelves of identical ledgers behind him, intimate quiet night scene, {STUDY}",
+          "texts": [
+            { "kind": "caption", "anchor": "tr", "orient": "v", "text": "每一次應驗、\n每一次不驗，\n他都記下——\n占驗派的功夫，\n在盤外。" }
+          ]
+        },
+        {
+          "id": "p8b", "h": 0.42,
+          "art": "the study a moment before the oil lamp is blown out, almost dark, only the golden lines of the great star map wall chart glimmering faintly in the blackness, a thin trail of lamp smoke",
+          "texts": [
+            { "kind": "end", "anchor": "center", "orient": "h", "text": "第16話 完。\n〈命格眾生相〉第二話《贏在起跑點》\n敬請期待。" }
+          ]
+        }
+      ]
+    }
+  ]
+}
