@@ -51,6 +51,11 @@ ITHUAN_BASE = os.environ.get("ITHUAN_BASE", "https://hapsing.ithuan.tw")
 # 拍照辨識（Gemini 視覺）＋ 會員碼驗證用（金鑰只放後端，絕不放前端）
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+# 生圖（字卡插圖）用的影像模型。改用 Google 官方影像生成模型（有官方 API、金鑰沿用 GEMINI_API_KEY）。
+# 預設 gemini-2.5-flash-image（Nano Banana）；若改用 gemini-2.0-flash-preview-image-generation，
+# 需另設 IMAGE_RESPONSE_MODALITIES="TEXT,IMAGE"。
+IMAGE_MODEL = os.environ.get("IMAGE_MODEL", "gemini-2.5-flash-image").strip()
+IMAGE_RESPONSE_MODALITIES = os.environ.get("IMAGE_RESPONSE_MODALITIES", "").strip()
 # 會員碼清單（逗號分隔，例：JAMINE2026,VIP-AAA,VIP-BBB）。在這份清單內＝無限使用、不扣免費次數。
 MEMBER_CODES = set(c.strip().upper() for c in os.environ.get("MEMBER_CODES", "").split(",") if c.strip())
 SCAN_PROMPT = (
@@ -301,3 +306,84 @@ async def translate(text: str, targets: str = "zh,ja,ko,ind,vi,th"):
             except Exception:
                 pass
     return JSONResponse(out)
+
+# ---------------------------------------------------------------------------
+# 字卡插圖生成：前端把一個詞（中/英）送來，後端用 Google 官方影像模型生成一張
+# 兒童繪本風格的插圖，回傳 data URI；前端把它塞進 card.img 顯示（取代 emoji）。
+# 金鑰沿用後端的 GEMINI_API_KEY，永不外露；同一詞會快取，避免重複計費。
+# ---------------------------------------------------------------------------
+IMAGINE_STYLE = (
+    "A cute, friendly flat vector illustration of a single {subject}, "
+    "centered on a plain white background, bright cheerful colors, thick clean outlines, "
+    "simple rounded shapes, children's picture-book style, high quality, "
+    "no text, no letters, no words, no watermark."
+)
+
+
+def _extract_inline_image(data: dict):
+    """從 Gemini generateContent 回應取出第一張內嵌圖片 (mime, base64)。"""
+    try:
+        for cand in data.get("candidates", []):
+            for part in cand.get("content", {}).get("parts", []):
+                inline = part.get("inline_data") or part.get("inlineData")
+                if inline and inline.get("data"):
+                    mime = inline.get("mime_type") or inline.get("mimeType") or "image/png"
+                    return mime, inline["data"]
+    except Exception:
+        pass
+    return None, None
+
+
+@app.post("/imagine")
+async def imagine(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "請傳 JSON")
+    subject = (body.get("prompt") or body.get("en") or body.get("zh") or "").strip()
+    code = body.get("code", "") or ""
+    is_member = verify_member(code)
+
+    if not GEMINI_API_KEY:
+        return JSONResponse({"error": "尚未設定 GEMINI_API_KEY", "member": is_member}, status_code=500)
+    if not subject:
+        return JSONResponse({"error": "缺少 prompt/zh/en", "member": is_member}, status_code=400)
+    if len(subject) > 80:
+        subject = subject[:80]
+    prompt = IMAGINE_STYLE.format(subject=subject)
+
+    # 快取：同一詞（同一模型）只生成一次，省費用、加速
+    cache = os.path.join(CACHE_DIR, "img_" + hashlib.md5((IMAGE_MODEL + ":" + prompt).encode()).hexdigest() + ".b64")
+    if os.path.exists(cache):
+        with open(cache, encoding="utf-8") as f:
+            return JSONResponse({"image": f.read(), "member": is_member, "cached": True})
+
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+           + IMAGE_MODEL + ":generateContent?key=" + GEMINI_API_KEY)
+    gen_cfg = {"temperature": 0.6}
+    if IMAGE_RESPONSE_MODALITIES:
+        gen_cfg["responseModalities"] = [m.strip() for m in IMAGE_RESPONSE_MODALITIES.split(",") if m.strip()]
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": gen_cfg}
+    try:
+        async with httpx.AsyncClient(timeout=120) as cli:
+            r = await cli.post(url, json=payload)
+    except Exception as e:
+        print(f"[IMAGINE] 連線影像模型失敗：{e}", flush=True)
+        return JSONResponse({"error": f"連線影像模型失敗：{e}", "member": is_member}, status_code=502)
+    if r.status_code != 200:
+        print(f"[IMAGINE] 影像模型回應 {r.status_code}: {r.text[:400]}", flush=True)
+        return JSONResponse({"error": f"影像模型回應 {r.status_code}: {r.text[:200]}", "member": is_member}, status_code=502)
+
+    data = r.json()
+    mime, b64 = _extract_inline_image(data)
+    if not b64:
+        print(f"[IMAGINE] 未取得圖片：{str(data)[:400]}", flush=True)
+        return JSONResponse({"error": "影像模型未回傳圖片（可能被安全過濾）", "member": is_member}, status_code=502)
+    data_uri = f"data:{mime};base64,{b64}"
+    try:
+        with open(cache, "w", encoding="utf-8") as f:
+            f.write(data_uri)
+    except Exception:
+        pass
+    print(f"[IMAGINE] OK member={is_member} subject={subject[:40]} bytes={len(b64)}", flush=True)
+    return JSONResponse({"image": data_uri, "member": is_member})

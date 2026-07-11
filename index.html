@@ -2575,6 +2575,8 @@ function Dex({ collected, lang, langObj, captured, learned, fav, toggleLearned, 
   const [draft, setDraft] = useState(null);
   const [adding, setAdding] = useState(false);
   const [addErr, setAddErr] = useState(null);
+  const [imaging, setImaging] = useState(false);
+  const [imgErr, setImgErr] = useState(null);
   const mkCard = (tr, fallback) => { const ascii = /^[\x00-\x7F\s]+$/.test(fallback || ""); return { id: "my-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6), emoji: "📝", cat: "自訂", level: "自訂", type: "自訂", custom: true, zh: tr.zh || fallback, en: tr.en || (ascii ? fallback : ""), ja: tr.ja || "", ko: tr.ko || "", ind: tr.ind || "", vi: tr.vi || "", th: tr.th || "", yue: tr.zh || fallback, tl: "" }; };
   const doTranslate = async () => {
     const t2 = addText.trim(); if (!t2) return;
@@ -2587,7 +2589,21 @@ function Dex({ collected, lang, langObj, captured, learned, fav, toggleLearned, 
     } catch (e) { setAddErr(e && e.message ? e.message : t("tr_fail")); }
     finally { setAdding(false); }
   };
-  const saveDraft = () => { if (draft) { addCustom(draft); setDraft(null); setAddText(""); } };
+  const saveDraft = () => { if (draft) { addCustom(draft); setDraft(null); setAddText(""); setImgErr(null); } };
+  // 用後端 /imagine 幫這張草稿卡生成一張兒童繪本風插圖，成功後塞進 draft.img（取代 emoji）
+  const genImage = async () => {
+    if (!draft || imaging) return;
+    setImaging(true); setImgErr(null);
+    try {
+      if (!TTS_BASE) throw new Error(t("tr_not_enabled"));
+      const r = await fetch(`${TTS_BASE}/imagine`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: draft.en || draft.zh, zh: draft.zh, en: draft.en, code: LS.get("yb_member_code", "") }) });
+      if (!r.ok) throw new Error(tt("err_service", { s: r.status }));
+      const d = await r.json();
+      if (!d.image) throw new Error(d.error || t("tr_fail"));
+      setDraft((x) => (x ? { ...x, img: d.image } : x));
+    } catch (e) { setImgErr(e && e.message ? e.message : t("tr_fail")); }
+    finally { setImaging(false); }
+  };
   const addWord = async (w) => { try { const r = await fetch(`${TTS_BASE}/translate?text=${encodeURIComponent(w)}`); addCustom(mkCard(r.ok ? await r.json() : {}, w)); } catch {} };
   const compWords = useMemo(() => {
     if (!draft || !draft.en) return [];
@@ -2627,13 +2643,20 @@ function Dex({ collected, lang, langObj, captured, learned, fav, toggleLearned, 
             {addErr && <div style={{ color: "#c0392b", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{addErr}</div>}
             {draft && (
               <div style={{ marginTop: 10, background: "#fff", borderRadius: 14, padding: 12, border: `2px solid ${C.brandSoft}` }}>
-                <div style={{ fontSize: 20, fontWeight: 900 }}>{draft.zh || "—"} <span style={{ fontSize: 14, color: "#a89878", fontWeight: 700 }}>{draft.en || ""}</span></div>
-                <div style={{ fontSize: 13, color: "#8a7a64", marginTop: 2 }}>JP {draft.ja || "—"}　KR {draft.ko || "—"}　ID {draft.ind || "—"}　VI {draft.vi || "—"}　TH {draft.th || "—"}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: "0 0 auto", width: 64, height: 64, borderRadius: 14, background: "#faf5ea", border: `2px solid ${C.brandSoft}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>{pic(draft, 56)}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 20, fontWeight: 900 }}>{draft.zh || "—"} <span style={{ fontSize: 14, color: "#a89878", fontWeight: 700 }}>{draft.en || ""}</span></div>
+                    <div style={{ fontSize: 13, color: "#8a7a64", marginTop: 2 }}>JP {draft.ja || "—"}　KR {draft.ko || "—"}　ID {draft.ind || "—"}　VI {draft.vi || "—"}　TH {draft.th || "—"}</div>
+                  </div>
+                </div>
                 {(!draft.zh || !draft.en || !draft.ja) && <div style={{ fontSize: 12, color: "#c08a2e", fontWeight: 700, marginTop: 6, background: "#fff6e6", padding: "6px 8px", borderRadius: 10 }}>⚠️ 機器翻譯，部分語言可能空白；建議輸入單一、明確的詞，存檔後仍可手動編輯。</div>}
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                   <button onClick={() => say(draft, lang, langObj)} className="press" style={{ border: "none", cursor: "pointer", background: C.coral, color: "#fff", padding: "8px 14px", borderRadius: 12, fontWeight: 800, fontFamily: "inherit" }}>🔊 {t("listen_short")}</button>
+                  <button onClick={genImage} disabled={imaging} className="press" style={{ border: "none", cursor: imaging ? "wait" : "pointer", background: C.sky, color: "#fff", padding: "8px 14px", borderRadius: 12, fontWeight: 800, fontFamily: "inherit", opacity: imaging ? 0.7 : 1 }}>🎨 {imaging ? "生成中…" : (draft.img ? "重新生成" : "生成插圖")}</button>
                   <button onClick={saveDraft} className="press" style={{ border: "none", cursor: "pointer", background: C.brand, color: "#fff", padding: "8px 14px", borderRadius: 12, fontWeight: 800, fontFamily: "inherit" }}>{t("dex_save")}</button>
                 </div>
+                {imgErr && <div style={{ color: "#c0392b", fontWeight: 700, fontSize: 12, marginTop: 6 }}>{imgErr}</div>}
                 {compWords.length > 0 && (
                   <div style={{ marginTop: 10 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: C.teal, marginBottom: 4 }}>{t("dex_newwords")}</div>
