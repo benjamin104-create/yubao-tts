@@ -1,0 +1,26 @@
+# JMD_S01_E01_shot_035_v01 — Shot Prompt 卡（自動產生）
+
+## 六格輸入
+
+| 欄位 | 值 |
+|------|-----|
+| 角色 | 潔米爸 |
+| 情緒 | joy |
+| 場景 | 潔米爸目送 |
+| 運鏡 | wide |
+| 光線 | dawn |
+
+## 引擎輸出（完整 Prompt）
+
+```
+A calm, warm 45-year-old Taiwanese man, 185cm, salt-and-pepper short hair, thin-rimmed glasses, wearing a deep navy mandarin-collar shirt, gentle tired eyes, dignified and slow in movement, cinematic warm lighting. Performance and mood: a relaxed, genuine warmth, the body visibly at ease. Setting: the interior of a warm timber hall (Zi-wei Hall) on a mountainside at dawn, a low wooden table, an old clay teapot, oil lamps and a glowing golden natal chart on the table. A wide establishing shot placing the small figure within the larger space. Lighting: soft dawn light, gentle and hopeful, cool-to-warm gradient. Sound: a wooden creak, a distant wind chime, low warm room tone. Cinematic, anamorphic, shallow depth of field, 2.39:1, subtle film grain, high detail. No horror, no superstition, no exaggeration, no supernatural elements. Cinematic, restrained, warm and human.
+```
+
+## 生成結果
+
+| 欄位 | 內容 |
+|------|------|
+| 生成工具 | Kling / Seedance |
+| 輸出檔 | `JMD_S01_E01_shot_035_kling_v01.mp4`（待生成） |
+| 狀態 | ☐ 待生成 |
+| 對白/旁白 | 潔：風再起，你就知道路 |

@@ -43,9 +43,9 @@
 | 34 | 門口·阿哲回頭 | 阿哲 | relief | shoulder | dawn | 4 | 阿：我還會再來嗎 | zhiwei-hall | `shot_034` |
 | 35 | 潔米爸目送 | 潔米爸 | joy | wide | dawn | 5 | 潔：風再起，你就知道路 | zhiwei-hall | `shot_035` |
 | 36 | 阿哲下山背影 | 阿哲 | relief | tracking | dawn | 5 | （背沒那麼駝） | mountain-path | `shot_036` |
-| 37 | 雨後街道·陽光 | 阿哲 | hope | crane | dawn | 5 | （暖光滲入城市） | 街道, sky | `shot_037` |
+| 37 | 雨後街道·陽光 | 阿哲 | hope | crane | dawn | 5 | （暖光滲入城市） | taipei-street-afterrain, sky | `shot_037` |
 | 38 | 阿哲回訊息 | 阿哲 | relief | zoom-in | dawn | 4 | 旁白：他讓我發現我能選 | ui-phone | `shot_038` |
-| 39 | 阿哲走進人群 | 阿哲 | joy | wide | dawn | 5 | 旁白：命裡有的是我自己 | 街道 | `shot_039` |
+| 39 | 阿哲走進人群 | 阿哲 | joy | wide | dawn | 5 | 旁白：命裡有的是我自己 | taipei-street-afterrain | `shot_039` |
 | 40 | 片尾·黑底金字 | — | awakening | slow-push | god-ray | 6 | 信念句 + 片名 | chart-glow | `shot_040` |
 
 **總長估計**：≈ 192 秒（約 3.2 分鐘純鏡頭；加對白留白/節奏 ≈ 6–8 分鐘）。
@@ -64,6 +64,6 @@
 
 | 素材 | slug | 類別 | 首次出現 |
 |------|------|------|----------|
-| 手機介面 | `phone-ui` | ui | shot_004 |
+| 手機介面 | `ui-phone` | ui | shot_004 |
 | 雨後台北街道 | `taipei-street-afterrain` | scene | shot_037 |
 | 命盤流光 | `chart-glow` | fx | shot_025 |

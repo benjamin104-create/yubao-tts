@@ -35,6 +35,39 @@
 
 ---
 
+## ✅ Phase 2 更新：缺口已用自動化解掉
+
+> 見 `automation/`。純 Python 標準庫，已實際跑在本集 40 鏡頭上驗證。
+
+| 缺口 | 狀態 | 用什麼解 |
+|------|------|----------|
+| #1 素材自動比對 | ✅ 已解 | `asset_check.py`：掃分鏡對照素材庫，本集自動抓出缺 `ui-phone`、`taipei-street-afterrain` |
+| #2 配音腳本 | ✅ 已解 | `voice_cue_sheet.py`：自動抽台詞成腳本，直接餵語寶 TTS |
+| #3 秒數對齊 | ✅ 已解 | 配音腳本內建「字數÷5」估時，超秒標 ⚠️ |
+| #4 光線優先序 | ✅ 已解 | `prompt_engine.resolve_lighting()`：明確 > 場景 > 保底，情緒不覆蓋場景 |
+| #5 金色色票 | ⏳ 待辦 | 屬視覺設計，留待 Brand/World 補 HEX（非程式） |
+
+### Phase 2 執行時新發現（已當場修補）
+
+- **場景欄多是取景標籤而非地點**（如「堂內·倒茶」）：引擎比對不到地點會退回原字串，Prompt 會壞。
+  → 已加 **carry-forward**：沿用上一鏡地點，並在 `build_shots.py` 列出哪些鏡頭套用，供人工複核。
+  本集 40 鏡中 23 鏡靠 carry-forward 正確補回地點，0 鏡無解。
+- **素材 slug 命名不一致**（`phone-ui` vs `ui-phone`、`街道` vs `taipei-street-afterrain`）：
+  被 `asset_check.py` 抓出，已統一分鏡與待辦表的 slug。
+
+### 一鍵成果（本集實跑）
+
+```
+python3 build_shots.py <storyboard> <07_Prompts/JMD/S01/E01>
+→ 40 張 Shot Prompt 卡（六格自動展開）
+→ 素材報告：缺 2 種
+→ 配音腳本：JMD_S01_E01_voice_cue_sheet.md
+```
+
+**結論**：Phase 1 的手工缺口，Phase 2 已自動化為「填分鏡表 → 一鍵出全套」。下一步接 LLM 拆劇本（見 `automation/README.md`）即可把 ① 劇本→分鏡 也自動化。
+
+---
+
 ## 結論
 
 **架構是站得住的。** 六格引擎 + 三本 Bible + 冷暖語言，讓一集從零到「可生成」只靠填表，沒有卡死點。發現的 5 個缺口都是「補強」而非「重做」，且多數可用 Agent 自動化（Phase 2 一併處理）。

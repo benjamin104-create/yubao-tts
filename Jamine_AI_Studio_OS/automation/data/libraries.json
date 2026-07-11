@@ -1,0 +1,98 @@
+{
+  "_note": "電影語言庫的機器可讀版。與 07_Prompts/*.md 對應；.md 是人看的，這份是引擎讀的。新增代號時兩邊同步。",
+  "camera": {
+    "slow-push": "Slow, deliberate push-in toward the subject, gradually tightening the frame to draw the viewer into the character's inner state; steady, unhurried camera move.",
+    "orbit": "A smooth, weightless orbiting arc around the subject, revealing depth and layered space.",
+    "shoulder": "Over-the-shoulder framing holding the conversation, intimate and attentive.",
+    "handheld": "Subtle handheld movement breathing with the moment, raw and immediate.",
+    "wide": "A wide establishing shot placing the small figure within the larger space.",
+    "drone": "A high aerial drone shot surveying the scene from above.",
+    "tracking": "A smooth tracking shot following the subject's movement.",
+    "zoom-in": "A slow zoom pushing focus onto a single detail or expression.",
+    "zoom-out": "A slow zoom pulling back to reveal context and distance.",
+    "crane": "A rising crane shot lifting to reveal the scene opening up.",
+    "rack-focus": "A rack focus shifting attention from foreground to background."
+  },
+  "emotion": {
+    "anxiety": "shallow breathing, restless unfocused eyes, small fidgeting hand movements, quiet inner tension",
+    "relief": "shoulders easing down, a longer breath released, the faint beginning of a smile",
+    "hope": "lifting the gaze, light catching the face, a cautious quiet openness",
+    "breakdown": "emotion welling up and barely held back, eyes glistening, throat tight",
+    "awakening": "a stilled, clearing gaze, the quiet of a sudden understanding settling in",
+    "loneliness": "a small withdrawn figure in a large empty space, closed-in and quiet",
+    "fear": "a held breath and a slight recoil (used sparingly, never rendered as horror)",
+    "joy": "a relaxed, genuine warmth, the body visibly at ease"
+  },
+  "lighting": {
+    "dawn": "soft dawn light, gentle and hopeful, cool-to-warm gradient",
+    "dusk": "golden dusk light, wistful and transitional",
+    "warm-lamp": "warm amber lamplight and oil-lamp glow on aged wood, honey and amber tones",
+    "neon": "cool neon city light, cyan and cold blue tones, reflections sliding on wet glass",
+    "moonlight": "cool blue moonlight, quiet and introspective",
+    "backlight": "strong backlight rimming the silhouette, mysterious",
+    "god-ray": "a single volumetric god-ray cutting through deep black, catching drifting golden particles"
+  },
+  "lighting_scene_default": {
+    "堂": "warm-lamp",
+    "捷運": "neon",
+    "車窗": "neon",
+    "車門": "neon",
+    "月台": "neon",
+    "百貨": "neon",
+    "咖啡": "neon",
+    "街道": "dawn",
+    "手機": "neon",
+    "命盤空間": "god-ray",
+    "山": "dawn",
+    "石階": "dawn",
+    "呼吸": "dawn"
+  },
+  "scenes": {
+    "捷運": {
+      "desc": "a near-empty Taipei MRT carriage at night, rain-streaked windows with neon reflections sliding across the glass, the carriage swaying gently",
+      "sound": "muffled train rumble, a distant automated announcement, no music"
+    },
+    "車窗": {
+      "desc": "reflections on the rain-streaked window of a moving Taipei MRT carriage at night",
+      "sound": "muffled train rumble, rain on glass"
+    },
+    "月台": {
+      "desc": "an MRT platform at night, cool signage light spilling into the carriage as the doors open",
+      "sound": "door chime, train departing, footsteps"
+    },
+    "手機": {
+      "desc": "a close-up of a smartphone screen glowing in the dark, an unanswered message thread and a self-drawn Zi-wei natal chart visible",
+      "sound": "faint UI tap, ambient train noise"
+    },
+    "山": {
+      "desc": "a wet stone mountain path in the forest just after rain, dark blue turning to pale dawn, breath misting in the cold air",
+      "sound": "footsteps on wet stone, dripping water, distant birdsong"
+    },
+    "石階": {
+      "desc": "wet stone steps climbing the misty mountainside at first light after rain",
+      "sound": "footsteps on wet stone, dripping water"
+    },
+    "呼吸": {
+      "desc": "an extreme close-up of breath misting in the cold dawn air on the mountain",
+      "sound": "slow breathing, faint wind"
+    },
+    "堂": {
+      "desc": "the interior of a warm timber hall (Zi-wei Hall) on a mountainside at dawn, a low wooden table, an old clay teapot, oil lamps and a glowing golden natal chart on the table",
+      "sound": "a wooden creak, a distant wind chime, low warm room tone"
+    },
+    "命盤空間": {
+      "desc": "an abstract inner-mind space: pure deep black void with a large circular Chinese Zi-wei Dou-shu natal chart floating and slowly rotating, its stars and grid lines glowing luminous gold, drifting golden motes; mysterious and contemplative, NOT fantasy, NOT magical, a visualization of a human interior",
+      "sound": "one sustained low tone, a single distant chime"
+    },
+    "街道": {
+      "desc": "a Taipei street just after rain, warm morning sunlight breaking through parting clouds and reflecting off wet pavement, amber warmth threading into the cool city, a moving crowd",
+      "sound": "footsteps, distant traffic, city life resuming"
+    },
+    "片尾": {
+      "desc": "a black end-title card, elegant gold Chinese text centered on deep black, faint drifting golden motes",
+      "sound": "one sustained low tone slowly fading out"
+    }
+  },
+  "brand_guardrail": "No horror, no superstition, no exaggeration, no supernatural elements. Cinematic, restrained, warm and human.",
+  "technical": "Cinematic, anamorphic, shallow depth of field, 2.39:1, subtle film grain, high detail."
+}
