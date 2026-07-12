@@ -71,7 +71,15 @@ asset_{類別}_{名稱}_{變體}_v{版本}.{副檔名}
 | 命盤動畫 | `asset_fx_natal-chart_glow_v02.mp4` |
 | 台北捷運場景 | `asset_scene_taipei-mrt_night_v01.png` |
 
-類別建議：`prop`（道具）、`scene`（場景）、`fx`（特效/動畫）、`char`（角色定裝）、`ui`（介面元素）。
+類別建議：`prop`（道具）、`scene`（場景）、`fx`（特效/動畫）、`char`（角色定裝）、`ui`（介面元素）、`tex`（布料材質貼圖）、`3d`（3D 資產）。
+
+3D 資產（見 `pipeline/3D_INTEGRATION_SOP.md`）：
+
+| 3D 物件 | 檔名 |
+|---------|------|
+| 角色模型 | `asset_3d_char_ah-zhe_v01`（MetaHuman） |
+| 3D 服裝 | `asset_3d_costume_ah-zhe-default_v01`（Marvelous Designer） |
+| 3D 鏡頭輸出 | `JMD_S01_E01_shot_012_3d_v01.mp4` |
 
 ---
 
