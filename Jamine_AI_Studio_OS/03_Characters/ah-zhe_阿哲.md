@@ -61,6 +61,11 @@
 | 語速 / 節奏 | 偏快，焦慮時更快 |
 | 情緒基調 | 壓抑、內耗，釋懷時放慢變柔 |
 
+## 視覺錨定（機器真相）
+
+> 上鎖用的精確 trigger / 不可變特徵（含左眼下小痣）/ 服裝規範 / 漂移負面詞 / seed，見
+> [`character_anchors.json`](character_anchors.json) 的 `ah-zhe`。產圖/產片一律以該檔為準。
+
 ## Prompt 定裝錨句（英文）
 
 > A tired 28-year-old Taiwanese man, 176cm, slim, messy black fringe, grey hoodie over a plain tee, headphones around his neck, slightly hunched, anxious eyes, cool city lighting.

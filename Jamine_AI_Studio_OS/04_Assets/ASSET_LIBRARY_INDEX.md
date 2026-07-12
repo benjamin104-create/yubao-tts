@@ -44,6 +44,19 @@
 
 > ☐ = 待製作　☑ = 已入庫（附檔名）
 
+## 角色定裝 / 布料 (char) — 服道化上鎖用
+
+> 規範見 [`COSTUME_TEXTURE_SPEC.md`](COSTUME_TEXTURE_SPEC.md)；機器真相在 `03_Characters/character_anchors.json`。
+
+| 名稱 | slug | PNG | 用途 |
+|------|------|-----|------|
+| 潔米爸定裝三視圖 | `char-jamie-dad-sheet` | ☐ | Seed 鎖定 / Kling 角色參考 |
+| 阿哲定裝三視圖 | `char-ah-zhe-sheet` | ☐ | 同上 |
+| 小薇定裝三視圖 | `char-xiao-wei-sheet` | ☐ | 同上 |
+| 深藍立領布料 | `tex-navy-mandarin` | ☐ | 布料材質參考 |
+| 灰帽 T 布料 | `tex-grey-hoodie` | ☐ | 布料材質參考 |
+| 米色風衣布料 | `tex-beige-trench` | ☐ | 布料材質參考 |
+
 ---
 
 ## 素材卡（每個素材一張，見範本）

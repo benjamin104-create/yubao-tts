@@ -61,6 +61,11 @@
 | 語速 / 節奏 | 平穩專業，情緒鬆動時出現停頓與哽咽 |
 | 情緒基調 | 得體、克制，釋懷時轉為柔軟 |
 
+## 視覺錨定（機器真相）
+
+> 上鎖用的精確 trigger / 不可變特徵（含右下顎美人痣）/ 服裝規範 / 漂移負面詞 / seed，見
+> [`character_anchors.json`](character_anchors.json) 的 `xiao-wei`。產圖/產片一律以該檔為準。
+
 ## Prompt 定裝錨句（英文）
 
 > A poised 31-year-old Taiwanese woman, 165cm, dark-brown low ponytail, beige trench coat over a crisp shirt, professional yet quietly exhausted, gold ear studs, cool urban lighting.

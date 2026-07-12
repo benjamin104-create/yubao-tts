@@ -61,6 +61,11 @@
 | 語速 / 節奏 | 偏慢，句與句之間留白 |
 | 情緒基調 | 穩、暖、不慌，偶爾一絲幽默上揚 |
 
+## 視覺錨定（機器真相）
+
+> 上鎖用的精確 trigger / 不可變特徵 / 服裝規範 / 漂移負面詞 / seed，見
+> [`character_anchors.json`](character_anchors.json) 的 `jamie-dad`。產圖/產片一律以該檔為準。
+
 ## Prompt 定裝錨句（英文）
 
 > A calm, warm 45-year-old Taiwanese man, 185cm, salt-and-pepper short hair, thin-rimmed glasses, wearing a deep navy mandarin-collar shirt, gentle tired eyes, dignified and slow in movement, cinematic warm lighting.
