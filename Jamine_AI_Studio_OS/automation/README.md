@@ -13,8 +13,10 @@
 | `prompt_engine.py` | 六格輸入 → 完整影片 Prompt | Pipeline ④（生 Prompt）；缺口 #4 光線優先序 |
 | `asset_check.py` | 分鏡 → 比對素材庫 → 列出缺的素材 | 缺口 #1 素材自動比對 |
 | `voice_cue_sheet.py` | 分鏡 → 配音腳本（含秒數對齊警告） | 缺口 #2 配音腳本、#3 秒數對齊 |
-| `build_shots.py` | 一鍵：分鏡 → 全部 Shot 卡 + 素材報告 + 配音腳本 | Pipeline ④⑤ 批次自動化 |
+| `build_shots.py` | 一鍵：分鏡 → 全部 Shot 卡 + 素材報告 + 配音腳本 + **Prompt 驗證矩陣** | Pipeline ④⑤ 批次自動化 |
+| `continuity_audit.py` | **角色一致性 / 服道化 / 時代穿幫**自動稽核 | 視覺總監的稽核責任程式化 |
 | `data/libraries.json` | 電影語言庫機器版（運鏡/情緒/光線/場景/護欄） | 引擎原料 |
+| `../03_Characters/character_anchors.json` | **角色視覺錨定表**（trigger/服裝/漂移負面詞/seed） | 角色一致性上鎖真相來源 |
 
 ---
 
@@ -34,9 +36,25 @@ python3 asset_check.py "$SB"
 # 3) 配音腳本
 python3 voice_cue_sheet.py "$SB" out_voice.md
 
-# 4) 一鍵批次：整集 40 鏡頭全生成
+# 4) 一鍵批次：整集 40 鏡頭全生成（含 Prompt 驗證矩陣）
 python3 build_shots.py "$SB" ../07_Prompts/JMD/S01/E01
+
+# 5) 角色一致性 / 服道化 / 時代穿幫稽核（進生成前的最後一關；有阻斷項回傳非 0）
+python3 continuity_audit.py "$SB"
 ```
+
+## 角色一致性上鎖（服道化防漂移）
+
+`character_anchors.json` 是每個角色的「數位聖經上鎖層」。引擎會**強制**把
+`[SLUG]` trigger + 服裝規範 + 漂移負面詞嵌入每一支 Prompt：
+
+- **prompt_engine**：自動注入 trigger / costume / `Consistency guard (avoid): …`。
+- **build_shots**：產出 `_prompt_validation_matrix.md`，逐鏡頭查核 trigger 是否確實帶入。
+- **continuity_audit**：抓「未上鎖角色」「服裝時代穿幫」「複雜紋樣風險」，通過才進生成。
+
+> 誠實校準：文字層（trigger/服裝/負面/矩陣/稽核）對 Kling/Seedance 與 SD/MJ 都有效；
+> Seed / IP-Adapter 只有 SD/MJ 吃，文生影片改用 reference_sheet 當角色參考。見
+> `agents/visual_costume_director.md`。
 
 ---
 

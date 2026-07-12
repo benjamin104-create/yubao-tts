@@ -52,8 +52,20 @@
 
 ## 一致性三支柱（整條線的品質底線）
 
-1. **角色一致** ← Character Bible 定裝錨句
+1. **角色一致** ← Character Bible 定裝錨句 + `character_anchors.json` 上鎖 + `continuity_audit.py`
 2. **世界一致** ← World Bible 冷暖光線
 3. **品牌一致** ← Brand Bible 禁止清單 + 信念句
 
-QA Agent 的工作，就是守住這三根柱子。
+QA Agent 與**視覺總監**（`agents/visual_costume_director.md`）的工作，就是守住這三根柱子。
+
+---
+
+## 兩條產出路線（2D vs 3D）
+
+同一套前期上鎖，可分流到兩條生成路線：
+
+- **2D 文生影片**（Kling/Seedance）：氛圍/特寫/過場，一致性靠 trigger 守。→ `production/` harness。
+- **3D 導入**（MetaHuman + Marvelous Designer）：連續動作/高一致鏡頭，「3D 為骨、AI 為皮」。
+  → SOP 見 [`3D_INTEGRATION_SOP.md`](3D_INTEGRATION_SOP.md)。
+
+兩條路線都吃同一份 `character_anchors.json` 與 `COSTUME_TEXTURE_SPEC.md`，確保 2D/3D 版角色一致。

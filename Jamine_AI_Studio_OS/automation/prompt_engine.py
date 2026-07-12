@@ -61,16 +61,28 @@ def resolve_scene(scene: str, libs: dict, fallback_key: str | None = None) -> di
 
 
 def build_prompt(char_slugs, emotion, scene, time, camera, lighting,
-                 dialogue="", libs=None, chars=None, fallback_key=None) -> str:
+                 dialogue="", libs=None, chars=None, fallback_key=None,
+                 anchors=None) -> str:
     libs = libs or studio.load_libraries()
     chars = chars or studio.load_characters()
+    anchors = anchors if anchors is not None else studio.load_anchors()
 
     parts = []
+    drift_negs = []
 
-    # 1. 角色錨句（鎖外型一致性）；命盤空間等無角色鏡頭略過
-    anchors = [chars[s]["anchor"] for s in char_slugs if s in chars and chars[s]["anchor"]]
-    if anchors:
-        parts.append(" ".join(anchors))
+    # 1. 角色錨定（Digital Bible 上鎖）：優先用錨定表 trigger + 服裝規範；退回 Bible 錨句。
+    #    命盤空間等無角色鏡頭略過。
+    for s in char_slugs:
+        a = anchors.get(s)
+        if a:
+            parts.append(a["trigger"])                       # 逐字嵌入（帶 [SLUG] 供驗證矩陣）
+            c = a.get("costume", {})
+            if c:
+                parts.append(f"wearing {c['items']} ({c['fabric']}; {c['pattern']}).")
+            if a.get("negative"):
+                drift_negs.append(a["negative"])
+        elif s in chars and chars[s].get("anchor"):
+            parts.append(chars[s]["anchor"])
 
     # 2. 情緒表演
     emo = libs["emotion"].get(emotion, "")
@@ -93,14 +105,17 @@ def build_prompt(char_slugs, emotion, scene, time, camera, lighting,
     # 6. 聲音
     parts.append(f"Sound: {sc['sound']}.")
 
-    # 7. 技術 + 品牌護欄
+    # 7. 技術 + 品牌護欄 + 角色漂移負面詞（服道化上鎖）
     parts.append(libs["technical"])
     parts.append(libs["brand_guardrail"])
+    if drift_negs:
+        parts.append("Consistency guard (avoid): " + "; ".join(drift_negs) + ".")
 
     return " ".join(p.strip() for p in parts if p.strip())
 
 
-def build_from_shot(row: dict, chars: dict, libs: dict, fallback_key=None) -> str:
+def build_from_shot(row: dict, chars: dict, libs: dict, fallback_key=None,
+                    anchors=None) -> str:
     """從一列分鏡 dict 產出 Prompt；fallback_key 為上一鏡地點，供 carry-forward。"""
     name_to_slug = chars["_name_to_slug"]
     char_slugs = studio.split_characters(row.get("角色", ""), name_to_slug)
@@ -115,6 +130,7 @@ def build_from_shot(row: dict, chars: dict, libs: dict, fallback_key=None) -> st
         libs=libs,
         chars=chars,
         fallback_key=fallback_key,
+        anchors=anchors,
     )
 
 

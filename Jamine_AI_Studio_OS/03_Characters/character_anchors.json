@@ -1,0 +1,81 @@
+{
+  "_note": "角色視覺錨定表（Digital Bible 上鎖層）—— 全系統角色一致性的機器真相來源。",
+  "_how_it_locks": {
+    "trigger": "每次產圖/產片『必須逐字包含』的角色核心提示詞（帶 [SLUG] 標記，供驗證矩陣 grep）。",
+    "immutable": "絕對不可變特徵；任一走樣即判不合格。",
+    "costume": "服道化規範：布料/紋樣/時代；紋樣一律標明避免 AI 邏輯混亂。",
+    "negative": "反向詞：明列最常見的漂移，鎖進每個 Prompt 的負面區。",
+    "seed / reference_sheet / ip_adapter_weight": "影像上鎖層——供 SD/MJ 角色定裝三視圖與 Kling 角色參考圖使用；文生影片(Kling/Seedance)不吃 SD Seed，但吃 reference_sheet 當角色參考。"
+  },
+  "characters": {
+    "jamie-dad": {
+      "name": "潔米爸",
+      "trigger": "[JAMIE-DAD] a calm, dignified 45-year-old Taiwanese man, exactly 185cm, salt-and-pepper short hair with greying temples, thin-rimmed round glasses (always worn), high cheekbones, gentle tired eyes, slow steady posture",
+      "immutable": [
+        "thin-rimmed round glasses — always present",
+        "salt-and-pepper short hair with greying temples",
+        "185cm tall, upright dignified posture",
+        "clean-shaven, high cheekbones, gentle tired eyes"
+      ],
+      "costume": {
+        "id": "jamie-dad-default",
+        "items": "deep navy mandarin-collar (立領) shirt, dark charcoal loose trousers",
+        "fabric": "matte cotton-linen, no sheen, natural drape",
+        "pattern": "solid deep navy — NO pattern, NO print",
+        "period": "timeless / contemporary 2026",
+        "texture_ref": "asset_tex_navy-mandarin_v01.png",
+        "variations_allowed": "none in S01 (single locked costume)"
+      },
+      "negative": "no beard, no different glasses, no changing hairstyle, no age drift, consistent face geometry, no pattern on shirt",
+      "seed": 1010101,
+      "reference_sheet": "asset_char_jamie-dad_sheet_v01.png",
+      "ip_adapter_weight": 0.8
+    },
+    "ah-zhe": {
+      "name": "阿哲",
+      "trigger": "[AH-ZHE] a tired 28-year-old Taiwanese man, exactly 176cm, slim, messy black hair with fringe over the forehead, no glasses, a small mole below the left eye, slightly hunched anxious posture",
+      "immutable": [
+        "messy black hair with fringe over the forehead",
+        "no glasses",
+        "a small mole below the left eye",
+        "176cm, slim, slightly hunched posture"
+      ],
+      "costume": {
+        "id": "ah-zhe-default",
+        "items": "heather-grey zip hoodie over a plain white tee, dark slim jeans; over-ear headphones resting around the neck",
+        "fabric": "matte cotton jersey, worn-in",
+        "pattern": "solid heather grey — NO logo, NO print",
+        "period": "contemporary 2026",
+        "texture_ref": "asset_tex_grey-hoodie_v01.png",
+        "variations_allowed": "none in S01"
+      },
+      "negative": "no glasses, no beard, no logo on hoodie, no color change of hoodie, consistent face, no build change (not muscular, not heavy)",
+      "seed": 2020202,
+      "reference_sheet": "asset_char_ah-zhe_sheet_v01.png",
+      "ip_adapter_weight": 0.8
+    },
+    "xiao-wei": {
+      "name": "小薇",
+      "trigger": "[XIAO-WEI] a poised 31-year-old Taiwanese woman, exactly 165cm, dark-brown hair in a low ponytail, a faint beauty mark at the right jaw, small gold ear studs, professional yet quietly tired expression",
+      "immutable": [
+        "dark-brown hair in a low ponytail",
+        "small gold ear studs",
+        "a faint beauty mark at the right jaw",
+        "165cm, poised upright but tense shoulders"
+      ],
+      "costume": {
+        "id": "xiao-wei-default",
+        "items": "beige gabardine trench coat over a crisp white shirt, dark tailored trousers",
+        "fabric": "structured gabardine trench, crisp cotton shirt",
+        "pattern": "solid beige / solid white — NO pattern",
+        "period": "contemporary 2026",
+        "texture_ref": "asset_tex_beige-trench_v01.png",
+        "variations_allowed": "none in S01"
+      },
+      "negative": "no hair-down, no earrings change, no pattern on coat, consistent face, no age drift",
+      "seed": 3030303,
+      "reference_sheet": "asset_char_xiao-wei_sheet_v01.png",
+      "ip_adapter_weight": 0.8
+    }
+  }
+}

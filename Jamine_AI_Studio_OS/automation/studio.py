@@ -19,6 +19,14 @@ def load_libraries() -> dict:
     return json.loads((DATA / "libraries.json").read_text(encoding="utf-8"))
 
 
+def load_anchors() -> dict:
+    """讀角色視覺錨定表（Digital Bible 上鎖層）→ {slug: {trigger, immutable, costume, negative, seed, ...}}。"""
+    path = OS_ROOT / "03_Characters" / "character_anchors.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8")).get("characters", {})
+
+
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
