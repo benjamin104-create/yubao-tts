@@ -86,7 +86,8 @@ def main():
         ("yt_subs", "YouTube 訂閱"),
         ("yt_watch_hours", "YouTube 觀看時數"),
         ("tiktok_followers", "TikTok 粉絲"),
-        ("ig_followers", "IG 粉絲"),
+        ("ig_milkmoney_followers", "IG 奶粉錢奮鬥記"),
+        ("ig_bookroom_followers", "IG 書房筆記"),
         ("posts_published", "本週發佈則數"),
     ]
     print("| 指標 | 上週 | 本週 | Δ |")

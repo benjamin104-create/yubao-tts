@@ -30,7 +30,8 @@
 |------|------|
 | `week` | ISO 週，如 2026-W29 |
 | `yt_subs` / `yt_watch_hours` | YouTube 訂閱數 / 累積有效觀看時數（營利門檻進度） |
-| `tiktok_followers` / `ig_followers` | 各平台粉絲數 |
+| `tiktok_followers` | TikTok 粉絲數 |
+| `ig_milkmoney_followers` / `ig_bookroom_followers` | IG 兩帳號分開記：奶粉錢奮鬥記（親子受眾→語寶潛在客）／書房筆記（命理受眾→R1/R2 潛在客） |
 | `list_size` | 自有名單（LINE + Email 合計）← North Star |
 | `posts_published` | 本週實際發佈則數 |
 | `income_twd` / `expense_twd` | 本週收支（由 ledger 彙總，可用工具算） |
