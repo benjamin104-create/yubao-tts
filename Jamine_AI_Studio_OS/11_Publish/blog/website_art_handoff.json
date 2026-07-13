@@ -6,6 +6,28 @@
   "scope_note": "依核心法律邊界：本層不產出任何 HTML 樣式、CSS、排版或視覺建議。以下僅為事實性交接資訊與需求登記。",
 
   "art_requirements": [
+    {
+      "art_id": "blog_theme_upgrade",
+      "type": "ui_design",
+      "prompt_concept": "A gorgeous, high-end techblog theme design, cyberpunk style, dark neon theme, clean layout, professional UI design",
+      "submitted": "2026-07-13",
+      "status": "blocked-pending-owner-decision",
+      "compliance_review": {
+        "reviewer": "管理與文字策劃層",
+        "checked_against": "01_Brand/BRAND_BIBLE.md 第七節「視覺基調」；02_World/WORLD_BIBLE.md 色彩系統",
+        "findings": [
+          "Brand Bible 視覺總綱明定：色彩「暖光為主、命盤金色點綴、城市冷色作對比」；cyberpunk dark neon 以冷色霓虹為主體，與總綱相反",
+          "World Bible 中「霓虹／冷色」被定義為『壓力與迷惘』的語彙，非品牌的『理解／安心』基調",
+          "brief 中 'techblog' 與本站定位（育兒、語言、旅遊、紫微斗數的個人長文部落格）不一致",
+          "備註：World Bible 的『命盤空間』(黑底金色) 是既有的深色視覺，若需深色方向，此為品牌內合規的參照系"
+        ],
+        "resolution_options": [
+          "A. 站主批准品牌例外，照 cyberpunk brief 發包",
+          "B. 修改 brief 後再發包（方向由站主與美術部議定）",
+          "C. 撤回本需求"
+        ]
+      }
+    },
     { "need": "需要修正網站首頁的配色與美化" },
     { "need": "需要確立全站視覺風格（首頁、分類頁、文章頁、關於頁共 4 種版型的外觀）" },
     { "need": "需要決定全站字體策略（目前僅安裝 Noto Sans TC / Noto Serif TC 兩套，可自行更換）" },
