@@ -29,7 +29,7 @@
 | 欄位 | 說明 |
 |------|------|
 | `week` | ISO 週，如 2026-W29 |
-| `yt_subs` / `yt_watch_hours` | YouTube 訂閱數 / 累積有效觀看時數（營利門檻進度） |
+| `yt_subs` / `yt_watch_hours` | YouTube 訂閱數 / **近 28 天**觀看時數（Studio 首頁可直接抄；追趨勢用，門檻進度另以 12 個月累計估算） |
 | `tiktok_followers` | TikTok 粉絲數 |
 | `ig_milkmoney_followers` / `ig_bookroom_followers` | IG 兩帳號分開記：奶粉錢奮鬥記（親子受眾→語寶潛在客）／書房筆記（命理受眾→R1/R2 潛在客） |
 | `list_size` | 自有名單（LINE + Email 合計）← North Star |
