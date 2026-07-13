@@ -1,0 +1,55 @@
+{
+  "handoff_id": "jaminepa_blog_visual_handoff_v01",
+  "date": "2026-07-13",
+  "from": "管理與文字策劃層 (Claude)",
+  "to": "美術企劃部 (Codex/GPT)",
+  "scope_note": "依核心法律邊界：本層不產出任何 HTML 樣式、CSS、排版或視覺建議。以下僅為事實性交接資訊與需求登記。",
+
+  "art_requirements": [
+    { "need": "需要修正網站首頁的配色與美化" },
+    { "need": "需要確立全站視覺風格（首頁、分類頁、文章頁、關於頁共 4 種版型的外觀）" },
+    { "need": "需要決定全站字體策略（目前僅安裝 Noto Sans TC / Noto Serif TC 兩套，可自行更換）" },
+    { "need": "需要 4 張文章插圖，規格見同資料夾 editorial_art_req.json（art_id_001–004）" },
+    { "need": "需要網站 favicon 與社群分享用 OG 圖（目前 favicon 為暫置檔，可整個重做）" }
+  ],
+
+  "site_facts": {
+    "project": "jaminepa-blog（潔米爸個人部落格）",
+    "tech": "Astro 5 靜態網站，內容為 Markdown",
+    "repo": "github.com/benjamin104-create/jaminepa-blog（Private）",
+    "repo_status": "⚠️ 程式碼尚未推上此倉庫——卡在站主需在電腦瀏覽器核准一次存取授權；核准後由本層負責推送",
+    "style_entry_points": {
+      "all_site_styles": "src/styles/global.css（全站樣式唯一入口）",
+      "fonts_loaded_in": "src/components/BaseHead.astro",
+      "favicon": "public/favicon.svg",
+      "page_templates": [
+        "src/pages/index.astro（首頁）",
+        "src/pages/[category]/index.astro（分類頁）",
+        "src/layouts/BlogPost.astro（文章頁）",
+        "src/pages/about.astro（關於頁）"
+      ]
+    },
+    "content_categories": [
+      { "id": "yubao", "name": "語寶", "topics": "育兒觀、語言自學、旅遊、各國地理文化歷史" },
+      { "id": "ziwei", "name": "紫微筆記", "topics": "紫微斗數自學筆記、紫微斗數漫畫" }
+    ]
+  },
+
+  "brand_constraints_reference": {
+    "note": "以下為站主既有定稿文件，屬品牌規範事實，非本層視覺意見",
+    "brand_bible": "yubao-tts 倉庫 Jamine_AI_Studio_OS/01_Brand/BRAND_BIBLE.md",
+    "world_bible_color_system": "yubao-tts 倉庫 Jamine_AI_Studio_OS/02_World/WORLD_BIBLE.md（冷暖對比／黑底金色命盤等色彩系統）",
+    "character_anchors": "yubao-tts 倉庫 Jamine_AI_Studio_OS/03_Characters/character_anchors.json"
+  },
+
+  "archived_drafts_disposition": {
+    "note": "本層先前曾產出 4 版 CSS 風格草稿與截圖（variants/A-D）。依邊界規則，該產出屬越權項目，已停止推進；美術企劃部可全數捨棄或僅作參考，處置權在美術部。",
+    "location": "jaminepa-blog 專案 variants/ 資料夾（隨程式碼一併交接）"
+  },
+
+  "pending_decision_owner": "站主（潔米爸）",
+  "pending_decisions": [
+    "全站視覺風格定案（由美術企劃部提案）",
+    "GitHub 存取授權核准（需站主在電腦瀏覽器操作一次）"
+  ]
+}
