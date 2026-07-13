@@ -1,0 +1,46 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { CATEGORIES, SITE_TITLE, type CategoryId } from '../consts';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  category: CategoryId;
+}
+
+const { title, description, pubDate, updatedDate, category } = Astro.props;
+---
+
+<html lang="zh-Hant">
+  <head>
+    <BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
+  </head>
+  <body>
+    <Header />
+    <main class="container">
+      <header class="article-header">
+        <a class={`chip ${category}`} href={`/${category}/`}>{CATEGORIES[category].name}</a>
+        <h1>{title}</h1>
+        <div class="dates">
+          <FormattedDate date={pubDate} />
+          {
+            updatedDate && (
+              <span>
+                （更新於 <FormattedDate date={updatedDate} />）
+              </span>
+            )
+          }
+        </div>
+      </header>
+      <article class="prose">
+        <slot />
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>

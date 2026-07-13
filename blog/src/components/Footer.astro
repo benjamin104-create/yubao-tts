@@ -1,0 +1,18 @@
+---
+import { SITE_TITLE } from '../consts';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <span class="seal">潔</span>
+  <div class="footer-title">{SITE_TITLE}</div>
+  <div>把時間慢慢寫成一間書房</div>
+  <nav>
+    <a href="/yubao/">語寶</a>
+    <a href="/ziwei/">紫微筆記</a>
+    <a href="/about/">關於</a>
+    <a href="/rss.xml">RSS</a>
+  </nav>
+  <div>© {year} {SITE_TITLE} · jaminepa.com</div>
+</footer>

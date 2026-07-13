@@ -1,0 +1,30 @@
+---
+import { SITE_TITLE } from '../consts';
+
+const path = Astro.url.pathname;
+const links = [
+  { href: '/', label: '首頁' },
+  { href: '/yubao/', label: '語寶' },
+  { href: '/ziwei/', label: '紫微筆記' },
+  { href: '/about/', label: '關於' },
+];
+
+function isCurrent(href: string) {
+  return href === '/' ? path === '/' : path.startsWith(href);
+}
+---
+
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="/"><span class="seal">潔</span>{SITE_TITLE}</a>
+    <nav class="site-nav">
+      {
+        links.map((link) => (
+          <a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</header>

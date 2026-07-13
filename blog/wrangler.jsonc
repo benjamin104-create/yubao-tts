@@ -1,0 +1,8 @@
+// Cloudflare Workers 部署設定：把 dist 資料夾當成靜態網站發佈
+{
+  "name": "jaminepa-blog",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
