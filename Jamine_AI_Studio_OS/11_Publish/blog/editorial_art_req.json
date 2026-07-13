@@ -1,0 +1,66 @@
+{
+  "request_id": "JMD_S01_blog_lore_01_art_req_v01",
+  "source_article": "11_Publish/blog/JMD_S01_blog_lore_01_v01.md",
+  "requested_by": "editorial_chief_agent",
+  "date": "2026-07-13",
+  "brand_rules": {
+    "world_bible": "02_World/WORLD_BIBLE.md",
+    "character_anchors": "03_Characters/character_anchors.json",
+    "core_visual_language": "冷暖對比：城市=冷色（壓力），紫微堂=暖光（理解），命盤空間=黑底金色",
+    "tone": "寫實為底、神秘但不玄幻、電影感",
+    "forbidden": ["超自然元素", "鬼神意象", "魔法特效", "誇張玄幻光效"]
+  },
+  "assets": [
+    {
+      "art_id": "art_id_001",
+      "placement": "第一節「一座城市，兩種光」之前，作為文章開場圖",
+      "purpose": "建立城市＝冷色壓力的世界觀第一印象",
+      "scene_zh": "2026 年台北雨夜，捷運站出口的傘海人潮，霓虹燈光反射在濕漉漉的柏油路面，冷藍與青綠色調，遠景帶 101 剪影",
+      "prompt_en": "Rainy night in Taipei 2026, crowd with umbrellas at MRT station exit, neon reflections on wet asphalt, cold blue and teal color palette, cinematic wide shot, realistic, moody",
+      "characters": [],
+      "palette": ["冷藍", "青綠", "灰"],
+      "aspect_ratio": "16:9",
+      "priority": "P1"
+    },
+    {
+      "art_id": "art_id_002",
+      "placement": "第二節「山腰上的紫微堂」段末",
+      "purpose": "呈現紫微堂＝暖光避風港",
+      "scene_zh": "山腰樹林間的木造老屋「紫微堂」，黃昏，門口燈籠亮著暖光，窗內透出油燈光，剛下過雨的濕潤感，樹葉滴水",
+      "prompt_en": "A wooden traditional house on a forested hillside at dusk, warm lantern glowing at the entrance, warm light through windows, wet leaves after rain, warm orange and wood tones, cinematic, cozy and serene",
+      "characters": [],
+      "palette": ["暖橙", "燈黃", "木色"],
+      "aspect_ratio": "16:9",
+      "priority": "P1"
+    },
+    {
+      "art_id": "art_id_003",
+      "placement": "第三節「堂主潔米爸」段末",
+      "purpose": "潔米爸定裝形象照（部落格用主視覺）",
+      "scene_zh": "潔米爸在紫微堂內倒茶，暖油燈光，木質空間，神情溫和沉穩",
+      "prompt_en": "A calm, warm 45-year-old Taiwanese man, 185cm, salt-and-pepper short hair, thin-rimmed glasses, wearing a deep navy mandarin-collar shirt, gentle tired eyes, pouring tea at a low wooden table, warm oil-lamp lighting, cinematic warm tones",
+      "characters": ["jamie-dad"],
+      "character_lock": "必須使用 character_anchors.json 的 jamie-dad trigger/seed，服裝不可改",
+      "palette": ["暖橙", "燈黃", "深藍（服裝）"],
+      "aspect_ratio": "4:5",
+      "priority": "P0"
+    },
+    {
+      "art_id": "art_id_004",
+      "placement": "第四節「命盤空間」段末",
+      "purpose": "命盤空間的標準視覺定裝",
+      "scene_zh": "深藍黑底的內心空間，金色紫微命盤與星曜緩慢浮動，微光流動，神秘但不玄幻、無魔法特效",
+      "prompt_en": "A meditative dark navy-black space with a golden Zi Wei Dou Shu astrology chart and star glyphs floating gently, subtle slow-moving light, mysterious but grounded, no fantasy magic effects, minimal, cinematic",
+      "characters": [],
+      "palette": ["金", "深藍黑"],
+      "aspect_ratio": "16:9",
+      "priority": "P1"
+    }
+  ],
+  "delivery": {
+    "format": "PNG 或 JPG，寬度至少 1600px",
+    "destination": "jaminepa-blog 倉庫 public/images/ziwei-tang/",
+    "filename_pattern": "ziwei-tang-{art_id}.jpg",
+    "after_delivery": "把文章中的 [INSERT_IMAGE_HERE: art_id_XXX] 替換成 ![說明](/images/ziwei-tang/檔名)"
+  }
+}
