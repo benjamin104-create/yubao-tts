@@ -9,7 +9,8 @@
 
 | Agent | 職責 | 建議模型 | 讀 | 產出 |
 |------|------|----------|----|------|
-| 👑 Marketing CEO | 統籌營運：收入策略、執行規劃、驅動各部門、每週向老闆匯報 | Claude | 00/01/11 | `00_CEO_Office` 週報/策略/Roadmap |
+| 👑 Marketing CEO | 統籌營運：收入策略、執行規劃、驅動各部門、每週週報＋每日產線簡報 | Claude | 00/01/11 | `00_CEO_Office` 週報/策略/`daily_ops` |
+| 📚 故事考古部 | 挖掘紫微題材：古籍案例、命盤原型、民俗考據，餵編劇與漫畫線 | Claude | 01/02/knowledge | `00_CEO_Office/daily_ops/research/` |
 | 🎬 Director | 審核劇本、控制品質、守品牌 | Claude | 01/02/03 | 通過/退回 + 修改意見 |
 | ✍️ Screenwriter | 寫劇本、對白 | Claude | 01/02/03 | `05_Scripts` |
 | 🎨 Art Director | 統一畫風與角色設定 | Claude | 02/03/04 | 風格守則、定裝把關 |
