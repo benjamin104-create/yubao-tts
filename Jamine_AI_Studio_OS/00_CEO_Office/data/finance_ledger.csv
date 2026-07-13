@@ -1,3 +1,5 @@
 date,type,category,item,amount_twd,revenue_line,note
-2026-07-13,expense,ai_tools,待老闆確認：目前訂閱中的生成工具（Kling/Seedance/Claude 等）與月費,0,unassigned,佔位符——金額待填
-2026-07-13,expense,infra,待老闆確認：Netlify/Render 等主機費用,0,R7,佔位符——金額待填
+2026-07-01,expense,ai_tools,Claude 年費攤提（US$200/年 ≈ US$16.7/月，匯率暫以 32 計）,533,unassigned,每月固定攤提
+2026-07-01,expense,ai_tools,ChatGPT 月費（US$20，匯率暫以 32 計）,640,unassigned,每月固定
+2026-07-01,expense,ai_tools,Kling 等影片生成工具（近期購買，實際金額待老闆補）,0,R4,佔位——金額待補
+2026-07-01,expense,ai_tools,HeyGen 數位人（目前用免費方案）,0,R4,免費方案暫無支出
