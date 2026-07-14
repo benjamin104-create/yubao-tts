@@ -1,6 +1,7 @@
 // Cloudflare Workers 部署設定：把 dist 資料夾當成靜態網站發佈
+// name 必須等於 Cloudflare 上的專案名稱（yubao-tts），建置成功才會更新到同一個網址
 {
-  "name": "jaminepa-blog",
+  "name": "yubao-tts",
   "compatibility_date": "2026-07-01",
   "assets": {
     "directory": "./dist"
