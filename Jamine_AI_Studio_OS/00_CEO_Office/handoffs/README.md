@@ -35,9 +35,24 @@ handoffs/
 4. **回報格式**：固定結構，第一行必須是 `STATUS: DONE` 或 `STATUS: BLOCKED - 原因`
 5. **自我檢核**：交件前 GPT 要自答的檢查清單
 
-## 自動化邊界（誠實聲明）
+## 兩種執行端模式
 
-- **CEO 端全自動**：每日排程可自動產包、自動驗收貼回的結果、自動歸檔。
-- **GPT 端無法全自動**：網頁版 ChatGPT 不能主動讀私有 repo、不能 push GitHub。
-  本 repo 含商業數據，**不公開**，故 GPT 端的上限就是「老闆貼上/貼回」。
-- 需要真全自動時 → 升級方案 B（OpenAI API 直連，另計費，需老闆核准）。
+### 模式一：網頁版 ChatGPT（人肉拋接）
+老闆複製 outbox 指令包 → 貼給 ChatGPT → 把回覆貼回對話，CEO 歸檔 inbox。
+限制：網頁版不能讀私有 repo、不能 push——上限就是貼上/貼回。
+
+### 模式二：Codex CLI（近全自動，2026-07-15 啟用）★
+老闆本機已裝 OpenAI Codex CLI，它能讀寫檔案與操作 git，於是拋接變成：
+
+```
+CEO 寫包 push → 老闆本機跑一條命令
+  cd {repo 本機路徑}
+  git pull origin claude/digital-marketing-ceo-project-uzws8r
+  codex exec "讀取並遵守 Jamine_AI_Studio_OS/00_CEO_Office/handoffs/CODEX_RUNNER.md，
+              處理 outbox 中所有尚未回報的指令包"
+→ Codex 執行、寫 inbox/、commit、push → CEO 排程自動驗收
+```
+
+- Codex 端規則見 `CODEX_RUNNER.md`（只准寫 inbox/、STATUS 回報、做不到要 BLOCKED）
+- 想再省：把上面三行存成 `jamine_handoff.sh`，甚至掛進本機排程（cron／捷徑 App），連打字都免了
+- 計費：Codex CLI 用 ChatGPT 帳號登入即可，額度含在訂閱內，不需另外的 API key
