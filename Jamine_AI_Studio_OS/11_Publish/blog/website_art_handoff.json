@@ -26,6 +26,20 @@
       }
     },
     {
+      "art_id": "dual_world_harmony",
+      "type": "ui_design",
+      "submitted": "2026-07-14",
+      "status": "approved-for-dispatch",
+      "owner_directive": "站主反映：首頁將「語寶」與「紫微筆記」並列有違和感，指示美術端化解；文案已由策劃層以「向外的理解／向內的理解」主軸縫合（首頁 hero、分類卡、關於頁）",
+      "brief_zh": "在維持全站同一骨架與品牌質感的前提下，讓兩個分類各自成立、互不干擾：使用者從首頁進入「語寶」或「紫微筆記」的分類頁與文章頁時，能感受到氛圍差異，但仍認得是同一個網站。氛圍語彙請以站主既有 World Bible 色彩系統為參照（語寶對應『暖光／陪伴』語彙；紫微筆記對應『命盤空間：深色底金色星曜』語彙）。具體手法由美術部全權決定。",
+      "affected_templates": [
+        "src/pages/index.astro",
+        "src/pages/[category]/index.astro",
+        "src/layouts/BlogPost.astro"
+      ],
+      "acceptance": "站主目測驗收：首頁不違和、兩分類各有氣質、整體仍是一個品牌"
+    },
+    {
       "need": "需要修正網站首頁的配色與美化"
     },
     {
