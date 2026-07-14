@@ -1,0 +1,24 @@
+---
+import { CATEGORIES, type CategoryId } from '../consts';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+  id: string;
+  title: string;
+  description: string;
+  pubDate: Date;
+  category: CategoryId;
+  showCategory?: boolean;
+}
+
+const { id, title, description, pubDate, category, showCategory = true } = Astro.props;
+---
+
+<article class="post-card">
+  <div class="meta">
+    {showCategory && <a class={`chip ${category}`} href={`/${category}/`}>{CATEGORIES[category].name}</a>}
+    <FormattedDate date={pubDate} />
+  </div>
+  <h3><a href={`/posts/${id}/`}>{title}</a></h3>
+  <p>{description}</p>
+</article>

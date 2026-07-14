@@ -1,0 +1,87 @@
+{
+  "handoff_id": "jaminepa_blog_visual_handoff_v01",
+  "date": "2026-07-13",
+  "from": "管理與文字策劃層 (Claude)",
+  "to": "美術企劃部 (Codex/GPT)",
+  "scope_note": "依核心法律邊界：本層不產出任何 HTML 樣式、CSS、排版或視覺建議。以下僅為事實性交接資訊與需求登記。",
+  "art_requirements": [
+    {
+      "art_id": "blog_theme_upgrade",
+      "type": "ui_design",
+      "version": "v02（v01 cyberpunk brief 經站主裁決後改寫）",
+      "submitted": "2026-07-13",
+      "status": "approved-for-dispatch",
+      "owner_directive": "站主原話：『我要的是質感，兩邊只要可以融合出來的，不限定是什麼顏色』",
+      "brief_zh": {
+        "goal": "為 jaminepa.com 設計高質感的全站視覺主題，水準對標一流個人品牌網站",
+        "must_fuse": "同一套設計語言必須同時承載兩個內容世界，不能偏廢任何一邊：(1) 語寶——育兒、語言、旅遊、世界文化，情感基調是溫暖、陪伴；(2) 紫微筆記——紫微斗數筆記與漫畫，情感基調是沉靜、神秘、深度",
+        "color_policy": "顏色不設限，由美術部自行提案；唯一的紅線是 Brand Bible『絕對禁止』清單（恐怖、迷信感、浮誇）與品牌語氣（成熟、溫暖、理性、有電影感）",
+        "quality_bar": "『質感』為第一驗收標準：字體排印、留白、層次、細節一致性優先於裝飾效果；避免廉價感（過度漸層、過多特效、擁擠版面）",
+        "deliverable": "直接修改 jaminepa-blog 專案的 src/styles/global.css（全站樣式唯一入口），必要時可調整版型檔與字體；交付後由管理層驗證建置與部署"
+      },
+      "prompt_concept_en": "A premium, high-end personal publication theme for a bilingual-topic blog: one voice that gracefully carries both a warm parenting/travel/culture journal and a contemplative Chinese astrology (Zi Wei Dou Shu) study notebook. Editorial-grade typography, generous whitespace, cinematic and mature, refined details. Color palette open to the designer; must never feel horror, superstitious, or gaudy.",
+      "compliance_review": {
+        "reviewer": "管理與文字策劃層",
+        "result": "v02 通過：顏色開放但保留 Brand Bible 語氣紅線與禁止清單；『techblog／cyberpunk』定位已依站主裁決移除"
+      }
+    },
+    {
+      "need": "需要修正網站首頁的配色與美化"
+    },
+    {
+      "need": "需要確立全站視覺風格（首頁、分類頁、文章頁、關於頁共 4 種版型的外觀）"
+    },
+    {
+      "need": "需要決定全站字體策略（目前僅安裝 Noto Sans TC / Noto Serif TC 兩套，可自行更換）"
+    },
+    {
+      "need": "需要 4 張文章插圖，規格見同資料夾 editorial_art_req.json（art_id_001–004）"
+    },
+    {
+      "need": "需要網站 favicon 與社群分享用 OG 圖（目前 favicon 為暫置檔，可整個重做）"
+    }
+  ],
+  "site_facts": {
+    "project": "jaminepa-blog（潔米爸個人部落格）",
+    "tech": "Astro 5 靜態網站，內容為 Markdown",
+    "repo": "github.com/benjamin104-create/yubao-tts，分支 claude/astro-cloudflare-blog-setup-6iwoz5，子資料夾 blog/（暫置；原定專屬倉庫 jaminepa-blog 因平台授權故障暫不可用，之後可搬遷）",
+    "repo_status": "✅ 已推上 GitHub，美術企劃部可開工；所有樣式路徑前面加 blog/，例如 blog/src/styles/global.css",
+    "style_entry_points": {
+      "all_site_styles": "src/styles/global.css（全站樣式唯一入口）",
+      "fonts_loaded_in": "src/components/BaseHead.astro",
+      "favicon": "public/favicon.svg",
+      "page_templates": [
+        "src/pages/index.astro（首頁）",
+        "src/pages/[category]/index.astro（分類頁）",
+        "src/layouts/BlogPost.astro（文章頁）",
+        "src/pages/about.astro（關於頁）"
+      ]
+    },
+    "content_categories": [
+      {
+        "id": "yubao",
+        "name": "語寶",
+        "topics": "育兒觀、語言自學、旅遊、各國地理文化歷史"
+      },
+      {
+        "id": "ziwei",
+        "name": "紫微筆記",
+        "topics": "紫微斗數自學筆記、紫微斗數漫畫"
+      }
+    ]
+  },
+  "brand_constraints_reference": {
+    "note": "以下為站主既有定稿文件，屬品牌規範事實，非本層視覺意見",
+    "brand_bible": "yubao-tts 倉庫 Jamine_AI_Studio_OS/01_Brand/BRAND_BIBLE.md",
+    "world_bible_color_system": "yubao-tts 倉庫 Jamine_AI_Studio_OS/02_World/WORLD_BIBLE.md（冷暖對比／黑底金色命盤等色彩系統）",
+    "character_anchors": "yubao-tts 倉庫 Jamine_AI_Studio_OS/03_Characters/character_anchors.json"
+  },
+  "archived_drafts_disposition": {
+    "note": "本層先前曾產出 4 版 CSS 風格草稿與截圖（variants/A-D）。依邊界規則，該產出屬越權項目，已停止推進；美術企劃部可全數捨棄或僅作參考，處置權在美術部。",
+    "location": "jaminepa-blog 專案 variants/ 資料夾（隨程式碼一併交接）"
+  },
+  "pending_decision_owner": "站主（潔米爸）",
+  "pending_decisions": [
+    "全站視覺風格定案（由美術企劃部提案）"
+  ]
+}

@@ -1,0 +1,31 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<html lang="zh-Hant">
+  <head>
+    <BaseHead title={`關於 | ${SITE_TITLE}`} description="關於潔米爸與這個網站" />
+  </head>
+  <body>
+    <Header />
+    <main class="container">
+      <header class="page-header">
+        <h1>關於潔米爸</h1>
+      </header>
+      <article class="prose">
+        <p>
+          嗨，我是潔米爸。這個網站是我的書房，放我想慢慢寫、慢慢累積的東西：
+        </p>
+        <ul>
+          <li><strong>語寶</strong>：寫給女兒的育兒觀察與思考、語言自學隨記、旅遊分享，以及各國地理、文化與歷史的故事。</li>
+          <li><strong>紫微筆記</strong>：紫微斗數的自學筆記，以及用漫畫方式呈現的紫微斗數小故事。</li>
+        </ul>
+        <p>（這一頁之後可以再慢慢補上自我介紹、聯絡方式等。）</p>
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>

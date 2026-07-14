@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import PostCard from '../../components/PostCard.astro';
+import { CATEGORIES, SITE_TITLE, type CategoryId } from '../../consts';
+
+export function getStaticPaths() {
+  return Object.keys(CATEGORIES).map((category) => ({ params: { category } }));
+}
+
+const category = Astro.params.category as CategoryId;
+const info = CATEGORIES[category];
+const posts = (await getCollection('blog', (post) => post.data.category === category)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<html lang="zh-Hant">
+  <head>
+    <BaseHead title={`${info.name} | ${SITE_TITLE}`} description={info.description} />
+  </head>
+  <body>
+    <Header />
+    <main class="container">
+      <header class="page-header">
+        <span class={`chip ${category}`}>{info.name}</span>
+        <h1>{info.name}</h1>
+        <p>{info.description}</p>
+      </header>
+      {posts.map((post) => <PostCard id={post.id} {...post.data} showCategory={false} />)}
+      {posts.length === 0 && <p>還沒有文章，敬請期待。</p>}
+    </main>
+    <Footer />
+  </body>
+</html>
