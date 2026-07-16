@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"WenQuanYi Zen Hei",serif;background:#0f0d0b;color:#ece3d4;width:1440px;height:1180px;overflow:hidden;position:relative}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:30px 70px}
+.brand{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:2px}
+.seal{width:38px;height:38px;border:1.5px solid #c9a24b;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#c9a24b}
+.nav-links{display:flex;gap:32px;font-size:13px;color:#b7a992;letter-spacing:3px}
+.head{text-align:center;padding:6px 0 20px}
+.kick{color:#c9a24b;letter-spacing:8px;font-size:12px}
+.head h1{font-size:40px;letter-spacing:4px;margin-top:10px}
+.head .sub{color:#9a8f7d;font-size:14px;letter-spacing:2px;margin-top:12px}
+.axis{display:flex;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 6px 10px;color:#8a8072;font-size:12px;letter-spacing:4px}
+.axis .o{color:#d8a24b}.axis .i{color:#7d97c0}
+/* 九宮格 = 洛書/命盤 = 腦內地圖 */
+.grid{width:1180px;height:760px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:10px}
+.cell{border-radius:12px;padding:22px 24px;position:relative;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;border:1px solid rgba(201,162,75,.18)}
+.cell .top{display:flex;justify-content:space-between;align-items:flex-start}
+.cell .col{font-size:11px;letter-spacing:2px;opacity:.85}
+.cell .role{font-size:11px;opacity:.7;text-align:right;line-height:1.5}
+.cell .name{font-size:26px;letter-spacing:2px;font-weight:700}
+.cell .desc{font-size:12px;opacity:.75;line-height:1.6;margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px;vertical-align:middle}
+/* 左欄 向外（暖） */
+.c-white{background:linear-gradient(150deg,#f4f1ea,#e5e0d4);color:#2a2620;border-color:#d8d0bd}
+.c-green{background:linear-gradient(150deg,#26402f,#1a2e22);color:#dbe8dd}
+.c-yubao{background:linear-gradient(150deg,rgba(201,162,75,.22),rgba(201,162,75,.05));color:#f0dcae}
+/* 中欄 本體/革命 */
+.c-red{background:linear-gradient(150deg,#5c2020,#3d1414);color:#f0d0cc}
+.c-core{background:radial-gradient(circle at 50% 45%,#3a3020,#15110b);color:#f3 e6c0;color:#f3e6c0;border:1.5px solid #c9a24b;align-items:center;text-align:center;justify-content:center}
+.c-core .name{font-size:34px;color:#f0dcae}
+.c-core .k{color:#c9a24b;font-size:12px;letter-spacing:4px;margin-bottom:10px}
+.c-core .d{font-size:12px;color:#b3a892;line-height:1.7;margin-top:10px;max-width:24ch}
+.c-black{background:linear-gradient(150deg,#1a1a20,#101014);color:#d8d8e0}
+/* 右欄 向內（冷/深） */
+.c-blue{background:linear-gradient(150deg,#1e3350,#14243a);color:#cfe0f2}
+.c-gray{background:linear-gradient(150deg,#3a3d42,#26282c);color:#dcdee2}
+.c-ziwei{background:linear-gradient(150deg,#1e2a3a,#141c27);color:#ecdcb4;border-color:rgba(201,162,75,.3)}
+.foot{text-align:center;color:#6b6152;font-size:12px;letter-spacing:4px;margin-top:18px}
+</style></head><body>
+<div class="nav"><div class="brand"><div class="seal">潔</div>潔米爸・腦內革命記</div>
+<div class="nav-links"><span style="color:#ece3d4">九宮</span><span>語寶</span><span>紫微筆記</span><span>卡牌挑戰</span><span>關於</span></div></div>
+<div class="head"><div class="kick">洛書九宮 · 命盤即腦內</div>
+<h1>一個人的心，是一張九宮格</h1>
+<div class="sub">中心是「本體我」（I 人）。八個方位，是意識（E 人）的八種顏色與世界。</div></div>
+<div class="axis"><span class="o">← 向外的理解（語寶 · 世界 · 語言）</span><span>本體 · 革命</span><span class="i">向內的理解（紫微 · 心理 · 自己）→</span></div>
+<div class="grid">
+ <div class="cell c-white"><div class="top"><span class="col"><span class="dot" style="background:#fff;border:1px solid #ccc"></span>白 · 純潔完美</span><span class="role">畫師<br>創作 · 純粹</span></div><div><div class="name">語言・文化</div><div class="desc">語寶向外的第一格：認識世界的乾淨起點</div></div></div>
+ <div class="cell c-red"><div class="top"><span class="col"><span class="dot" style="background:#e05a4a"></span>紅 · 熱情自信</span><span class="role">陳浩南<br>義氣 · 勇氣</span></div><div><div class="name">行動力</div><div class="desc">抓住目光、跨出去的衝勁</div></div></div>
+ <div class="cell c-blue"><div class="top"><span class="col"><span class="dot" style="background:#5a86c0"></span>藍 · 冷靜專業</span><span class="role">柯南 / 湯川<br>洞察 · 推理</span></div><div><div class="name">心理・分析</div><div class="desc">紫微向內的第一格：冷靜看懂自己</div></div></div>
+
+ <div class="cell c-green"><div class="top"><span class="col"><span class="dot" style="background:#5a9a6c"></span>綠 · 療癒平衡</span><span class="role">歌手<br>療癒 · 生機</span></div><div><div class="name">語寶・陪伴</div><div class="desc">育兒、旅遊、放鬆神經的療癒日常</div></div></div>
+ <div class="cell c-core"><div class="k">本體我 · I 人</div><div class="name">潔米爸</div><div class="d">容器我 × 感受我。發現了意識 E 人的存在，開始一場腦內革命。</div></div>
+ <div class="cell c-gray"><div class="top"><span class="col"><span class="dot" style="background:#9096a0"></span>灰 · 中立穩重</span><span class="role">湯川教授<br>低調 · 沉著</span></div><div><div class="name">紫微・命盤</div><div class="desc">介於黑白之間，穩住重心的定盤星</div></div></div>
+
+ <div class="cell c-yubao"><div class="top"><span class="col">☀ 語寶總入口</span><span class="role">向外的理解</span></div><div><div class="name">語寶</div><div class="desc">育兒 · 語言自學 · 旅遊 · 各國文化</div></div></div>
+ <div class="cell c-black"><div class="top"><span class="col"><span class="dot" style="background:#3a3a44"></span>黑 · 權威神秘</span><span class="role">黑魔導士<br>進化 · 衝擊</span></div><div><div class="name">野心・進化</div><div class="desc">高端、前衛、強烈企圖心的暗面能量</div></div></div>
+ <div class="cell c-ziwei"><div class="top"><span class="col">◇ 紫微總入口</span><span class="role">向內的理解</span></div><div><div class="name">紫微筆記</div><div class="desc">紫微斗數自學 · 漫畫 · 心理學</div></div></div>
+</div>
+<div class="foot">每天抽一張卡，用掉是能力，用不完隔天就有代價 · JAMINEPA.COM</div>
+</body></html>
