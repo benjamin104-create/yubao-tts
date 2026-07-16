@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"WenQuanYi Zen Hei",serif;background:#f5f2ea;color:#33302a;width:1440px;height:1180px;position:relative;overflow:hidden}
+.bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,#faf8f2,#efece2)}
+.nav{position:relative;display:flex;justify-content:space-between;align-items:center;padding:34px 76px}
+.brand{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:3px;font-weight:700}
+.seal{width:38px;height:38px;border:1px solid #b79a58;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9a7e3e;font-size:17px}
+.nav-links{display:flex;gap:34px;font-size:13px;color:#a29a88;letter-spacing:3px}
+.head{position:relative;text-align:center;padding:8px 0 26px}
+.kick{color:#b08a3a;letter-spacing:9px;font-size:11px}
+.head h1{font-size:34px;letter-spacing:5px;margin-top:12px;font-weight:700}
+.head .sub{color:#948b78;font-size:13px;letter-spacing:3px;margin-top:12px}
+.grid{position:relative;width:900px;height:760px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:20px}
+.cell{background:rgba(255,255,255,.55);border:1px solid rgba(150,130,90,.18);border-radius:16px;padding:26px 26px;position:relative;display:flex;flex-direction:column;justify-content:space-between;backdrop-filter:blur(2px);transition:.2s}
+.cell .dot{width:9px;height:9px;border-radius:50%;position:absolute;top:26px;right:26px}
+.cell .cat{font-size:10px;letter-spacing:3px;color:#a89e8a}
+.cell .nm{font-size:22px;letter-spacing:2px;margin-top:auto}
+.cell .ln{font-size:11px;color:#9b917e;line-height:1.6;margin-top:7px;letter-spacing:.5px}
+/* 外圍色格：顏色只作為極淡的色調 + 一顆小圓點，其餘素白 */
+.c1{background:linear-gradient(160deg,rgba(255,255,255,.72),rgba(240,236,228,.5))}
+.c-white .dot{background:#e9e6df;border:1px solid #cfcabb}
+.c-blue{background:linear-gradient(160deg,rgba(238,242,248,.72),rgba(255,255,255,.4))}
+.c-blue .dot{background:#6f93c2}
+.c-black{background:linear-gradient(160deg,rgba(238,238,242,.7),rgba(255,255,255,.4))}
+.c-black .dot{background:#3f3f48}
+.c-green{background:linear-gradient(160deg,rgba(238,245,239,.72),rgba(255,255,255,.4))}
+.c-green .dot{background:#6ba07d}
+.c-gray{background:linear-gradient(160deg,rgba(242,242,240,.7),rgba(255,255,255,.4))}
+.c-gray .dot{background:#9aa0a6}
+.c-red{background:linear-gradient(160deg,rgba(250,240,238,.72),rgba(255,255,255,.4))}
+.c-red .dot{background:#c56a5c}
+.c-white{background:linear-gradient(160deg,rgba(252,251,248,.8),rgba(255,255,255,.4))}
+/* 中心 I */
+.c-core{background:linear-gradient(160deg,#2b2620,#1c1813);border:1px solid #b79a58;color:#f0e6d0;align-items:center;text-align:center;justify-content:center}
+.c-core .k{color:#c9a24b;font-size:11px;letter-spacing:5px}
+.c-core .nm{font-size:30px;color:#f2e7cc;margin:8px 0}
+.c-core .ln{color:#b6aa8f}
+/* 兩個特殊格：語寶 / 遊戲測驗 */
+.c-yubao{background:linear-gradient(160deg,rgba(201,162,75,.16),rgba(255,255,255,.35));border-color:rgba(180,150,80,.35)}
+.c-yubao .dot{background:#c9a24b}
+.c-quiz{background:linear-gradient(160deg,rgba(120,140,175,.14),rgba(255,255,255,.35));border-color:rgba(110,130,170,.3)}
+.c-quiz .dot{background:#7188b0}
+.c-quiz .nm,.c-yubao .nm{font-weight:700}
+.foot{position:relative;text-align:center;color:#a89e8a;font-size:11px;letter-spacing:4px;margin-top:20px}
+.foot b{color:#b08a3a;font-weight:400}
+</style></head><body>
+<div class="bg"></div>
+<div class="nav"><div class="brand"><div class="seal">潔</div>潔米爸・腦內革命記</div>
+<div class="nav-links"><span style="color:#33302a">九宮</span><span>語寶</span><span>紫微筆記</span><span>測驗</span><span>關於</span></div></div>
+<div class="head"><div class="kick">洛書九宮 · 命盤即腦內</div>
+<h1>一個人的心，是一張九宮格</h1>
+<div class="sub">中心是本體我（I）· 六格是意識的六種顏色（E）· 兩格是入口</div></div>
+<div class="grid">
+ <div class="cell c-white"><span class="dot"></span><span class="cat">白 · 純潔完美</span><div><div class="nm">畫師</div><div class="ln">創作與純粹 → 語言・文化</div></div></div>
+ <div class="cell c-blue"><span class="dot"></span><span class="cat">藍 · 冷靜專業</span><div><div class="nm">推理者</div><div class="ln">洞察與分析 → 心理・紫微</div></div></div>
+ <div class="cell c-black"><span class="dot"></span><span class="cat">黑 · 權威神秘</span><div><div class="nm">進化者</div><div class="ln">野心與蛻變 → 深度命理</div></div></div>
+
+ <div class="cell c-green"><span class="dot"></span><span class="cat">綠 · 療癒平衡</span><div><div class="nm">歌者</div><div class="ln">紓壓與生機 → 育兒陪伴</div></div></div>
+ <div class="cell c-core"><div class="k">本 體 我 · I</div><div class="nm">潔米爸</div><div class="ln">容器我 × 感受我<br>發現了意識 E 的存在</div></div>
+ <div class="cell c-gray"><span class="dot"></span><span class="cat">灰 · 中立穩重</span><div><div class="nm">定盤者</div><div class="ln">沉著與重心 → 命盤基礎</div></div></div>
+
+ <div class="cell c-yubao"><span class="dot"></span><span class="cat">☀ 向外的理解</span><div><div class="nm">語寶</div><div class="ln">育兒 · 語言 · 旅遊 · 各國文化</div></div></div>
+ <div class="cell c-red"><span class="dot"></span><span class="cat">紅 · 熱情自信</span><div><div class="nm">行動者</div><div class="ln">勇氣與義氣 → 跨出去</div></div></div>
+ <div class="cell c-quiz"><span class="dot"></span><span class="cat">◇ 互動入口</span><div><div class="nm">遊戲 / 測驗</div><div class="ln">你今天是哪個顏色？抽卡・心理測驗</div></div></div>
+</div>
+<div class="foot">點任一格 → 進入該世界的分頁 · 測驗會帶你找到<b>屬於你的顏色</b> · JAMINEPA.COM</div>
+</body></html>
