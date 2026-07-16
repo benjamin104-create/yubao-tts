@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#9a5b33"/>
-  <text x="50" y="68" font-size="52" text-anchor="middle" fill="#faf8f4" font-family="sans-serif" font-weight="bold">潔</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="16" fill="#0f1925"/>
+  <rect x="6.5" y="6.5" width="51" height="51" rx="11.5" fill="none" stroke="#c8a66a" stroke-width="1.5"/>
+  <path d="M10 47c10 5 19 6 27 3 7-2 12-6 17-12" fill="none" stroke="#6f9b8d" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="49" cy="15" r="3" fill="#c8a66a"/>
+  <text x="32" y="42" text-anchor="middle" fill="#f4efe4" font-family="Noto Serif TC, serif" font-size="30" font-weight="700">潔</text>
 </svg>

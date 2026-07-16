@@ -15,37 +15,52 @@ const posts = (await getCollection('blog'))
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
-  <body>
+  <body class="page-home">
     <Header />
     <main class="container">
       <section class="hero">
-        <p class="eyebrow">Jaminepa.com</p>
-        <h1>把時間，<br />慢慢寫成一間<span class="em">書房</span>。</h1>
-        <p>
-          你好，我是潔米爸。這間書房裡放的，其實是同一件事——<strong>理解</strong>。
-          「語寶」是向外的理解：陪女兒認識世界的育兒思考、語言自學、旅遊與各國文化；
-          「紫微筆記」是向內的理解：用紫微斗數，慢慢讀懂自己。
-        </p>
+        <div class="hero-copy">
+          <p class="eyebrow">Jaminepa.com</p>
+          <h1>把時間，<br />慢慢寫成一間<span class="em">書房</span>。</h1>
+          <p>
+            你好，我是潔米爸。這間書房裡放的，其實是同一件事——<strong>理解</strong>。
+            「語寶」是向外的理解：陪女兒認識世界的育兒思考、語言自學、旅遊與各國文化；
+            「紫微筆記」是向內的理解：用紫微斗數，慢慢讀懂自己。
+          </p>
+        </div>
+        <div class="hero-atmosphere" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
         <span class="vertical" aria-hidden="true">語寶 · 紫微筆記</span>
       </section>
 
       <div class="category-grid">
         <a class="category-card yubao" href="/yubao/">
-          <span class="icon">🌱</span>
-          <h2>語寶</h2>
-          <p>{CATEGORIES.yubao.description}</p>
+          <span class="icon" aria-hidden="true"></span>
+          <div class="category-card-copy">
+            <h2>語寶</h2>
+            <p>{CATEGORIES.yubao.description}</p>
+          </div>
           <span class="cta">看看文章 →</span>
         </a>
         <a class="category-card ziwei" href="/ziwei/">
-          <span class="icon">🔮</span>
-          <h2>紫微筆記</h2>
-          <p>{CATEGORIES.ziwei.description}</p>
+          <span class="icon" aria-hidden="true"></span>
+          <div class="category-card-copy">
+            <h2>紫微筆記</h2>
+            <p>{CATEGORIES.ziwei.description}</p>
+          </div>
           <span class="cta">看看文章 →</span>
         </a>
       </div>
 
-      <h2 class="section-title">最新文章</h2>
-      {posts.map((post) => <PostCard id={post.id} {...post.data} />)}
+      <section class="latest-section">
+        <h2 class="section-title">最新文章</h2>
+        <div class="post-list">
+          {posts.map((post) => <PostCard id={post.id} {...post.data} />)}
+        </div>
+      </section>
     </main>
     <Footer />
   </body>
