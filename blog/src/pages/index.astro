@@ -4,7 +4,8 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import PostCard from '../components/PostCard.astro';
-import { CATEGORIES, SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import NineGrid from '../components/NineGrid.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -15,37 +16,35 @@ const posts = (await getCollection('blog'))
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
-  <body>
+  <body class="page-home">
     <Header />
-    <main class="container">
-      <section class="hero">
-        <p class="eyebrow">Jaminepa.com</p>
-        <h1>把時間，<br />慢慢寫成一間<span class="em">書房</span>。</h1>
-        <p>
-          你好，我是潔米爸。這間書房裡放的，其實是同一件事——<strong>理解</strong>。
-          「語寶」是向外的理解：陪女兒認識世界的育兒思考、語言自學、旅遊與各國文化；
-          「紫微筆記」是向內的理解：用紫微斗數，慢慢讀懂自己。
+    <main>
+      <section class="grid-hero container">
+        <p class="eyebrow">洛書九宮 · 命盤即腦內</p>
+        <h1>一個人的心，<br />是一張<span>九宮格</span></h1>
+        <p class="hero-lead">
+          中心是本體我（I），六格是意識的六種顏色（E），兩格通往語寶與卡牌世界。
+          命盤不是命運判決，而是一張練習理解自己的地圖。
         </p>
-        <span class="vertical" aria-hidden="true">語寶 · 紫微筆記</span>
+        <div class="hero-orbit" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </div>
       </section>
 
-      <div class="category-grid">
-        <a class="category-card yubao" href="/yubao/">
-          <span class="icon">🌱</span>
-          <h2>語寶</h2>
-          <p>{CATEGORIES.yubao.description}</p>
-          <span class="cta">看看文章 →</span>
-        </a>
-        <a class="category-card ziwei" href="/ziwei/">
-          <span class="icon">🔮</span>
-          <h2>紫微筆記</h2>
-          <p>{CATEGORIES.ziwei.description}</p>
-          <span class="cta">看看文章 →</span>
-        </a>
-      </div>
+      <div class="container">
+        <NineGrid />
 
-      <h2 class="section-title">最新文章</h2>
-      {posts.map((post) => <PostCard id={post.id} {...post.data} />)}
+        <section class="latest-section" aria-labelledby="latest-title">
+          <div class="section-intro compact">
+            <p class="eyebrow">FROM THE STUDY</p>
+            <h2 id="latest-title">最新文章</h2>
+          </div>
+          <div class="post-list">
+            {posts.map((post) => <PostCard id={post.id} {...post.data} />)}
+          </div>
+        </section>
+      </div>
     </main>
     <Footer />
   </body>

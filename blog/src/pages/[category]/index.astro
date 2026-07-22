@@ -21,16 +21,25 @@ const posts = (await getCollection('blog', (post) => post.data.category === cate
   <head>
     <BaseHead title={`${info.name} | ${SITE_TITLE}`} description={info.description} />
   </head>
-  <body>
+  <body class={`page-category theme-${category}`}>
     <Header />
     <main class="container">
+      <a class="back-grid" href="/#nine-grid">
+        <span aria-hidden="true">←</span>
+        回到九宮
+      </a>
       <header class="page-header">
-        <span class={`chip ${category}`}>{info.name}</span>
-        <h1>{info.name}</h1>
-        <p>{info.description}</p>
+        <div>
+          <span class={`chip ${category}`}>{info.name}</span>
+          <h1>{info.name}</h1>
+          <p>{info.description}</p>
+        </div>
+        <span class="page-mark" aria-hidden="true"></span>
       </header>
-      {posts.map((post) => <PostCard id={post.id} {...post.data} showCategory={false} />)}
-      {posts.length === 0 && <p>還沒有文章，敬請期待。</p>}
+      <section class="post-list category-posts">
+        {posts.map((post) => <PostCard id={post.id} {...post.data} showCategory={false} />)}
+        {posts.length === 0 && <p>還沒有文章，敬請期待。</p>}
+      </section>
     </main>
     <Footer />
   </body>

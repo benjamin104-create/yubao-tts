@@ -1,0 +1,39 @@
+---
+import { NINE_GRID } from '../consts';
+---
+
+<section class="nine-section" id="nine-grid" aria-labelledby="nine-title">
+  <div class="section-intro">
+    <p class="eyebrow">THE INNER NINE · 九宮導覽</p>
+    <h2 id="nine-title">選一格，走進今天的自己</h2>
+    <p>每一種顏色都是一種心理能力；不是命運標籤，而是你此刻可以調用的理解方式。</p>
+  </div>
+
+  <div class="nine-grid">
+    {
+      NINE_GRID.map((cell) => (
+        <a
+          class={`nine-cell theme-${cell.theme}${cell.theme === 'core' ? ' is-core' : ''}`}
+          href={cell.href}
+          aria-label={`${cell.eyebrow}：${cell.name}`}
+        >
+          <span class="color-rail" aria-hidden="true"></span>
+          <span class="cell-top">
+            <span class="cell-label">{cell.eyebrow}</span>
+            <span class="color-dot" aria-hidden="true"></span>
+          </span>
+          <span class="cell-copy">
+            <strong>{cell.name}</strong>
+            <span>{cell.description}</span>
+          </span>
+          <span class="cell-index" aria-hidden="true">{cell.index}</span>
+        </a>
+      ))
+    }
+  </div>
+
+  <p class="color-legend">
+    <span aria-hidden="true"></span>
+    顏色 = 六種心理原型，滑過感受你的顏色
+  </p>
+</section>
