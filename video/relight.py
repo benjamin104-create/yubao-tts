@@ -126,6 +126,11 @@ PRESETS = {
     "g1": dict(key=0.17, rim=0.34, lift=0.17, wb=0.90, clar=0.16, vib=0.13, contrast=0.21),
     "g2": dict(key=0.15, rim=0.30, lift=0.13, wb=0.85, clar=0.14, vib=0.11, contrast=0.18),
     "ng": dict(key=0.06, rim=0.12, lift=0.05, wb=0.35, clar=0.08, vib=0.06, contrast=0.08),
+    # The model-sheet figures are already studio-lit, just very low-key against
+    # their dark card. On a white page they need a little lift so the face reads
+    # at reel size — but no rim: a white kicker on a black suit over a white page
+    # only eats the silhouette.
+    "body": dict(key=0.10, rim=0.0, lift=0.10, wb=0.55, clar=0.12, vib=0.08, contrast=0.14),
 }
 
 

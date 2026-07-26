@@ -69,6 +69,7 @@ COL_X0, COL_X1 = 305, 715
 LOOK_Y = 352
 PERSON_BOTTOM = 1090
 PERSON_MAX_W, PERSON_MAX_H = 415, 645
+BODY_H = 690          # full-body views run taller than the chest-up cut-outs
 
 
 def box_rect(i):
@@ -115,6 +116,8 @@ LOOKS = [
     },
     {
         "photo": "ng",
+        "views": ["body_front", "body_a45", "body_side", "body_back"],
+        "view_labels": ["FRONT", "45\u00b0", "SIDE", "BACK"],
         "title": "GLASSES OFF",
         "tag": "LOOK 03",
         "label": "正式 · 西裝",
@@ -132,6 +135,7 @@ LOOKS = [
 
 INTRO_F = 150
 LOOK_F = 99
+LOOK3_F = 168         # the turn needs 4 views held in sequence
 OUTRO_F = 73
 
 
@@ -226,6 +230,19 @@ def load_people():
         im = Image.open(os.path.join(ASSETS, key + ".png")).convert("RGBA")
         im = relight.relight_named(im, key)
         people[key] = fade_bottom(fit(im, PERSON_MAX_W, PERSON_MAX_H), 90)
+
+    # Full-body views off the character model sheet. They are scaled as a group
+    # against the tallest of them, so the figure keeps one constant height while
+    # it turns — scaling each to fit its own box would make him bob.
+    raw = {}
+    for name in ("front", "a45", "side", "back"):
+        im = Image.open(os.path.join(ASSETS, "body_%s.png" % name)).convert("RGBA")
+        raw[name] = relight.relight_named(im, "body")
+    tallest = max(im.height for im in raw.values())
+    scale = BODY_H / tallest
+    for name, im in raw.items():
+        people["body_" + name] = im.resize(
+            (max(1, int(im.width * scale)), max(1, int(im.height * scale))), Image.LANCZOS)
     return people
 
 
@@ -314,6 +331,33 @@ def draw_pill(d, xy, text, on):
     d.text((x + 15, y + 6), text, font=C_PILL, fill=(255, 255, 255) if on else INK)
 
 
+TURN_START = 40          # frame the figure begins to rotate
+TURN_HOLD = 20           # frames each view is held
+TURN_SWAP = 7            # frames of smear covering each change of view
+
+
+def turn_frame(look, f, total):
+    """Pick the body view for this frame and say how hard to smear it.
+
+    The reference reel turns the model on camera; with four stills off the model
+    sheet the same beat is built by cutting FRONT → 45° → SIDE → BACK under a
+    horizontal smear, which is what the eye reads as a body rotating.
+    """
+    views = look["views"]
+    t = f - TURN_START
+    if t < 0:
+        return PEOPLE[views[0]], 0, 0.0
+    step = TURN_HOLD + TURN_SWAP
+    idx = min(len(views) - 1, t // step)
+    within = t - idx * step
+    if within >= TURN_HOLD and idx < len(views) - 1:
+        # inside a swap: smear peaks mid-way, and the new view takes over there
+        k = (within - TURN_HOLD) / TURN_SWAP
+        smear = math.sin(k * math.pi) * 88
+        return PEOPLE[views[idx + 1 if k > 0.5 else idx]], int(idx + (1 if k > 0.5 else 0)), smear
+    return PEOPLE[views[idx]], int(idx), 0.0
+
+
 def render_look(look, f, total):
     """One frame of an outfit card."""
     canvas = Image.new("RGBA", (W, H), BG + (255,))
@@ -337,14 +381,43 @@ def render_look(look, f, total):
         draw_pill(d, (COL_X0 + 12, LOOK_Y + 72 + dy), *look["pill"])
 
     # subject, bottom-anchored, with a slow push-in
-    person = PEOPLE[look["photo"]]
-    zoom = 1.0 + 0.055 * p
+    if look.get("views"):
+        person, view_i, smear = turn_frame(look, f, total)
+        zoom = 1.0
+    else:
+        person = PEOPLE[look["photo"]]
+        view_i, smear = None, 0.0
+        zoom = 1.0 + 0.055 * p
     pw, ph = int(person.width * zoom), int(person.height * zoom)
-    ps = person.resize((pw, ph), Image.LANCZOS)
+    ps = person.resize((pw, ph), Image.LANCZOS) if zoom != 1.0 else person
     slide = int((1 - ease_out(min(1.0, f / 12.0))) * 40)
     px = int((COL_X0 + COL_X1) / 2 - pw / 2) + slide
     py = PERSON_BOTTOM - ph
-    canvas.alpha_composite(ps, (px, py))
+
+    if smear > 0:
+        # blur the figure alone, not the page, so the turn reads as the body
+        # moving while the layout stays locked
+        plate = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+        plate.alpha_composite(ps, (px, py))
+        plate = plate.filter(ImageFilter.GaussianBlur(smear * 0.22))
+        plate = Image.fromarray(
+            np.asarray(motion_blur(Image.fromarray(
+                np.asarray(plate)[..., :3]), int(smear))).astype(np.uint8))
+        alpha = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+        alpha.alpha_composite(ps, (px, py))
+        a = np.asarray(alpha)[..., 3]
+        a = np.asarray(Image.fromarray(a).filter(ImageFilter.GaussianBlur(smear * 0.22)))
+        merged = np.dstack([np.asarray(plate), a])
+        canvas.alpha_composite(Image.fromarray(merged.astype(np.uint8), "RGBA"))
+    else:
+        canvas.alpha_composite(ps, (px, py))
+
+    if view_i is not None:
+        tag = look["view_labels"][view_i]
+        tw = tracked_width(d, tag, F_QTY, 1)
+        d.rounded_rectangle([COL_X1 - tw - 34, PERSON_BOTTOM + 14,
+                             COL_X1 - 10, PERSON_BOTTOM + 46], radius=16, fill=INK)
+        tracked(d, (COL_X1 - tw - 22, PERSON_BOTTOM + 19), tag, F_QTY, (255, 255, 255), tracking=1)
 
     wm = ig_glyph(30, (206, 208, 214, 255))
     canvas.alpha_composite(wm, (W - 52, 330))
@@ -410,7 +483,9 @@ def render_intro(f, total):
 
 def render_outro(f, total):
     """Final look, dimmed, with the handle."""
-    base = render_look(LOOKS[-1], LOOK_F - 1, LOOK_F)
+    # frame 38: boxes fully revealed, still on FRONT — the turn starts at 40, and
+    # ending the reel on the back of his head is a poor last impression
+    base = render_look(LOOKS[-1], 38, LOOK3_F)
     p = f / (total - 1)
     dim = 0.88 * min(1.0, f / 10.0)
     canvas = Image.blend(base, Image.new("RGB", (W, H), (22, 22, 24)), dim).convert("RGBA")
@@ -446,21 +521,22 @@ def apply_wipe(img, f, total, first, last):
 def frames():
     yield from (("intro", f, INTRO_F) for f in range(INTRO_F))
     for i in range(len(LOOKS)):
-        yield from ((("look", i), f, LOOK_F) for f in range(LOOK_F))
+        n = LOOK3_F if LOOKS[i].get("views") else LOOK_F
+        yield from ((("look", i), f, n) for f in range(n))
     yield from (("outro", f, OUTRO_F) for f in range(OUTRO_F))
 
 
 def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    total = INTRO_F + LOOK_F * len(LOOKS) + OUTRO_F
     cmd = [
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
         "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
         "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "18",
         "-pix_fmt", "yuv420p", "-movflags", "+faststart", OUT,
     ]
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     seq = list(frames())
+    total = len(seq)
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     for n, (kind, f, seg_total) in enumerate(seq):
         if kind == "intro":
             img = render_intro(f, seg_total)
