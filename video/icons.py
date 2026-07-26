@@ -217,6 +217,34 @@ def draw_blazer(size):
     return _shadow(im, blur=8, offset=(0, 6), opacity=58)
 
 
+def draw_cardigan(size):
+    """agnès b.'s signature snap cardigan — open front, ribbed placket of snaps."""
+    w, h = size
+    im, d = _tile(size)
+    cx = w / 2
+    top, hem = h * 0.24, h * 0.84
+    sh = w * 0.38
+    body = (206, 208, 214, 255)
+    d.polygon([(cx - sh, top + h * 0.09), (cx - sh * 0.94, hem), (cx + sh * 0.94, hem),
+               (cx + sh, top + h * 0.09), (cx + sh * 0.40, top),
+               (cx - sh * 0.40, top)], fill=body)
+    # open front gap
+    d.polygon([(cx - sh * 0.10, top + h * 0.02), (cx + sh * 0.10, top + h * 0.02),
+               (cx + sh * 0.13, hem), (cx - sh * 0.13, hem)], fill=(236, 238, 242, 255))
+    # ribbed collar band
+    d.polygon([(cx - sh * 0.40, top), (cx + sh * 0.40, top),
+               (cx + sh * 0.34, top + h * 0.06), (cx - sh * 0.34, top + h * 0.06)],
+              fill=(180, 182, 190, 255))
+    # the row of pearly snaps
+    for k in range(7):
+        by = top + h * 0.10 + k * h * 0.098
+        if by > hem - h * 0.04:
+            break
+        d.ellipse([cx - sh * 0.22 - w * 0.013, by, cx - sh * 0.22 + w * 0.013, by + w * 0.026],
+                  fill=(250, 250, 252, 255), outline=(160, 162, 170, 255))
+    return _shadow(im, blur=7, offset=(0, 5), opacity=48)
+
+
 def draw_tie(size):
     w, h = size
     im, d = _tile(size)
@@ -281,6 +309,7 @@ ICONS = {
     "beads": draw_beads,
     "sneakers": draw_sneakers,
     "blazer": draw_blazer,
+    "cardigan": draw_cardigan,
     "tie": draw_tie,
     "phone": draw_phone,
     "watch": draw_watch,

@@ -17,6 +17,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 import icons
+import relight
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(HERE, "assets")
@@ -53,6 +54,7 @@ C_LEAD = cjk(30)
 C_LABEL = cjk(26)
 C_ITEM = cjk(17)
 C_PILL = cjk(20)
+C_BRAND = cjk(14)
 
 # ---------------------------------------------------------------- layout grid
 PAD_X = 40
@@ -75,6 +77,11 @@ def box_rect(i):
 
 
 # ------------------------------------------------------------------- looks
+# Items are (icon, 中文名, brand, official reference, qty). Brand/reference are
+# real agnès b. catalogue entries where the piece is theirs; personal items are
+# marked 個人單品 with no reference.
+OWN = "個人單品"
+
 LOOKS = [
     {
         "photo": "g1",
@@ -83,9 +90,12 @@ LOOKS = [
         "label": "日常 · 白T",
         "pill": ("眼鏡 ON", True),
         "boxes": [
-            [("glasses", "黑框眼鏡", "J0114", "1x"), ("beads", "木珠項鍊", "J0207", "1x")],
-            [("tshirt", "厚磅白T", "J0331", "1x"), ("cap", "鴨舌帽", "J0442", "1x")],
-            [("sneakers", "灰色球鞋", "J0518", "1x"), ("phone", "手機", "J0620", "1x")],
+            [("glasses", "黑框眼鏡", OWN, "", "1x"),
+             ("beads", "木珠項鍊", OWN, "", "1x")],
+            [("tshirt", "G&G 白T", "agnès b.", "EAI1SFC0_010", "1x"),
+             ("cap", "logo 棒球帽", "agnès b.", "2572GT47_000", "1x")],
+            [("sneakers", "灰色球鞋", OWN, "", "1x"),
+             ("phone", "手機", OWN, "", "1x")],
         ],
     },
     {
@@ -95,9 +105,12 @@ LOOKS = [
         "label": "出門 · 後背包",
         "pill": ("眼鏡 ON", True),
         "boxes": [
-            [("glasses", "黑框眼鏡", "J0114", "1x"), ("cap", "鴨舌帽", "J0442", "1x")],
-            [("tshirt", "厚磅白T", "J0331", "1x"), ("backpack", "黑色後背包", "J0755", "1x")],
-            [("sneakers", "灰色球鞋", "J0518", "1x"), ("watch", "手錶", "J0863", "1x")],
+            [("glasses", "黑框眼鏡", OWN, "", "1x"),
+             ("cap", "b. 棒球帽", "agnès b.", "2572K032_834", "1x")],
+            [("tshirt", "G&G 白T", "agnès b.", "EAI1SFC0_010", "1x"),
+             ("backpack", "機能後背包", "agnès b. VOYAGE", "O066VNP8_000", "1x")],
+            [("sneakers", "灰色球鞋", OWN, "", "1x"),
+             ("watch", "手錶", OWN, "", "1x")],
         ],
     },
     {
@@ -107,9 +120,12 @@ LOOKS = [
         "label": "正式 · 西裝",
         "pill": ("眼鏡 OFF", False),
         "boxes": [
-            [("glasses", "黑框眼鏡", "J0114", "0x"), ("blazer", "黑色西裝外套", "J0902", "1x")],
-            [("tshirt", "白襯衫", "J0918", "1x"), ("tie", "素面領帶", "J0927", "1x")],
-            [("watch", "手錶", "J0863", "1x"), ("phone", "手機", "J0620", "1x")],
+            [("glasses", "黑框眼鏡", OWN, "", "0x"),
+             ("blazer", "黑色西裝外套", OWN, "", "1x")],
+            [("tshirt", "Tom 白襯衫", "agnès b.", "W501UQ36_010", "1x"),
+             ("tie", "素面領帶", OWN, "", "1x")],
+            [("cardigan", "排釦開襟衫", "agnès b.", "Cardigan Pression", "1x"),
+             ("watch", "手錶", OWN, "", "1x")],
         ],
     },
 ]
@@ -208,13 +224,15 @@ def load_people():
     people = {}
     for key in ("g1", "g2", "ng"):
         im = Image.open(os.path.join(ASSETS, key + ".png")).convert("RGBA")
+        im = relight.relight_named(im, key)
         people[key] = fade_bottom(fit(im, PERSON_MAX_W, PERSON_MAX_H), 90)
     return people
 
 
 PEOPLE = load_people()
 INTRO_PERSON = fade_bottom(
-    fit(Image.open(os.path.join(ASSETS, "g1.png")).convert("RGBA"), 520, 800), 120)
+    fit(relight.relight_named(
+        Image.open(os.path.join(ASSETS, "g1.png")).convert("RGBA"), "g1"), 520, 800), 120)
 ICON_CACHE = {}
 
 
@@ -231,6 +249,15 @@ def draw_head(d, look):
     tracked(d, (PAD_X, TITLE_Y), look["title"], F_TITLE, INK, tracking=-4)
     tracked(d, (PAD_X, SUB_Y), "DRESSING BREAKDOWN", F_SUB, INK, tracking=-1)
     d.text((PAD_X + 2, LEAD_Y), "潔米爸 換裝拆解", font=C_LEAD, fill=GREY)
+
+
+def fit_text(d, cx, y, text, fnt, max_w, fill, mk):
+    """Centre `text` at `cx`, stepping the point size down until it fits."""
+    size = fnt.size
+    while size > 9 and d.textlength(text, font=fnt) > max_w:
+        size -= 1
+        fnt = mk(size)
+    d.text((cx - d.textlength(text, font=fnt) / 2, y), text, font=fnt, fill=fill)
 
 
 def draw_box(canvas, d, idx, items, reveal):
@@ -253,25 +280,28 @@ def draw_box(canvas, d, idx, items, reveal):
         d.text((x1 - 30, y0 + 18), "i", font=F_QTY, fill=INK)
 
     cell_w = (x1 - x0) / len(items)
-    for j, (name, zh, code, qty) in enumerate(items):
+    for j, (name, zh, brand, code, qty) in enumerate(items):
         ix = x0 + cell_w * (j + 0.5)
-        sz = 104
+        sz = 88
         tile = icon(name, sz)
-        pos = (int(ix - sz / 2), int(y0 + 26))
+        pos = (int(ix - sz / 2), int(y0 + 22))
         canvas.alpha_composite(tile, pos)
         if qty == "0x":
             # crossed out — this piece is *not* worn in this look
-            d.line([(pos[0] + 16, pos[1] + sz - 18), (pos[0] + sz - 16, pos[1] + 18)],
+            d.line([(pos[0] + 14, pos[1] + sz - 15), (pos[0] + sz - 14, pos[1] + 15)],
                    fill=(196, 60, 52), width=4)
-        # rotated product code beside the icon, as in the reference flat-lays
-        code_im = Image.new("RGBA", (60, 16), (0, 0, 0, 0))
-        ImageDraw.Draw(code_im).text((0, 1), code, font=F_CODE, fill=(168, 170, 176, 255))
-        canvas.alpha_composite(code_im.rotate(90, expand=True), (int(ix + sz / 2 - 4), int(y0 + 46)))
+        # rotated reference beside the icon, as in the reference flat-lays
+        if code:
+            code_im = Image.new("RGBA", (66, 16), (0, 0, 0, 0))
+            ImageDraw.Draw(code_im).text((0, 1), code, font=F_CODE, fill=(172, 174, 180, 255))
+            canvas.alpha_composite(code_im.rotate(90, expand=True),
+                                   (int(ix + sz / 2 - 2), int(y0 + 34)))
 
-        zw = d.textlength(zh, font=C_ITEM)
-        d.text((ix - zw / 2, y0 + 26 + sz + 4), zh, font=C_ITEM, fill=(120, 122, 128))
+        fit_text(d, ix, y0 + 116, zh, C_ITEM, cell_w - 8, (104, 106, 112), cjk)
+        fit_text(d, ix, y0 + 137, brand, C_BRAND, cell_w - 8,
+                 INK if brand != OWN else (176, 178, 184), cjk)
         qw = d.textlength(qty, font=F_QTY)
-        d.text((ix - qw / 2, y0 + 26 + sz + 26), qty, font=F_QTY,
+        d.text((ix - qw / 2, y0 + 158), qty, font=F_QTY,
                fill=(196, 60, 52) if qty == "0x" else INK)
 
 
