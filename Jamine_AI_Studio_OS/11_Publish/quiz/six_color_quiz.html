@@ -1,0 +1,579 @@
+<title>你此刻最亮的那顆星｜潔米爸的六色測驗</title>
+
+<style>
+  :root{
+    --ground:#0C1017;
+    --surface:rgba(255,255,255,.045);
+    --surface-2:rgba(255,255,255,.07);
+    --line:rgba(201,162,75,.22);
+    --line-soft:rgba(237,230,214,.10);
+    --gold:#C9A24B;
+    --gold-dim:#8F7434;
+    --ink:#EDE6D6;
+    --ink-2:#B9B3A5;
+    --muted:#7F8794;
+    --c-white:#E8E4DA;
+    --c-blue:#6F93C2;
+    --c-grey:#9AA0A6;
+    --c-violet:#8B79BC;
+    --c-green:#6BA07D;
+    --c-red:#C56A5C;
+    --shadow:0 24px 60px rgba(0,0,0,.55);
+    --serif:"Noto Serif TC","Songti TC","Source Han Serif TC",Georgia,serif;
+    --sans:"PingFang TC","Noto Sans TC","Heiti TC",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  /* 淺色＝古星圖紙本，同一個世界的另一種載體 */
+  @media (prefers-color-scheme: light){
+    :root{
+      --ground:#EFE9DA;
+      --surface:rgba(28,22,14,.035);
+      --surface-2:rgba(28,22,14,.06);
+      --line:rgba(140,110,50,.30);
+      --line-soft:rgba(40,32,20,.18);
+      --gold:#8A6A22;
+      --gold-dim:#B79A58;
+      --ink:#1A150D;
+      --ink-2:#4A4234;
+      --muted:#6E6656;
+      --c-white:#A79E8C;
+      --c-blue:#3F659A;
+      --c-grey:#6E747C;
+      --c-violet:#5F4E90;
+      --c-green:#3F7553;
+      --c-red:#A2402F;
+      --shadow:0 20px 50px rgba(90,70,30,.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0C1017;--surface:rgba(255,255,255,.045);--surface-2:rgba(255,255,255,.07);
+    --line:rgba(201,162,75,.22);--line-soft:rgba(237,230,214,.10);
+    --gold:#C9A24B;--gold-dim:#8F7434;--ink:#EDE6D6;--ink-2:#B9B3A5;--muted:#7F8794;
+    --c-white:#E8E4DA;--c-blue:#6F93C2;--c-grey:#9AA0A6;--c-violet:#8B79BC;--c-green:#6BA07D;--c-red:#C56A5C;
+    --shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  :root[data-theme="light"]{
+    --ground:#EFE9DA;--surface:rgba(28,22,14,.035);--surface-2:rgba(28,22,14,.06);
+    --line:rgba(140,110,50,.30);--line-soft:rgba(40,32,20,.18);
+    --gold:#8A6A22;--gold-dim:#B79A58;--ink:#1A150D;--ink-2:#4A4234;--muted:#6E6656;
+    --c-white:#A79E8C;--c-blue:#3F659A;--c-grey:#6E747C;--c-violet:#5F4E90;--c-green:#3F7553;--c-red:#A2402F;
+    --shadow:0 20px 50px rgba(90,70,30,.16);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--sans);line-height:1.75;
+    min-height:100vh;
+  }
+  @media (prefers-color-scheme: dark){ body{-webkit-font-smoothing:antialiased} }
+  :root[data-theme="dark"] body{-webkit-font-smoothing:antialiased}
+  :root[data-theme="light"] body{-webkit-font-smoothing:auto}
+  #sky{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{position:relative;z-index:1;max-width:44rem;margin:0 auto;padding:clamp(2rem,6vw,4.5rem) clamp(1.15rem,4vw,2rem) 5rem}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--gold);margin:0 0 1.15rem
+  }
+  h1{
+    font-family:var(--serif);font-weight:700;
+    font-size:clamp(2rem,7vw,3.1rem);line-height:1.28;letter-spacing:.02em;
+    text-wrap:balance;margin:0 0 1.25rem
+  }
+  .lede{max-width:24em;color:var(--ink-2);font-size:1.02rem;margin:0 0 2.4rem}
+  .fine{color:var(--muted);font-size:.83rem;line-height:1.9;max-width:27em}
+
+  /* 六星羅列 —— 入口 */
+  .stars{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 2.6rem;padding:0;list-style:none}
+  .stars li{
+    display:flex;align-items:center;gap:.5rem;
+    border:1px solid var(--line-soft);border-radius:2rem;
+    padding:.42rem .85rem;font-size:.8rem;color:var(--ink-2);
+    background:var(--surface)
+  }
+  .pip{width:.5rem;height:.5rem;border-radius:50%;flex:none}
+
+  button{font:inherit;color:inherit;cursor:pointer}
+  .btn{
+    display:inline-flex;align-items:center;gap:.7rem;
+    background:var(--gold);color:var(--ground);
+    border:0;border-radius:.2rem;padding:.9rem 1.7rem;
+    font-size:.95rem;font-weight:700;letter-spacing:.06em;
+    transition:transform .18s ease,filter .18s ease
+  }
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+  .btn-ghost{
+    background:transparent;color:var(--ink-2);
+    border:1px solid var(--line);border-radius:.2rem;
+    padding:.72rem 1.25rem;font-size:.85rem;font-weight:400
+  }
+  .btn-ghost:hover{color:var(--ink);border-color:var(--gold)}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+  /* 進度：一條被點亮的星軌 */
+  .track{display:flex;gap:.34rem;margin:0 0 2.2rem}
+  .track i{flex:1;height:2px;background:var(--line-soft);transition:background .4s ease}
+  .track i.on{background:var(--gold)}
+
+  .qnum{font-family:var(--mono);font-size:.7rem;letter-spacing:.3em;color:var(--muted);margin:0 0 .9rem}
+  .q{
+    font-family:var(--serif);font-weight:700;
+    font-size:clamp(1.32rem,4.4vw,1.72rem);line-height:1.5;
+    text-wrap:balance;margin:0 0 2rem
+  }
+  .opts{display:flex;flex-direction:column;gap:.7rem}
+  .opt{
+    text-align:left;width:100%;
+    background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:.25rem;padding:1.05rem 1.2rem;
+    font-size:.98rem;line-height:1.65;color:var(--ink);
+    transition:border-color .16s ease,background .16s ease,transform .16s ease
+  }
+  .opt:hover{border-color:var(--gold);background:var(--surface-2);transform:translateX(3px)}
+
+  .screen{animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .screen{animation:none}
+    .opt:hover,.btn:hover{transform:none}
+  }
+
+  /* 結果 */
+  .result-head{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin:0 0 .3rem}
+  .result-name{font-family:var(--serif);font-size:clamp(2.1rem,8vw,3rem);font-weight:700;line-height:1.1;margin:0}
+  .result-hue{font-family:var(--mono);font-size:.72rem;letter-spacing:.28em;color:var(--muted)}
+  .result-line{color:var(--ink-2);margin:.9rem 0 2.2rem;font-size:1.02rem;max-width:26em}
+
+  .chart-row{display:flex;gap:clamp(1.2rem,5vw,2.4rem);align-items:center;flex-wrap:wrap;margin:.4rem 0 2.4rem}
+  canvas#radar{width:min(230px,58vw);height:min(230px,58vw);flex:none}
+  .legend{display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;color:var(--ink-2);min-width:10rem;flex:1}
+  .legend div{display:flex;align-items:center;gap:.55rem;font-variant-numeric:tabular-nums}
+  .legend b{margin-left:auto;color:var(--ink);font-weight:600}
+
+  .block{border-top:1px solid var(--line-soft);padding-top:1.5rem;margin-top:1.5rem}
+  .block h3{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--gold);font-weight:400;margin:0 0 .7rem
+  }
+  .block p{margin:0;color:var(--ink-2);max-width:30em}
+  .second{display:flex;align-items:center;gap:.6rem;color:var(--ink-2);font-size:.95rem}
+
+  .quote{
+    border-left:2px solid var(--gold);padding:.2rem 0 .2rem 1.1rem;
+    font-family:var(--serif);font-size:1.06rem;line-height:1.8;color:var(--ink);margin:1.4rem 0 0
+  }
+  .cta{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:2.4rem}
+  .foot{margin-top:3rem;border-top:1px solid var(--line-soft);padding-top:1.4rem}
+  .toast{
+    position:fixed;left:50%;bottom:2rem;transform:translateX(-50%) translateY(1rem);
+    background:var(--gold);color:var(--ground);padding:.6rem 1.1rem;border-radius:.2rem;
+    font-size:.85rem;font-weight:700;opacity:0;pointer-events:none;transition:.25s ease;z-index:5
+  }
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .hide{display:none}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<div class="wrap">
+
+  <!-- 入口 -->
+  <section id="intro" class="screen">
+    <p class="eyebrow">命盤空間 · 潔米爸</p>
+    <h1>你此刻最亮的<br>是哪一顆星？</h1>
+    <p class="lede">六種顏色，是六種理解世界的方式。這裡不算命、不預言吉凶——只幫你看清楚，你現在正在用哪一種力氣過日子。</p>
+
+    <ul class="stars">
+      <li><span class="pip" style="background:var(--c-white)"></span>畫師</li>
+      <li><span class="pip" style="background:var(--c-blue)"></span>推理者</li>
+      <li><span class="pip" style="background:var(--c-grey)"></span>定盤者</li>
+      <li><span class="pip" style="background:var(--c-violet)"></span>進化者</li>
+      <li><span class="pip" style="background:var(--c-green)"></span>歌者</li>
+      <li><span class="pip" style="background:var(--c-red)"></span>行動者</li>
+    </ul>
+
+    <button class="btn" id="start">開始 · 10 個問題</button>
+    <p class="fine" style="margin-top:1.6rem">約 2 分鐘。沒有標準答案，選你「真的會做的」，不是「應該做的」。</p>
+  </section>
+
+  <!-- 題目 -->
+  <section id="quiz" class="hide">
+    <div class="track" id="track" aria-hidden="true"></div>
+    <p class="qnum" id="qnum"></p>
+    <h2 class="q" id="qtext"></h2>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="hide">
+    <p class="eyebrow">你的盤 · 此刻</p>
+    <div class="result-head">
+      <h2 class="result-name" id="rname"></h2>
+      <span class="result-hue" id="rhue"></span>
+    </div>
+    <p class="result-line" id="rline"></p>
+
+    <div class="chart-row">
+      <canvas id="radar" width="380" height="380" aria-hidden="true"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="block">
+      <h3>這顆星的力量</h3>
+      <p id="rpower"></p>
+    </div>
+    <div class="block">
+      <h3>它的代價</h3>
+      <p id="rcost"></p>
+    </div>
+    <div class="block">
+      <h3>你的第二顆星</h3>
+      <p class="second" id="rsecond"></p>
+    </div>
+    <div class="block">
+      <h3>這週可以練習的一件事</h3>
+      <p id="rpractice"></p>
+    </div>
+
+    <p class="quote" id="rquote"></p>
+
+    <div class="cta">
+      <button class="btn" id="share">複製我的結果</button>
+      <button class="btn-ghost" id="again">重新測一次</button>
+    </div>
+
+    <div class="foot">
+      <p class="fine" style="max-width:30em">命盤描述的是傾向，不是判決。真正重要的不是答案，而是你開始理解自己。</p>
+      <p class="fine" style="max-width:30em;margin-top:.9rem">
+        書房筆記 · 命盤怎麼讀成生活　<b style="color:var(--ink)">@jamine_pa</b><br>
+        奶粉錢奮鬥記 · 一個爸爸的真實現場　<b style="color:var(--ink)">@i_jamine_pa</b>
+      </p>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast">已複製，去限動貼上吧</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = {
+    white:{name:"畫師",hue:"WHITE · 純潔完美",v:"--c-white"},
+    blue:{name:"推理者",hue:"BLUE · 冷靜專業",v:"--c-blue"},
+    grey:{name:"定盤者",hue:"GREY · 中立穩重",v:"--c-grey"},
+    violet:{name:"進化者",hue:"BLACK · 權威神秘",v:"--c-violet"},
+    green:{name:"歌者",hue:"GREEN · 療癒平衡",v:"--c-green"},
+    red:{name:"行動者",hue:"RED · 熱情自信",v:"--c-red"}
+  };
+  var ORDER = ["white","blue","grey","violet","green","red"];
+
+  var QUESTIONS = [
+    {q:"週五晚上突然空出三小時，沒人找你。你會——",o:[
+      {t:"把拖很久的東西一次整理乾淨",s:{white:2,grey:1}},
+      {t:"找一部想很久的片，安靜看完",s:{green:2,blue:1}},
+      {t:"研究一個最近很好奇的主題",s:{blue:2,violet:1}},
+      {t:"揪人出門，臨時的最好玩",s:{red:2,green:1}}
+    ]},
+    {q:"跟在乎的人吵完架，你的第一個念頭是——",o:[
+      {t:"先想清楚我哪句話說錯了",s:{blue:2,white:1}},
+      {t:"給彼此時間，等情緒過了再說",s:{grey:2,green:1}},
+      {t:"直接打電話講開，我受不了懸著",s:{red:2}},
+      {t:"這段關係我需要重新想一次",s:{violet:2,white:1}}
+    ]},
+    {q:"拿到一筆計畫外的錢，第一個衝動是——",o:[
+      {t:"先存起來，我喜歡有底",s:{grey:2}},
+      {t:"買一個想很久的好東西，一次到位",s:{white:2,violet:1}},
+      {t:"帶家人去吃一頓好的",s:{green:2,red:1}},
+      {t:"拿去學一個新技能或投資自己",s:{violet:2,blue:1}}
+    ]},
+    {q:"別人形容你，最常出現的一句話是——",o:[
+      {t:"你想事情很細",s:{white:2,blue:1}},
+      {t:"你很穩，找你就對了",s:{grey:2}},
+      {t:"跟你在一起很放鬆",s:{green:2}},
+      {t:"你怎麼什麼都敢",s:{red:2,violet:1}}
+    ]},
+    {q:"眼前出現一個沒人想處理的爛攤子。你——",o:[
+      {t:"先把狀況拆解清楚，才動手",s:{blue:2}},
+      {t:"我來吧，總要有人收",s:{red:1,grey:2}},
+      {t:"先找出問題根源，制度要改",s:{violet:2,white:1}},
+      {t:"先安撫大家的情緒，再談事情",s:{green:2}}
+    ]},
+    {q:"一天之中，你最喜歡的時刻是——",o:[
+      {t:"清晨還沒有人醒，一切都乾淨",s:{white:2}},
+      {t:"通勤路上，一個人戴著耳機",s:{blue:1,grey:2}},
+      {t:"傍晚，家裡開始有聲音",s:{green:2}},
+      {t:"深夜，終於可以想自己的事",s:{violet:2,red:1}}
+    ]},
+    {q:"面對一個完全不熟的領域，你會——",o:[
+      {t:"先找最完整的資料看一遍",s:{blue:2,white:1}},
+      {t:"找已經在做的人聊聊",s:{red:1,green:2}},
+      {t:"先做一次再說，錯了再修",s:{red:2,violet:1}},
+      {t:"不急，先在旁邊觀察一陣子",s:{grey:2}}
+    ]},
+    {q:"下面哪一種狀況，你最受不了？",o:[
+      {t:"東西擺得亂七八糟",s:{white:2}},
+      {t:"講話沒邏輯、前後矛盾",s:{blue:2}},
+      {t:"有人一直用情緒綁架別人",s:{grey:1,violet:2}},
+      {t:"明明可以做，卻一直拖",s:{red:2}}
+    ]},
+    {q:"要送朋友一份禮物，你的做法是——",o:[
+      {t:"挑很久，一定要挑到對的那個",s:{white:2,blue:1}},
+      {t:"送實用的，他真的會用到",s:{grey:2}},
+      {t:"送能讓他放鬆下來的東西",s:{green:2}},
+      {t:"送一個體驗，然後一起去",s:{red:2}}
+    ]},
+    {q:"這一年，你最想要的其實是——",o:[
+      {t:"把生活整理得更乾淨一點",s:{white:2,grey:1}},
+      {t:"更懂自己為什麼會這樣",s:{blue:2,violet:1}},
+      {t:"過得鬆一點、開心一點",s:{green:2}},
+      {t:"真的去做那件一直想做的事",s:{red:2,violet:1}}
+    ]}
+  ];
+
+  var READINGS = {
+    white:{
+      line:"你把「乾淨」當成一種安全感。事情整齊了，心才靜得下來。",
+      power:"你對細節的標準，是別人偷不走的專業。你經手過的東西，質感會不一樣——因為你真的在意，而且看得見別人看不見的那 5%。",
+      cost:"完美主義最貴的地方，是它會讓你遲遲不敢開始，也讓你太晚原諒自己。有時候「夠好」就已經足夠好了。",
+      practice:"這週刻意留一件事做到 80% 就交出去，觀察一下——世界並沒有塌。",
+      quote:"你不是龜毛，你只是不願意隨便。但偶爾隨便一次，也是一種練習。"
+    },
+    blue:{
+      line:"你習慣先看懂，再行動。理解本身，就能讓你安心。",
+      power:"你能把一團情緒拆成「可以處理的問題」。在混亂裡，你是那個讓大家冷靜下來的人——因為你先冷靜了。",
+      cost:"分析太快的人，容易跳過感受。有些事不需要被解釋，只需要被承認。你有時候會用「想通」代替「難過完」。",
+      practice:"這週有一次不解釋、不分析，只跟自己說一句：我現在就是不舒服，這樣可以。",
+      quote:"看懂一件事會讓你安心，但有些事要先允許自己不懂，才走得過去。"
+    },
+    grey:{
+      line:"你是那種不出聲，但大家都知道你在的人。",
+      power:"你的穩定是別人的地板。你不搶功、不製造戲劇，卻是團體裡真正撐住結構的那一個——這種人很稀有，也常被視為理所當然。",
+      cost:"太穩的人，容易把自己的需要放到最後。你習慣「我沒關係」，久了連自己都不知道自己想要什麼。",
+      practice:"這週說出一次「我想要」，不加任何解釋和條件。",
+      quote:"你撐住了很多人。也要有人問一句：那你呢？"
+    },
+    violet:{
+      line:"你不甘於停在原地。你要的不是更多，是「不一樣」。",
+      power:"你看得到別人還沒看到的方向，也願意為此重來一次。蛻變對你不是危機，是節奏——你天生就在往下一個版本走。",
+      cost:"一直進化的人，容易對「現在的自己」不滿意。野心會推著你走，也會讓你忘記停下來看看已經走多遠。",
+      practice:"這週寫下三件「我已經做到」的事，只寫過去式，不寫下一步。",
+      quote:"你總是在往前。但真正的進化，也包含承認此刻已經夠好。"
+    },
+    green:{
+      line:"你讓身邊的人鬆下來。這是一種很少被算進「能力」的能力。",
+      power:"你能接住別人的情緒，也懂得怎麼讓氣氛不緊繃。在一個大家都很用力的世界裡，你是少數知道怎麼休息的人。",
+      cost:"很會接住別人的人，常常沒有人接住。你怕衝突、怕破壞和諧，於是把不舒服自己吞下去。",
+      practice:"這週練習一次「不接」——別人的情緒先放著，你先照顧自己一次。",
+      quote:"你很擅長讓別人好過。也請對自己用同一套標準。"
+    },
+    red:{
+      line:"你不是不怕，你只是不習慣等。",
+      power:"你有把想法變成動作的能力，而這件事比想像中稀有。多數人卡在「想」，你已經開始做，而且願意為在乎的人挺身而出。",
+      cost:"衝得快的人，容易撞牆，也容易累。你的勇氣有時候是在替焦慮找出口——動起來，比坐著面對感受容易。",
+      practice:"這週有一次先不動，坐著把不舒服完整感覺一遍，再決定要不要出手。",
+      quote:"你的勇氣是真的。但真正的勇敢，有時候是停下來看清楚。"
+    }
+  };
+
+  var scores = {white:0,blue:0,grey:0,violet:0,green:0,red:0};
+  var idx = 0;
+
+  var $ = function(id){return document.getElementById(id);};
+  var intro=$("intro"), quiz=$("quiz"), result=$("result");
+  var track=$("track"), qnum=$("qnum"), qtext=$("qtext"), opts=$("opts");
+
+  // 進度星軌
+  QUESTIONS.forEach(function(){ track.appendChild(document.createElement("i")); });
+
+  function render(){
+    var Q = QUESTIONS[idx];
+    qnum.textContent = String(idx+1).padStart(2,"0") + " / " + String(QUESTIONS.length).padStart(2,"0");
+    qtext.textContent = Q.q;
+    opts.innerHTML = "";
+    Q.o.forEach(function(o){
+      var b = document.createElement("button");
+      b.className = "opt";
+      b.type = "button";
+      b.textContent = o.t;
+      b.addEventListener("click", function(){ pick(o); });
+      opts.appendChild(b);
+    });
+    Array.prototype.forEach.call(track.children, function(el,i){
+      el.className = i <= idx ? "on" : "";
+    });
+    quiz.classList.remove("screen");
+    void quiz.offsetWidth;
+    quiz.classList.add("screen");
+  }
+
+  function pick(o){
+    for(var k in o.s){ if(Object.prototype.hasOwnProperty.call(o.s,k)) scores[k] += o.s[k]; }
+    idx++;
+    if(idx < QUESTIONS.length){ render(); } else { finish(); }
+  }
+
+  function finish(){
+    quiz.classList.add("hide");
+    result.classList.remove("hide");
+    result.classList.add("screen");
+
+    var ranked = ORDER.slice().sort(function(a,b){ return scores[b]-scores[a]; });
+    var top = ranked[0], second = ranked[1];
+    var C = COLORS[top], R = READINGS[top];
+    var cs = getComputedStyle(document.documentElement);
+    var topColor = cs.getPropertyValue(C.v).trim();
+
+    $("rname").textContent = C.name;
+    $("rname").style.color = topColor;
+    $("rhue").textContent = C.hue;
+    $("rline").textContent = R.line;
+    $("rpower").textContent = R.power;
+    $("rcost").textContent = R.cost;
+    $("rpractice").textContent = R.practice;
+    $("rquote").textContent = R.quote;
+
+    var sc = COLORS[second];
+    $("rsecond").innerHTML =
+      '<span class="pip" style="background:'+cs.getPropertyValue(sc.v).trim()+'"></span>' +
+      '<span><b style="color:var(--ink)">'+sc.name+'</b>　'+sc.hue.split(" · ")[1]+
+      '——這是你的備用力氣，壓力大的時候會冒出來。</span>';
+
+    var legend = $("legend");
+    legend.innerHTML = "";
+    var max = scores[top] || 1;
+    ranked.forEach(function(k){
+      var d = document.createElement("div");
+      d.innerHTML = '<span class="pip" style="background:'+cs.getPropertyValue(COLORS[k].v).trim()+'"></span>'+
+                    COLORS[k].name+'<b>'+Math.round(scores[k]/max*100)+'</b>';
+      legend.appendChild(d);
+    });
+
+    drawRadar(topColor);
+    window.scrollTo({top:0,behavior:"smooth"});
+
+    $("share").onclick = function(){
+      var txt = "我此刻最亮的星是「"+C.name+"」——"+R.line+
+                "\n\n第二顆是「"+sc.name+"」。\n測你的顏色：潔米爸的六色測驗\n@i_jamine_pa";
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(showToast, showToast);
+      } else { showToast(); }
+    };
+  }
+
+  function showToast(){
+    var t = $("toast");
+    t.classList.add("show");
+    setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  function drawRadar(topColor){
+    var cv = $("radar"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height, cx = W/2, cy = H/2, R = W*0.36;
+    var cs = getComputedStyle(document.documentElement);
+    var line = cs.getPropertyValue("--line").trim();
+    var lineSoft = cs.getPropertyValue("--line-soft").trim();
+    ctx.clearRect(0,0,W,H);
+
+    var max = Math.max.apply(null, ORDER.map(function(k){return scores[k];})) || 1;
+    function pt(i, r){
+      var a = -Math.PI/2 + i*(Math.PI*2/6);
+      return [cx + Math.cos(a)*r, cy + Math.sin(a)*r];
+    }
+    // 底盤環
+    [0.34,0.67,1].forEach(function(f){
+      ctx.beginPath();
+      for(var i=0;i<6;i++){ var p=pt(i,R*f); i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); }
+      ctx.closePath();
+      ctx.strokeStyle = lineSoft; ctx.lineWidth = 1; ctx.stroke();
+    });
+    // 軸
+    for(var i=0;i<6;i++){
+      var p = pt(i,R);
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(p[0],p[1]);
+      ctx.strokeStyle = lineSoft; ctx.stroke();
+    }
+    // 資料多邊形
+    ctx.beginPath();
+    ORDER.forEach(function(k,i){
+      var r = R * Math.max(scores[k]/max, 0.08);
+      var p = pt(i,r);
+      i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);
+    });
+    ctx.closePath();
+    ctx.fillStyle = hexA(topColor, .20); ctx.fill();
+    ctx.strokeStyle = topColor; ctx.lineWidth = 2; ctx.stroke();
+    // 端點
+    ORDER.forEach(function(k,i){
+      var r = R * Math.max(scores[k]/max, 0.08);
+      var p = pt(i,r);
+      ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2);
+      ctx.fillStyle = cs.getPropertyValue(COLORS[k].v).trim(); ctx.fill();
+    });
+    ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2);
+    ctx.fillStyle = line; ctx.fill();
+  }
+
+  function hexA(hex, a){
+    hex = hex.replace("#","");
+    if(hex.length===3){ hex = hex.split("").map(function(c){return c+c;}).join(""); }
+    var n = parseInt(hex,16);
+    return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+  }
+
+  $("start").addEventListener("click", function(){
+    intro.classList.add("hide");
+    quiz.classList.remove("hide");
+    render();
+  });
+  $("again").addEventListener("click", function(){
+    for(var k in scores){ if(Object.prototype.hasOwnProperty.call(scores,k)) scores[k]=0; }
+    idx = 0;
+    result.classList.add("hide");
+    intro.classList.remove("hide");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  /* 星空：緩慢漂移的金色星點 */
+  (function sky(){
+    var cv = $("sky"), ctx = cv.getContext("2d");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var stars = [], DPR = Math.min(window.devicePixelRatio||1, 2);
+    function size(){
+      cv.width = innerWidth*DPR; cv.height = innerHeight*DPR;
+      cv.style.width = innerWidth+"px"; cv.style.height = innerHeight+"px";
+      stars = [];
+      var n = Math.round(innerWidth*innerHeight/9000);
+      for(var i=0;i<n;i++){
+        stars.push({
+          x:Math.random()*cv.width, y:Math.random()*cv.height,
+          r:(Math.random()*1.25+.25)*DPR,
+          a:Math.random()*.5+.12,
+          v:(Math.random()*.14+.03)*DPR,
+          p:Math.random()*Math.PI*2
+        });
+      }
+    }
+    function frame(t){
+      var cs = getComputedStyle(document.documentElement);
+      var gold = cs.getPropertyValue("--gold").trim();
+      ctx.clearRect(0,0,cv.width,cv.height);
+      for(var i=0;i<stars.length;i++){
+        var s = stars[i];
+        var tw = reduce ? s.a : s.a * (0.62 + 0.38*Math.sin(t/1400 + s.p));
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fillStyle = hexA(gold, tw); ctx.fill();
+        if(!reduce){
+          s.y -= s.v;
+          if(s.y < -4){ s.y = cv.height+4; s.x = Math.random()*cv.width; }
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+    size();
+    addEventListener("resize", size);
+    requestAnimationFrame(frame);
+  })();
+})();
+</script>
