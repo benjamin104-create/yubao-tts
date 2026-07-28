@@ -1,6 +1,6 @@
 {
-  "date": "2026-07-27",
+  "date": "2026-07-28",
   "project_priorities": ["短影音（首團導流＋測驗鉤子）", "數位產品（筆記電子書）", "電影/IP（腦內革命記九宮宇宙）", "漫畫（六色E人）", "長內容"],
   "budget_status": "NORMAL",
-  "requires_human_approval": true
+  "requires_human_approval": false
 }
