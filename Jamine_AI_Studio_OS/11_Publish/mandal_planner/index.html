@@ -1,138 +1,112 @@
-<title>九宮格計劃表｜把「我想」變成「我做」</title>
+<title>九宮格計劃表｜我陪你想清楚今年要做什麼</title>
 
 <style>
   :root{
-    --paper:#FBF8F1;
-    --paper-2:#F3EEE2;
-    --ink:#1E1A14;
-    --ink-2:#615948;
-    --ink-3:#948B77;
-    --rule:#DDD4C2;
-    --rule-2:#EBE4D5;
-    --seal:#B23A2E;
-    --deep:#2E5A4E;
+    --paper:#FBF8F1; --paper-2:#F4EFE3; --ink:#1E1A14; --ink-2:#5E5646; --ink-3:#948B77;
+    --rule:#DDD4C2; --rule-2:#EBE4D5; --seal:#B23A2E; --deep:#2E5A4E;
     --serif:"Noto Serif TC","Songti TC","Source Han Serif TC",serif;
     --sans:"PingFang TC","Noto Sans TC","Heiti TC",system-ui,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,monospace;
   }
   @media (prefers-color-scheme: dark){
-    :root{
-      --paper:#15140F;--paper-2:#1D1B15;--ink:#F0EADC;--ink-2:#B0A793;--ink-3:#7C7462;
-      --rule:#333026;--rule-2:#26241C;--seal:#D9705F;--deep:#6FAE99;
-    }
+    :root{--paper:#15140F;--paper-2:#1E1B15;--ink:#F0EADC;--ink-2:#B2A995;--ink-3:#7C7462;
+      --rule:#353227;--rule-2:#26241C;--seal:#DB7462;--deep:#71B09B;}
   }
-  :root[data-theme="light"]{
-    --paper:#FBF8F1;--paper-2:#F3EEE2;--ink:#1E1A14;--ink-2:#615948;--ink-3:#948B77;
-    --rule:#DDD4C2;--rule-2:#EBE4D5;--seal:#B23A2E;--deep:#2E5A4E;
-  }
-  :root[data-theme="dark"]{
-    --paper:#15140F;--paper-2:#1D1B15;--ink:#F0EADC;--ink-2:#B0A793;--ink-3:#7C7462;
-    --rule:#333026;--rule-2:#26241C;--seal:#D9705F;--deep:#6FAE99;
-  }
+  :root[data-theme="light"]{--paper:#FBF8F1;--paper-2:#F4EFE3;--ink:#1E1A14;--ink-2:#5E5646;
+    --ink-3:#948B77;--rule:#DDD4C2;--rule-2:#EBE4D5;--seal:#B23A2E;--deep:#2E5A4E;}
+  :root[data-theme="dark"]{--paper:#15140F;--paper-2:#1E1B15;--ink:#F0EADC;--ink-2:#B2A995;
+    --ink-3:#7C7462;--rule:#353227;--rule-2:#26241C;--seal:#DB7462;--deep:#71B09B;}
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7}
-  .wrap{max-width:41rem;margin:0 auto;padding:clamp(1.6rem,5vw,3.4rem) clamp(1rem,4vw,1.8rem) 6rem}
+  .wrap{max-width:33rem;margin:0 auto;padding:clamp(1.5rem,5vw,3rem) clamp(1.05rem,4vw,1.6rem) 5rem}
 
-  .step-mark{font-family:var(--mono);font-size:.68rem;letter-spacing:.3em;color:var(--seal);margin:0 0 .9rem}
-  h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.75rem,6.4vw,2.5rem);
-     line-height:1.34;letter-spacing:.01em;text-wrap:balance;margin:0 0 1rem}
-  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.35rem,5vw,1.75rem);
-     line-height:1.45;text-wrap:balance;margin:0 0 .7rem}
+  .mark{font-family:var(--mono);font-size:.66rem;letter-spacing:.28em;color:var(--seal);margin:0 0 .85rem}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.7rem,6.2vw,2.35rem);
+     line-height:1.36;text-wrap:balance;margin:0 0 1rem}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.3rem,4.9vw,1.62rem);
+     line-height:1.5;text-wrap:balance;margin:0 0 .5rem}
   p{margin:0 0 1rem;color:var(--ink-2)}
-  .tip{font-size:.87rem;color:var(--ink-3);line-height:1.85}
-
-  .card{background:var(--paper-2);border:1px solid var(--rule);border-radius:.35rem;padding:1.1rem 1.2rem}
+  .tip{font-size:.86rem;color:var(--ink-3);line-height:1.8}
+  .hide{display:none}
 
   button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-  .btn{background:var(--ink);color:var(--paper);border-radius:.25rem;
-       padding:.85rem 1.6rem;font-size:.95rem;font-weight:700;letter-spacing:.05em;
-       transition:transform .16s ease,opacity .16s ease}
-  .btn:hover{transform:translateY(-1px);opacity:.9}
-  .btn[disabled]{opacity:.32;cursor:not-allowed;transform:none}
-  .btn-2{border:1px solid var(--rule);border-radius:.25rem;padding:.72rem 1.15rem;
-         font-size:.87rem;color:var(--ink-2)}
+  .btn{background:var(--ink);color:var(--paper);border-radius:.25rem;padding:.85rem 1.5rem;
+       font-size:.95rem;font-weight:700;letter-spacing:.04em;transition:opacity .16s}
+  .btn:hover{opacity:.88}
+  .btn[disabled]{opacity:.3;cursor:not-allowed}
+  .btn-2{border:1px solid var(--rule);border-radius:.25rem;padding:.68rem 1.05rem;
+         font-size:.86rem;color:var(--ink-2)}
   .btn-2:hover{border-color:var(--seal);color:var(--ink)}
-  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1.6rem}
+  .row{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:1.5rem}
   :focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
-  input,textarea{font:inherit;width:100%;background:var(--paper);color:var(--ink);
-    border:1px solid var(--rule);border-radius:.2rem;padding:.7rem .8rem;line-height:1.5}
-  input:focus,textarea:focus{outline:none;border-color:var(--seal)}
-  input::placeholder,textarea::placeholder{color:var(--ink-3)}
-  .big-input{font-family:var(--serif);font-size:1.2rem;font-weight:700;padding:.95rem 1rem}
+  input{font:inherit;width:100%;background:var(--paper);color:var(--ink);
+    border:1px solid var(--rule);border-radius:.2rem;padding:.72rem .85rem}
+  input:focus{outline:none;border-color:var(--seal)}
+  input::placeholder{color:var(--ink-3)}
+  .big{font-family:var(--serif);font-size:1.18rem;font-weight:700;padding:.95rem 1rem}
 
-  /* 進度 */
-  .steps{display:flex;gap:.3rem;margin:0 0 1.9rem}
-  .steps i{flex:1;height:3px;background:var(--rule-2);border-radius:2px}
-  .steps i.on{background:var(--seal)}
+  /* 訪談 */
+  .prog{display:flex;align-items:center;gap:.7rem;margin-bottom:1.7rem}
+  .prog .bar{flex:1;height:3px;background:var(--rule-2);border-radius:2px;overflow:hidden}
+  .prog .bar i{display:block;height:100%;background:var(--seal);transition:width .35s ease}
+  .prog .n{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--ink-3);
+    font-variant-numeric:tabular-nums}
 
-  /* 範例摺疊 */
-  details{border:1px dashed var(--rule);border-radius:.25rem;padding:.7rem .9rem;margin:.9rem 0 0}
-  details summary{cursor:pointer;font-size:.88rem;color:var(--seal);font-weight:600;list-style:none}
-  details summary::-webkit-details-marker{display:none}
-  details summary::before{content:"＋ ";font-family:var(--mono)}
-  details[open] summary::before{content:"− "}
-  details ul{margin:.75rem 0 .2rem;padding-left:1.1rem;font-size:.88rem;color:var(--ink-2);line-height:2}
+  .goalchip{display:inline-flex;align-items:center;gap:.45rem;background:var(--deep);color:#fff;
+    border-radius:2rem;padding:.3rem .9rem;font-size:.78rem;margin-bottom:1.1rem;max-width:100%}
+  .goalchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .goalchip b{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;opacity:.72;font-weight:400;flex:none}
 
-  /* 3×3 支柱輸入 */
-  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:1.1rem}
-  .g3 .cell{background:var(--paper-2);border:1px solid var(--rule);border-radius:.25rem;
-    padding:.5rem .5rem .55rem;min-height:5.4rem;display:flex;flex-direction:column;gap:.28rem}
-  .g3 .cell label{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;color:var(--ink-3)}
-  .g3 .cell textarea{border:0;background:transparent;padding:0;resize:none;
-    font-size:.8rem;line-height:1.5;flex:1;min-height:3.2rem}
-  .g3 .core{background:var(--deep);border-color:var(--deep);color:#fff;justify-content:center;text-align:center}
-  .g3 .core .k{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;opacity:.75}
-  .g3 .core .v{font-family:var(--serif);font-weight:700;font-size:.9rem;line-height:1.45;
-    word-break:break-word;margin-top:.2rem}
+  .opts{display:flex;flex-direction:column;gap:.55rem;margin-top:1.35rem}
+  .opt{text-align:left;width:100%;background:var(--paper-2);border:1px solid var(--rule);
+    border-radius:.28rem;padding:.95rem 1.05rem;font-size:1rem;color:var(--ink);
+    display:flex;align-items:center;gap:.75rem;transition:border-color .15s,transform .15s}
+  .opt:hover{border-color:var(--seal);transform:translateX(3px)}
+  .opt .dot{width:1.35rem;height:1.35rem;border:1px solid var(--rule);border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.62rem;color:var(--ink-3)}
+  .opt.own{border-style:dashed;color:var(--ink-2)}
+  .ownbox{display:flex;gap:.5rem;margin-top:.55rem}
+  .ownbox .btn{padding:.72rem 1.1rem;font-size:.88rem;flex:none}
 
-  /* 範本選擇 */
-  .tpl{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.9rem}
-  .tpl button{border:1px solid var(--rule);border-radius:2rem;padding:.4rem .85rem;
-    font-size:.82rem;color:var(--ink-2);background:var(--paper)}
-  .tpl button:hover{border-color:var(--seal);color:var(--ink)}
+  .qlabel{font-family:var(--mono);font-size:.63rem;letter-spacing:.22em;color:var(--ink-3);margin-bottom:.5rem}
 
-  /* 行動分頁 */
-  .tabs{display:flex;gap:.32rem;overflow-x:auto;padding-bottom:.5rem;margin-top:1rem;
-    scrollbar-width:none}
+  /* 小行動 */
+  .tabs{display:flex;gap:.3rem;overflow-x:auto;padding-bottom:.5rem;margin-top:.4rem;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tabs button{white-space:nowrap;border:1px solid var(--rule);border-radius:2rem;
-    padding:.38rem .8rem;font-size:.8rem;color:var(--ink-2);background:var(--paper)}
+  .tabs button{white-space:nowrap;border:1px solid var(--rule);border-radius:2rem;padding:.36rem .78rem;
+    font-size:.79rem;color:var(--ink-2)}
   .tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .tabs button .dot{color:var(--seal)}
-  .acts{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-top:1rem}
-  .acts input{font-size:.85rem;padding:.55rem .65rem}
-  @media (max-width:400px){ .acts{grid-template-columns:1fr} }
+  .tabs button i{font-style:normal;color:var(--seal)}
+  .egs{display:flex;flex-wrap:wrap;gap:.36rem;margin:.9rem 0 .2rem}
+  .egs button{border:1px dashed var(--rule);border-radius:2rem;padding:.32rem .72rem;
+    font-size:.79rem;color:var(--ink-2)}
+  .egs button:hover{border-color:var(--seal);border-style:solid;color:var(--ink)}
+  .acts{display:flex;flex-direction:column;gap:.4rem;margin-top:.8rem}
+  .acts input{font-size:.88rem;padding:.55rem .7rem}
 
   /* 成果 */
-  .sheet{border:2px solid var(--ink);background:var(--paper);padding:.5rem;margin-top:1.4rem;
-    overflow-x:auto}
-  table.m{border-collapse:collapse;width:100%;min-width:33rem;table-layout:fixed}
-  table.m td{border:1px solid var(--rule);vertical-align:middle;text-align:center;
-    padding:.3rem .18rem;font-size:.56rem;line-height:1.42;height:3.05rem;
-    color:var(--ink-2);word-break:break-word}
-  table.m td.pillar{background:var(--paper-2);font-weight:700;color:var(--ink);font-size:.62rem}
-  table.m td.goal{background:var(--deep);color:#fff;font-family:var(--serif);
-    font-weight:700;font-size:.78rem}
+  .sheet{border:2px solid var(--ink);background:var(--paper);padding:.45rem;margin-top:1.3rem;overflow-x:auto}
+  table.m{border-collapse:collapse;width:100%;min-width:31rem;table-layout:fixed}
+  table.m td{border:1px solid var(--rule);text-align:center;vertical-align:middle;
+    padding:.28rem .16rem;font-size:.54rem;line-height:1.4;height:2.95rem;color:var(--ink-2);word-break:break-word}
+  table.m td.pillar{background:var(--paper-2);font-weight:700;color:var(--ink);font-size:.6rem}
+  table.m td.goal{background:var(--deep);color:#fff;font-family:var(--serif);font-weight:700;font-size:.74rem}
   table.m td.bb{border-right-width:2px;border-right-color:var(--ink)}
   table.m td.bbt{border-bottom-width:2px;border-bottom-color:var(--ink)}
-  .sheet-cap{display:flex;justify-content:space-between;align-items:baseline;
-    font-size:.68rem;color:var(--ink-3);margin-top:.55rem;font-family:var(--mono);letter-spacing:.1em}
+  .cap{display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);
+    margin-top:.5rem;font-family:var(--mono);letter-spacing:.1em}
 
-  .saved{font-size:.78rem;color:var(--ink-3);margin-top:.9rem}
-  .hide{display:none}
-  .screen{animation:fade .35s ease both}
-  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){.screen{animation:none}.btn:hover{transform:none}}
-
-  .credit{margin-top:3rem;border-top:1px solid var(--rule);padding-top:1.2rem;
-    font-size:.8rem;color:var(--ink-3);line-height:1.9}
+  .credit{margin-top:2.6rem;border-top:1px solid var(--rule);padding-top:1.1rem;
+    font-size:.79rem;color:var(--ink-3);line-height:1.9}
   .credit b{color:var(--ink-2)}
-
-  .toast{position:fixed;left:50%;bottom:1.6rem;transform:translateX(-50%) translateY(1rem);
-    background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:.25rem;
-    font-size:.85rem;font-weight:700;opacity:0;pointer-events:none;transition:.22s;z-index:9}
+  .screen{animation:fade .3s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.screen{animation:none}.opt:hover{transform:none}}
+  .toast{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%) translateY(1rem);
+    background:var(--ink);color:var(--paper);padding:.58rem 1.05rem;border-radius:.25rem;
+    font-size:.84rem;font-weight:700;opacity:0;pointer-events:none;transition:.22s;z-index:9}
   .toast.show{opacity:1;transform:translateX(-50%)}
 
   @media print{
@@ -141,407 +115,412 @@
     .wrap{max-width:none;padding:0}
     .sheet{border:2px solid #000;page-break-inside:avoid}
     table.m{min-width:0}
-    table.m td{border-color:#999;color:#222;height:2.6rem}
-    table.m td.goal{background:#eee!important;color:#000!important;
+    table.m td{border-color:#999;color:#222;height:2.5rem}
+    table.m td.goal{background:#e8e8e8!important;color:#000!important;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    table.m td.pillar{background:#f6f6f6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.m td.pillar{background:#f5f5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 
 <div class="wrap">
 
-<!-- ── 0 入口 ── -->
 <section id="s0" class="screen">
-  <p class="step-mark">潔米爸的小禮物 · 免費</p>
-  <h1>把「我想」<br>變成「我做得到」。</h1>
-  <p>大谷翔平高中一年級時，在紙上畫了一張九宮格，寫下他想進職棒的目標，和為了達成它必須做到的 64 件小事。他後來做到了。</p>
-  <p>這張表叫<b>曼陀羅計劃表</b>。今天我陪你填一張你自己的——<b>五分鐘，一格一格來，我會告訴你每一格可以寫什麼。</b></p>
-
-  <div class="card" style="margin-top:1.4rem">
-    <p style="margin:0;font-size:.9rem"><b style="color:var(--ink)">填完你會得到：</b></p>
-    <ul style="margin:.6rem 0 0;padding-left:1.1rem;font-size:.88rem;color:var(--ink-2);line-height:2">
-      <li>一張完整的九宮格計劃表</li>
-      <li>可以<b>存進相簿</b>，設成桌布每天看到</li>
-      <li>可以<b>印出來貼牆上</b>（A4）</li>
-    </ul>
-  </div>
-
+  <p class="mark">潔米爸的小禮物 · 免費</p>
+  <h1>我陪你想清楚，<br>今年到底要做什麼。</h1>
+  <p>大谷翔平高中時畫過一張九宮格：中間寫目標，周圍寫「為了達成它，我要做到哪些事」。他後來真的做到了。</p>
+  <p><b style="color:var(--ink)">你不用自己想。</b>我會像聊天一樣問你 8 個問題，每題給你幾個選項，選就好。最後你會拿到一張自己的表——可以存進相簿、設成桌布、印出來貼牆上。</p>
   <div class="row">
-    <button class="btn" id="go">開始填第一格</button>
-    <button class="btn-2 hide" id="resume">繼續上次的</button>
+    <button class="btn" id="go">開始（大約 3 分鐘）</button>
+    <button class="btn-2 hide" id="resume">看上次填的</button>
   </div>
-  <p class="tip" style="margin-top:1.1rem">會自動存在這台裝置上，中途離開也不會不見。</p>
+  <p class="tip" style="margin-top:1.1rem">不用註冊、不用留資料，內容只存在你這台裝置。</p>
 </section>
 
-<!-- ── 1 中心目標 ── -->
 <section id="s1" class="hide">
-  <div class="steps"><i class="on"></i><i></i><i></i></div>
-  <p class="step-mark">第 一 步 · 中心那一格</p>
+  <div class="prog"><div class="bar"><i style="width:8%"></i></div><div class="n">第 1 步</div></div>
+  <p class="qlabel">先 說 目 標</p>
   <h2>接下來這一年，<br>你最想完成的一件事是什麼？</h2>
-  <p>只寫<b>一件</b>。寫得越具體越好——具體的目標，身體才知道要往哪走。</p>
-
-  <input class="big-input" id="goal" maxlength="24" placeholder="例：今年存到 30 萬" autocomplete="off">
-
-  <details>
-    <summary>不知道怎麼寫？點這裡</summary>
-    <p class="tip" style="margin:.6rem 0 .3rem">先問自己這三句，答案通常就出來了：</p>
-    <ul>
-      <li>今年結束時，我希望自己<b>不一樣</b>在哪裡？</li>
-      <li>有什麼事我<b>拖了很久</b>，一直沒開始？</li>
-      <li>如果只能完成一件事，我會選哪一件？</li>
-    </ul>
-    <p class="tip" style="margin:.7rem 0 .3rem">別人寫過的：</p>
-    <ul id="goal-eg"></ul>
-  </details>
-
+  <p class="tip" style="margin-bottom:1.1rem">只寫一件、寫具體一點。不確定也沒關係，下面有例子可以直接點。</p>
+  <input class="big" id="goal" maxlength="20" placeholder="例：今年存到 30 萬" autocomplete="off">
+  <div class="egs" id="goalEgs"></div>
   <div class="row">
-    <button class="btn" id="to2" disabled>下一步</button>
-    <button class="btn-2" data-back="0">上一步</button>
+    <button class="btn" id="toQ" disabled>好了，開始問我</button>
   </div>
 </section>
 
-<!-- ── 2 八個支柱 ── -->
 <section id="s2" class="hide">
-  <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
-  <p class="step-mark">第 二 步 · 圍著中心的八格</p>
-  <h2>要做到這件事，<br>有哪 8 件事必須成立？</h2>
-  <p>不用寫行動，寫<b>「方向」或「要素」</b>就好。例如目標是存錢，要素可能是「記帳」「減少外食」「增加收入」。</p>
-
-  <p class="tip" style="margin-bottom:.2rem">懶得想？選一個最接近你目標的類型，我先幫你填，你再改成自己的話：</p>
-  <div class="tpl" id="tpl"></div>
-
-  <div class="g3" id="g3"></div>
-
-  <p class="tip" style="margin-top:1rem">八格不一定要全填滿，但填越多，這張表越有力量。</p>
-
+  <div class="prog"><div class="bar"><i id="pbar" style="width:0"></i></div><div class="n" id="pnum"></div></div>
+  <div class="goalchip"><b>目標</b><span id="chip"></span></div>
+  <p class="qlabel" id="qlab"></p>
+  <h2 id="qtext"></h2>
+  <p class="tip" id="qhint"></p>
+  <div class="opts" id="opts"></div>
   <div class="row">
-    <button class="btn" id="to3" disabled>下一步</button>
-    <button class="btn-2" data-back="1">上一步</button>
+    <button class="btn-2" id="qback">上一題</button>
+    <button class="btn-2" id="qskip">這題跳過</button>
   </div>
 </section>
 
-<!-- ── 3 六十四個行動 ── -->
 <section id="s3" class="hide">
-  <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
-  <p class="step-mark">第 三 步 · 最外圈（可以跳過）</p>
-  <h2>每一個方向，<br>再拆成 8 個「今天就能做」的小事。</h2>
-  <p>這是大谷那張表真正厲害的地方——<b>大目標會嚇到人，小到不可能失敗的事不會。</b>不用一次填完，之後隨時能回來補。</p>
-
+  <div class="prog"><div class="bar"><i style="width:88%"></i></div><div class="n">最後一步</div></div>
+  <p class="qlabel">選 填 · 可 以 直 接 跳 過</p>
+  <h2>要不要再想幾件<br>「今天就能做」的小事？</h2>
+  <p class="tip">大目標會嚇到人，<b style="color:var(--ink-2)">小到不可能失敗的事不會</b>。點下面的例子可以直接填入，之後隨時能回來補。</p>
   <div class="tabs" id="tabs"></div>
+  <div class="egs" id="egs"></div>
   <div class="acts" id="acts"></div>
-
   <div class="row">
-    <button class="btn" id="to4">完成，看我的表</button>
-    <button class="btn-2" data-back="2">上一步</button>
+    <button class="btn" id="toEnd">完成，看我的表</button>
+    <button class="btn-2" id="backQ">回上一步</button>
   </div>
 </section>
 
-<!-- ── 4 成果 ── -->
 <section id="s4" class="hide">
-  <p class="step-mark">完 成 · 這是你的表</p>
-  <h2 id="doneTitle"></h2>
+  <p class="mark">完 成 · 這 是 你 的 表</p>
+  <h2 id="doneT"></h2>
   <p class="noprint">存進相簿設成桌布，或印出來貼在你每天會看到的地方——冰箱、書桌前、廁所門後都可以。</p>
-
-  <div class="sheet" id="sheet">
-    <table class="m" id="mtable"></table>
-    <div class="sheet-cap"><span id="capDate"></span><span>JAMINEPA · 九宮格計劃表</span></div>
+  <div class="sheet">
+    <table class="m" id="mt"></table>
+    <div class="cap"><span id="capD"></span><span>JAMINEPA · 九宮格計劃表</span></div>
   </div>
-
   <div class="row noprint">
-    <button class="btn" id="dl">存成圖片（相簿）</button>
+    <button class="btn" id="dl">存成圖片</button>
     <button class="btn-2" id="dlw">手機桌布版</button>
     <button class="btn-2" id="pr">列印 / 存 PDF</button>
-    <button class="btn-2" data-back="2">回去修改</button>
+    <button class="btn-2" id="redo">回去修改</button>
   </div>
-  <p class="saved noprint" id="savedNote"></p>
-
+  <p class="tip noprint" style="margin-top:.9rem">已自動存在這台裝置，隨時回來都在。</p>
   <div class="credit noprint">
     這張表是<b>潔米爸</b>做給你的小禮物，免費、不用留資料。<br>
-    如果它對你有用，把你填好的表截圖，標記 <b>@i_jamine_pa</b>，我想看看你今年想做什麼。<br><br>
+    如果它對你有用，把你填好的表截圖標記 <b>@i_jamine_pa</b>，我想看看你今年想做什麼。<br><br>
     <b>@i_jamine_pa</b>　一個爸爸的真實育兒現場<br>
     <b>@jamine_pa</b>　書房筆記 · 用命盤讀懂自己
   </div>
 </section>
-
 </div>
 
 <canvas id="cv" class="hide"></canvas>
-<div class="toast" id="toast">已儲存</div>
+<div class="toast" id="toast"></div>
 
 <script>
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i);};
-var KEY="jaminepa_mandal_v1";
+var KEY="jaminepa_mandal_v2";
 
-var GOAL_EG=["今年存到 30 萬","每週陪孩子讀 3 本書","完成人生第一場半馬",
-  "開始我的副業，賺到第一筆收入","把身體調回健康狀態","學會用日文自我介紹"];
+var GOAL_EG=["今年存到 30 萬","每週陪孩子讀 3 本書","把身體調回健康","開始我的副業","學會用日文自我介紹","每天有 30 分鐘是我自己的"];
 
-var TPL={
-  "健康身體":["睡眠","飲食","運動習慣","體重管理","壓力調節","定期檢查","戒掉一個壞習慣","身體覺察"],
-  "工作事業":["專業技能","人脈連結","時間管理","作品產出","收入來源","溝通表達","情緒穩定","持續學習"],
-  "家庭關係":["陪伴時間","好好傾聽","分擔家務","共同活動","情緒管理","各自空間","家庭儀式","財務共識"],
-  "學習成長":["固定時段","選對教材","輸出練習","找到同伴","進度追蹤","克服卡關","實際應用","獎勵自己"],
-  "金錢財務":["記帳習慣","固定儲蓄","減少支出","增加收入","投資學習","保險保障","目標拆解","忍住衝動"],
-  "自我照顧":["獨處時間","興趣愛好","睡眠品質","學會拒絕","身體活動","情緒出口","滋養的關係","定期回顧"]
-};
+/* 八個問題：缺口→能力→習慣→阻力→支援→取捨→追蹤→動力 */
+var QS=[
+ {lab:"缺 口",q:"現在的你，離這個目標最遠的是什麼？",hint:"先承認卡在哪，比急著訂計畫有用。"},
+ {lab:"能 力",q:"要做到它，你最需要練起來的是什麼？",hint:"不是天份，是可以練的那種。"},
+ {lab:"習 慣",q:"怎麼把它放進你的日常？",hint:"能重複的才算數，做一次的不算。"},
+ {lab:"阻 力",q:"什麼最可能讓你半途而廢？",hint:"先講出來，它就沒那麼有殺傷力。"},
+ {lab:"支 援",q:"誰或什麼可以幫你？",hint:"一個人撐的目標，通常撐不久。"},
+ {lab:"取 捨",q:"你願意先放掉什麼？",hint:"沒有取捨的目標，只是願望。"},
+ {lab:"追 蹤",q:"你要怎麼知道自己有在前進？",hint:"看得見進度，才不會半路懷疑自己。"},
+ {lab:"動 力",q:"什麼會讓你想繼續下去？",hint:"撐不下去的那天，你會想起這個。"}
+];
 
-var D={goal:"",pillars:["","","","","","","",""],acts:[[],[],[],[],[],[],[],[]]};
-for(var z=0;z<8;z++){ for(var y=0;y<8;y++){ D.acts[z].push(""); } }
-var cur=0, tab=0;
+var CATS=[
+ {k:"money",re:/存|錢|萬|財|債|收入|儲蓄|投資|買房|買車|理財|負債/,
+  o:[["不知道錢花去哪","收入就是不夠","存了又拿出來花"],
+     ["記帳的習慣","忍住不買的定力","開源的本事"],
+     ["睡前記一次帳","薪水入帳先轉存","每週固定對帳"],
+     ["臨時的大支出","朋友揪吃喝玩","看到就想買"],
+     ["跟家人一起存","設定自動轉帳","找一個記帳同伴"],
+     ["少一點外食","取消閒置訂閱","戒掉手搖飲"],
+     ["每月看存款數字","畫一張進度表","每季結算一次"],
+     ["想到目標那天","達標給自己獎勵","跟人分享進度"]],
+  eg:["今天記第一筆帳","刪掉一個訂閱","設定自動轉帳","查一次餘額","跟家人說這件事","把目標寫在錢包裡"]},
+ {k:"health",re:/健康|減|瘦|胖|公斤|運動|跑|健身|睡|戒菸|戒酒|體力|身體|作息/,
+  o:[["沒時間動","體力跟不上","作息很亂"],
+     ["規律的作息","動起來的習慣","吃東西的選擇"],
+     ["每天走 30 分鐘","固定時間上床","先動十分鐘再說"],
+     ["天氣或懶","加班太累","一停就停很久"],
+     ["找人一起動","用手錶記錄","排進行事曆"],
+     ["少熬夜滑手機","少一杯飲料","少一次外食"],
+     ["量體重或圍度","記錄運動天數","看體力有沒有變"],
+     ["想陪孩子跑得動","衣服穿得下","精神變好"]],
+  eg:["今天走 15 分鐘","把鞋放門口","十一點放下手機","多喝一杯水","爬樓梯不搭電梯","記錄今天有沒有動"]},
+ {k:"family",re:/陪|孩子|小孩|家人|老婆|老公|爸媽|家庭|親子|婚|女兒|兒子/,
+  o:[["時間都被工作吃掉","回家只剩疲憊","不知道怎麼開口"],
+     ["專心陪的能力","好好聽的能力","穩住情緒的能力"],
+     ["每天 20 分鐘不看手機","固定一天家庭日","睡前聊五分鐘"],
+     ["加班和應酬","滑手機分心","累了就沒耐心"],
+     ["跟另一半講好","排進行事曆","讓孩子一起訂"],
+     ["推掉一些應酬","少一點加班","放下手機"],
+     ["記下相處的時刻","孩子的反應","另一半有沒有變輕鬆"],
+     ["孩子會長大","不想錯過","家人的笑容"]],
+  eg:["今天問一句他今天好嗎","睡前唸一本","手機放另一個房間","週末排一件一起做的事","說一次謝謝","拍一張合照"]},
+ {k:"learn",re:/學|考|證照|語言|英文|日文|讀書|課|技能|練/,
+  o:[["沒有固定時間","不知道從哪開始","學了就忘"],
+     ["每天坐下來的習慣","抓重點的能力","開口或動手練"],
+     ["每天固定 30 分鐘","通勤時間用起來","週末補一次"],
+     ["工作一忙就斷","看不到進步","一個人很孤單"],
+     ["找學習夥伴","報一堂課","設一個小考核"],
+     ["少滑一點社群","推掉一些邀約","不追劇"],
+     ["記錄學習時數","做一次小測驗","能不能講給別人聽"],
+     ["用得上的那一刻","想成為的樣子","不想再重來一次"]],
+  eg:["今天讀 15 分鐘","打開那個 App","把教材放桌上","跟人說我在學","做一題就好","記下今天學到什麼"]},
+ {k:"work",re:/工作|升|職|創業|副業|轉職|接案|開店|品牌|事業|客戶|生意/,
+  o:[["時間都在瞎忙","缺一個代表作","不知道下一步"],
+     ["專業的深度","表達與溝通","時間管理"],
+     ["每天先做最重要的","週一排好一週","固定產出時間"],
+     ["雜事一直插隊","做到一半沒信心","沒有人給回饋"],
+     ["找一個前輩聊","公開自己的進度","找合作夥伴"],
+     ["推掉不重要的事","少開無效的會","放掉完美主義"],
+     ["每月看產出","收到的回饋","收入有沒有動"],
+     ["想要的生活","證明給自己看","被需要的感覺"]],
+  eg:["今天做一件最重要的","寄出那封信","完成一個小樣","問一個人意見","關掉通知一小時","記下今天完成什麼"]},
+ {k:"self",re:/自己|快樂|放鬆|焦慮|情緒|興趣|旅行|生活|時間|療癒|休息/,
+  o:[["永遠在忙別人的事","停不下來","不知道自己想要什麼"],
+     ["允許自己休息","說不的能力","覺察情緒"],
+     ["每天留 20 分鐘給自己","週末排一件想做的事","睡前寫三行"],
+     ["罪惡感","臨時被叫走","覺得在浪費時間"],
+     ["跟家人講好","排進行事曆","找一個伴一起"],
+     ["少答應一些事","少滑手機","放掉一些期待"],
+     ["情緒有沒有比較穩","睡得好不好","有沒有笑"],
+     ["想活得像自己","不想再撐了","家人也會受益"]],
+  eg:["今天留 15 分鐘給自己","拒絕一件不想做的事","寫下現在的心情","出門走一圈","做一件喜歡的小事","早睡半小時"]},
+ {k:"any",re:/./,
+  o:[["還沒開始","不知道方法","時間不夠"],
+     ["持續的習慣","需要的技能","專注的能力"],
+     ["每天固定一小段","接在既有習慣後面","一週固定一天"],
+     ["三分鐘熱度","太忙就放棄","看不到成果"],
+     ["找一個夥伴","告訴身邊的人","用工具提醒"],
+     ["少滑手機","推掉一些邀約","放下完美主義"],
+     ["寫下每次進度","每月回顧一次","看得到的數字"],
+     ["完成後的樣子","不想再拖了","為了在乎的人"]],
+  eg:["今天先做五分鐘","寫下第一步","跟一個人說","把東西準備好","設一個提醒","記下今天做了什麼"]}
+];
 
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(D)); }catch(e){} }
-function load(){ try{ var r=localStorage.getItem(KEY); if(!r) return null; return JSON.parse(r); }catch(e){ return null; } }
+var D={goal:"",pillars:["","","","","","","",""],acts:[]};
+for(var z=0;z<8;z++){ D.acts.push(["","","","","","","",""]); }
+var qi=0, tab=0, cat=CATS[6];
 
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){} }
+function load(){ try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;} }
+function pickCat(){ for(var i=0;i<CATS.length;i++){ if(CATS[i].re.test(D.goal)) return CATS[i]; } return CATS[6]; }
 function show(n){
   ["s0","s1","s2","s3","s4"].forEach(function(id,i){
     var el=$(id);
-    if(i===n){ el.classList.remove("hide"); el.classList.add("screen"); }
-    else { el.classList.add("hide"); el.classList.remove("screen"); }
+    if(i===n){el.classList.remove("hide");el.classList.add("screen");}
+    else{el.classList.add("hide");el.classList.remove("screen");}
   });
-  cur=n; window.scrollTo({top:0,behavior:"smooth"});
+  window.scrollTo({top:0,behavior:"smooth"});
 }
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");
+  setTimeout(function(){t.classList.remove("show");},2100);}
 
-/* 範例 */
+/* 目標例子 */
 GOAL_EG.forEach(function(t){
-  var li=document.createElement("li"); li.textContent=t; $("goal-eg").appendChild(li);
+  var b=document.createElement("button"); b.type="button"; b.textContent=t;
+  b.addEventListener("click",function(){ $("goal").value=t; D.goal=t; save(); $("toQ").disabled=false; });
+  $("goalEgs").appendChild(b);
 });
 
-/* 範本鈕 */
-Object.keys(TPL).forEach(function(k){
-  var b=document.createElement("button"); b.type="button"; b.textContent=k;
-  b.addEventListener("click",function(){
-    TPL[k].forEach(function(v,i){ if(!D.pillars[i]) D.pillars[i]=v; });
-    buildG3(); save(); checkP();
+/* ── 訪談 ── */
+function renderQ(){
+  var Q=QS[qi];
+  $("pbar").style.width=((qi+1)/8*80+8)+"%";
+  $("pnum").textContent="第 "+(qi+1)+" 題 / 共 8 題";
+  $("chip").textContent=D.goal;
+  $("qlab").textContent=Q.lab;
+  $("qtext").textContent=Q.q;
+  $("qhint").textContent=Q.hint;
+  $("qback").style.visibility = qi===0 ? "hidden" : "visible";
+
+  var box=$("opts"); box.innerHTML="";
+  cat.o[qi].forEach(function(t,i){
+    var b=document.createElement("button"); b.type="button"; b.className="opt";
+    b.innerHTML='<span class="dot">'+String.fromCharCode(65+i)+'</span><span></span>';
+    b.lastChild.textContent=t;
+    b.addEventListener("click",function(){ answer(t); });
+    box.appendChild(b);
   });
-  $("tpl").appendChild(b);
-});
+  var own=document.createElement("button");
+  own.type="button"; own.className="opt own";
+  own.innerHTML='<span class="dot">＋</span><span>都不是，我自己寫</span>';
+  own.addEventListener("click",function(){
+    own.remove();
+    var w=document.createElement("div"); w.className="ownbox";
+    var ip=document.createElement("input");
+    ip.maxLength=10; ip.placeholder="用你自己的話（10 字內）";
+    var ok=document.createElement("button"); ok.className="btn"; ok.type="button"; ok.textContent="就這個";
+    var done=function(){ if(ip.value.trim()) answer(ip.value.trim()); };
+    ok.addEventListener("click",done);
+    ip.addEventListener("keydown",function(e){ if(e.key==="Enter") done(); });
+    w.appendChild(ip); w.appendChild(ok); box.appendChild(w); ip.focus();
+  });
+  box.appendChild(own);
 
-/* 3×3 */
-var POS=[0,1,2,3,5,6,7,8];
-function buildG3(){
-  var g=$("g3"); g.innerHTML="";
-  for(var p=0;p<9;p++){
-    var d=document.createElement("div");
-    if(p===4){
-      d.className="cell core";
-      d.innerHTML='<div class="k">中 心 目 標</div><div class="v"></div>';
-      d.querySelector(".v").textContent=D.goal||"（尚未填寫）";
-    } else {
-      var idx=POS.indexOf(p);
-      d.className="cell";
-      var lab=document.createElement("label"); lab.textContent="要素 "+(idx+1);
-      var ta=document.createElement("textarea");
-      ta.maxLength=10; ta.placeholder="…"; ta.value=D.pillars[idx];
-      (function(k,el){
-        el.addEventListener("input",function(){ D.pillars[k]=el.value; save(); checkP(); });
-      })(idx,ta);
-      d.appendChild(lab); d.appendChild(ta);
-    }
-    g.appendChild(d);
+  // 已答過就標示目前答案
+  if(D.pillars[qi]){
+    var hintEl=document.createElement("p");
+    hintEl.className="tip"; hintEl.style.marginTop=".8rem";
+    hintEl.textContent="上次選的是：「"+D.pillars[qi]+"」，可以改。";
+    box.appendChild(hintEl);
   }
 }
-function checkP(){
-  var n=D.pillars.filter(function(v){return v.trim();}).length;
-  $("to3").disabled = n<3;
-  $("to3").textContent = n<3 ? "至少先填 3 格" : "下一步";
+function answer(v){
+  D.pillars[qi]=v; save();
+  if(qi<7){ qi++; renderQ(); }
+  else { buildTabs(); buildActs(); show(3); }
 }
 
-/* 行動分頁 */
+/* ── 小行動 ── */
 function buildTabs(){
   var t=$("tabs"); t.innerHTML="";
   D.pillars.forEach(function(p,i){
-    if(!p.trim()) return;
+    if(!p) return;
+    var n=D.acts[i].filter(function(v){return v.trim();}).length;
     var b=document.createElement("button"); b.type="button";
-    var done=D.acts[i].filter(function(v){return v.trim();}).length;
-    b.innerHTML=p+(done?' <span class="dot">'+done+'</span>':"");
+    b.innerHTML=p+(n?' <i>'+n+'</i>':"");
     if(i===tab) b.className="on";
-    b.addEventListener("click",function(){ tab=i; buildTabs(); buildActs(); });
+    (function(k){ b.addEventListener("click",function(){ tab=k; buildTabs(); buildActs(); }); })(i);
     t.appendChild(b);
   });
 }
 function buildActs(){
+  if(!D.pillars[tab]){ var f=D.pillars.findIndex(function(v){return v;}); if(f>=0){tab=f;buildTabs();} }
+  var e=$("egs"); e.innerHTML="";
+  cat.eg.forEach(function(t){
+    var b=document.createElement("button"); b.type="button"; b.textContent="＋ "+t;
+    b.addEventListener("click",function(){
+      var slot=D.acts[tab].findIndex(function(v){return !v.trim();});
+      if(slot<0){ toast("這個方向已經填滿了"); return; }
+      D.acts[tab][slot]=t; save(); buildActs(); buildTabs();
+    });
+    e.appendChild(b);
+  });
   var a=$("acts"); a.innerHTML="";
-  if(!D.pillars[tab] || !D.pillars[tab].trim()){
-    var firstFilled=D.pillars.findIndex(function(v){return v.trim();});
-    if(firstFilled>=0){ tab=firstFilled; buildTabs(); }
-  }
   for(var i=0;i<8;i++){
-    var inp=document.createElement("input");
-    inp.maxLength=14;
-    inp.placeholder=(i+1)+"　小行動";
-    inp.value=D.acts[tab][i]||"";
+    var ip=document.createElement("input");
+    ip.maxLength=14; ip.placeholder=(i+1)+"　自己寫，或點上面的例子";
+    ip.value=D.acts[tab][i]||"";
     (function(k,el){
       el.addEventListener("input",function(){ D.acts[tab][k]=el.value; save(); buildTabs(); });
-    })(i,inp);
-    a.appendChild(inp);
+    })(i,ip);
+    a.appendChild(ip);
   }
 }
 
-/* 成果表 */
+/* ── 成果 ── */
+var POS=[0,1,2,3,5,6,7,8];
+function cellOf(bIdx,iIdx){
+  if(bIdx===4){
+    if(iIdx===4) return {t:D.goal,c:"goal"};
+    return {t:D.pillars[POS.indexOf(iIdx)],c:"pillar"};
+  }
+  var pi=POS.indexOf(bIdx);
+  if(iIdx===4) return {t:D.pillars[pi],c:"pillar"};
+  return {t:D.acts[pi][POS.indexOf(iIdx)]||"",c:"act"};
+}
 function buildTable(){
-  var t=$("mtable"); t.innerHTML="";
+  var t=$("mt"); t.innerHTML="";
   for(var r=0;r<9;r++){
     var tr=document.createElement("tr");
     for(var c=0;c<9;c++){
       var td=document.createElement("td");
-      var br=Math.floor(r/3), bc=Math.floor(c/3);
-      var ir=r%3, ic=c%3;
-      var bIdx=br*3+bc, iIdx=ir*3+ic;
-      var txt="", cls=[];
-      if(bIdx===4){
-        if(iIdx===4){ txt=D.goal; cls.push("goal"); }
-        else { txt=D.pillars[POS.indexOf(iIdx)]; cls.push("pillar"); }
-      } else {
-        var pi=POS.indexOf(bIdx);
-        if(iIdx===4){ txt=D.pillars[pi]; cls.push("pillar"); }
-        else { txt=D.acts[pi][POS.indexOf(iIdx)]||""; }
-      }
-      if(ic===2 && c<8) cls.push("bb");
-      if(ir===2 && r<8) cls.push("bbt");
-      td.className=cls.join(" ");
-      td.textContent=txt;
+      var o=cellOf(Math.floor(r/3)*3+Math.floor(c/3),(r%3)*3+(c%3));
+      var cls=[]; if(o.c!=="act") cls.push(o.c);
+      if(c%3===2&&c<8) cls.push("bb");
+      if(r%3===2&&r<8) cls.push("bbt");
+      td.className=cls.join(" "); td.textContent=o.t;
       tr.appendChild(td);
     }
     t.appendChild(tr);
   }
   var d=new Date();
-  $("capDate").textContent=d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
-  $("doneTitle").textContent="「"+(D.goal||"我的目標")+"」";
+  $("capD").textContent=d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
+  $("doneT").textContent="「"+(D.goal||"我的目標")+"」";
 }
 
-/* 匯出圖片 */
-function draw(W,H,mode){
-  var cv=$("cv"), x=cv.getContext("2d");
-  cv.width=W; cv.height=H;
-  var paper="#FBF8F1", ink="#1E1A14", ink2="#615948", rule="#DDD4C2",
-      pil="#F0EADB", deep="#2E5A4E";
-  x.fillStyle=paper; x.fillRect(0,0,W,H);
-
-  var pad=Math.round(W*0.06);
-  var titleH=mode==="wall"?Math.round(H*0.13):Math.round(W*0.10);
-  var gridW=W-pad*2;
-  var topY=mode==="wall"?Math.round(H*0.17):titleH+Math.round(W*0.055);
-  var cell=gridW/9;
-
-  // 標題
-  x.fillStyle=ink;
-  x.font="700 "+Math.round(W*0.042)+"px 'Noto Serif TC','Songti TC',serif";
-  x.textBaseline="alphabetic";
-  var title=D.goal||"我的九宮格計劃表";
-  if(x.measureText(title).width>gridW){
-    x.font="700 "+Math.round(W*0.032)+"px 'Noto Serif TC','Songti TC',serif";
-  }
-  x.fillText(title, pad, topY-Math.round(W*0.050));
-  x.fillStyle=ink2;
-  x.font="400 "+Math.round(W*0.019)+"px 'PingFang TC','Noto Sans TC',sans-serif";
-  x.fillText("九宮格計劃表 · 曼陀羅思考法", pad, topY-Math.round(W*0.017));
-
-  // 格線與文字
-  for(var r=0;r<9;r++){
-    for(var c=0;c<9;c++){
-      var gx=pad+c*cell, gy=topY+r*cell;
-      var br=Math.floor(r/3), bc=Math.floor(c/3), ir=r%3, ic=c%3;
-      var bIdx=br*3+bc, iIdx=ir*3+ic, txt="", type="act";
-      if(bIdx===4){
-        if(iIdx===4){ txt=D.goal; type="goal"; }
-        else { txt=D.pillars[POS.indexOf(iIdx)]; type="pillar"; }
-      } else {
-        var pi=POS.indexOf(bIdx);
-        if(iIdx===4){ txt=D.pillars[pi]; type="pillar"; }
-        else { txt=D.acts[pi][POS.indexOf(iIdx)]||""; }
-      }
-      x.fillStyle = type==="goal"?deep : (type==="pillar"?pil:paper);
-      x.fillRect(gx,gy,cell,cell);
-      x.strokeStyle=rule; x.lineWidth=Math.max(1,W*0.0012);
-      x.strokeRect(gx,gy,cell,cell);
-
-      if(txt){
-        x.fillStyle = type==="goal"?"#fff":(type==="pillar"?ink:ink2);
-        var fs = type==="goal"?W*0.0185:(type==="pillar"?W*0.0155:W*0.0128);
-        var fam = type==="act" ? "'PingFang TC','Noto Sans TC',sans-serif" : "'Noto Serif TC','Songti TC',serif";
-        x.font=(type==="act"?"400 ":"700 ")+Math.round(fs)+"px "+fam;
-        x.textAlign="center"; x.textBaseline="middle";
-        var lines=wrap(x,txt,cell*0.86);
-        var lh=fs*1.35, sy=gy+cell/2-(lines.length-1)*lh/2;
-        for(var li=0;li<lines.length && li<4;li++){
-          x.fillText(lines[li], gx+cell/2, sy+li*lh);
-        }
-        x.textAlign="left"; x.textBaseline="alphabetic";
-      }
-    }
-  }
-  // 粗框
-  x.strokeStyle=ink; x.lineWidth=Math.max(2,W*0.0028);
-  for(var b=0;b<=3;b++){
-    x.beginPath(); x.moveTo(pad+b*cell*3,topY); x.lineTo(pad+b*cell*3,topY+cell*9); x.stroke();
-    x.beginPath(); x.moveTo(pad,topY+b*cell*3); x.lineTo(pad+cell*9,topY+b*cell*3); x.stroke();
-  }
-  // 頁尾
-  x.fillStyle=ink2;
-  x.font="400 "+Math.round(W*0.016)+"px 'PingFang TC',sans-serif";
-  var dd=new Date();
-  x.fillText(dd.getFullYear()+"."+String(dd.getMonth()+1).padStart(2,"0")+"."+String(dd.getDate()).padStart(2,"0"),
-             pad, topY+cell*9+Math.round(W*0.045));
-  x.textAlign="right";
-  x.fillText("@i_jamine_pa · 潔米爸", W-pad, topY+cell*9+Math.round(W*0.045));
-  x.textAlign="left";
-  return cv;
-}
 function wrap(x,t,max){
   var out=[],line="";
   for(var i=0;i<t.length;i++){
     var test=line+t[i];
-    if(x.measureText(test).width>max && line){ out.push(line); line=t[i]; }
-    else line=test;
+    if(x.measureText(test).width>max&&line){out.push(line);line=t[i];}else line=test;
   }
-  if(line) out.push(line);
+  if(line)out.push(line);
   return out;
+}
+function draw(W,H,mode){
+  var cv=$("cv"),x=cv.getContext("2d");
+  cv.width=W;cv.height=H;
+  var paper="#FBF8F1",ink="#1E1A14",ink2="#5E5646",rule="#DDD4C2",pil="#F0EADB",deep="#2E5A4E";
+  x.fillStyle=paper;x.fillRect(0,0,W,H);
+  var pad=Math.round(W*0.06), gridW=W-pad*2, cell=gridW/9;
+  var topY=mode==="wall"?Math.round(H*0.17):Math.round(W*0.155);
+  x.fillStyle=ink;
+  var fs=Math.round(W*0.042);
+  x.font="700 "+fs+"px 'Noto Serif TC','Songti TC',serif";
+  var title=D.goal||"我的九宮格計劃表";
+  while(x.measureText(title).width>gridW&&fs>18){ fs-=2; x.font="700 "+fs+"px 'Noto Serif TC','Songti TC',serif"; }
+  x.fillText(title,pad,topY-Math.round(W*0.052));
+  x.fillStyle=ink2;
+  x.font="400 "+Math.round(W*0.0185)+"px 'PingFang TC','Noto Sans TC',sans-serif";
+  x.fillText("九宮格計劃表 · 曼陀羅思考法",pad,topY-Math.round(W*0.018));
+
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+    var gx=pad+c*cell, gy=topY+r*cell;
+    var o=cellOf(Math.floor(r/3)*3+Math.floor(c/3),(r%3)*3+(c%3));
+    x.fillStyle=o.c==="goal"?deep:(o.c==="pillar"?pil:paper);
+    x.fillRect(gx,gy,cell,cell);
+    x.strokeStyle=rule;x.lineWidth=Math.max(1,W*0.0012);x.strokeRect(gx,gy,cell,cell);
+    if(o.t){
+      x.fillStyle=o.c==="goal"?"#fff":(o.c==="pillar"?ink:ink2);
+      var f=o.c==="goal"?W*0.0185:(o.c==="pillar"?W*0.0152:W*0.0126);
+      x.font=(o.c==="act"?"400 ":"700 ")+Math.round(f)+"px "+
+        (o.c==="act"?"'PingFang TC','Noto Sans TC',sans-serif":"'Noto Serif TC','Songti TC',serif");
+      x.textAlign="center";x.textBaseline="middle";
+      var ls=wrap(x,o.t,cell*0.86), lh=f*1.34, sy=gy+cell/2-(ls.length-1)*lh/2;
+      for(var li=0;li<ls.length&&li<4;li++) x.fillText(ls[li],gx+cell/2,sy+li*lh);
+      x.textAlign="left";x.textBaseline="alphabetic";
+    }
+  }
+  x.strokeStyle=ink;x.lineWidth=Math.max(2,W*0.0028);
+  for(var b=0;b<=3;b++){
+    x.beginPath();x.moveTo(pad+b*cell*3,topY);x.lineTo(pad+b*cell*3,topY+cell*9);x.stroke();
+    x.beginPath();x.moveTo(pad,topY+b*cell*3);x.lineTo(pad+cell*9,topY+b*cell*3);x.stroke();
+  }
+  x.fillStyle=ink2;x.font="400 "+Math.round(W*0.016)+"px 'PingFang TC',sans-serif";
+  var dd=new Date();
+  var by=topY+cell*9+Math.round(W*0.045);
+  x.fillText(dd.getFullYear()+"."+String(dd.getMonth()+1).padStart(2,"0")+"."+String(dd.getDate()).padStart(2,"0"),pad,by);
+  x.textAlign="right";x.fillText("@i_jamine_pa · 潔米爸",W-pad,by);x.textAlign="left";
+  return cv;
 }
 function download(cv,name){
   try{
-    var a=document.createElement("a");
-    a.download=name; a.href=cv.toDataURL("image/png");
-    document.body.appendChild(a); a.click(); a.remove();
+    var a=document.createElement("a");a.download=name;a.href=cv.toDataURL("image/png");
+    document.body.appendChild(a);a.click();a.remove();
     toast("已下載，去相簿看看");
-  }catch(e){ toast("長按圖片可直接儲存"); }
-}
-function toast(m){
-  var t=$("toast"); t.textContent=m; t.classList.add("show");
-  setTimeout(function(){t.classList.remove("show");},2200);
+  }catch(e){ toast("長按圖片可以直接儲存"); }
 }
 
 /* 事件 */
 $("go").addEventListener("click",function(){ show(1); $("goal").focus(); });
-$("goal").addEventListener("input",function(){
-  D.goal=$("goal").value; save();
-  $("to2").disabled = !D.goal.trim();
+$("goal").addEventListener("input",function(){ D.goal=$("goal").value; save(); $("toQ").disabled=!D.goal.trim(); });
+$("toQ").addEventListener("click",function(){ cat=pickCat(); qi=0; renderQ(); show(2); });
+$("qback").addEventListener("click",function(){ if(qi>0){qi--;renderQ();} });
+$("qskip").addEventListener("click",function(){
+  if(qi<7){ qi++; renderQ(); } else { buildTabs(); buildActs(); show(3); }
 });
-$("to2").addEventListener("click",function(){ buildG3(); checkP(); show(2); });
-$("to3").addEventListener("click",function(){ tab=D.pillars.findIndex(function(v){return v.trim();}); if(tab<0)tab=0; buildTabs(); buildActs(); show(3); });
-$("to4").addEventListener("click",function(){ buildTable(); show(4);
-  $("savedNote").textContent="已自動存在這台裝置，隨時回來都在。"; });
-Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(b){
-  b.addEventListener("click",function(){
-    var n=parseInt(b.getAttribute("data-back"),10);
-    if(n===2){ buildG3(); checkP(); }
-    show(n);
-  });
-});
-$("dl").addEventListener("click",function(){ download(draw(1600,1780,"sq"),"我的九宮格計劃表.png"); });
+$("toEnd").addEventListener("click",function(){ buildTable(); show(4); });
+$("backQ").addEventListener("click",function(){ qi=7; renderQ(); show(2); });
+$("redo").addEventListener("click",function(){ buildTabs(); buildActs(); show(3); });
+$("dl").addEventListener("click",function(){ download(draw(1600,1760,"sq"),"我的九宮格計劃表.png"); });
 $("dlw").addEventListener("click",function(){ download(draw(1170,2080,"wall"),"九宮格_手機桌布.png"); });
 $("pr").addEventListener("click",function(){ window.print(); });
 
-/* 續填 */
-var saved=load();
-if(saved && (saved.goal || saved.pillars.some(function(v){return v;}))){
+var sv=load();
+if(sv&&sv.goal){
   $("resume").classList.remove("hide");
   $("resume").addEventListener("click",function(){
-    D=saved;
-    if(!D.acts) D.acts=[[],[],[],[],[],[],[],[]];
-    $("goal").value=D.goal||"";
-    $("to2").disabled=!D.goal.trim();
-    buildG3(); checkP(); buildTable(); show(4);
+    D=sv; if(!D.acts||!D.acts.length){D.acts=[];for(var i=0;i<8;i++)D.acts.push(["","","","","","","",""]);}
+    cat=pickCat(); $("goal").value=D.goal; buildTable(); show(4);
   });
 }
 })();
