@@ -24,7 +24,7 @@
   .mark{font-family:var(--mono);font-size:.66rem;letter-spacing:.28em;color:var(--seal);margin:0 0 .85rem}
   h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.7rem,6.2vw,2.35rem);
      line-height:1.36;text-wrap:balance;margin:0 0 1rem}
-  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.3rem,4.9vw,1.62rem);
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.28rem,4.8vw,1.58rem);
      line-height:1.5;text-wrap:balance;margin:0 0 .5rem}
   p{margin:0 0 1rem;color:var(--ink-2)}
   .tip{font-size:.86rem;color:var(--ink-3);line-height:1.8}
@@ -35,10 +35,10 @@
        font-size:.95rem;font-weight:700;letter-spacing:.04em;transition:opacity .16s}
   .btn:hover{opacity:.88}
   .btn[disabled]{opacity:.3;cursor:not-allowed}
-  .btn-2{border:1px solid var(--rule);border-radius:.25rem;padding:.68rem 1.05rem;
-         font-size:.86rem;color:var(--ink-2)}
+  .btn-2{border:1px solid var(--rule);border-radius:.25rem;padding:.66rem 1rem;
+         font-size:.85rem;color:var(--ink-2)}
   .btn-2:hover{border-color:var(--seal);color:var(--ink)}
-  .row{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:1.5rem}
+  .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:1.4rem}
   :focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
   input{font:inherit;width:100%;background:var(--paper);color:var(--ink);
@@ -47,46 +47,70 @@
   input::placeholder{color:var(--ink-3)}
   .big{font-family:var(--serif);font-size:1.18rem;font-weight:700;padding:.95rem 1rem}
 
-  /* 訪談 */
-  .prog{display:flex;align-items:center;gap:.7rem;margin-bottom:1.7rem}
+  .prog{display:flex;align-items:center;gap:.7rem;margin-bottom:1.5rem}
   .prog .bar{flex:1;height:3px;background:var(--rule-2);border-radius:2px;overflow:hidden}
-  .prog .bar i{display:block;height:100%;background:var(--seal);transition:width .35s ease}
-  .prog .n{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--ink-3);
+  .prog .bar i{display:block;height:100%;background:var(--seal);transition:width .4s ease}
+  .prog .n{font-family:var(--mono);font-size:.67rem;letter-spacing:.13em;color:var(--ink-3);
     font-variant-numeric:tabular-nums}
 
   .goalchip{display:inline-flex;align-items:center;gap:.45rem;background:var(--deep);color:#fff;
-    border-radius:2rem;padding:.3rem .9rem;font-size:.78rem;margin-bottom:1.1rem;max-width:100%}
+    border-radius:2rem;padding:.28rem .85rem;font-size:.77rem;margin-bottom:1.15rem;max-width:100%}
   .goalchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .goalchip b{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;opacity:.72;font-weight:400;flex:none}
+  .goalchip b{font-family:var(--mono);font-size:.58rem;letter-spacing:.13em;opacity:.72;font-weight:400;flex:none}
 
-  .opts{display:flex;flex-direction:column;gap:.55rem;margin-top:1.35rem}
+  /* 上一題的回應 —— 對談感的核心 */
+  .echo{border-left:2px solid var(--seal);padding:.15rem 0 .15rem .85rem;margin:0 0 1.4rem}
+  .echo .said{font-size:.84rem;color:var(--ink-3);margin:0 0 .2rem}
+  .echo .said b{color:var(--ink-2);font-weight:600}
+  .echo .re{font-family:var(--serif);font-size:.99rem;line-height:1.72;color:var(--ink);margin:0}
+
+  .qlabel{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;color:var(--ink-3);margin-bottom:.45rem}
+
+  .opts{display:flex;flex-direction:column;gap:.5rem;margin-top:1.2rem}
   .opt{text-align:left;width:100%;background:var(--paper-2);border:1px solid var(--rule);
-    border-radius:.28rem;padding:.95rem 1.05rem;font-size:1rem;color:var(--ink);
-    display:flex;align-items:center;gap:.75rem;transition:border-color .15s,transform .15s}
+    border-radius:.28rem;padding:.9rem 1rem;font-size:.99rem;line-height:1.55;color:var(--ink);
+    display:flex;align-items:flex-start;gap:.7rem;transition:border-color .15s,transform .15s}
   .opt:hover{border-color:var(--seal);transform:translateX(3px)}
-  .opt .dot{width:1.35rem;height:1.35rem;border:1px solid var(--rule);border-radius:50%;flex:none;
-    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.62rem;color:var(--ink-3)}
+  .opt .dot{width:1.3rem;height:1.3rem;border:1px solid var(--rule);border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.6rem;
+    color:var(--ink-3);margin-top:.12rem}
   .opt.own{border-style:dashed;color:var(--ink-2)}
-  .ownbox{display:flex;gap:.5rem;margin-top:.55rem}
-  .ownbox .btn{padding:.72rem 1.1rem;font-size:.88rem;flex:none}
+  .ownbox{display:flex;gap:.5rem;margin-top:.5rem}
+  .ownbox .btn{padding:.7rem 1.05rem;font-size:.87rem;flex:none}
 
-  .qlabel{font-family:var(--mono);font-size:.63rem;letter-spacing:.22em;color:var(--ink-3);margin-bottom:.5rem}
+  /* 自帶 AI */
+  .ai{margin-top:1.1rem}
+  .ai>summary{cursor:pointer;font-size:.83rem;color:var(--seal);list-style:none}
+  .ai>summary::-webkit-details-marker{display:none}
+  .ai>summary::after{content:" →"}
+  .aibox{border:1px dashed var(--rule);border-radius:.25rem;padding:.85rem .95rem;margin-top:.6rem}
+  .aibox p{font-size:.83rem;margin:0 0 .7rem;color:var(--ink-3)}
+  .aibtns{display:flex;flex-wrap:wrap;gap:.4rem}
+  .aibtns button{border:1px solid var(--rule);border-radius:2rem;padding:.36rem .8rem;
+    font-size:.8rem;color:var(--ink-2)}
+  .aibtns button:hover{border-color:var(--seal);color:var(--ink)}
+  .aibtns button.go{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
-  /* 小行動 */
   .tabs{display:flex;gap:.3rem;overflow-x:auto;padding-bottom:.5rem;margin-top:.4rem;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tabs button{white-space:nowrap;border:1px solid var(--rule);border-radius:2rem;padding:.36rem .78rem;
-    font-size:.79rem;color:var(--ink-2)}
+  .tabs button{white-space:nowrap;border:1px solid var(--rule);border-radius:2rem;padding:.34rem .74rem;
+    font-size:.78rem;color:var(--ink-2)}
   .tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .tabs button i{font-style:normal;color:var(--seal)}
-  .egs{display:flex;flex-wrap:wrap;gap:.36rem;margin:.9rem 0 .2rem}
-  .egs button{border:1px dashed var(--rule);border-radius:2rem;padding:.32rem .72rem;
-    font-size:.79rem;color:var(--ink-2)}
+  .egs{display:flex;flex-wrap:wrap;gap:.35rem;margin:.85rem 0 .2rem}
+  .egs button{border:1px dashed var(--rule);border-radius:2rem;padding:.3rem .7rem;
+    font-size:.78rem;color:var(--ink-2)}
   .egs button:hover{border-color:var(--seal);border-style:solid;color:var(--ink)}
-  .acts{display:flex;flex-direction:column;gap:.4rem;margin-top:.8rem}
-  .acts input{font-size:.88rem;padding:.55rem .7rem}
+  .acts{display:flex;flex-direction:column;gap:.38rem;margin-top:.75rem}
+  .acts input{font-size:.87rem;padding:.52rem .68rem}
 
-  /* 成果 */
+  /* 我聽到的是 */
+  .recap{background:var(--paper-2);border:1px solid var(--rule);border-radius:.3rem;
+    padding:1.05rem 1.15rem;margin:1.2rem 0}
+  .recap .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;color:var(--seal);margin-bottom:.55rem}
+  .recap p{font-family:var(--serif);font-size:1rem;line-height:1.95;color:var(--ink);margin:0}
+  .recap b{color:var(--seal);font-weight:700}
+
   .sheet{border:2px solid var(--ink);background:var(--paper);padding:.45rem;margin-top:1.3rem;overflow-x:auto}
   table.m{border-collapse:collapse;width:100%;min-width:31rem;table-layout:fixed}
   table.m td{border:1px solid var(--rule);text-align:center;vertical-align:middle;
@@ -98,7 +122,7 @@
   .cap{display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);
     margin-top:.5rem;font-family:var(--mono);letter-spacing:.1em}
 
-  .credit{margin-top:2.6rem;border-top:1px solid var(--rule);padding-top:1.1rem;
+  .credit{margin-top:2.4rem;border-top:1px solid var(--rule);padding-top:1.1rem;
     font-size:.79rem;color:var(--ink-3);line-height:1.9}
   .credit b{color:var(--ink-2)}
   .screen{animation:fade .3s ease both}
@@ -128,7 +152,7 @@
   <p class="mark">潔米爸的小禮物 · 免費</p>
   <h1>我陪你想清楚，<br>今年到底要做什麼。</h1>
   <p>大谷翔平高中時畫過一張九宮格：中間寫目標，周圍寫「為了達成它，我要做到哪些事」。他後來真的做到了。</p>
-  <p><b style="color:var(--ink)">你不用自己想。</b>我會像聊天一樣問你 8 個問題，每題給你幾個選項，選就好。最後你會拿到一張自己的表——可以存進相簿、設成桌布、印出來貼牆上。</p>
+  <p><b style="color:var(--ink)">你不用自己想。</b>我會像聊天一樣問你 8 個問題，你選就好，我會順著你的答案往下問。最後你會拿到一張自己的表——存進相簿、設成桌布，或印出來貼牆上。</p>
   <div class="row">
     <button class="btn" id="go">開始（大約 3 分鐘）</button>
     <button class="btn-2 hide" id="resume">看上次填的</button>
@@ -140,21 +164,34 @@
   <div class="prog"><div class="bar"><i style="width:8%"></i></div><div class="n">第 1 步</div></div>
   <p class="qlabel">先 說 目 標</p>
   <h2>接下來這一年，<br>你最想完成的一件事是什麼？</h2>
-  <p class="tip" style="margin-bottom:1.1rem">只寫一件、寫具體一點。不確定也沒關係，下面有例子可以直接點。</p>
+  <p class="tip" style="margin-bottom:1.1rem">只寫一件、寫具體一點。不確定也沒關係，下面的例子可以直接點。</p>
   <input class="big" id="goal" maxlength="20" placeholder="例：今年存到 30 萬" autocomplete="off">
   <div class="egs" id="goalEgs"></div>
-  <div class="row">
-    <button class="btn" id="toQ" disabled>好了，開始問我</button>
-  </div>
+  <div class="row"><button class="btn" id="toQ" disabled>好了，開始問我</button></div>
 </section>
 
 <section id="s2" class="hide">
   <div class="prog"><div class="bar"><i id="pbar" style="width:0"></i></div><div class="n" id="pnum"></div></div>
   <div class="goalchip"><b>目標</b><span id="chip"></span></div>
+  <div class="echo hide" id="echo">
+    <p class="said">你說：<b id="echoSaid"></b></p>
+    <p class="re" id="echoRe"></p>
+  </div>
   <p class="qlabel" id="qlab"></p>
   <h2 id="qtext"></h2>
-  <p class="tip" id="qhint"></p>
   <div class="opts" id="opts"></div>
+  <details class="ai" id="aiWrap">
+    <summary>想不出來？讓你自己的 AI 陪你想這一題</summary>
+    <div class="aibox">
+      <p>我幫你把問題寫成一段提示詞。按「複製」之後，開你平常用的 AI 貼上就好。</p>
+      <div class="aibtns">
+        <button type="button" class="go" id="aiCopy">複製提示詞</button>
+        <button type="button" data-ai="chatgpt">開 ChatGPT</button>
+        <button type="button" data-ai="claude">開 Claude</button>
+        <button type="button" data-ai="gemini">開 Gemini</button>
+      </div>
+    </div>
+  </details>
   <div class="row">
     <button class="btn-2" id="qback">上一題</button>
     <button class="btn-2" id="qskip">這題跳過</button>
@@ -162,10 +199,11 @@
 </section>
 
 <section id="s3" class="hide">
-  <div class="prog"><div class="bar"><i style="width:88%"></i></div><div class="n">最後一步</div></div>
+  <div class="prog"><div class="bar"><i style="width:90%"></i></div><div class="n">最後一步</div></div>
+  <div class="recap"><div class="k">我 聽 到 的 是</div><p id="recapT"></p></div>
   <p class="qlabel">選 填 · 可 以 直 接 跳 過</p>
   <h2>要不要再想幾件<br>「今天就能做」的小事？</h2>
-  <p class="tip">大目標會嚇到人，<b style="color:var(--ink-2)">小到不可能失敗的事不會</b>。點下面的例子可以直接填入，之後隨時能回來補。</p>
+  <p class="tip">大目標會嚇到人，<b style="color:var(--ink-2)">小到不可能失敗的事不會</b>。點下面的例子可以直接填入。</p>
   <div class="tabs" id="tabs"></div>
   <div class="egs" id="egs"></div>
   <div class="acts" id="acts"></div>
@@ -189,7 +227,19 @@
     <button class="btn-2" id="pr">列印 / 存 PDF</button>
     <button class="btn-2" id="redo">回去修改</button>
   </div>
-  <p class="tip noprint" style="margin-top:.9rem">已自動存在這台裝置，隨時回來都在。</p>
+  <details class="ai noprint" style="margin-top:1.6rem">
+    <summary>想再拆細一點？把整張表帶去問你的 AI</summary>
+    <div class="aibox">
+      <p>我會把你整張表寫成一段提示詞，讓 AI 幫你補上還空著的格子、指出你可能忽略的方向。</p>
+      <div class="aibtns">
+        <button type="button" class="go" id="aiCopy2">複製整張表的提示詞</button>
+        <button type="button" data-ai2="chatgpt">開 ChatGPT</button>
+        <button type="button" data-ai2="claude">開 Claude</button>
+        <button type="button" data-ai2="gemini">開 Gemini</button>
+      </div>
+    </div>
+  </details>
+  <p class="tip noprint" style="margin-top:1.1rem">已自動存在這台裝置，隨時回來都在。</p>
   <div class="credit noprint">
     這張表是<b>潔米爸</b>做給你的小禮物，免費、不用留資料。<br>
     如果它對你有用，把你填好的表截圖標記 <b>@i_jamine_pa</b>，我想看看你今年想做什麼。<br><br>
@@ -206,96 +256,120 @@
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i);};
-var KEY="jaminepa_mandal_v2";
+var KEY="jaminepa_mandal_v3";
 
 var GOAL_EG=["今年存到 30 萬","每週陪孩子讀 3 本書","把身體調回健康","開始我的副業","學會用日文自我介紹","每天有 30 分鐘是我自己的"];
 
-/* 八個問題：缺口→能力→習慣→阻力→支援→取捨→追蹤→動力 */
+/* 每題：標籤／問句／回應（回應是給「上一題」用的） */
 var QS=[
- {lab:"缺 口",q:"現在的你，離這個目標最遠的是什麼？",hint:"先承認卡在哪，比急著訂計畫有用。"},
- {lab:"能 力",q:"要做到它，你最需要練起來的是什麼？",hint:"不是天份，是可以練的那種。"},
- {lab:"習 慣",q:"怎麼把它放進你的日常？",hint:"能重複的才算數，做一次的不算。"},
- {lab:"阻 力",q:"什麼最可能讓你半途而廢？",hint:"先講出來，它就沒那麼有殺傷力。"},
- {lab:"支 援",q:"誰或什麼可以幫你？",hint:"一個人撐的目標，通常撐不久。"},
- {lab:"取 捨",q:"你願意先放掉什麼？",hint:"沒有取捨的目標，只是願望。"},
- {lab:"追 蹤",q:"你要怎麼知道自己有在前進？",hint:"看得見進度，才不會半路懷疑自己。"},
- {lab:"動 力",q:"什麼會讓你想繼續下去？",hint:"撐不下去的那天，你會想起這個。"}
+ {lab:"缺 口",q:"現在的你，離這個目標最遠的是什麼？"},
+ {lab:"能 力",q:"要做到它，你最需要練起來的是什麼？"},
+ {lab:"習 慣",q:"怎麼把它放進你的日常？"},
+ {lab:"阻 力",q:"什麼最可能讓你半途而廢？"},
+ {lab:"支 援",q:"誰、或什麼，可以幫你？"},
+ {lab:"取 捨",q:"為了它，你願意先放掉什麼？"},
+ {lab:"追 蹤",q:"你要怎麼知道自己有在前進？"},
+ {lab:"動 力",q:"什麼會讓你想繼續下去？"}
+];
+/* 答完第 N 題後、出現在第 N+1 題上方的回應 */
+var RE=[
+ "承認卡在哪，比急著訂十個計畫有用。接下來看你能練什麼。",
+ "能力可以練，但要有地方練。所以下一題談你的日常。",
+ "習慣一定會被生活打斷——先想清楚會被什麼打斷。",
+ "知道阻力在哪，就知道該找誰幫忙。",
+ "有人幫還不夠，你自己也得空出手來。",
+ "放掉東西之後，要看得見自己在前進，才撐得住。",
+ "最後一題。撐不下去的那天，你會想起什麼？"
 ];
 
+/* 選項：[說出來的話, 格子裡的短標籤] */
 var CATS=[
- {k:"money",re:/存|錢|萬|財|債|收入|儲蓄|投資|買房|買車|理財|負債/,
-  o:[["不知道錢花去哪","收入就是不夠","存了又拿出來花"],
-     ["記帳的習慣","忍住不買的定力","開源的本事"],
-     ["睡前記一次帳","薪水入帳先轉存","每週固定對帳"],
-     ["臨時的大支出","朋友揪吃喝玩","看到就想買"],
-     ["跟家人一起存","設定自動轉帳","找一個記帳同伴"],
-     ["少一點外食","取消閒置訂閱","戒掉手搖飲"],
-     ["每月看存款數字","畫一張進度表","每季結算一次"],
-     ["想到目標那天","達標給自己獎勵","跟人分享進度"]],
-  eg:["今天記第一筆帳","刪掉一個訂閱","設定自動轉帳","查一次餘額","跟家人說這件事","把目標寫在錢包裡"]},
- {k:"health",re:/健康|減|瘦|胖|公斤|運動|跑|健身|睡|戒菸|戒酒|體力|身體|作息/,
-  o:[["沒時間動","體力跟不上","作息很亂"],
-     ["規律的作息","動起來的習慣","吃東西的選擇"],
-     ["每天走 30 分鐘","固定時間上床","先動十分鐘再說"],
-     ["天氣或懶","加班太累","一停就停很久"],
-     ["找人一起動","用手錶記錄","排進行事曆"],
-     ["少熬夜滑手機","少一杯飲料","少一次外食"],
-     ["量體重或圍度","記錄運動天數","看體力有沒有變"],
-     ["想陪孩子跑得動","衣服穿得下","精神變好"]],
-  eg:["今天走 15 分鐘","把鞋放門口","十一點放下手機","多喝一杯水","爬樓梯不搭電梯","記錄今天有沒有動"]},
- {k:"family",re:/陪|孩子|小孩|家人|老婆|老公|爸媽|家庭|親子|婚|女兒|兒子/,
-  o:[["時間都被工作吃掉","回家只剩疲憊","不知道怎麼開口"],
-     ["專心陪的能力","好好聽的能力","穩住情緒的能力"],
-     ["每天 20 分鐘不看手機","固定一天家庭日","睡前聊五分鐘"],
-     ["加班和應酬","滑手機分心","累了就沒耐心"],
-     ["跟另一半講好","排進行事曆","讓孩子一起訂"],
-     ["推掉一些應酬","少一點加班","放下手機"],
-     ["記下相處的時刻","孩子的反應","另一半有沒有變輕鬆"],
-     ["孩子會長大","不想錯過","家人的笑容"]],
-  eg:["今天問一句他今天好嗎","睡前唸一本","手機放另一個房間","週末排一件一起做的事","說一次謝謝","拍一張合照"]},
- {k:"learn",re:/學|考|證照|語言|英文|日文|讀書|課|技能|練/,
-  o:[["沒有固定時間","不知道從哪開始","學了就忘"],
-     ["每天坐下來的習慣","抓重點的能力","開口或動手練"],
-     ["每天固定 30 分鐘","通勤時間用起來","週末補一次"],
-     ["工作一忙就斷","看不到進步","一個人很孤單"],
-     ["找學習夥伴","報一堂課","設一個小考核"],
-     ["少滑一點社群","推掉一些邀約","不追劇"],
-     ["記錄學習時數","做一次小測驗","能不能講給別人聽"],
-     ["用得上的那一刻","想成為的樣子","不想再重來一次"]],
-  eg:["今天讀 15 分鐘","打開那個 App","把教材放桌上","跟人說我在學","做一題就好","記下今天學到什麼"]},
- {k:"work",re:/工作|升|職|創業|副業|轉職|接案|開店|品牌|事業|客戶|生意/,
-  o:[["時間都在瞎忙","缺一個代表作","不知道下一步"],
-     ["專業的深度","表達與溝通","時間管理"],
-     ["每天先做最重要的","週一排好一週","固定產出時間"],
-     ["雜事一直插隊","做到一半沒信心","沒有人給回饋"],
-     ["找一個前輩聊","公開自己的進度","找合作夥伴"],
-     ["推掉不重要的事","少開無效的會","放掉完美主義"],
-     ["每月看產出","收到的回饋","收入有沒有動"],
-     ["想要的生活","證明給自己看","被需要的感覺"]],
-  eg:["今天做一件最重要的","寄出那封信","完成一個小樣","問一個人意見","關掉通知一小時","記下今天完成什麼"]},
- {k:"self",re:/自己|快樂|放鬆|焦慮|情緒|興趣|旅行|生活|時間|療癒|休息/,
-  o:[["永遠在忙別人的事","停不下來","不知道自己想要什麼"],
-     ["允許自己休息","說不的能力","覺察情緒"],
-     ["每天留 20 分鐘給自己","週末排一件想做的事","睡前寫三行"],
-     ["罪惡感","臨時被叫走","覺得在浪費時間"],
-     ["跟家人講好","排進行事曆","找一個伴一起"],
-     ["少答應一些事","少滑手機","放掉一些期待"],
-     ["情緒有沒有比較穩","睡得好不好","有沒有笑"],
-     ["想活得像自己","不想再撐了","家人也會受益"]],
-  eg:["今天留 15 分鐘給自己","拒絕一件不想做的事","寫下現在的心情","出門走一圈","做一件喜歡的小事","早睡半小時"]},
- {k:"any",re:/./,
-  o:[["還沒開始","不知道方法","時間不夠"],
-     ["持續的習慣","需要的技能","專注的能力"],
-     ["每天固定一小段","接在既有習慣後面","一週固定一天"],
-     ["三分鐘熱度","太忙就放棄","看不到成果"],
-     ["找一個夥伴","告訴身邊的人","用工具提醒"],
-     ["少滑手機","推掉一些邀約","放下完美主義"],
-     ["寫下每次進度","每月回顧一次","看得到的數字"],
-     ["完成後的樣子","不想再拖了","為了在乎的人"]],
-  eg:["今天先做五分鐘","寫下第一步","跟一個人說","把東西準備好","設一個提醒","記下今天做了什麼"]}
+{k:"money",re:/存|錢|萬|財|債|收入|儲蓄|投資|買房|買車|理財|負債/,
+ o:[
+ [["我根本不知道錢花去哪了","錢流向不明"],["賺的就是不夠，省也省不出來","收入不夠"],["存得起來，但總會又拿出來花","存了又花掉"]],
+ [["把每一筆錢記下來的耐心","記帳的耐心"],["想買的時候忍住的定力","忍住的定力"],["讓收入多一條路的本事","開源的本事"]],
+ [["睡前花兩分鐘記一次帳","睡前記帳"],["薪水一入帳就先轉走一筆","入帳先轉存"],["每週固定一天對一次帳","每週對帳"]],
+ [["突然冒出來的大筆支出","臨時大支出"],["朋友一揪就不好意思不去","人情的邀約"],["看到想要的就先買再說","看到就想買"]],
+ [["跟家人講好，一起存","家人一起存"],["設自動轉帳，不靠意志力","自動轉帳"],["找一個會一起記帳的人","記帳同伴"]],
+ [["少吃幾次外食","少一點外食"],["把沒在用的訂閱都退掉","退掉訂閱"],["戒掉每天那杯手搖","戒掉手搖"]],
+ [["每個月看一次存款數字","月看存款"],["畫一張進度表，一格一格填","畫進度表"],["每一季認真結算一次","每季結算"]],
+ [["想到存到的那天要做什麼","存到那天"],["每過一個小關卡就獎勵自己","小關卡獎勵"],["把進度講給在乎的人聽","說給人聽"]]],
+ eg:["今天記第一筆帳","刪掉一個訂閱","設定自動轉帳","查一次餘額","跟家人說這件事","把目標寫在錢包裡"]},
+
+{k:"health",re:/健康|減|瘦|胖|公斤|運動|跑|健身|睡|戒菸|戒酒|體力|身體|作息/,
+ o:[
+ [["每天忙完就完全沒力氣了","沒力氣動"],["爬個樓梯就開始喘","體力變差"],["作息整個亂掉了","作息很亂"]],
+ [["準時上床的那點自律","準時睡"],["願意先動起來的那一步","動起來"],["吃之前多想三秒鐘","吃的選擇"]],
+ [["每天走個三十分鐘","每天走30分"],["固定時間放下手機睡覺","固定時間睡"],["先做十分鐘，做完再說","先動十分鐘"]],
+ [["天氣一不好就不想動","懶或天氣"],["加班回家只想躺著","太累了"],["一停下來就停很久","一停就停久"]],
+ [["找一個會來約我的人","找人一起"],["用手錶或 App 記錄","用工具記錄"],["直接排進行事曆","排進行事曆"]],
+ [["少熬夜滑那半小時","少熬夜"],["少喝一杯含糖的","少一杯飲料"],["少點一次外送","少一次外送"]],
+ [["量體重或量腰圍","量身體數字"],["記錄這個月動了幾天","記運動天數"],["看爬樓梯還喘不喘","看體力變化"]],
+ [["想陪孩子跑得動","陪孩子跑動"],["想穿回那件衣服","穿得下"],["想每天醒來有精神","精神變好"]]],
+ eg:["今天走 15 分鐘","把運動鞋放門口","十一點放下手機","多喝一杯水","爬樓梯不搭電梯","記下今天有沒有動"]},
+
+{k:"family",re:/陪|孩子|小孩|家人|老婆|老公|爸媽|家庭|親子|婚|女兒|兒子/,
+ o:[
+ [["時間都被工作吃光了","時間被吃光"],["回到家只剩下疲憊","回家沒力氣"],["想靠近，但不知道怎麼開口","不知怎麼開口"]],
+ [["把手機放下的那種專心","專心陪"],["不急著給建議的傾聽","好好聽"],["累的時候還能穩住脾氣","穩住情緒"]],
+ [["每天二十分鐘不碰手機","每天20分鐘"],["每週固定一天是家庭日","固定家庭日"],["睡前聊個五分鐘","睡前聊五分"]],
+ [["加班和推不掉的應酬","加班應酬"],["人在旁邊卻一直滑手機","滑手機分心"],["太累就沒耐心了","累了沒耐心"]],
+ [["先跟另一半講好","跟另一半講好"],["直接寫進行事曆","排進行事曆"],["讓孩子一起決定要做什麼","讓孩子一起訂"]],
+ [["推掉幾場應酬","推掉應酬"],["少接一點下班後的工作","少一點加班"],["一回家就把手機收起來","收起手機"]],
+ [["記下每次相處的小事","記下相處"],["看孩子的反應有沒有變","看孩子反應"],["問另一半有沒有比較輕鬆","問另一半"]],
+ [["孩子長大不會等我","孩子會長大"],["不想以後才後悔","不想錯過"],["他們笑起來的時候","家人的笑"]]],
+ eg:["今天問一句「你今天好嗎」","睡前唸一本書","手機放到另一個房間","週末排一件一起做的事","說一次謝謝","拍一張合照"]},
+
+{k:"learn",re:/學|考|證照|語言|英文|日文|讀書|課|技能|練/,
+ o:[
+ [["永遠找不到固定的時間","沒有時間"],["不知道該從哪裡開始","不知從何開始"],["學了一陣子就忘光了","學了就忘"]],
+ [["每天願意坐下來的那個開關","坐下來"],["抓重點、不貪多","抓重點"],["敢開口、敢動手練","開口去練"]],
+ [["每天固定三十分鐘","每天30分鐘"],["把通勤時間用起來","用通勤時間"],["週末補一次進度","週末補進度"]],
+ [["工作一忙就整個斷掉","一忙就斷"],["感覺不到自己有進步","看不到進步"],["一個人學很孤單","一個人很孤單"]],
+ [["找一個一起學的人","找學習夥伴"],["花錢報一堂課逼自己","報一堂課"],["設一個一定要考的檢定","設一個檢定"]],
+ [["少滑一點社群","少滑社群"],["推掉一些聚會","推掉聚會"],["先不追那部劇","先不追劇"]],
+ [["記錄每天學了多久","記學習時數"],["定期做一次小測驗","做小測驗"],["看能不能講給別人聽","講給別人聽"]],
+ [["真的用上的那一刻","用得上那刻"],["想成為的那個樣子","想成為的人"],["不想再重來一次","不想再重來"]]],
+ eg:["今天讀 15 分鐘","打開那個 App","把教材放桌上","跟人說我在學這個","做一題就好","記下今天學到什麼"]},
+
+{k:"work",re:/工作|升|職|創業|副業|轉職|接案|開店|品牌|事業|客戶|生意/,
+ o:[
+ [["每天都在忙，但沒有累積","瞎忙沒累積"],["拿不出一個代表作","沒有代表作"],["不知道下一步要往哪走","不知下一步"]],
+ [["把一件事做到夠深","做到夠深"],["把想法講得讓人聽懂","講得清楚"],["守住重要的那段時間","守住時間"]],
+ [["每天先做最重要的那一件","先做最重要"],["週一花十分鐘排一整週","週一排一週"],["固定一段不被打擾的時間","固定產出時間"]],
+ [["雜事一直插隊","雜事插隊"],["做到一半開始懷疑自己","中途沒信心"],["做了也沒人給回饋","沒有回饋"]],
+ [["找一個走過這條路的人聊","找前輩聊"],["公開自己的進度","公開進度"],["找一個一起做的人","找夥伴"]],
+ [["推掉不重要的請託","推掉雜事"],["少開幾個沒必要的會","少開會"],["放掉一定要完美的執念","放掉完美"]],
+ [["每個月看自己做出了什麼","看月產出"],["收到的回饋和反應","看回饋"],["收入有沒有真的動","看收入"]],
+ [["想過的那種生活","想要的生活"],["想證明給自己看","證明給自己"],["有人真的需要我做的東西","被需要"]]],
+ eg:["今天先做最重要那件","把那封信寄出去","完成一個小樣","問一個人的意見","關掉通知一小時","記下今天完成什麼"]},
+
+{k:"self",re:/自己|快樂|放鬆|焦慮|情緒|興趣|旅行|生活|時間|療癒|休息|喘/,
+ o:[
+ [["永遠在處理別人的事","都在忙別人"],["連停下來都會有罪惡感","停不下來"],["不知道自己到底想要什麼","不知道要什麼"]],
+ [["允許自己休息","允許休息"],["把「不」說出口","說得出不"],["感覺得到自己的情緒","覺察情緒"]],
+ [["每天留二十分鐘給自己","每天20分鐘"],["每週排一件想做的事","每週一件"],["睡前寫三行今天","睡前寫三行"]],
+ [["會覺得自己在偷懶","罪惡感"],["臨時被家人或工作叫走","臨時被叫走"],["覺得這樣很浪費時間","覺得浪費"]],
+ [["先跟家人講好這段時間","跟家人講好"],["直接排進行事曆","排進行事曆"],["找一個聊得來的人","找人聊"]],
+ [["少答應一些事","少答應事"],["少滑一點手機","少滑手機"],["放掉一些對自己的要求","放掉期待"]],
+ [["情緒有沒有比較穩","情緒變穩"],["晚上睡得好不好","睡得好不好"],["這週有沒有真的笑過","有沒有笑"]],
+ [["想活得比較像自己","像自己一點"],["真的撐不下去了","不想再撐"],["我好了，家人也會好","家人也受益"]]],
+ eg:["今天留 15 分鐘給自己","拒絕一件不想做的事","寫下現在的心情","出門走一圈","做一件喜歡的小事","早睡半小時"]},
+
+{k:"any",re:/./,
+ o:[
+ [["一直沒有真的開始","還沒開始"],["不知道方法對不對","不知道方法"],["時間永遠不夠用","時間不夠"]],
+ [["能持續下去的習慣","持續的習慣"],["缺的那一項技能","需要的技能"],["專心不分心的能力","專注力"]],
+ [["每天固定一小段時間","每天一小段"],["接在已經有的習慣後面","接在習慣後"],["一週固定一天做","每週固定一天"]],
+ [["三分鐘熱度","三分鐘熱度"],["一忙起來就放掉","忙起來就放"],["看不到成果就想放棄","看不到成果"]],
+ [["找一個夥伴","找夥伴"],["告訴身邊的人","告訴別人"],["用工具提醒自己","用工具提醒"]],
+ [["少滑一點手機","少滑手機"],["推掉一些邀約","推掉邀約"],["放下非得完美不可","放下完美"]],
+ [["每次都寫下進度","寫下進度"],["每個月回顧一次","每月回顧"],["用看得到的數字","看數字"]],
+ [["完成之後的樣子","完成的樣子"],["真的不想再拖了","不想再拖"],["為了我在乎的人","為了在乎的人"]]],
+ eg:["今天先做五分鐘","寫下第一步","跟一個人說","把東西準備好","設一個提醒","記下今天做了什麼"]}
 ];
 
-var D={goal:"",pillars:["","","","","","","",""],acts:[]};
+var D={goal:"",pillars:["","","","","","","",""],said:["","","","","","","",""],acts:[]};
 for(var z=0;z<8;z++){ D.acts.push(["","","","","","","",""]); }
 var qi=0, tab=0, cat=CATS[6];
 
@@ -312,8 +386,13 @@ function show(n){
 }
 function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");
   setTimeout(function(){t.classList.remove("show");},2100);}
+function copy(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(t).then(function(){toast("提示詞已複製");},function(){toast("複製失敗，請長按選取");});
+  }
+  toast("請長按選取複製");
+}
 
-/* 目標例子 */
 GOAL_EG.forEach(function(t){
   var b=document.createElement("button"); b.type="button"; b.textContent=t;
   b.addEventListener("click",function(){ $("goal").value=t; D.goal=t; save(); $("toQ").disabled=false; });
@@ -321,52 +400,70 @@ GOAL_EG.forEach(function(t){
 });
 
 /* ── 訪談 ── */
+function aiPrompt(){
+  return "我在做一張九宮格目標計劃表（大谷翔平那種）。\n"+
+    "我今年的目標是：「"+D.goal+"」\n"+
+    "現在這一題是：「"+QS[qi].q+"」（這一格代表「"+QS[qi].lab.replace(/ /g,"")+"」）\n\n"+
+    "請用繁體中文，給我 3 個具體、口語、不空泛的可能答案（每個 15 字以內），"+
+    "每個再補一句話說明為什麼這可能是我的狀況。最後問我一個能幫我想更清楚的問題。";
+}
 function renderQ(){
   var Q=QS[qi];
-  $("pbar").style.width=((qi+1)/8*80+8)+"%";
+  $("pbar").style.width=((qi+1)/8*82+8)+"%";
   $("pnum").textContent="第 "+(qi+1)+" 題 / 共 8 題";
   $("chip").textContent=D.goal;
   $("qlab").textContent=Q.lab;
   $("qtext").textContent=Q.q;
-  $("qhint").textContent=Q.hint;
   $("qback").style.visibility = qi===0 ? "hidden" : "visible";
 
+  if(qi>0 && D.said[qi-1]){
+    $("echo").classList.remove("hide");
+    $("echoSaid").textContent="「"+D.said[qi-1]+"」";
+    $("echoRe").textContent=RE[qi-1];
+  } else { $("echo").classList.add("hide"); }
+
   var box=$("opts"); box.innerHTML="";
-  cat.o[qi].forEach(function(t,i){
+  cat.o[qi].forEach(function(pair,i){
     var b=document.createElement("button"); b.type="button"; b.className="opt";
-    b.innerHTML='<span class="dot">'+String.fromCharCode(65+i)+'</span><span></span>';
-    b.lastChild.textContent=t;
-    b.addEventListener("click",function(){ answer(t); });
+    var d=document.createElement("span"); d.className="dot"; d.textContent=String.fromCharCode(65+i);
+    var s=document.createElement("span"); s.textContent=pair[0];
+    b.appendChild(d); b.appendChild(s);
+    b.addEventListener("click",function(){ answer(pair[0],pair[1]); });
     box.appendChild(b);
   });
   var own=document.createElement("button");
   own.type="button"; own.className="opt own";
-  own.innerHTML='<span class="dot">＋</span><span>都不是，我自己寫</span>';
+  own.innerHTML='<span class="dot">＋</span><span>都不是，我自己說</span>';
   own.addEventListener("click",function(){
     own.remove();
     var w=document.createElement("div"); w.className="ownbox";
-    var ip=document.createElement("input");
-    ip.maxLength=10; ip.placeholder="用你自己的話（10 字內）";
+    var ip=document.createElement("input"); ip.maxLength=12; ip.placeholder="用你自己的話（12 字內）";
     var ok=document.createElement("button"); ok.className="btn"; ok.type="button"; ok.textContent="就這個";
-    var done=function(){ if(ip.value.trim()) answer(ip.value.trim()); };
+    var done=function(){ var v=ip.value.trim(); if(v) answer(v,v.slice(0,8)); };
     ok.addEventListener("click",done);
     ip.addEventListener("keydown",function(e){ if(e.key==="Enter") done(); });
     w.appendChild(ip); w.appendChild(ok); box.appendChild(w); ip.focus();
   });
   box.appendChild(own);
-
-  // 已答過就標示目前答案
-  if(D.pillars[qi]){
-    var hintEl=document.createElement("p");
-    hintEl.className="tip"; hintEl.style.marginTop=".8rem";
-    hintEl.textContent="上次選的是：「"+D.pillars[qi]+"」，可以改。";
-    box.appendChild(hintEl);
-  }
+  $("aiWrap").open=false;
 }
-function answer(v){
-  D.pillars[qi]=v; save();
+function answer(spoken,label){
+  D.said[qi]=spoken; D.pillars[qi]=label; save();
   if(qi<7){ qi++; renderQ(); }
-  else { buildTabs(); buildActs(); show(3); }
+  else { buildRecap(); buildTabs(); buildActs(); show(3); }
+}
+
+/* ── 我聽到的是 ── */
+function buildRecap(){
+  var p=D.pillars, s=D.said;
+  var g=function(i,f){ return s[i]? "<b>"+s[i]+"</b>" : f; };
+  $("recapT").innerHTML=
+    "為了「<b>"+D.goal+"</b>」——<br>"+
+    "你現在卡在 "+g(0,"（跳過）")+"，需要練起 "+g(1,"（跳過）")+"，"+
+    "打算靠 "+g(2,"（跳過）")+" 落實它。<br>"+
+    "最可能毀掉它的是 "+g(3,"（跳過）")+"，而 "+g(4,"（跳過）")+" 會幫你。<br>"+
+    "你願意 "+g(5,"（跳過）")+"，用 "+g(6,"（跳過）")+" 確認自己在前進，"+
+    "靠 "+g(7,"（跳過）")+" 撐下去。";
 }
 
 /* ── 小行動 ── */
@@ -399,23 +496,18 @@ function buildActs(){
     var ip=document.createElement("input");
     ip.maxLength=14; ip.placeholder=(i+1)+"　自己寫，或點上面的例子";
     ip.value=D.acts[tab][i]||"";
-    (function(k,el){
-      el.addEventListener("input",function(){ D.acts[tab][k]=el.value; save(); buildTabs(); });
-    })(i,ip);
+    (function(k,el){ el.addEventListener("input",function(){ D.acts[tab][k]=el.value; save(); buildTabs(); }); })(i,ip);
     a.appendChild(ip);
   }
 }
 
 /* ── 成果 ── */
 var POS=[0,1,2,3,5,6,7,8];
-function cellOf(bIdx,iIdx){
-  if(bIdx===4){
-    if(iIdx===4) return {t:D.goal,c:"goal"};
-    return {t:D.pillars[POS.indexOf(iIdx)],c:"pillar"};
-  }
-  var pi=POS.indexOf(bIdx);
-  if(iIdx===4) return {t:D.pillars[pi],c:"pillar"};
-  return {t:D.acts[pi][POS.indexOf(iIdx)]||"",c:"act"};
+function cellOf(b,i){
+  if(b===4){ if(i===4) return {t:D.goal,c:"goal"}; return {t:D.pillars[POS.indexOf(i)],c:"pillar"}; }
+  var pi=POS.indexOf(b);
+  if(i===4) return {t:D.pillars[pi],c:"pillar"};
+  return {t:D.acts[pi][POS.indexOf(i)]||"",c:"act"};
 }
 function buildTable(){
   var t=$("mt"); t.innerHTML="";
@@ -427,14 +519,27 @@ function buildTable(){
       var cls=[]; if(o.c!=="act") cls.push(o.c);
       if(c%3===2&&c<8) cls.push("bb");
       if(r%3===2&&r<8) cls.push("bbt");
-      td.className=cls.join(" "); td.textContent=o.t;
-      tr.appendChild(td);
+      td.className=cls.join(" "); td.textContent=o.t; tr.appendChild(td);
     }
     t.appendChild(tr);
   }
   var d=new Date();
   $("capD").textContent=d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
   $("doneT").textContent="「"+(D.goal||"我的目標")+"」";
+}
+function fullPrompt(){
+  var lines=["這是我用九宮格（曼陀羅）做的目標計劃表，請幫我看看：","","目標：「"+D.goal+"」","","八個方向："];
+  D.pillars.forEach(function(p,i){
+    if(!p) { lines.push((i+1)+". （還沒想）"); return; }
+    var a=D.acts[i].filter(function(v){return v.trim();});
+    lines.push((i+1)+". "+p+(D.said[i]&&D.said[i]!==p?"（我的原話："+D.said[i]+"）":"")+
+      (a.length?"　小行動："+a.join("、"):"　小行動：還沒想"));
+  });
+  lines.push("","請用繁體中文：",
+    "1. 指出我這張表裡最可能被忽略、但其實最關鍵的一個方向，並說為什麼。",
+    "2. 幫每個「小行動還沒想」的方向，各補 3 件今天就能做、小到不可能失敗的事。",
+    "3. 最後給我一句真話——不用安慰我。");
+  return lines.join("\n");
 }
 
 function wrap(x,t,max){
@@ -443,8 +548,7 @@ function wrap(x,t,max){
     var test=line+t[i];
     if(x.measureText(test).width>max&&line){out.push(line);line=t[i];}else line=test;
   }
-  if(line)out.push(line);
-  return out;
+  if(line)out.push(line); return out;
 }
 function draw(W,H,mode){
   var cv=$("cv"),x=cv.getContext("2d");
@@ -462,7 +566,6 @@ function draw(W,H,mode){
   x.fillStyle=ink2;
   x.font="400 "+Math.round(W*0.0185)+"px 'PingFang TC','Noto Sans TC',sans-serif";
   x.fillText("九宮格計劃表 · 曼陀羅思考法",pad,topY-Math.round(W*0.018));
-
   for(var r=0;r<9;r++)for(var c=0;c<9;c++){
     var gx=pad+c*cell, gy=topY+r*cell;
     var o=cellOf(Math.floor(r/3)*3+Math.floor(c/3),(r%3)*3+(c%3));
@@ -486,8 +589,7 @@ function draw(W,H,mode){
     x.beginPath();x.moveTo(pad,topY+b*cell*3);x.lineTo(pad+cell*9,topY+b*cell*3);x.stroke();
   }
   x.fillStyle=ink2;x.font="400 "+Math.round(W*0.016)+"px 'PingFang TC',sans-serif";
-  var dd=new Date();
-  var by=topY+cell*9+Math.round(W*0.045);
+  var dd=new Date(), by=topY+cell*9+Math.round(W*0.045);
   x.fillText(dd.getFullYear()+"."+String(dd.getMonth()+1).padStart(2,"0")+"."+String(dd.getDate()).padStart(2,"0"),pad,by);
   x.textAlign="right";x.fillText("@i_jamine_pa · 潔米爸",W-pad,by);x.textAlign="left";
   return cv;
@@ -495,9 +597,13 @@ function draw(W,H,mode){
 function download(cv,name){
   try{
     var a=document.createElement("a");a.download=name;a.href=cv.toDataURL("image/png");
-    document.body.appendChild(a);a.click();a.remove();
-    toast("已下載，去相簿看看");
+    document.body.appendChild(a);a.click();a.remove(); toast("已下載，去相簿看看");
   }catch(e){ toast("長按圖片可以直接儲存"); }
+}
+function openAI(which,text){
+  var u={chatgpt:"https://chatgpt.com/?q=",claude:"https://claude.ai/new?q=",gemini:"https://gemini.google.com/app"}[which];
+  var url = which==="gemini" ? u : u+encodeURIComponent(text.slice(0,1200));
+  window.open(url,"_blank","noopener");
 }
 
 /* 事件 */
@@ -506,11 +612,19 @@ $("goal").addEventListener("input",function(){ D.goal=$("goal").value; save(); $
 $("toQ").addEventListener("click",function(){ cat=pickCat(); qi=0; renderQ(); show(2); });
 $("qback").addEventListener("click",function(){ if(qi>0){qi--;renderQ();} });
 $("qskip").addEventListener("click",function(){
-  if(qi<7){ qi++; renderQ(); } else { buildTabs(); buildActs(); show(3); }
+  if(qi<7){ qi++; renderQ(); } else { buildRecap(); buildTabs(); buildActs(); show(3); }
+});
+$("aiCopy").addEventListener("click",function(){ copy(aiPrompt()); });
+Array.prototype.forEach.call(document.querySelectorAll("[data-ai]"),function(b){
+  b.addEventListener("click",function(){ var t=aiPrompt(); copy(t); openAI(b.getAttribute("data-ai"),t); });
+});
+$("aiCopy2").addEventListener("click",function(){ copy(fullPrompt()); });
+Array.prototype.forEach.call(document.querySelectorAll("[data-ai2]"),function(b){
+  b.addEventListener("click",function(){ var t=fullPrompt(); copy(t); openAI(b.getAttribute("data-ai2"),t); });
 });
 $("toEnd").addEventListener("click",function(){ buildTable(); show(4); });
 $("backQ").addEventListener("click",function(){ qi=7; renderQ(); show(2); });
-$("redo").addEventListener("click",function(){ buildTabs(); buildActs(); show(3); });
+$("redo").addEventListener("click",function(){ buildRecap(); buildTabs(); buildActs(); show(3); });
 $("dl").addEventListener("click",function(){ download(draw(1600,1760,"sq"),"我的九宮格計劃表.png"); });
 $("dlw").addEventListener("click",function(){ download(draw(1170,2080,"wall"),"九宮格_手機桌布.png"); });
 $("pr").addEventListener("click",function(){ window.print(); });
@@ -519,7 +633,9 @@ var sv=load();
 if(sv&&sv.goal){
   $("resume").classList.remove("hide");
   $("resume").addEventListener("click",function(){
-    D=sv; if(!D.acts||!D.acts.length){D.acts=[];for(var i=0;i<8;i++)D.acts.push(["","","","","","","",""]);}
+    D=sv;
+    if(!D.acts||!D.acts.length){D.acts=[];for(var i=0;i<8;i++)D.acts.push(["","","","","","","",""]);}
+    if(!D.said){D.said=D.pillars.slice();}
     cat=pickCat(); $("goal").value=D.goal; buildTable(); show(4);
   });
 }
