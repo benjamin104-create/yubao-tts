@@ -1,0 +1,548 @@
+<title>九宮格計劃表｜把「我想」變成「我做」</title>
+
+<style>
+  :root{
+    --paper:#FBF8F1;
+    --paper-2:#F3EEE2;
+    --ink:#1E1A14;
+    --ink-2:#615948;
+    --ink-3:#948B77;
+    --rule:#DDD4C2;
+    --rule-2:#EBE4D5;
+    --seal:#B23A2E;
+    --deep:#2E5A4E;
+    --serif:"Noto Serif TC","Songti TC","Source Han Serif TC",serif;
+    --sans:"PingFang TC","Noto Sans TC","Heiti TC",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#15140F;--paper-2:#1D1B15;--ink:#F0EADC;--ink-2:#B0A793;--ink-3:#7C7462;
+      --rule:#333026;--rule-2:#26241C;--seal:#D9705F;--deep:#6FAE99;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#FBF8F1;--paper-2:#F3EEE2;--ink:#1E1A14;--ink-2:#615948;--ink-3:#948B77;
+    --rule:#DDD4C2;--rule-2:#EBE4D5;--seal:#B23A2E;--deep:#2E5A4E;
+  }
+  :root[data-theme="dark"]{
+    --paper:#15140F;--paper-2:#1D1B15;--ink:#F0EADC;--ink-2:#B0A793;--ink-3:#7C7462;
+    --rule:#333026;--rule-2:#26241C;--seal:#D9705F;--deep:#6FAE99;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7}
+  .wrap{max-width:41rem;margin:0 auto;padding:clamp(1.6rem,5vw,3.4rem) clamp(1rem,4vw,1.8rem) 6rem}
+
+  .step-mark{font-family:var(--mono);font-size:.68rem;letter-spacing:.3em;color:var(--seal);margin:0 0 .9rem}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.75rem,6.4vw,2.5rem);
+     line-height:1.34;letter-spacing:.01em;text-wrap:balance;margin:0 0 1rem}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.35rem,5vw,1.75rem);
+     line-height:1.45;text-wrap:balance;margin:0 0 .7rem}
+  p{margin:0 0 1rem;color:var(--ink-2)}
+  .tip{font-size:.87rem;color:var(--ink-3);line-height:1.85}
+
+  .card{background:var(--paper-2);border:1px solid var(--rule);border-radius:.35rem;padding:1.1rem 1.2rem}
+
+  button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+  .btn{background:var(--ink);color:var(--paper);border-radius:.25rem;
+       padding:.85rem 1.6rem;font-size:.95rem;font-weight:700;letter-spacing:.05em;
+       transition:transform .16s ease,opacity .16s ease}
+  .btn:hover{transform:translateY(-1px);opacity:.9}
+  .btn[disabled]{opacity:.32;cursor:not-allowed;transform:none}
+  .btn-2{border:1px solid var(--rule);border-radius:.25rem;padding:.72rem 1.15rem;
+         font-size:.87rem;color:var(--ink-2)}
+  .btn-2:hover{border-color:var(--seal);color:var(--ink)}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1.6rem}
+  :focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+  input,textarea{font:inherit;width:100%;background:var(--paper);color:var(--ink);
+    border:1px solid var(--rule);border-radius:.2rem;padding:.7rem .8rem;line-height:1.5}
+  input:focus,textarea:focus{outline:none;border-color:var(--seal)}
+  input::placeholder,textarea::placeholder{color:var(--ink-3)}
+  .big-input{font-family:var(--serif);font-size:1.2rem;font-weight:700;padding:.95rem 1rem}
+
+  /* 進度 */
+  .steps{display:flex;gap:.3rem;margin:0 0 1.9rem}
+  .steps i{flex:1;height:3px;background:var(--rule-2);border-radius:2px}
+  .steps i.on{background:var(--seal)}
+
+  /* 範例摺疊 */
+  details{border:1px dashed var(--rule);border-radius:.25rem;padding:.7rem .9rem;margin:.9rem 0 0}
+  details summary{cursor:pointer;font-size:.88rem;color:var(--seal);font-weight:600;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"＋ ";font-family:var(--mono)}
+  details[open] summary::before{content:"− "}
+  details ul{margin:.75rem 0 .2rem;padding-left:1.1rem;font-size:.88rem;color:var(--ink-2);line-height:2}
+
+  /* 3×3 支柱輸入 */
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:1.1rem}
+  .g3 .cell{background:var(--paper-2);border:1px solid var(--rule);border-radius:.25rem;
+    padding:.5rem .5rem .55rem;min-height:5.4rem;display:flex;flex-direction:column;gap:.28rem}
+  .g3 .cell label{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;color:var(--ink-3)}
+  .g3 .cell textarea{border:0;background:transparent;padding:0;resize:none;
+    font-size:.8rem;line-height:1.5;flex:1;min-height:3.2rem}
+  .g3 .core{background:var(--deep);border-color:var(--deep);color:#fff;justify-content:center;text-align:center}
+  .g3 .core .k{font-family:var(--mono);font-size:.56rem;letter-spacing:.2em;opacity:.75}
+  .g3 .core .v{font-family:var(--serif);font-weight:700;font-size:.9rem;line-height:1.45;
+    word-break:break-word;margin-top:.2rem}
+
+  /* 範本選擇 */
+  .tpl{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.9rem}
+  .tpl button{border:1px solid var(--rule);border-radius:2rem;padding:.4rem .85rem;
+    font-size:.82rem;color:var(--ink-2);background:var(--paper)}
+  .tpl button:hover{border-color:var(--seal);color:var(--ink)}
+
+  /* 行動分頁 */
+  .tabs{display:flex;gap:.32rem;overflow-x:auto;padding-bottom:.5rem;margin-top:1rem;
+    scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{white-space:nowrap;border:1px solid var(--rule);border-radius:2rem;
+    padding:.38rem .8rem;font-size:.8rem;color:var(--ink-2);background:var(--paper)}
+  .tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .tabs button .dot{color:var(--seal)}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-top:1rem}
+  .acts input{font-size:.85rem;padding:.55rem .65rem}
+  @media (max-width:400px){ .acts{grid-template-columns:1fr} }
+
+  /* 成果 */
+  .sheet{border:2px solid var(--ink);background:var(--paper);padding:.5rem;margin-top:1.4rem;
+    overflow-x:auto}
+  table.m{border-collapse:collapse;width:100%;min-width:33rem;table-layout:fixed}
+  table.m td{border:1px solid var(--rule);vertical-align:middle;text-align:center;
+    padding:.3rem .18rem;font-size:.56rem;line-height:1.42;height:3.05rem;
+    color:var(--ink-2);word-break:break-word}
+  table.m td.pillar{background:var(--paper-2);font-weight:700;color:var(--ink);font-size:.62rem}
+  table.m td.goal{background:var(--deep);color:#fff;font-family:var(--serif);
+    font-weight:700;font-size:.78rem}
+  table.m td.bb{border-right-width:2px;border-right-color:var(--ink)}
+  table.m td.bbt{border-bottom-width:2px;border-bottom-color:var(--ink)}
+  .sheet-cap{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:.68rem;color:var(--ink-3);margin-top:.55rem;font-family:var(--mono);letter-spacing:.1em}
+
+  .saved{font-size:.78rem;color:var(--ink-3);margin-top:.9rem}
+  .hide{display:none}
+  .screen{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.screen{animation:none}.btn:hover{transform:none}}
+
+  .credit{margin-top:3rem;border-top:1px solid var(--rule);padding-top:1.2rem;
+    font-size:.8rem;color:var(--ink-3);line-height:1.9}
+  .credit b{color:var(--ink-2)}
+
+  .toast{position:fixed;left:50%;bottom:1.6rem;transform:translateX(-50%) translateY(1rem);
+    background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:.25rem;
+    font-size:.85rem;font-weight:700;opacity:0;pointer-events:none;transition:.22s;z-index:9}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media print{
+    .noprint{display:none!important}
+    body{background:#fff;color:#000}
+    .wrap{max-width:none;padding:0}
+    .sheet{border:2px solid #000;page-break-inside:avoid}
+    table.m{min-width:0}
+    table.m td{border-color:#999;color:#222;height:2.6rem}
+    table.m td.goal{background:#eee!important;color:#000!important;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.m td.pillar{background:#f6f6f6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+
+<div class="wrap">
+
+<!-- ── 0 入口 ── -->
+<section id="s0" class="screen">
+  <p class="step-mark">潔米爸的小禮物 · 免費</p>
+  <h1>把「我想」<br>變成「我做得到」。</h1>
+  <p>大谷翔平高中一年級時，在紙上畫了一張九宮格，寫下他想進職棒的目標，和為了達成它必須做到的 64 件小事。他後來做到了。</p>
+  <p>這張表叫<b>曼陀羅計劃表</b>。今天我陪你填一張你自己的——<b>五分鐘，一格一格來，我會告訴你每一格可以寫什麼。</b></p>
+
+  <div class="card" style="margin-top:1.4rem">
+    <p style="margin:0;font-size:.9rem"><b style="color:var(--ink)">填完你會得到：</b></p>
+    <ul style="margin:.6rem 0 0;padding-left:1.1rem;font-size:.88rem;color:var(--ink-2);line-height:2">
+      <li>一張完整的九宮格計劃表</li>
+      <li>可以<b>存進相簿</b>，設成桌布每天看到</li>
+      <li>可以<b>印出來貼牆上</b>（A4）</li>
+    </ul>
+  </div>
+
+  <div class="row">
+    <button class="btn" id="go">開始填第一格</button>
+    <button class="btn-2 hide" id="resume">繼續上次的</button>
+  </div>
+  <p class="tip" style="margin-top:1.1rem">會自動存在這台裝置上，中途離開也不會不見。</p>
+</section>
+
+<!-- ── 1 中心目標 ── -->
+<section id="s1" class="hide">
+  <div class="steps"><i class="on"></i><i></i><i></i></div>
+  <p class="step-mark">第 一 步 · 中心那一格</p>
+  <h2>接下來這一年，<br>你最想完成的一件事是什麼？</h2>
+  <p>只寫<b>一件</b>。寫得越具體越好——具體的目標，身體才知道要往哪走。</p>
+
+  <input class="big-input" id="goal" maxlength="24" placeholder="例：今年存到 30 萬" autocomplete="off">
+
+  <details>
+    <summary>不知道怎麼寫？點這裡</summary>
+    <p class="tip" style="margin:.6rem 0 .3rem">先問自己這三句，答案通常就出來了：</p>
+    <ul>
+      <li>今年結束時，我希望自己<b>不一樣</b>在哪裡？</li>
+      <li>有什麼事我<b>拖了很久</b>，一直沒開始？</li>
+      <li>如果只能完成一件事，我會選哪一件？</li>
+    </ul>
+    <p class="tip" style="margin:.7rem 0 .3rem">別人寫過的：</p>
+    <ul id="goal-eg"></ul>
+  </details>
+
+  <div class="row">
+    <button class="btn" id="to2" disabled>下一步</button>
+    <button class="btn-2" data-back="0">上一步</button>
+  </div>
+</section>
+
+<!-- ── 2 八個支柱 ── -->
+<section id="s2" class="hide">
+  <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+  <p class="step-mark">第 二 步 · 圍著中心的八格</p>
+  <h2>要做到這件事，<br>有哪 8 件事必須成立？</h2>
+  <p>不用寫行動，寫<b>「方向」或「要素」</b>就好。例如目標是存錢，要素可能是「記帳」「減少外食」「增加收入」。</p>
+
+  <p class="tip" style="margin-bottom:.2rem">懶得想？選一個最接近你目標的類型，我先幫你填，你再改成自己的話：</p>
+  <div class="tpl" id="tpl"></div>
+
+  <div class="g3" id="g3"></div>
+
+  <p class="tip" style="margin-top:1rem">八格不一定要全填滿，但填越多，這張表越有力量。</p>
+
+  <div class="row">
+    <button class="btn" id="to3" disabled>下一步</button>
+    <button class="btn-2" data-back="1">上一步</button>
+  </div>
+</section>
+
+<!-- ── 3 六十四個行動 ── -->
+<section id="s3" class="hide">
+  <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <p class="step-mark">第 三 步 · 最外圈（可以跳過）</p>
+  <h2>每一個方向，<br>再拆成 8 個「今天就能做」的小事。</h2>
+  <p>這是大谷那張表真正厲害的地方——<b>大目標會嚇到人，小到不可能失敗的事不會。</b>不用一次填完，之後隨時能回來補。</p>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="acts" id="acts"></div>
+
+  <div class="row">
+    <button class="btn" id="to4">完成，看我的表</button>
+    <button class="btn-2" data-back="2">上一步</button>
+  </div>
+</section>
+
+<!-- ── 4 成果 ── -->
+<section id="s4" class="hide">
+  <p class="step-mark">完 成 · 這是你的表</p>
+  <h2 id="doneTitle"></h2>
+  <p class="noprint">存進相簿設成桌布，或印出來貼在你每天會看到的地方——冰箱、書桌前、廁所門後都可以。</p>
+
+  <div class="sheet" id="sheet">
+    <table class="m" id="mtable"></table>
+    <div class="sheet-cap"><span id="capDate"></span><span>JAMINEPA · 九宮格計劃表</span></div>
+  </div>
+
+  <div class="row noprint">
+    <button class="btn" id="dl">存成圖片（相簿）</button>
+    <button class="btn-2" id="dlw">手機桌布版</button>
+    <button class="btn-2" id="pr">列印 / 存 PDF</button>
+    <button class="btn-2" data-back="2">回去修改</button>
+  </div>
+  <p class="saved noprint" id="savedNote"></p>
+
+  <div class="credit noprint">
+    這張表是<b>潔米爸</b>做給你的小禮物，免費、不用留資料。<br>
+    如果它對你有用，把你填好的表截圖，標記 <b>@i_jamine_pa</b>，我想看看你今年想做什麼。<br><br>
+    <b>@i_jamine_pa</b>　一個爸爸的真實育兒現場<br>
+    <b>@jamine_pa</b>　書房筆記 · 用命盤讀懂自己
+  </div>
+</section>
+
+</div>
+
+<canvas id="cv" class="hide"></canvas>
+<div class="toast" id="toast">已儲存</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+var KEY="jaminepa_mandal_v1";
+
+var GOAL_EG=["今年存到 30 萬","每週陪孩子讀 3 本書","完成人生第一場半馬",
+  "開始我的副業，賺到第一筆收入","把身體調回健康狀態","學會用日文自我介紹"];
+
+var TPL={
+  "健康身體":["睡眠","飲食","運動習慣","體重管理","壓力調節","定期檢查","戒掉一個壞習慣","身體覺察"],
+  "工作事業":["專業技能","人脈連結","時間管理","作品產出","收入來源","溝通表達","情緒穩定","持續學習"],
+  "家庭關係":["陪伴時間","好好傾聽","分擔家務","共同活動","情緒管理","各自空間","家庭儀式","財務共識"],
+  "學習成長":["固定時段","選對教材","輸出練習","找到同伴","進度追蹤","克服卡關","實際應用","獎勵自己"],
+  "金錢財務":["記帳習慣","固定儲蓄","減少支出","增加收入","投資學習","保險保障","目標拆解","忍住衝動"],
+  "自我照顧":["獨處時間","興趣愛好","睡眠品質","學會拒絕","身體活動","情緒出口","滋養的關係","定期回顧"]
+};
+
+var D={goal:"",pillars:["","","","","","","",""],acts:[[],[],[],[],[],[],[],[]]};
+for(var z=0;z<8;z++){ for(var y=0;y<8;y++){ D.acts[z].push(""); } }
+var cur=0, tab=0;
+
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(D)); }catch(e){} }
+function load(){ try{ var r=localStorage.getItem(KEY); if(!r) return null; return JSON.parse(r); }catch(e){ return null; } }
+
+function show(n){
+  ["s0","s1","s2","s3","s4"].forEach(function(id,i){
+    var el=$(id);
+    if(i===n){ el.classList.remove("hide"); el.classList.add("screen"); }
+    else { el.classList.add("hide"); el.classList.remove("screen"); }
+  });
+  cur=n; window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* 範例 */
+GOAL_EG.forEach(function(t){
+  var li=document.createElement("li"); li.textContent=t; $("goal-eg").appendChild(li);
+});
+
+/* 範本鈕 */
+Object.keys(TPL).forEach(function(k){
+  var b=document.createElement("button"); b.type="button"; b.textContent=k;
+  b.addEventListener("click",function(){
+    TPL[k].forEach(function(v,i){ if(!D.pillars[i]) D.pillars[i]=v; });
+    buildG3(); save(); checkP();
+  });
+  $("tpl").appendChild(b);
+});
+
+/* 3×3 */
+var POS=[0,1,2,3,5,6,7,8];
+function buildG3(){
+  var g=$("g3"); g.innerHTML="";
+  for(var p=0;p<9;p++){
+    var d=document.createElement("div");
+    if(p===4){
+      d.className="cell core";
+      d.innerHTML='<div class="k">中 心 目 標</div><div class="v"></div>';
+      d.querySelector(".v").textContent=D.goal||"（尚未填寫）";
+    } else {
+      var idx=POS.indexOf(p);
+      d.className="cell";
+      var lab=document.createElement("label"); lab.textContent="要素 "+(idx+1);
+      var ta=document.createElement("textarea");
+      ta.maxLength=10; ta.placeholder="…"; ta.value=D.pillars[idx];
+      (function(k,el){
+        el.addEventListener("input",function(){ D.pillars[k]=el.value; save(); checkP(); });
+      })(idx,ta);
+      d.appendChild(lab); d.appendChild(ta);
+    }
+    g.appendChild(d);
+  }
+}
+function checkP(){
+  var n=D.pillars.filter(function(v){return v.trim();}).length;
+  $("to3").disabled = n<3;
+  $("to3").textContent = n<3 ? "至少先填 3 格" : "下一步";
+}
+
+/* 行動分頁 */
+function buildTabs(){
+  var t=$("tabs"); t.innerHTML="";
+  D.pillars.forEach(function(p,i){
+    if(!p.trim()) return;
+    var b=document.createElement("button"); b.type="button";
+    var done=D.acts[i].filter(function(v){return v.trim();}).length;
+    b.innerHTML=p+(done?' <span class="dot">'+done+'</span>':"");
+    if(i===tab) b.className="on";
+    b.addEventListener("click",function(){ tab=i; buildTabs(); buildActs(); });
+    t.appendChild(b);
+  });
+}
+function buildActs(){
+  var a=$("acts"); a.innerHTML="";
+  if(!D.pillars[tab] || !D.pillars[tab].trim()){
+    var firstFilled=D.pillars.findIndex(function(v){return v.trim();});
+    if(firstFilled>=0){ tab=firstFilled; buildTabs(); }
+  }
+  for(var i=0;i<8;i++){
+    var inp=document.createElement("input");
+    inp.maxLength=14;
+    inp.placeholder=(i+1)+"　小行動";
+    inp.value=D.acts[tab][i]||"";
+    (function(k,el){
+      el.addEventListener("input",function(){ D.acts[tab][k]=el.value; save(); buildTabs(); });
+    })(i,inp);
+    a.appendChild(inp);
+  }
+}
+
+/* 成果表 */
+function buildTable(){
+  var t=$("mtable"); t.innerHTML="";
+  for(var r=0;r<9;r++){
+    var tr=document.createElement("tr");
+    for(var c=0;c<9;c++){
+      var td=document.createElement("td");
+      var br=Math.floor(r/3), bc=Math.floor(c/3);
+      var ir=r%3, ic=c%3;
+      var bIdx=br*3+bc, iIdx=ir*3+ic;
+      var txt="", cls=[];
+      if(bIdx===4){
+        if(iIdx===4){ txt=D.goal; cls.push("goal"); }
+        else { txt=D.pillars[POS.indexOf(iIdx)]; cls.push("pillar"); }
+      } else {
+        var pi=POS.indexOf(bIdx);
+        if(iIdx===4){ txt=D.pillars[pi]; cls.push("pillar"); }
+        else { txt=D.acts[pi][POS.indexOf(iIdx)]||""; }
+      }
+      if(ic===2 && c<8) cls.push("bb");
+      if(ir===2 && r<8) cls.push("bbt");
+      td.className=cls.join(" ");
+      td.textContent=txt;
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var d=new Date();
+  $("capDate").textContent=d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
+  $("doneTitle").textContent="「"+(D.goal||"我的目標")+"」";
+}
+
+/* 匯出圖片 */
+function draw(W,H,mode){
+  var cv=$("cv"), x=cv.getContext("2d");
+  cv.width=W; cv.height=H;
+  var paper="#FBF8F1", ink="#1E1A14", ink2="#615948", rule="#DDD4C2",
+      pil="#F0EADB", deep="#2E5A4E";
+  x.fillStyle=paper; x.fillRect(0,0,W,H);
+
+  var pad=Math.round(W*0.06);
+  var titleH=mode==="wall"?Math.round(H*0.13):Math.round(W*0.10);
+  var gridW=W-pad*2;
+  var topY=mode==="wall"?Math.round(H*0.17):titleH+Math.round(W*0.055);
+  var cell=gridW/9;
+
+  // 標題
+  x.fillStyle=ink;
+  x.font="700 "+Math.round(W*0.042)+"px 'Noto Serif TC','Songti TC',serif";
+  x.textBaseline="alphabetic";
+  var title=D.goal||"我的九宮格計劃表";
+  if(x.measureText(title).width>gridW){
+    x.font="700 "+Math.round(W*0.032)+"px 'Noto Serif TC','Songti TC',serif";
+  }
+  x.fillText(title, pad, topY-Math.round(W*0.050));
+  x.fillStyle=ink2;
+  x.font="400 "+Math.round(W*0.019)+"px 'PingFang TC','Noto Sans TC',sans-serif";
+  x.fillText("九宮格計劃表 · 曼陀羅思考法", pad, topY-Math.round(W*0.017));
+
+  // 格線與文字
+  for(var r=0;r<9;r++){
+    for(var c=0;c<9;c++){
+      var gx=pad+c*cell, gy=topY+r*cell;
+      var br=Math.floor(r/3), bc=Math.floor(c/3), ir=r%3, ic=c%3;
+      var bIdx=br*3+bc, iIdx=ir*3+ic, txt="", type="act";
+      if(bIdx===4){
+        if(iIdx===4){ txt=D.goal; type="goal"; }
+        else { txt=D.pillars[POS.indexOf(iIdx)]; type="pillar"; }
+      } else {
+        var pi=POS.indexOf(bIdx);
+        if(iIdx===4){ txt=D.pillars[pi]; type="pillar"; }
+        else { txt=D.acts[pi][POS.indexOf(iIdx)]||""; }
+      }
+      x.fillStyle = type==="goal"?deep : (type==="pillar"?pil:paper);
+      x.fillRect(gx,gy,cell,cell);
+      x.strokeStyle=rule; x.lineWidth=Math.max(1,W*0.0012);
+      x.strokeRect(gx,gy,cell,cell);
+
+      if(txt){
+        x.fillStyle = type==="goal"?"#fff":(type==="pillar"?ink:ink2);
+        var fs = type==="goal"?W*0.0185:(type==="pillar"?W*0.0155:W*0.0128);
+        var fam = type==="act" ? "'PingFang TC','Noto Sans TC',sans-serif" : "'Noto Serif TC','Songti TC',serif";
+        x.font=(type==="act"?"400 ":"700 ")+Math.round(fs)+"px "+fam;
+        x.textAlign="center"; x.textBaseline="middle";
+        var lines=wrap(x,txt,cell*0.86);
+        var lh=fs*1.35, sy=gy+cell/2-(lines.length-1)*lh/2;
+        for(var li=0;li<lines.length && li<4;li++){
+          x.fillText(lines[li], gx+cell/2, sy+li*lh);
+        }
+        x.textAlign="left"; x.textBaseline="alphabetic";
+      }
+    }
+  }
+  // 粗框
+  x.strokeStyle=ink; x.lineWidth=Math.max(2,W*0.0028);
+  for(var b=0;b<=3;b++){
+    x.beginPath(); x.moveTo(pad+b*cell*3,topY); x.lineTo(pad+b*cell*3,topY+cell*9); x.stroke();
+    x.beginPath(); x.moveTo(pad,topY+b*cell*3); x.lineTo(pad+cell*9,topY+b*cell*3); x.stroke();
+  }
+  // 頁尾
+  x.fillStyle=ink2;
+  x.font="400 "+Math.round(W*0.016)+"px 'PingFang TC',sans-serif";
+  var dd=new Date();
+  x.fillText(dd.getFullYear()+"."+String(dd.getMonth()+1).padStart(2,"0")+"."+String(dd.getDate()).padStart(2,"0"),
+             pad, topY+cell*9+Math.round(W*0.045));
+  x.textAlign="right";
+  x.fillText("@i_jamine_pa · 潔米爸", W-pad, topY+cell*9+Math.round(W*0.045));
+  x.textAlign="left";
+  return cv;
+}
+function wrap(x,t,max){
+  var out=[],line="";
+  for(var i=0;i<t.length;i++){
+    var test=line+t[i];
+    if(x.measureText(test).width>max && line){ out.push(line); line=t[i]; }
+    else line=test;
+  }
+  if(line) out.push(line);
+  return out;
+}
+function download(cv,name){
+  try{
+    var a=document.createElement("a");
+    a.download=name; a.href=cv.toDataURL("image/png");
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("已下載，去相簿看看");
+  }catch(e){ toast("長按圖片可直接儲存"); }
+}
+function toast(m){
+  var t=$("toast"); t.textContent=m; t.classList.add("show");
+  setTimeout(function(){t.classList.remove("show");},2200);
+}
+
+/* 事件 */
+$("go").addEventListener("click",function(){ show(1); $("goal").focus(); });
+$("goal").addEventListener("input",function(){
+  D.goal=$("goal").value; save();
+  $("to2").disabled = !D.goal.trim();
+});
+$("to2").addEventListener("click",function(){ buildG3(); checkP(); show(2); });
+$("to3").addEventListener("click",function(){ tab=D.pillars.findIndex(function(v){return v.trim();}); if(tab<0)tab=0; buildTabs(); buildActs(); show(3); });
+$("to4").addEventListener("click",function(){ buildTable(); show(4);
+  $("savedNote").textContent="已自動存在這台裝置，隨時回來都在。"; });
+Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(b){
+  b.addEventListener("click",function(){
+    var n=parseInt(b.getAttribute("data-back"),10);
+    if(n===2){ buildG3(); checkP(); }
+    show(n);
+  });
+});
+$("dl").addEventListener("click",function(){ download(draw(1600,1780,"sq"),"我的九宮格計劃表.png"); });
+$("dlw").addEventListener("click",function(){ download(draw(1170,2080,"wall"),"九宮格_手機桌布.png"); });
+$("pr").addEventListener("click",function(){ window.print(); });
+
+/* 續填 */
+var saved=load();
+if(saved && (saved.goal || saved.pillars.some(function(v){return v;}))){
+  $("resume").classList.remove("hide");
+  $("resume").addEventListener("click",function(){
+    D=saved;
+    if(!D.acts) D.acts=[[],[],[],[],[],[],[],[]];
+    $("goal").value=D.goal||"";
+    $("to2").disabled=!D.goal.trim();
+    buildG3(); checkP(); buildTable(); show(4);
+  });
+}
+})();
+</script>
