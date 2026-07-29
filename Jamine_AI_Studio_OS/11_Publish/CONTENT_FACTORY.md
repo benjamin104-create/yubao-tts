@@ -55,3 +55,20 @@
 ## Phase 4 自動化目標
 
 Marketing Manager Agent 讀定稿 → 自動產出以上全部格式草稿 → 人工只做最後把關。
+
+### 已落地：IG（輪播 / Reels / 文案）
+
+```bash
+cd Jamine_AI_Studio_OS/automation
+python3 ig_post_maker.py ../05_Scripts/JMD/S01/E01/JMD_S01_E01_script_v01.md \
+    --storyboard ../06_Storyboard/JMD/S01/E01/JMD_S01_E01_storyboard_v01.md
+```
+
+- 產出到 `11_Publish/IG/{PROJECT}/S{季}/E{集}/`，檔名依上方命名規範。
+- 自動抽金句、對回分鏡（場景／運鏡／光線）、選 Reels 選段（15–60s）、產 hashtag。
+- 內建**品牌護欄稽核**（Brand Bible 第五節禁止清單）：有阻斷項時程式回傳非 0，
+  報告寫在 `_brand_guard_report.md`。
+- 潤稿與最後把關流程見 skill `/ig-post-maker`（`.claude/skills/ig-post-maker/SKILL.md`）。
+
+> 護欄綠燈只是最低標——語意層（有沒有在販賣焦慮、有沒有停在焦慮不收釋懷）仍要人看過。
+> 其餘平台（TikTok / Podcast / 電子報 / LINE）尚未程式化，仍走 Agent 手動拆解。

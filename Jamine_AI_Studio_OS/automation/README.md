@@ -15,6 +15,7 @@
 | `voice_cue_sheet.py` | 分鏡 → 配音腳本（含秒數對齊警告） | 缺口 #2 配音腳本、#3 秒數對齊 |
 | `build_shots.py` | 一鍵：分鏡 → 全部 Shot 卡 + 素材報告 + 配音腳本 + **Prompt 驗證矩陣** | Pipeline ④⑤ 批次自動化 |
 | `continuity_audit.py` | **角色一致性 / 服道化 / 時代穿幫**自動稽核 | 視覺總監的稽核責任程式化 |
+| `ig_post_maker.py` | 劇本(+分鏡) → **IG 貼文包**（輪播 / Reels / 文案 + 品牌護欄稽核） | Pipeline ⑪ 內容工廠；Marketing Manager 的拆解責任程式化 |
 | `data/libraries.json` | 電影語言庫機器版（運鏡/情緒/光線/場景/護欄） | 引擎原料 |
 | `../03_Characters/character_anchors.json` | **角色視覺錨定表**（trigger/服裝/漂移負面詞/seed） | 角色一致性上鎖真相來源 |
 
@@ -41,6 +42,10 @@ python3 build_shots.py "$SB" ../07_Prompts/JMD/S01/E01
 
 # 5) 角色一致性 / 服道化 / 時代穿幫稽核（進生成前的最後一關；有阻斷項回傳非 0）
 python3 continuity_audit.py "$SB"
+
+# 6) 定稿後拆 IG：輪播 + Reels + 文案（品牌護欄不過回傳非 0）
+SC=../05_Scripts/JMD/S01/E01/JMD_S01_E01_script_v01.md
+python3 ig_post_maker.py "$SC" --storyboard "$SB"
 ```
 
 ## 角色一致性上鎖（服道化防漂移）

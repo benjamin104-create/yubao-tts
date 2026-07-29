@@ -58,6 +58,8 @@
 ### 📣 Marketing Manager
 - 執行 `11_Publish/CONTENT_FACTORY.md` 的自動拆解。
 - 每則切片保留品牌 Tone、結尾回扣信念句。
+- IG 這條已**程式化**：`automation/ig_post_maker.py`（輪播 / Reels / 文案 + 品牌護欄稽核）；
+  操作與潤稿流程見 skill `/ig-post-maker`。其餘平台仍手動拆。
 
 ### 📊 QA Agent
 - 巡檢一致性三支柱（角色/世界/品牌）。

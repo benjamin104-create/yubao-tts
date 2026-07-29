@@ -49,6 +49,7 @@
 | AI 團隊 | `agents/` | 9 位 AI Agent 的職責與指令 |
 | 知識庫 | `knowledge/` | 你的真正價值：Knowledge Graph |
 | 命名規範 | `NAMING_CONVENTION.md` | 全系統檔名規則 |
+| Claude Skills | `../.claude/skills/` | 可直接叫用的作業流程（如 `/ig-post-maker`） |
 
 ---
 
