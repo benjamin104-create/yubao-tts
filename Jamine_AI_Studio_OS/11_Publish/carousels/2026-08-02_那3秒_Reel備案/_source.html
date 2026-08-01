@@ -1,0 +1,97 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);padding:100px 92px;display:flex;flex-direction:column}
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+/* 選項頁 */
+.pick{font-family:var(--serif);font-size:92px;font-weight:900;line-height:1.36;
+  letter-spacing:.02em;color:var(--cream)}
+.pick .n{color:var(--brick)}
+.bridge{display:flex;align-items:center;gap:26px;margin:58px 0 46px}
+.bridge .ln{flex:1;height:1px;background:var(--rule)}
+.bridge .t{font-size:27px;letter-spacing:.34em;color:var(--brick)}
+.mean{font-family:var(--serif);font-size:54px;font-weight:400;line-height:1.78;
+  letter-spacing:.03em;color:var(--cream);opacity:.94}
+.mean em{font-style:normal;color:var(--brick)}
+.tail{margin-top:52px;font-size:31px;line-height:1.9;color:var(--dim);font-weight:300}
+
+/* 封面 */
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:64px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:100px;line-height:1.36;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.92;color:var(--dim);margin-top:50px;font-weight:300}
+.cover .two{margin-top:auto;border-top:1px solid var(--rule);padding-top:34px;display:flex;gap:0}
+.cover .two div{flex:1;font-family:var(--serif);font-size:44px;color:var(--dim);letter-spacing:.04em}
+.cover .two div:last-child{text-align:right;opacity:.5}
+.swipe{margin-top:34px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+/* 結尾 */
+.end .q{font-family:var(--serif);font-weight:700;font-size:78px;line-height:1.56;letter-spacing:.02em}
+.end .q .dim{color:var(--dim)}
+.end .q .hl{color:var(--brick)}
+.end .sign{margin-top:56px;font-size:33px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:30px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:30px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:24px;letter-spacing:.16em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">8 月 · 那 3 秒</div>
+  <h1>孩子跌倒的<br>那 3 秒，<br><span class="hl">你會伸手嗎？</span></h1>
+  <div class="sub">這一題沒有標準答案。<br>但你選的那一次，她會記住。</div>
+  <div class="two"><div>伸手 →</div><div>← 不伸手</div></div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">選 項 一</div><div class="n">01 / 02</div></div>
+  <div class="body">
+    <div class="pick">你<span class="n">伸手</span>了。</div>
+    <div class="bridge"><div class="ln"></div><div class="t">她學到的是</div><div class="ln"></div></div>
+    <div class="mean">跌倒的時候，<br><em>會有人來</em>。</div>
+    <div class="tail">她以後比較敢往前走，<br>因為她知道後面有人。</div>
+  </div>
+  <div class="foot"><span>那 3 秒</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">選 項 二</div><div class="n">02 / 02</div></div>
+  <div class="body">
+    <div class="pick">你<span class="n">停住</span>了。</div>
+    <div class="bridge"><div class="ln"></div><div class="t">她學到的是</div><div class="ln"></div></div>
+    <div class="mean">跌倒了，<br><em>我可以自己起來</em>。</div>
+    <div class="tail">她以後比較不怕痛，<br>但也可能比較不會開口求救。</div>
+  </div>
+  <div class="foot"><span>那 3 秒</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">所 以</div><div class="n">08.02</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">兩個都是<br>好答案。</span><br><br>難的是你要在 3 秒內<br><span class="hl">決定今天教她哪一件</span>。</div>
+    <div class="sign">沒有人一次就選對。<br>我到現在還是每次都在那 3 秒裡卡住。</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>你上一次選了哪一個？</span></div>
+</div>
+
+</body></html>
