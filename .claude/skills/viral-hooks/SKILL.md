@@ -133,6 +133,16 @@ C｜（型號＋型名）
 - 不要三個版本都用同一型
 - 不要給「這樣改會更好」這種沒有理由的建議
 
+## 在流程中的位置
+
+五段流程的**第二站**，完整順序見專案根目錄的 `CLAUDE.md`。
+
+```
+storytelling → viral-hooks → dumbify → anti-ai-writing → voice-dna
+```
+
+storytelling 已經把第一拍排好了，你只負責把那一句寫到位。不要動後面的段落。
+
 ## 與 voice-dna 的搭配
 重寫後，套用模式讀 `../voice-dna/references/my-voice.md`，逐條比對「絕不出現」清單。
 鉤子的張力和語氣的真實度衝突時，以語氣檔為準——講不出口的鉤子沒有用。

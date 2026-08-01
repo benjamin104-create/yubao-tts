@@ -98,6 +98,16 @@ description: 把冗長、抽象、術語過多的文字改寫成一般讀者讀�
 改寫後：
 > 做社群久了會遇到一個問題：大家寫的東西越來越像。內容一像，讀者就不會停下來。
 
+## 在流程中的位置
+
+五段流程的**第三站**，完整順序見專案根目錄的 `CLAUDE.md`。
+
+```
+storytelling → viral-hooks → dumbify → anti-ai-writing → voice-dna
+```
+
+viral-hooks 在你前面，**第一句已經調過了，不要再簡化它**，會把鉤子磨鈍。
+
 ## 跟 voice-dna 衝突時怎麼辦
 
 這個 skill 的「四、結構調整」說**先講結論再講理由**。
