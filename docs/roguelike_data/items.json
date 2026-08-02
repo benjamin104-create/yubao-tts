@@ -1,0 +1,473 @@
+{
+  "schema_version": "0.2",
+  "_comment": "道具主資料表。effects 為有序的 op 陣列，由效果解算器依序執行。price 用於商店定價與價格鑑定的候選集合分群。",
+
+  "identification_rules": {
+    "_comment": "武器與盾牌『種類』永遠可見（玩家看得出那是劍還是盾），未鑑定的是強化值與詛咒；草藥/卷軸/杖/壺則連種類都被外觀名遮蔽。",
+    "masked_categories": ["herb", "scroll", "wand", "pot"],
+    "unmasked_categories": ["weapon", "shield"],
+    "unmasked_hidden_fields": ["upgrade", "cursed"],
+    "appearance_shuffle_scope": "per_run",
+    "decoy_count_per_category": 2,
+    "_decoy_comment": "外觀池必須比真實種類多出 decoy_count 個永不使用的假外觀，防止玩家用排除法在最後 1 種必中。"
+  },
+
+  "appearance_pools": {
+    "herb": [
+      "赤紅的草", "靛藍的草", "嫩黃的草", "灰白的草", "墨綠的草", "斑點的草",
+      "捲曲的草", "焦黑的草", "半透明的草", "帶刺的草", "毛絨的草", "泛紫的草",
+      "濕黏的草", "乾枯的草", "蜜色的草", "鏽色的草"
+    ],
+    "scroll": [
+      "寫著「茲拉薩」的卷軸", "寫著「梅倫多」的卷軸", "寫著「卡布拉」的卷軸",
+      "寫著「希歐尼」的卷軸", "寫著「多爾加」的卷軸", "寫著「烏魯茲」的卷軸",
+      "寫著「帕拉戈」的卷軸", "寫著「涅墨西」的卷軸", "寫著「賽伊爾」的卷軸",
+      "寫著「洛蓋斯」的卷軸", "寫著「圖蘭比」的卷軸", "寫著「阿茲密」的卷軸",
+      "寫著「戈耶納」的卷軸", "寫著「思塔瓦」的卷軸", "寫著「米爾佐」的卷軸",
+      "寫著「哈爾修」的卷軸", "寫著「奈布拉」的卷軸", "寫著「柯薩德」的卷軸"
+    ],
+    "wand": [
+      "木質的杖", "白樺的杖", "疙瘩的杖", "螺旋的杖", "漆黑的杖", "骨製的杖",
+      "藤編的杖", "龜裂的杖", "鑲銀的杖", "苔生的杖", "光滑的杖", "焦痕的杖",
+      "鏡面的杖", "纏線的杖"
+    ],
+    "pot": [
+      "圓肚的壺", "細頸的壺", "有裂痕的壺", "素燒的壺", "藍紋的壺", "缺口的壺",
+      "扁平的壺", "雙耳的壺", "泛光的壺", "粗糙的壺", "漆黑的壺", "螺紋的壺"
+    ]
+  },
+
+  "weapons": [
+    {
+      "id": "wpn_club", "name": "木棒", "category": "weapon",
+      "atk": 2, "atk_per_upgrade": 1, "upgrade_range": [0, 2],
+      "hit_mod": 0, "base_price": 240,
+      "floor_range": [1, 6], "spawn_weight": 40,
+      "traits": [], "tags": ["starter"]
+    },
+    {
+      "id": "wpn_bronze_sword", "name": "銅之劍", "category": "weapon",
+      "atk": 5, "atk_per_upgrade": 2, "upgrade_range": [-1, 3],
+      "hit_mod": 0, "base_price": 800,
+      "floor_range": [2, 12], "spawn_weight": 35,
+      "traits": [], "tags": []
+    },
+    {
+      "id": "wpn_spear", "name": "長槍", "category": "weapon",
+      "atk": 7, "atk_per_upgrade": 2, "upgrade_range": [-1, 4],
+      "hit_mod": -4, "base_price": 1600,
+      "floor_range": [5, 18], "spawn_weight": 22,
+      "traits": [
+        { "type": "PIERCE", "range": 2, "_comment": "攻擊直線 2 格，可隔著同伴/怪物打到後排" }
+      ],
+      "tags": ["tactical"]
+    },
+    {
+      "id": "wpn_steel_sword", "name": "鋼之劍", "category": "weapon",
+      "atk": 8, "atk_per_upgrade": 2, "upgrade_range": [-2, 5],
+      "hit_mod": 0, "base_price": 2400,
+      "floor_range": [7, 22], "spawn_weight": 28,
+      "traits": [], "tags": []
+    },
+    {
+      "id": "wpn_oni_slayer", "name": "斬鬼刀", "category": "weapon",
+      "atk": 10, "atk_per_upgrade": 2, "upgrade_range": [0, 5],
+      "hit_mod": 0, "base_price": 4000,
+      "floor_range": [10, 26], "spawn_weight": 12,
+      "traits": [
+        { "type": "SLAYER", "family": "oni", "multiplier": 1.5 }
+      ],
+      "tags": ["niche"]
+    },
+    {
+      "id": "wpn_abacus", "name": "商人的算盤", "category": "weapon",
+      "atk": 3, "atk_per_upgrade": 1, "upgrade_range": [0, 3],
+      "hit_mod": 0, "base_price": 3000,
+      "floor_range": [4, 20], "spawn_weight": 8,
+      "traits": [
+        { "type": "GOLD_BONUS", "multiplier": 1.5, "_comment": "擊殺獲得金錢 x1.5" }
+      ],
+      "tags": ["build"]
+    },
+    {
+      "id": "wpn_growth_blade", "name": "成長之劍", "category": "weapon",
+      "atk": 3, "atk_per_upgrade": 2, "upgrade_range": [0, 0],
+      "hit_mod": 0, "base_price": 5000,
+      "floor_range": [6, 24], "spawn_weight": 6,
+      "traits": [
+        { "type": "KILL_STACK", "atk_per_kill": 0.2, "cap": 20, "_comment": "每擊殺 +0.2 ATK，上限 +20；死亡不繼承" }
+      ],
+      "tags": ["build", "long_game"]
+    },
+    {
+      "id": "wpn_mithril_sword", "name": "秘銀之劍", "category": "weapon",
+      "atk": 14, "atk_per_upgrade": 2, "upgrade_range": [-2, 8],
+      "hit_mod": 0, "base_price": 7200,
+      "floor_range": [16, 30], "spawn_weight": 18,
+      "traits": [], "tags": ["endgame"]
+    },
+    {
+      "id": "wpn_greatsword", "name": "雙手大劍", "category": "weapon",
+      "atk": 18, "atk_per_upgrade": 3, "upgrade_range": [-3, 6],
+      "hit_mod": -12, "base_price": 6800,
+      "floor_range": [14, 30], "spawn_weight": 10,
+      "traits": [
+        { "type": "TWO_HANDED", "_comment": "佔用盾牌欄，無法裝備盾" }
+      ],
+      "tags": ["high_risk"]
+    },
+    {
+      "id": "wpn_hunger_edge", "name": "飢餓之刃", "category": "weapon",
+      "atk": 20, "atk_per_upgrade": 3, "upgrade_range": [0, 6],
+      "hit_mod": 0, "base_price": 8000,
+      "floor_range": [18, 30], "spawn_weight": 7,
+      "traits": [
+        { "type": "HUNGER_RATE", "multiplier": 2.0, "_comment": "飽足度消耗倍率 x2，與 §2.3 修正表相乘" }
+      ],
+      "tags": ["high_risk", "cursed_bias"],
+      "curse_chance": 0.35
+    }
+  ],
+
+  "shields": [
+    {
+      "id": "shd_leather", "name": "皮之盾", "category": "shield",
+      "def": 2, "def_per_upgrade": 1, "upgrade_range": [0, 2],
+      "base_price": 240, "floor_range": [1, 6], "spawn_weight": 40,
+      "traits": [], "tags": ["starter"]
+    },
+    {
+      "id": "shd_wooden", "name": "木之盾", "category": "shield",
+      "def": 4, "def_per_upgrade": 1, "upgrade_range": [-1, 3],
+      "base_price": 800, "floor_range": [2, 12], "spawn_weight": 35,
+      "traits": [], "tags": []
+    },
+    {
+      "id": "shd_steel", "name": "鋼之盾", "category": "shield",
+      "def": 7, "def_per_upgrade": 2, "upgrade_range": [-2, 5],
+      "base_price": 2400, "floor_range": [8, 24], "spawn_weight": 26,
+      "traits": [], "tags": []
+    },
+    {
+      "id": "shd_mirror", "name": "鏡之盾", "category": "shield",
+      "def": 6, "def_per_upgrade": 2, "upgrade_range": [0, 5],
+      "base_price": 4800, "floor_range": [12, 28], "spawn_weight": 10,
+      "traits": [
+        { "type": "REFLECT", "damage_type": "magic", "ratio": 1.0, "_comment": "遠程魔法傷害原封反彈給施放者，剋制 RANGED 型怪物" }
+      ],
+      "tags": ["counter_ranged"]
+    },
+    {
+      "id": "shd_elemental", "name": "元素之盾", "category": "shield",
+      "def": 7, "def_per_upgrade": 2, "upgrade_range": [-1, 5],
+      "base_price": 5200, "floor_range": [14, 30], "spawn_weight": 9,
+      "traits": [
+        { "type": "RESIST", "damage_type": "fire", "reduction": 0.5 },
+        { "type": "PROTECT_INVENTORY", "against": "burn", "_comment": "火焰卷軸不再燒毀背包道具" }
+      ],
+      "tags": []
+    },
+    {
+      "id": "shd_bulwark", "name": "重甲之盾", "category": "shield",
+      "def": 14, "def_per_upgrade": 2, "upgrade_range": [-3, 6],
+      "base_price": 7600, "floor_range": [18, 30], "spawn_weight": 12,
+      "traits": [
+        { "type": "HUNGER_RATE", "multiplier": 1.5 }
+      ],
+      "tags": ["endgame", "high_risk"],
+      "curse_chance": 0.25
+    }
+  ],
+
+  "herbs": [
+    { "id": "hrb_heal", "name": "回復草", "category": "herb", "base_price": 100, "floor_range": [1, 30], "spawn_weight": 100,
+      "effects": [{ "op": "HEAL_HP", "value": 30 }],
+      "throw_effect": [{ "op": "HEAL_HP", "value": 30, "target": "hit" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_elixir", "name": "特效藥", "category": "herb", "base_price": 2500, "floor_range": [4, 30], "spawn_weight": 22,
+      "effects": [{ "op": "HEAL_HP", "value": "FULL" }, { "op": "MOD_MAX_HP", "value": 2 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_life", "name": "命之草", "category": "herb", "base_price": 1200, "floor_range": [3, 30], "spawn_weight": 30,
+      "effects": [{ "op": "MOD_MAX_HP", "value": 5 }, { "op": "HEAL_HP", "value": 5 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_might", "name": "力量草", "category": "herb", "base_price": 300, "floor_range": [2, 30], "spawn_weight": 45,
+      "effects": [{ "op": "MOD_STR", "value": 1 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_haste", "name": "加速草", "category": "herb", "base_price": 800, "floor_range": [5, 30], "spawn_weight": 28,
+      "effects": [{ "op": "SET_SPEED", "value": 2.0, "duration": 20 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive",
+      "_comment": "與 §2.3 連動：加速期間飽足度消耗 x2" },
+
+    { "id": "hrb_revive", "name": "復活草", "category": "herb", "base_price": 2500, "floor_range": [3, 30], "spawn_weight": 18,
+      "effects": [{ "op": "HEAL_HP", "value": 20 }],
+      "passive": { "op": "AUTO_REVIVE", "hp_restore": "FULL", "priority": 1,
+        "_comment": "留在背包中、死亡時自動發動；主動喝下只回 20 HP（刻意讓『喝掉試看看』是嚴重虧損）" },
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_antidote", "name": "解毒草", "category": "herb", "base_price": 300, "floor_range": [2, 30], "spawn_weight": 40,
+      "effects": [{ "op": "CURE_STATUS", "value": ["POISON", "PARALYZE", "CONFUSED"] }, { "op": "RESTORE_STR" }],
+      "identify_on_use": "CONDITIONAL", "alignment": "positive",
+      "_comment": "無異常狀態時顯示『什麼都沒有發生』且不鑑定 → 自動標 TENTATIVE" },
+
+    { "id": "hrb_luck", "name": "幸運草", "category": "herb", "base_price": 800, "floor_range": [6, 30], "spawn_weight": 20,
+      "effects": [{ "op": "SET_CRIT_RATE", "value": 0.30, "duration": 15 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "hrb_confuse", "name": "混亂草", "category": "herb", "base_price": 300, "floor_range": [2, 30], "spawn_weight": 40,
+      "effects": [{ "op": "ADD_STATUS", "value": "CONFUSED", "duration": 10 }],
+      "throw_effect": [{ "op": "ADD_STATUS", "value": "CONFUSED", "duration": 10, "target": "hit" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" },
+
+    { "id": "hrb_sleep", "name": "睡眠草", "category": "herb", "base_price": 800, "floor_range": [3, 30], "spawn_weight": 32,
+      "effects": [{ "op": "ADD_STATUS", "value": "SLEEP", "duration": 5 }],
+      "throw_effect": [{ "op": "ADD_STATUS", "value": "SLEEP", "duration": 10, "target": "hit" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative",
+      "_comment": "本表最危險的一張：低血被圍時喝到等同死亡。這是『未鑑定 18% 嚴重負面』的主要來源" },
+
+    { "id": "hrb_blind", "name": "失明草", "category": "herb", "base_price": 300, "floor_range": [2, 30], "spawn_weight": 34,
+      "effects": [{ "op": "ADD_STATUS", "value": "BLIND", "duration": 5 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" },
+
+    { "id": "hrb_poison", "name": "毒草", "category": "herb", "base_price": 100, "floor_range": [1, 30], "spawn_weight": 42,
+      "effects": [{ "op": "MOD_STR", "value": -1 }, { "op": "DAMAGE_HP", "value": 10 }],
+      "throw_effect": [{ "op": "MOD_ATK", "value": -2, "target": "hit" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" },
+
+    { "id": "hrb_glutton", "name": "大胃草", "category": "herb", "base_price": 300, "floor_range": [4, 30], "spawn_weight": 24,
+      "effects": [{ "op": "SET_HUNGER_RATE", "value": 3.0, "duration": 50 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" },
+
+    { "id": "hrb_paralyze", "name": "麻痺草", "category": "herb", "base_price": 800, "floor_range": [7, 30], "spawn_weight": 22,
+      "effects": [{ "op": "ADD_STATUS", "value": "PARALYZE", "duration": 3 }],
+      "throw_effect": [{ "op": "ADD_STATUS", "value": "PARALYZE", "duration": 8, "target": "hit" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative",
+      "_comment": "與 SLEEP 差異：受擊不解除，但持續較短" }
+  ],
+
+  "scrolls": [
+    { "id": "scr_identify", "name": "鑑定卷軸", "category": "scroll", "base_price": 500, "floor_range": [1, 30], "spawn_weight": 90,
+      "effects": [{ "op": "IDENTIFY_ITEM", "target": "player_choice", "reveal": ["type", "upgrade", "cursed", "uses"] }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_map", "name": "地圖卷軸", "category": "scroll", "base_price": 500, "floor_range": [1, 30], "spawn_weight": 70,
+      "effects": [{ "op": "REVEAL_MAP", "include": ["terrain", "stairs"] }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_enchant", "name": "強化卷軸", "category": "scroll", "base_price": 1500, "floor_range": [2, 30], "spawn_weight": 45,
+      "effects": [{ "op": "MOD_UPGRADE", "target": "player_choice_equipped", "value": 1 }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_purify", "name": "淨化卷軸", "category": "scroll", "base_price": 800, "floor_range": [3, 30], "spawn_weight": 40,
+      "effects": [{ "op": "REMOVE_CURSE", "scope": "all_carried" }],
+      "identify_on_use": "CONDITIONAL", "alignment": "positive" },
+
+    { "id": "scr_flame", "name": "火焰卷軸", "category": "scroll", "base_price": 800, "floor_range": [4, 30], "spawn_weight": 35,
+      "effects": [
+        { "op": "DAMAGE_AREA", "radius": 1, "value": 20, "damage_type": "fire" },
+        { "op": "DESTROY_ITEM", "filter": "category==scroll", "count": 1, "target": "self_inventory" }
+      ],
+      "identify_on_use": "IMMEDIATE", "alignment": "mixed" },
+
+    { "id": "scr_seal", "name": "封印卷軸", "category": "scroll", "base_price": 1500, "floor_range": [6, 30], "spawn_weight": 28,
+      "effects": [{ "op": "ADD_STATUS_AREA", "scope": "visible_monsters", "value": "ABILITY_SEALED", "duration": 8 }],
+      "identify_on_use": "DELAYED", "alignment": "positive" },
+
+    { "id": "scr_blank", "name": "白紙卷軸", "category": "scroll", "base_price": 3000, "floor_range": [5, 30], "spawn_weight": 18,
+      "effects": [{ "op": "TRANSFORM_INTO", "pool": "identified_scrolls", "chooser": "player" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_confuse_all", "name": "混亂卷軸", "category": "scroll", "base_price": 800, "floor_range": [3, 30], "spawn_weight": 38,
+      "effects": [{ "op": "ADD_STATUS_AREA", "scope": "visible_monsters", "value": "CONFUSED", "duration": 12 }],
+      "identify_on_use": "CONDITIONAL", "alignment": "positive" },
+
+    { "id": "scr_sleep_all", "name": "睡眠卷軸", "category": "scroll", "base_price": 1500, "floor_range": [5, 30], "spawn_weight": 30,
+      "effects": [{ "op": "ADD_STATUS_AREA", "scope": "visible_monsters", "value": "SLEEP", "duration": 15 }],
+      "identify_on_use": "CONDITIONAL", "alignment": "positive",
+      "_comment": "怪物之家的正解之一" },
+
+    { "id": "scr_escape", "name": "逃脫卷軸", "category": "scroll", "base_price": 3000, "floor_range": [4, 30], "spawn_weight": 25,
+      "effects": [{ "op": "WARP_TO_TOWN", "keep_items": true }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive",
+      "_comment": "帶著戰利品主動收手的唯一手段 —— 這是本作『見好就收』決策的載體" },
+
+    { "id": "scr_return", "name": "歸還卷軸", "category": "scroll", "base_price": 5000, "floor_range": [8, 30], "spawn_weight": 12,
+      "passive": { "op": "DEATH_KEEP_EQUIPMENT", "_comment": "留在背包中即生效，死亡時保留全部裝備（§4.5 Step 3）" },
+      "effects": [{ "op": "NO_EFFECT_ON_READ" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_trap_sense", "name": "陷阱感知卷軸", "category": "scroll", "base_price": 500, "floor_range": [2, 30], "spawn_weight": 32,
+      "effects": [{ "op": "REVEAL_MAP", "include": ["traps"] }],
+      "identify_on_use": "CONDITIONAL", "alignment": "positive" },
+
+    { "id": "scr_treasure_sense", "name": "祕寶探知卷軸", "category": "scroll", "base_price": 800, "floor_range": [3, 30], "spawn_weight": 30,
+      "effects": [{ "op": "REVEAL_MAP", "include": ["items", "gold"] }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "scr_shuffle", "name": "換裝卷軸", "category": "scroll", "base_price": 1500, "floor_range": [6, 30], "spawn_weight": 20,
+      "effects": [{ "op": "REROLL_INVENTORY", "scope": "unequipped", "preserve_category": true }],
+      "identify_on_use": "IMMEDIATE", "alignment": "mixed" },
+
+    { "id": "scr_summon", "name": "召喚卷軸", "category": "scroll", "base_price": 500, "floor_range": [4, 30], "spawn_weight": 26,
+      "effects": [{ "op": "SPAWN_MONSTER", "count": 3, "table": "current_floor", "placement": "adjacent_to_player" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" },
+
+    { "id": "scr_curse", "name": "詛咒卷軸", "category": "scroll", "base_price": 500, "floor_range": [5, 30], "spawn_weight": 24,
+      "effects": [{ "op": "APPLY_CURSE", "count": 2, "target": "random_carried" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "negative" }
+  ],
+
+  "wands": [
+    { "id": "wnd_sleep", "name": "睡眠之杖", "category": "wand", "base_price": 1600, "floor_range": [3, 30], "spawn_weight": 45,
+      "uses_range": [5, 8], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "ADD_STATUS", "value": "SLEEP", "duration": 10, "target": "hit" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_polymorph", "name": "變身之杖", "category": "wand", "base_price": 2400, "floor_range": [6, 30], "spawn_weight": 24,
+      "uses_range": [3, 5], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "TRANSFORM_MONSTER", "table": "tier_below_current" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_blink", "name": "位移之杖", "category": "wand", "base_price": 1600, "floor_range": [4, 30], "spawn_weight": 38,
+      "uses_range": [4, 6], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "TELEPORT_TARGET", "destination": "random_walkable_floor" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_slow", "name": "減速之杖", "category": "wand", "base_price": 1600, "floor_range": [5, 30], "spawn_weight": 34,
+      "uses_range": [4, 6], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "SET_SPEED", "value": 0.5, "duration": 30, "target": "hit" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_knockback", "name": "擊退之杖", "category": "wand", "base_price": 1000, "floor_range": [2, 30], "spawn_weight": 40,
+      "uses_range": [5, 8], "target": "line_first_hit", "range": 10,
+      "effects": [
+        { "op": "PUSH_TARGET", "distance": 10 },
+        { "op": "DAMAGE_ON_WALL_IMPACT", "value": 12 }
+      ],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_dig", "name": "挖掘之杖", "category": "wand", "base_price": 2400, "floor_range": [7, 30], "spawn_weight": 18,
+      "uses_range": [2, 3], "target": "direction", "range": 999,
+      "effects": [{ "op": "CARVE_TUNNEL", "shape": "straight_line" }],
+      "identify_on_use": "IMMEDIATE", "alignment": "positive" },
+
+    { "id": "wnd_swap", "name": "替身之杖", "category": "wand", "base_price": 2400, "floor_range": [6, 30], "spawn_weight": 22,
+      "uses_range": [4, 6], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "SWAP_POSITION", "with": "hit" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive",
+      "_comment": "被圍時的脫身牌，也是把遠程怪拉進近戰的手段" },
+
+    { "id": "wnd_antimagic", "name": "封魔之杖", "category": "wand", "base_price": 1600, "floor_range": [10, 30], "spawn_weight": 20,
+      "uses_range": [4, 6], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "ADD_STATUS", "value": "ABILITY_SEALED", "duration": 999, "target": "hit" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive",
+      "_comment": "RANGED 型怪物的直接解答" },
+
+    { "id": "wnd_lightning", "name": "雷擊之杖", "category": "wand", "base_price": 3000, "floor_range": [8, 30], "spawn_weight": 16,
+      "uses_range": [3, 5], "target": "line_pierce_all", "range": 10,
+      "effects": [{ "op": "DAMAGE_HP", "value": 30, "damage_type": "magic", "ignore_defense": true }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive",
+      "_comment": "無視防禦，是打高 DEF 怪的稀有解" },
+
+    { "id": "wnd_weaken", "name": "弱化之杖", "category": "wand", "base_price": 1000, "floor_range": [4, 30], "spawn_weight": 30,
+      "uses_range": [5, 8], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "MOD_ATK", "value": -6, "target": "hit" }, { "op": "MOD_DEF", "value": -4, "target": "hit" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" },
+
+    { "id": "wnd_lure", "name": "引誘之杖", "category": "wand", "base_price": 1000, "floor_range": [3, 30], "spawn_weight": 26,
+      "uses_range": [5, 8], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "PULL_TARGET", "to": "adjacent_to_caster" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "mixed" },
+
+    { "id": "wnd_puppet", "name": "傀儡之杖", "category": "wand", "base_price": 3000, "floor_range": [12, 30], "spawn_weight": 12,
+      "uses_range": [2, 4], "target": "line_first_hit", "range": 10,
+      "effects": [{ "op": "CHARM", "duration": 20, "ai_override": "ALLY_CHASER" }],
+      "identify_on_use": "ON_TARGET_HIT", "alignment": "positive" }
+  ],
+
+  "pots": [
+    { "id": "pot_storage", "name": "保存壺", "category": "pot", "base_price": 1200, "floor_range": [2, 30], "spawn_weight": 60,
+      "capacity_range": [3, 5], "on_insert": [{ "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_storage_large", "name": "大保存壺", "category": "pot", "base_price": 3600, "floor_range": [10, 30], "spawn_weight": 18,
+      "capacity_range": [8, 8], "on_insert": [{ "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_fusion", "name": "合成壺", "category": "pot", "base_price": 3600, "floor_range": [6, 30], "spawn_weight": 22,
+      "capacity_range": [2, 4],
+      "on_insert": [{ "op": "FUSE", "rule": "first_item_is_base", "merge": ["upgrade", "traits"] }],
+      "identify_on_use": "ON_SECOND_INSERT", "alignment": "positive",
+      "_comment": "強化值累加、特效繼承 —— 全遊戲最高價值的 build 道具" },
+
+    { "id": "pot_identify", "name": "識別壺", "category": "pot", "base_price": 2000, "floor_range": [3, 30], "spawn_weight": 34,
+      "capacity_range": [2, 3], "on_insert": [{ "op": "IDENTIFY_ITEM", "target": "inserted" }, { "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_change", "name": "變化壺", "category": "pot", "base_price": 2000, "floor_range": [5, 30], "spawn_weight": 30,
+      "capacity_range": [2, 4], "on_insert": [{ "op": "REROLL_ITEM", "preserve_category": true }, { "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "mixed" },
+
+    { "id": "pot_dispel", "name": "破魔壺", "category": "pot", "base_price": 2000, "floor_range": [7, 30], "spawn_weight": 24,
+      "capacity_range": [2, 3], "on_insert": [{ "op": "REMOVE_CURSE", "target": "inserted" }, { "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_vault", "name": "保管壺", "category": "pot", "base_price": 6000, "floor_range": [10, 30], "spawn_weight": 10,
+      "capacity_range": [2, 2], "on_insert": [{ "op": "STORE" }],
+      "passive": { "op": "DEATH_KEEP_CONTENTS", "_comment": "內容物在死亡時不遺失（§4.5 Step 3）" },
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_copy", "name": "複製壺", "category": "pot", "base_price": 6000, "floor_range": [12, 30], "spawn_weight": 8,
+      "capacity_range": [1, 1], "on_insert": [{ "op": "DUPLICATE_ITEM", "count": 1 }, { "op": "STORE" }],
+      "identify_on_use": "ON_INSERT", "alignment": "positive" },
+
+    { "id": "pot_devour", "name": "吸物壺", "category": "pot", "base_price": 1200, "floor_range": [4, 30], "spawn_weight": 26,
+      "capacity_range": [999, 999], "on_insert": [{ "op": "DESTROY_ITEM", "target": "inserted" }],
+      "identify_on_use": "ON_INSERT", "alignment": "negative",
+      "_comment": "試壺一律用最廉價道具是預期中的正解，不應懲罰" },
+
+    { "id": "pot_cursed", "name": "詛咒壺", "category": "pot", "base_price": 1200, "floor_range": [6, 30], "spawn_weight": 20,
+      "capacity_range": [3, 5], "on_insert": [{ "op": "STORE" }, { "op": "LOCK_POT" }],
+      "identify_on_use": "ON_INSERT", "alignment": "negative",
+      "_comment": "外觀與保存壺同池；放進去才知道拿不出來。可用淨化卷軸/破魔壺解除" }
+  ],
+
+  "price_clusters": {
+    "_comment": "價格鑑定的核心：同價位必須有 2 個以上候選，關鍵道具刻意同價。玩家能靠標價縮小範圍，但無法完全破解。",
+    "herb": {
+      "100":  ["hrb_heal", "hrb_poison"],
+      "300":  ["hrb_might", "hrb_antidote", "hrb_confuse", "hrb_blind", "hrb_glutton"],
+      "800":  ["hrb_haste", "hrb_sleep", "hrb_luck", "hrb_paralyze"],
+      "1200": ["hrb_life"],
+      "2500": ["hrb_elixir", "hrb_revive"]
+    },
+    "scroll": {
+      "500":  ["scr_identify", "scr_map", "scr_trap_sense", "scr_summon", "scr_curse"],
+      "800":  ["scr_purify", "scr_flame", "scr_confuse_all", "scr_treasure_sense"],
+      "1500": ["scr_enchant", "scr_seal", "scr_sleep_all", "scr_shuffle"],
+      "3000": ["scr_blank", "scr_escape"],
+      "5000": ["scr_return"]
+    },
+    "wand": {
+      "1000": ["wnd_knockback", "wnd_weaken", "wnd_lure"],
+      "1600": ["wnd_sleep", "wnd_blink", "wnd_slow", "wnd_antimagic"],
+      "2400": ["wnd_polymorph", "wnd_dig", "wnd_swap"],
+      "3000": ["wnd_lightning", "wnd_puppet"]
+    },
+    "pot": {
+      "1200": ["pot_storage", "pot_devour", "pot_cursed"],
+      "2000": ["pot_identify", "pot_change", "pot_dispel"],
+      "3600": ["pot_storage_large", "pot_fusion"],
+      "6000": ["pot_vault", "pot_copy"]
+    }
+  },
+
+  "economy": {
+    "sell_ratio": 0.35,
+    "appraiser_fee_ratio": 0.30,
+    "_comment": "1200 檔的壺是最經典的陷阱：保存壺 / 吸物壺 / 詛咒壺 完全同價，只能靠試。"
+  }
+}
