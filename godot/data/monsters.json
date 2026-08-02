@@ -1,0 +1,228 @@
+{
+  "schema_version": "0.2",
+  "_comment": "怪物主資料表。ai_profile 決定行為模式，數值欄位餵入 §傷害公式。decision_priority 由上而下求值，第一個成立的分支即為本回合 Intent（P4 決策階段，見 GDD §1.3）。",
+
+  "ai_profiles": {
+    "CHASER": {
+      "name": "直線追逐型",
+      "design_role": "地牢的基礎壓力。完全可預測 —— 玩家可以精確計算幾回合後被追上，因此『拉到走廊 1v1』『繞柱子』等走位戰術對牠成立。難度來自數值，不是行為。",
+      "priority_class": 3,
+      "params": {
+        "detect_mode": "ROOM_WIDE_OR_SIGHT",
+        "_detect_comment": "與玩家同房間 → 必定發現；走廊中 → 需在 sight 格內且視線無阻擋",
+        "memory_turns": 8,
+        "_memory_comment": "失去玩家視野後，仍朝 last_known_pos 前進 memory_turns 回合，之後轉為巡邏",
+        "aggro_on_damage": true,
+        "flee_hp_ratio": 0.0,
+        "prefers_diagonal": true
+      },
+      "decision_priority": [
+        { "cond": "status.has(SLEEP) or status.has(PARALYZE)", "intent": "WAIT" },
+        { "cond": "status.has(CONFUSED)", "intent": "MOVE(random_dir)" },
+        { "cond": "is_adjacent(player) and not corner_blocked(self, player)", "intent": "ATTACK(player)" },
+        { "cond": "can_see(player)", "intent": "MOVE(step_toward(player)); memory = player.pos; memory_left = memory_turns" },
+        { "cond": "memory_left > 0", "intent": "MOVE(step_toward(memory)); memory_left -= 1" },
+        { "cond": "true", "intent": "MOVE(patrol_dir)" }
+      ],
+      "counter_strategy": ["走廊 1v1", "擊退之杖", "位移之杖", "睡眠"]
+    },
+
+    "WANDERER": {
+      "name": "隨機遊蕩型",
+      "design_role": "地牢的環境噪音，也是『可以繞過去』的選項。不主動追擊 → 玩家可以選擇不打；但受擊後會轉為追擊，讓『打了一半就跑』要付代價。牠的存在讓『避戰』成為一種正當策略。",
+      "priority_class": 5,
+      "params": {
+        "detect_mode": "ADJACENT_ONLY",
+        "wander_bias": 0.6,
+        "_wander_comment": "有 wander_bias 機率沿用上一回合方向（避免原地抖動的視覺噪音），否則重擲 8 方向",
+        "aggro_on_damage": true,
+        "aggro_turns": 15,
+        "_aggro_comment": "受擊後暫時套用 CHASER 的 decision_priority，計時歸零後回復遊蕩",
+        "memory_turns": 3,
+        "flee_hp_ratio": 0.0
+      },
+      "decision_priority": [
+        { "cond": "status.has(SLEEP) or status.has(PARALYZE)", "intent": "WAIT" },
+        { "cond": "aggro_left > 0", "intent": "DELEGATE(CHASER); aggro_left -= 1" },
+        { "cond": "is_adjacent(player) and not corner_blocked(self, player)", "intent": "ATTACK(player)" },
+        { "cond": "rand() < wander_bias and can_walk(last_dir)", "intent": "MOVE(last_dir)" },
+        { "cond": "true", "intent": "MOVE(random_walkable_dir); last_dir = chosen" }
+      ],
+      "counter_strategy": ["直接繞過", "先手秒殺（避免進入 aggro）", "引誘之杖拉離動線"]
+    },
+
+    "RANGED": {
+      "name": "遠程攻擊型",
+      "design_role": "走廊戰術的剋星。CHASER 讓走廊變安全，RANGED 讓走廊變成射擊場 —— 沒有牠，全遊戲的戰鬥會塌縮成同一招。牠強迫玩家處理『距離』這個維度：貼上去、切斷視線、或用杖解決。",
+      "priority_class": 1,
+      "_priority_comment": "priority_class 最小 → 在 P5 執行階段最先行動，確保『先射擊再由近戰怪補位』的威脅感成立",
+      "params": {
+        "detect_mode": "LINE_OF_SIGHT",
+        "keep_distance": [3, 8],
+        "_distance_comment": "距離 < 3 → 後退（kiting）；3~8 且對齊 → 射擊；> 8 → 接近",
+        "fire_alignment": ["ORTHOGONAL", "DIAGONAL"],
+        "_alignment_comment": "僅在同列/同行/正對角線且路徑無阻擋時可射擊。這讓玩家能靠『站在非對齊格』主動躲避 —— 是可推理的規避手段，不是骰運",
+        "cooldown_turns": 2,
+        "memory_turns": 5,
+        "aggro_on_damage": true,
+        "flee_hp_ratio": 0.25,
+        "_flee_comment": "HP 低於 25% 時逃離玩家，逼玩家追擊或放生"
+      },
+      "decision_priority": [
+        { "cond": "status.has(SLEEP) or status.has(PARALYZE)", "intent": "WAIT" },
+        { "cond": "status.has(ABILITY_SEALED)", "intent": "DELEGATE(CHASER)", "_comment": "被封魔後退化為普通追擊怪" },
+        { "cond": "hp / max_hp < flee_hp_ratio", "intent": "MOVE(step_away_from(player))" },
+        { "cond": "is_adjacent(player)", "intent": "ATTACK(player)", "_comment": "貼身時只能近戰，且近戰數值弱 → 貼上去就是正解" },
+        { "cond": "dist(player) < keep_distance[0]", "intent": "MOVE(step_away_from(player))" },
+        { "cond": "cooldown_left > 0", "intent": "MOVE(hold_or_reposition); cooldown_left -= 1" },
+        { "cond": "is_aligned(player) and line_clear(player) and dist <= keep_distance[1]", "intent": "RANGED_ATTACK(player); cooldown_left = cooldown_turns" },
+        { "cond": "can_see(player)", "intent": "MOVE(step_to_align_with(player))" },
+        { "cond": "memory_left > 0", "intent": "MOVE(step_toward(memory)); memory_left -= 1" },
+        { "cond": "true", "intent": "WAIT" }
+      ],
+      "counter_strategy": ["貼身近戰", "切斷直線（站到非對齊格）", "封魔之杖", "鏡之盾反射", "替身之杖直接換位"]
+    }
+  },
+
+  "monsters": [
+    {
+      "id": "mon_cave_rat", "name": "洞穴鼠", "ai_profile": "CHASER",
+      "lv": 1, "hp": 8, "atk": 5, "def": 1, "exp": 3,
+      "speed": 1.0, "sight": 4, "evade": 0,
+      "family": "beast", "floor_range": [1, 5], "spawn_weight": 100,
+      "traits": [], "on_hit_effects": [],
+      "drop_table": [{ "item": "any", "chance": 0.05 }],
+      "_comment": "教學怪。1 級玩家一擊必殺，用來讓玩家安心學會移動與攻擊的節奏"
+    },
+    {
+      "id": "mon_blue_slime", "name": "藍史萊姆", "ai_profile": "WANDERER",
+      "lv": 1, "hp": 10, "atk": 4, "def": 2, "exp": 4,
+      "speed": 1.0, "sight": 2, "evade": 0,
+      "family": "ooze", "floor_range": [1, 4], "spawn_weight": 80,
+      "traits": [], "on_hit_effects": [],
+      "drop_table": [{ "item": "any", "chance": 0.05 }],
+      "_comment": "第一隻『可以不打』的怪。用來教玩家 WANDERER 的行為特徵"
+    },
+    {
+      "id": "mon_green_goblin", "name": "綠哥布林", "ai_profile": "CHASER",
+      "lv": 3, "hp": 14, "atk": 9, "def": 3, "exp": 12,
+      "speed": 1.0, "sight": 5, "evade": 0,
+      "family": "humanoid", "floor_range": [2, 8], "spawn_weight": 90,
+      "traits": [{ "type": "PICKUP_ITEMS", "_comment": "會撿走地上道具，擊殺後掉落 → 製造『必須追殺』的動機" }],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "any", "chance": 0.10 }]
+    },
+    {
+      "id": "mon_drunk_shroom", "name": "醉步蕈", "ai_profile": "WANDERER",
+      "lv": 5, "hp": 16, "atk": 10, "def": 4, "exp": 20,
+      "speed": 1.0, "sight": 2, "evade": 0,
+      "family": "plant", "floor_range": [3, 9], "spawn_weight": 65,
+      "traits": [],
+      "on_hit_effects": [{ "status": "CONFUSED", "duration": 8, "chance": 0.20 }],
+      "drop_table": [{ "item": "hrb_confuse", "chance": 0.15 }],
+      "_comment": "混亂 = 玩家自己的移動變隨機。低血時中招極危險，強化了『避戰 WANDERER』的判斷價值"
+    },
+    {
+      "id": "mon_pebble_imp", "name": "投石妖精", "ai_profile": "RANGED",
+      "lv": 6, "hp": 12, "atk": 12, "def": 3, "exp": 24,
+      "speed": 1.0, "sight": 8, "evade": 4,
+      "family": "fae", "floor_range": [4, 10], "spawn_weight": 55,
+      "ranged": { "range": 5, "damage_type": "physical", "projectile": "stone", "blocked_by": ["wall", "monster"] },
+      "melee_penalty": 0.5,
+      "_melee_comment": "近戰時攻擊力 x0.5 → 明確獎勵『貼上去』這個正解",
+      "traits": [], "on_hit_effects": [],
+      "drop_table": [{ "item": "any", "chance": 0.10 }],
+      "_comment": "玩家第一次學到『走廊不再絕對安全』的教材"
+    },
+    {
+      "id": "mon_rot_grub", "name": "食腐蟲", "ai_profile": "WANDERER",
+      "lv": 8, "hp": 20, "atk": 8, "def": 5, "exp": 28,
+      "speed": 1.0, "sight": 3, "evade": 0,
+      "family": "insect", "floor_range": [5, 12], "spawn_weight": 50,
+      "traits": [],
+      "on_hit_effects": [{ "op": "DRAIN_SATIETY", "value": 5000, "chance": 1.0 }],
+      "drop_table": [{ "item": "food", "chance": 0.20 }],
+      "_comment": "攻擊飽足度而非 HP，是唯一會『偷走時間』的怪。被打 10 下等於損失 500 回合的行動力"
+    },
+    {
+      "id": "mon_skeleton", "name": "骷髏兵", "ai_profile": "CHASER",
+      "lv": 12, "hp": 30, "atk": 20, "def": 10, "exp": 60,
+      "speed": 1.0, "sight": 6, "evade": 0,
+      "family": "undead", "floor_range": [8, 16], "spawn_weight": 70,
+      "traits": [
+        { "type": "IMMUNE", "status": ["SLEEP", "CONFUSED", "POISON"] },
+        { "type": "WEAK_TO", "damage_type": "fire", "multiplier": 1.5 }
+      ],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "weapon_or_shield", "chance": 0.12 }],
+      "_comment": "免疫睡眠 → 打破『睡眠之杖萬用』的中期慣性，逼玩家換解法"
+    },
+    {
+      "id": "mon_gale_wolf", "name": "疾風狼", "ai_profile": "CHASER",
+      "lv": 14, "hp": 28, "atk": 22, "def": 8, "exp": 90,
+      "speed": 2.0, "sight": 7, "evade": 8,
+      "family": "beast", "floor_range": [10, 18], "spawn_weight": 45,
+      "traits": [{ "type": "PACK", "min": 2, "max": 3, "_comment": "成群生成" }],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "any", "chance": 0.08 }],
+      "_comment": "倍速 → 逃跑無效，必須正面處理。是驗證 §1.4 前後半子回合手感的關鍵怪"
+    },
+    {
+      "id": "mon_hex_mage", "name": "詛咒法師", "ai_profile": "RANGED",
+      "lv": 18, "hp": 26, "atk": 18, "def": 9, "exp": 140,
+      "speed": 1.0, "sight": 9, "evade": 4,
+      "family": "humanoid", "floor_range": [12, 20], "spawn_weight": 35,
+      "ranged": { "range": 7, "damage_type": "magic", "projectile": "hex_bolt", "blocked_by": ["wall"] },
+      "melee_penalty": 0.5,
+      "traits": [],
+      "on_hit_effects": [{ "op": "APPLY_CURSE", "target": "random_equipped", "chance": 0.15 }],
+      "drop_table": [{ "item": "wand_or_scroll", "chance": 0.25 }],
+      "_comment": "詛咒裝備無法卸下 → 傷害不高但後果持久。鏡之盾在此處從『冷門裝』變成『針對解』"
+    },
+    {
+      "id": "mon_wander_golem", "name": "徘徊石像", "ai_profile": "WANDERER",
+      "lv": 20, "hp": 60, "atk": 30, "def": 20, "exp": 180,
+      "speed": 0.5, "sight": 2, "evade": 0,
+      "family": "construct", "floor_range": [14, 24], "spawn_weight": 30,
+      "traits": [
+        { "type": "IMMUNE", "status": ["SLEEP", "CONFUSED", "PARALYZE"] },
+        { "type": "KNOCKBACK_IMMUNE" }
+      ],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "shield", "chance": 0.20 }],
+      "_comment": "半速 + 高防 + 不主動追擊 = 一道會走路的牆。設計意圖是讓玩家算出『打牠不划算』並繞開 —— 正確答案是不戰鬥"
+    },
+    {
+      "id": "mon_crystal_turret", "name": "水晶砲台", "ai_profile": "RANGED",
+      "lv": 24, "hp": 45, "atk": 40, "def": 15, "exp": 300,
+      "speed": 0.5, "sight": 10, "evade": 0,
+      "family": "construct", "floor_range": [18, 28], "spawn_weight": 22,
+      "ranged": { "range": 8, "damage_type": "magic", "projectile": "prism_beam", "blocked_by": ["wall"] },
+      "traits": [
+        { "type": "IMMOBILE", "_comment": "永不移動；決策樹中所有 MOVE 分支自動失敗，退化為 WAIT" },
+        { "type": "IMMUNE", "status": ["SLEEP", "CONFUSED"] }
+      ],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "wand", "chance": 0.30 }],
+      "_comment": "不會動 = 純粹的地形問題。玩家必須解『怎麼在不吃 3 發的情況下走到牠面前』"
+    },
+    {
+      "id": "mon_abyss_knight", "name": "深淵騎士", "ai_profile": "CHASER",
+      "lv": 30, "hp": 70, "atk": 48, "def": 18, "exp": 360,
+      "speed": 1.0, "sight": 8, "evade": 0,
+      "family": "oni", "floor_range": [20, 30], "spawn_weight": 40,
+      "traits": [
+        { "type": "COUNTER", "chance": 0.25, "ratio": 0.5, "_comment": "被近戰攻擊時 25% 機率反擊半傷" }
+      ],
+      "on_hit_effects": [],
+      "drop_table": [{ "item": "weapon_or_shield", "chance": 0.25 }],
+      "_comment": "family=oni → 斬鬼刀在此從冷門變成核心。反擊機制讓『純近戰硬拚』不再是最優解"
+    }
+  ],
+
+  "encounter_bands": {
+    "_comment": "每層的出現表 = 所有 floor_range 涵蓋該層的怪物，權重依距離主場層段線性衰減：weight_final = spawn_weight * falloff(F)。falloff 在 floor_range 中央為 1.0，兩端邊界為 0.4，超出範圍為 0 —— 讓玩家有 2~3 層的緩衝期熟悉新怪。",
+    "falloff_edge_ratio": 0.4,
+    "monster_house_multiplier": { "_comment": "怪物之家使用同一張表，但 spawn_weight 對 WANDERER 減半、CHASER 加倍 —— 確保進門的瞬間是壓迫感而非鬧劇。", "CHASER": 2.0, "WANDERER": 0.5, "RANGED": 1.0 }
+  }
+}

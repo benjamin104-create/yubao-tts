@@ -316,7 +316,7 @@ def load_tables():
     with open(os.path.join(DATA_DIR, "monsters.json"), encoding="utf-8") as f:
         monsters = json.load(f)
     flat_items = []
-    for key in ("weapons", "shields", "herbs", "scrolls", "wands", "pots"):
+    for key in ("foods", "weapons", "shields", "herbs", "scrolls", "wands", "pots"):
         flat_items.extend(items[key])
     return flat_items, monsters["monsters"]
 
