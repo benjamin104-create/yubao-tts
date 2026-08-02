@@ -1,0 +1,574 @@
+<meta charset="utf-8"><title>sprite sheet</title>
+<style>
+body{background:#14110f;color:#e8dcc0;font-family:system-ui,sans-serif;margin:0;padding:20px}
+h2{font-size:13px;letter-spacing:.2em;color:#c9973f;margin:22px 0 10px;font-weight:600}
+.grid{display:flex;flex-wrap:wrap;gap:14px}
+.cell{text-align:center;font-size:10px;color:#a99a7e;width:104px}
+canvas{image-rendering:pixelated;width:96px;height:96px;background:#221c17;display:block;margin-bottom:4px}
+.floor canvas{background:none}
+</style><div id="out"></div>
+<script>
+
+"use strict";
+/* ══════════════════════════════════════════════════════════════
+   深淵行商人 — 回合制網格地牢
+   玩家動一步，場上所有怪物同步行動一次。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── 色盤 ───────────────────────────────────────────────────
+   32 色。所有像素資料只能用這裡的字元 —— 統一色盤是讓手繪精靈、
+   程序化地形、道具圖示看起來像同一款遊戲的關鍵。 */
+const PAL = {
+  '.':null,
+  '0':'#0d0d12','1':'#1a1a24','2':'#2b2b38','3':'#3d3d4d','4':'#565668',
+  '5':'#757589','6':'#c8c8d4',
+  '7':'#2a1d14','8':'#43301f','9':'#5e442c','a':'#7d5c3c','b':'#9c7850',
+  'c':'#bb9668','d':'#ecd3ae',
+  'e':'#6b1a1e','f':'#9c2b2b','g':'#c94a3a','h':'#e87a4a','i':'#f5a95e',
+  'j':'#1e5230','k':'#2f7d45','l':'#4aa85e','m':'#79c97a',
+  'n':'#101c3a','o':'#1d3468','p':'#2f57a0','q':'#4a86cf','r':'#7cb8ea',
+  's':'#6b4a12','t':'#a87a1e','u':'#dcae35','v':'#f5dc7a'
+};
+const T = 16;               // 一格 16px
+const PANEL_TILES = 6.6;    // 背包面板寬度換算成格數
+const VW = 16, VH = 12;     // 視窗 16x12 格 = 256x192，格子夠厚才有 16-bit 的份量
+
+/* ─── 精靈：手繪像素資料 ─────────────────────────────────────
+   固定左上光源、深色描邊、16x16 剪影優先。 */
+const SPR = {
+player:[
+"................","................",".....888888.....","....89999998....",
+"...8999ddd998...","...899ddddd98...","...89dd0d0dd8...","...89ddddddd8...",
+"....8ddddd8.....","....gggggggg....","...8gguuuugg8...","...8gguuuugg8...",
+"...8gggggggg8...","....8g8..8g8....","....999..999....","....888..888...."],
+rat:[
+"................","................","................","................",
+"...00......00...","..0aa0....0aa0..","..0aaa0000aaa0..",".0aaaaaaaaaaaa0.",
+".0aa0aaaaaa0aa0.",".0aaaaaaaaaaaa0.",".0aaadddddaaaa0.","..0aaddddddaa0..",
+"...0aaaaaaa0.9..","....0aaaaa0.90..",".....00000..90..","............0...",
+],
+slime:[
+"................","................","................",".......000......",
+".....00qqq00....","....0qqrrrqq0...","...0qrrrrrrrq0..","...0qrr0rr0rq0..",
+"..0qrrrrrrrrrq0.","..0qrrrrrrrrrq0.","..0qqrrrrrrrqq0.","..0pqqqqqqqqqp0.",
+"...0ppppppppp0..","....000000000...","................","................"],
+goblin:[
+"................","................","..0..........0..","..l0........0l..",
+"..ll00....00ll..","...0lllllllll0..","..0lmllllllml0..","..0lm0lll0lml0..",
+"..0lllljjjllll0.","...0llllllll0...","..08880lll08880.","..0b8880008b880.",
+"...0bb8ggg8bb0..","....0lllllll0...","....0ll0.0ll0...",".....00...00...."],
+shroom:[
+"................","................","................","......0000......",
+"....00hhhh00....","...0hihhhhih0...","..0hhhihhihhh0..","..0ihhhhhhhhi0..",
+"..0hhihhhhihh0..","...0hhhhhhhh0...","....00dddd00....","......dddd......",
+"......d00d......","......dddd......",".....0dddd0.....","......0000......"],
+imp:[
+"................",".....05550......",".....05550......","...0.00000.0....",
+"..0m0.....0m0...","..0mm00000mm0...","..0mmmmmmmmm0...","..0m0mmmmm0m0...",
+"..0mmmmmmmmm0...","...0mm000mm0....","...0mmmmmmm0....","..0mmmmmmmmm0...",
+"..0mm0mmm0mm0...","...00.0m0.00....","......0m0.......","......000.......",
+],
+grub:[
+"................","................","..09........90..","..090......090..",
+"...0900000090...","...0cccccccc0...","..0cc0cccc0cc0..",".0cccccccccccc0.",
+".0cc0cccccc0cc0.",".0cccccccccccc0.",".0cc0cccccc0cc0.",".0cccccccccccc0.",
+"..0cccccccccc0..","...0cccccccc0...","....00000000....","................",
+],
+skeleton:[
+"................",".....0000.......","....066660......","...06666660.....",
+"...06060660.....","...06666660.....","....060060......",".....0660.......",
+"..06666666660...","..06000000060...","..06666666660...","..06000000060...",
+"...066666660....","...060....060...","...060....060...","...000....000...",
+],
+wolf:[
+"................","................","..00........00..",".0550......0550.",
+".05550....05550.",".05555000055550.","0555555555555550","0555005555005550",
+"0555555555555550",".05556666665550.",".0556dddddd6550.","..006dddddd600..",
+"...06dd00dd60...","....06dddd60....",".....066660.....","................",
+],
+mage:[
+"................","................","......0000......",".....0ppppo.....",
+"....0poooooo0...","...0poo0000oop..","...0po0dddd0p0..","...0po0d00d0p0..",
+"..0ppodddddopp0.","..0pppooooopppu.","..0pppppppppp0u.","..0ppppppppppp0.",
+"...0pppppppp0.u.","...0pppppppp0...","....00000000....","................"],
+golem:[
+"................","..000000000000..",".05555555555550.","0544444444444450",
+"0544h44444h44450","0544444444444450","0544400000044450","0544444444444450",
+"0544444444444450",".05444444444450.",".05444444444450.",".05440000000450.",
+".05440....04450.",".05440....04450.",".00000....00000.","................",
+],
+turret:[
+"................","................",".......00.......","......0rr0......",
+".....0rrrr0.....","....0rqqqqr0....","...0rqqqqqqr0...","...0rqqrrqqr0...",
+"...0rqqrrqqr0...","...0rqqqqqqr0...","....0rqqqqr0....",".....0rrrr0.....",
+"..000000000000..",".05555555555550.",".04444444444440.",".00000000000000.",
+],
+knight:[
+"................","......0000......",".....04444440...","....04ff44ff40..",
+"....0444444440..","....0400440040..","....0444444440..","....04f4444ff0..",
+"...044444444440.","..044ee444ee440.","..04eeffffeee40.","..044eeeeeee440.",
+"...044444444440.","...044400044440.","...0440...04440.","...000.....000.."],
+};
+
+/* ─── 地牢資料 ─────────────────────────────────────────────── */
+const MONS = [
+ {id:'rat',    nm:'洞穴鼠',   ai:'C', hp:8, atk:5, def:1, exp:3,  spd:1,   sight:4, ev:0, fl:[1,5],  w:100},
+ {id:'slime',  nm:'藍史萊姆', ai:'W', hp:10,atk:4, def:2, exp:4,  spd:1,   sight:2, ev:0, fl:[1,4],  w:80},
+ {id:'goblin', nm:'綠哥布林', ai:'C', hp:14,atk:9, def:3, exp:12, spd:1,   sight:5, ev:0, fl:[2,8],  w:90, steal:1},
+ {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:{st:'亂',dur:8,ch:.25}},
+ {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
+ {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
+ {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂']},
+ {id:'wolf',   nm:'疾風狼',   ai:'C', hp:28,atk:22,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:2},
+ {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:18,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
+ {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
+ {id:'turret', nm:'水晶砲台', ai:'R', hp:45,atk:40,def:15,exp:300,spd:.5,  sight:10,ev:0, fl:[18,28],w:22, rng:8, still:1},
+ {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
+];
+
+const HERB = [
+ {id:'heal', nm:'回復草', hp:30, price:100},
+ {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
+ {id:'life', nm:'命之草', mhp:5, price:1200},
+ {id:'str',  nm:'力量草', str:1, price:300},
+ {id:'rev',  nm:'復活草', hp:20, revive:1, price:2500},
+ {id:'cure', nm:'解毒草', cure:1, price:300},
+ {id:'conf', nm:'混亂草', self:{st:'亂',dur:10}, bad:1, price:300},
+ {id:'slp',  nm:'睡眠草', self:{st:'睡',dur:5}, bad:1, price:800},
+ {id:'blind',nm:'失明草', self:{st:'盲',dur:6}, bad:1, price:300},
+ {id:'psn',  nm:'毒草',   str:-1, dmg:10, bad:1, price:100},
+ {id:'hst',  nm:'加速草', self:{st:'速',dur:20}, price:800},
+ {id:'para', nm:'麻痺草', self:{st:'麻',dur:3}, bad:1, price:800},
+];
+const SCROLL = [
+ {id:'ident', nm:'鑑定卷軸', price:500},
+ {id:'map',   nm:'地圖卷軸', price:500},
+ {id:'ench',  nm:'強化卷軸', price:1500},
+ {id:'purif', nm:'淨化卷軸', price:800},
+ {id:'flame', nm:'火焰卷軸', price:800},
+ {id:'sleep', nm:'睡眠卷軸', price:1500},
+ {id:'conf',  nm:'混亂卷軸', price:800},
+ {id:'summon',nm:'召喚卷軸', price:500, bad:1},
+ {id:'curse', nm:'詛咒卷軸', price:500, bad:1},
+];
+const WAND = [
+ {id:'sleep', nm:'睡眠之杖', price:1600},
+ {id:'blink', nm:'位移之杖', price:1600},
+ {id:'slow',  nm:'減速之杖', price:1600},
+ {id:'knock', nm:'擊退之杖', price:1000},
+ {id:'swap',  nm:'替身之杖', price:2400},
+ {id:'bolt',  nm:'雷擊之杖', price:3000},
+ {id:'weak',  nm:'弱化之杖', price:1000},
+];
+const POT = [
+ {id:'store', nm:'保存壺', beh:'store', price:1200},
+ {id:'ident', nm:'識別壺', beh:'ident', price:2000},
+ {id:'devour',nm:'吸物壺', beh:'devour',price:1200, bad:1},
+ {id:'dispel',nm:'破魔壺', beh:'dispel',price:2000},
+];
+const FOOD = [
+ {id:'big',  nm:'大麵包', sat:100000, price:300},
+ {id:'bread',nm:'麵包',   sat:50000,  price:150},
+ {id:'fruit',nm:'野果',   sat:25000,  price:80},
+];
+const WEAP = [
+ {id:'club', nm:'木棒',     atk:2,  up:2, price:240},
+ {id:'brnz', nm:'銅之劍',   atk:5,  up:3, price:800},
+ {id:'spear',nm:'長槍',     atk:7,  up:4, price:1600, pierce:1},
+ {id:'steel',nm:'鋼之劍',   atk:8,  up:5, price:2400},
+ {id:'mith', nm:'秘銀之劍', atk:14, up:8, price:7200},
+];
+const SHLD = [
+ {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
+ {id:'wood', nm:'木之盾', def:4, up:3, price:800},
+ {id:'steel',nm:'鋼之盾', def:7, up:5, price:2400},
+ {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
+];
+
+/* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
+   防止玩家用排除法在最後一種必中。 */
+const LOOK = {
+ herb:['赤紅的草','靛藍的草','嫩黃的草','灰白的草','墨綠的草','斑點的草','捲曲的草',
+       '焦黑的草','半透明的草','帶刺的草','毛絨的草','泛紫的草','濕黏的草','鏽色的草'],
+ scroll:['寫著「茲拉薩」的卷軸','寫著「梅倫多」的卷軸','寫著「卡布拉」的卷軸',
+         '寫著「希歐尼」的卷軸','寫著「多爾加」的卷軸','寫著「烏魯茲」的卷軸',
+         '寫著「涅墨西」的卷軸','寫著「賽伊爾」的卷軸','寫著「洛蓋斯」的卷軸',
+         '寫著「圖蘭比」的卷軸','寫著「阿茲密」的卷軸'],
+ wand:['木質的杖','白樺的杖','疙瘩的杖','螺旋的杖','漆黑的杖','骨製的杖','藤編的杖',
+       '龜裂的杖','鑲銀的杖'],
+ pot:['圓肚的壺','細頸的壺','有裂痕的壺','素燒的壺','藍紋的壺','缺口的壺'],
+};
+
+/* ─── 決定論亂數 ───────────────────────────────────────────── */
+function RNG(seed){
+  let s = seed >>> 0 || 1;
+  const f = () => { s ^= s<<13; s>>>=0; s ^= s>>17; s ^= s<<5; s>>>=0; return s/4294967296; };
+  f.i = (a,b) => a + Math.floor(f()*(b-a+1));
+  f.pick = arr => arr[f.i(0,arr.length-1)];
+  f.chance = p => f() < p;
+  f.shuffle = arr => { for(let i=arr.length-1;i>0;i--){ const j=f.i(0,i); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
+  f.weight = (arr, wf) => {
+    let tot = 0; for(const a of arr) tot += wf(a);
+    if(tot<=0) return null;
+    let r = f()*tot;
+    for(const a of arr){ r -= wf(a); if(r<=0) return a; }
+    return arr[arr.length-1];
+  };
+  return f;
+}
+
+/* ─── 精靈圖集：把像素資料燒進離屏 canvas ─────────────────── */
+const atlas = {};
+function bake(rows, w=T, h=T){
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const x = c.getContext('2d');
+  for(let y=0;y<rows.length;y++){
+    const row = rows[y];
+    for(let i=0;i<row.length;i++){
+      const col = PAL[row[i]];
+      if(col){ x.fillStyle=col; x.fillRect(i,y,1,1); }
+    }
+  }
+  return c;
+}
+for(const k in SPR) atlas[k] = bake(SPR[k]);
+
+/* ─── 道具圖示：參數化生成 ────────────────────────────────────
+   81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，
+   只換顏色的話玩家會覺得所有草都是同一種。 */
+function px(x,c,X,Y,W,H){ if(!c) return; x.fillStyle=c; x.fillRect(X,Y,W||1,H||1); }
+function outline(x,pts,col){ x.fillStyle=col; for(const [a,b] of pts) x.fillRect(a,b,1,1); }
+
+/* 由「跨距表」建出遮罩，再自動描邊。
+   這樣每種輪廓可以真的長得不一樣，而不是同一個矩形換顏色 ——
+   只換顏色的話，玩家會覺得所有草都是同一種，隨機外觀就失去意義了。 */
+function shapeMask(spans){
+  const m = Array.from({length:T}, ()=>new Array(T).fill(0));
+  for(const [y,x0,w] of spans) for(let i=0;i<w;i++) if(x0+i<T && y<T) m[y][x0+i]=1;
+  return m;
+}
+function paintMask(x, m, fill, edge, liquid, liqFrom){
+  for(let y=0;y<T;y++) for(let px_=0;px_<T;px_++){
+    if(m[y][px_]){
+      x.fillStyle = (liquid && y>=liqFrom) ? liquid : fill;
+      x.fillRect(px_,y,1,1);
+    } else if((m[y-1]&&m[y-1][px_]) || (m[y+1]&&m[y+1][px_]) || m[y][px_-1] || m[y][px_+1]){
+      x.fillStyle = edge; x.fillRect(px_,y,1,1);
+    }
+  }
+}
+function maskTop(m){ for(let y=0;y<T;y++) for(let x2=0;x2<T;x2++) if(m[y][x2]) return y; return 0; }
+function maskBottom(m){ for(let y=T-1;y>=0;y--) for(let x2=0;x2<T;x2++) if(m[y][x2]) return y; return T-1; }
+
+/* 六種瓶形 —— 圓底燒瓶 / 高細瓶 / 扁圓罐 / 錐形瓶 / 葫蘆瓶 / 安瓿 */
+const BOTTLE = [
+  [[5,7,2],[6,7,2],[7,5,6],[8,4,8],[9,4,8],[10,3,10],[11,3,10],[12,4,8],[13,5,6]],
+  [[3,6,4],[4,6,4],[5,6,4],[6,6,4],[7,6,4],[8,6,4],[9,6,4],[10,6,4],[11,6,4],[12,6,4],[13,6,4]],
+  [[7,6,4],[8,3,10],[9,2,12],[10,2,12],[11,2,12],[12,2,12],[13,3,10]],
+  [[4,7,2],[5,7,2],[6,6,4],[7,6,4],[8,5,6],[9,5,6],[10,4,8],[11,3,10],[12,3,10],[13,2,12]],
+  [[3,6,4],[4,5,6],[5,5,6],[6,6,4],[7,6,4],[8,4,8],[9,3,10],[10,3,10],[11,3,10],[12,4,8],[13,5,6]],
+  [[2,7,2],[3,7,2],[4,6,4],[5,6,4],[6,6,4],[7,6,4],[8,6,4],[9,6,4],[10,6,4],[11,6,4],[12,6,4],[13,7,2]],
+];
+function makeHerb(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const liquids=['g','h','v','r','l','q','m','u','p','f','i','k','6','b'];
+  const m = shapeMask(BOTTLE[v % BOTTLE.length]);
+  const top = maskTop(m), bot = maskBottom(m);
+  paintMask(x, m, PAL['3'], PAL['0'], PAL[liquids[v % liquids.length]],
+            top + Math.ceil((bot-top)*0.45));
+  px(x,PAL['9'],7,top-3,2,3); px(x,PAL['8'],7,top-1,2,1);   // 軟木塞
+  px(x,PAL['6'],Math.floor(T/2)-2, top+2, 1, 2);            // 玻璃高光
+  return c;
+}
+
+/* 六種壺形 —— 圓肚 / 細頸 / 裂痕 / 素燒 / 藍紋 / 缺口 */
+const JAR = [
+  [[4,6,4],[5,4,8],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,4,8],[13,5,6]],
+  [[3,6,4],[4,6,4],[5,5,6],[6,4,8],[7,4,8],[8,4,8],[9,4,8],[10,4,8],[11,4,8],[12,4,8],[13,4,8]],
+  [[4,6,4],[5,2,12],[6,2,12],[7,2,12],[8,2,12],[9,2,12],[10,2,12],[11,2,12],[12,2,12],[13,3,10]],
+  [[4,5,6],[5,4,8],[6,4,8],[7,4,8],[8,4,8],[9,4,8],[10,4,8],[11,4,8],[12,4,8],[13,4,8]],
+  [[4,6,4],[5,4,8],[6,4,8],[7,4,8],[8,4,8],[9,4,8],[10,4,8],[11,4,8],[12,4,8],[13,3,10]],
+  [[4,5,3],[4,9,2],[5,4,8],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,3,10],[13,4,8]],
+];
+function makePot(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const clays=['b','a','c','9','5','8'], marks=['p','g','j','u','r','1'];
+  const shape = v % JAR.length;
+  const m = shapeMask(JAR[shape]);
+  paintMask(x, m, PAL[clays[v % clays.length]], PAL['0'], null, 99);
+  const mk = PAL[marks[v % marks.length]];
+  if(shape===2){ px(x,PAL['0'],7,6,1,6); px(x,PAL['0'],8,8,1,3); }        // 裂痕
+  else if(shape===4){ px(x,mk,4,7,8,1); px(x,mk,4,10,8,1); }              // 環紋
+  else if(shape===0){ px(x,mk,4,8,8,2); }
+  else if(shape===1){ px(x,mk,5,9,6,1); }
+  else if(shape===3){ px(x,mk,5,8,6,2); }
+  px(x,PAL['d'],4,6,1,2);                                                  // 陶面高光
+  return c;
+}
+
+function makeScroll(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const seals=['g','p','l','u','q','f','m','r','h','5','t'];
+  const seal=PAL[seals[v%seals.length]], paper=PAL['d'], shade=PAL['c'], dark=PAL['0'];
+  const shape=v%3;
+  const top = shape===1?3:(shape===2?4:2), h = shape===1?10:(shape===2?8:12);
+  px(x,dark,3,top,10,h);
+  px(x,paper,4,top+1,8,h-2);
+  px(x,shade,4,top+1,1,h-2);
+  px(x,shade,4,top+h-2,8,1);
+  for(let i=0;i<3;i++) px(x,PAL['9'],6,top+3+i*2,4,1);   // 字行
+  px(x,dark,3,top,10,1); px(x,dark,3,top+h-1,10,1);
+  if(shape===0){ px(x,seal,7,top+h-4,3,3); px(x,dark,7,top+h-4,3,1); }
+  else if(shape===1){ px(x,seal,2,top+4,12,2); px(x,dark,2,top+4,12,1); } // 緞帶
+  else { px(x,seal,11,top+1,2,h-2); }
+  return c;
+}
+function makeWand(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const woods=['9','8','a','4','7','b','5','3','c'];
+  const tips=['r','v','m','g','q','u','h','l','6'];
+  const wood=PAL[woods[v%woods.length]], tip=PAL[tips[v%tips.length]], dark=PAL['0'];
+  px(x,dark,6,4,4,11);
+  px(x,wood,7,5,2,9);
+  px(x,PAL['d'],7,6,1,6);
+  const shape=v%3;
+  if(shape===0){ px(x,dark,5,1,6,5); px(x,tip,6,2,4,3); px(x,PAL['6'],7,2,1,1); }
+  else if(shape===1){ px(x,dark,6,1,4,4); px(x,tip,6,2,4,2); px(x,tip,5,3,6,1); }
+  else { px(x,dark,5,2,6,3); px(x,tip,6,2,1,3); px(x,tip,9,2,1,3); px(x,tip,7,3,2,1); }
+  px(x,PAL['8'],6,13,4,1);
+  return c;
+}
+function makeFood(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const dark=PAL['0'];
+  if(v===2){ px(x,dark,5,5,6,7); px(x,PAL['g'],6,6,4,5); px(x,PAL['h'],6,6,2,2);
+             px(x,PAL['k'],8,3,2,3); px(x,PAL['l'],9,2,2,2); return c; }
+  const w = v===0?11:8, bx=Math.floor((T-w)/2);
+  px(x,dark,bx-1,5,w+2,7);
+  px(x,PAL['b'],bx,6,w,5);
+  px(x,PAL['c'],bx+1,6,w-2,2);
+  px(x,PAL['9'],bx+1,10,w-2,1);
+  for(let i=0;i<3;i++) px(x,PAL['9'],bx+2+i*3,7,1,2);
+  return c;
+}
+function makeWeapon(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const blades=['5','c','6','6','r'], hilts=['9','t','8','5','u'];
+  const bl=PAL[blades[v]||'6'], hi=PAL[hilts[v]||'9'], dark=PAL['0'];
+  if(v===0){ px(x,dark,6,2,4,11); px(x,PAL['9'],7,3,2,9); px(x,PAL['b'],7,3,1,4);
+             px(x,PAL['8'],6,12,4,2); return c; }
+  if(v===2){ px(x,dark,7,1,2,12); px(x,bl,7,2,2,3); px(x,PAL['6'],7,2,1,2);
+             px(x,PAL['9'],7,5,2,8); px(x,dark,5,5,6,1); px(x,hi,5,5,6,1); return c; }
+  px(x,dark,6,1,4,10);
+  px(x,bl,7,2,2,8);
+  px(x,PAL['6'],7,2,1,6);
+  px(x,dark,4,10,8,2); px(x,hi,4,10,8,1);
+  px(x,dark,7,12,2,3); px(x,PAL['8'],7,12,2,2);
+  px(x,PAL['u'],7,14,2,1);
+  return c;
+}
+function makeShield(v){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const faces=['9','a','5','r'], rims=['8','9','4','6'];
+  const fa=PAL[faces[v%4]], rm=PAL[rims[v%4]], dark=PAL['0'];
+  // 四種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）
+  const SHAPES = [
+    [[3,4,8],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,4,8],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
+    [[3,6,4],[4,4,8],[5,3,10],[6,2,12],[7,2,12],[8,2,12],[9,2,12],[10,3,10],[11,4,8],[12,6,4]],
+    [[2,6,4],[3,5,6],[4,4,8],[5,4,8],[6,4,8],[7,4,8],[8,5,6],[9,5,6],[10,6,4],[11,6,4],[12,7,2],[13,7,2]],
+    [[2,4,8],[3,3,10],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,4,8]],
+  ];
+  const m = shapeMask(SHAPES[v%4]);
+  paintMask(x, m, rm, dark, null, 99);
+  // 內面：把遮罩往內縮一圈
+  for(let y=1;y<T-1;y++) for(let i=1;i<T-1;i++)
+    if(m[y][i] && m[y-1][i] && m[y+1][i] && m[y][i-1] && m[y][i+1]){ x.fillStyle=fa; x.fillRect(i,y,1,1); }
+  px(x,PAL['d'],5,4,2,2);                                  // 高光
+  if(v===3){ px(x,PAL['6'],6,5,4,4); px(x,PAL['r'],7,6,2,2); }   // 鏡面
+  else px(x,PAL['u'],7,6,2,2);                             // 盾徽
+  return c;
+}
+
+/* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
+   牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
+function makeFloor(seed, corridor){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const r = RNG(seed*2654435761);
+  const base = corridor?'8':'9', lit = corridor?'9':'a', mortar = corridor?'7':'8';
+  x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
+  // 磚縫
+  x.fillStyle=PAL[mortar];
+  x.fillRect(0,0,T,1); x.fillRect(0,8,T,1);
+  x.fillRect(0,0,1,8); x.fillRect(8,8,1,8);
+  // 顆粒
+  for(let i=0;i<26;i++){
+    const px_=r.i(1,15), py=r.i(1,15);
+    x.fillStyle = r.chance(.55)?PAL[lit]:PAL[mortar];
+    x.fillRect(px_,py,1,1);
+  }
+  return c;
+}
+function makeWall(face){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const r=RNG(99173);
+  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
+  // 石塊
+  x.fillStyle=PAL['2'];
+  x.fillRect(1,1,6,6); x.fillRect(9,1,6,6); x.fillRect(1,9,6,6); x.fillRect(9,9,6,6);
+  x.fillStyle=PAL['3'];
+  x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
+  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['3']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+  if(face){
+    // 立面：下方有地板時畫出厚度，深度感就出來了
+    x.fillStyle=PAL['4']; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL['3']; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL['1']; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+    for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
+  }
+  return c;
+}
+function makeStairs(){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
+  for(let i=0;i<4;i++){
+    const y=2+i*3, w=13-i*2, sx=Math.floor((T-w)/2);
+    x.fillStyle=PAL['0']; x.fillRect(sx,y,w,3);
+    x.fillStyle=PAL[['5','4','3','2'][i]]; x.fillRect(sx,y,w,1);
+    x.fillStyle=PAL[['3','2','1','1'][i]]; x.fillRect(sx+1,y+1,w-2,1);
+  }
+  return c;
+}
+const TILE_ART = {
+  floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
+  corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
+  wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(),
+};
+const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
+  const x=c.getContext('2d');
+  px(x,PAL['0'],4,8,8,5); px(x,PAL['t'],5,9,6,3); px(x,PAL['u'],5,9,6,1); px(x,PAL['v'],6,9,2,1);
+  px(x,PAL['0'],3,5,6,4); px(x,PAL['t'],4,6,4,2); px(x,PAL['v'],4,6,2,1);
+  return c; })();
+const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
+  const x=c.getContext('2d');
+  px(x,PAL['0'],3,6,10,7); px(x,PAL['2'],4,7,8,5);
+  for(let i=0;i<4;i++){ px(x,PAL['5'],5+i*2,7,1,2); px(x,PAL['5'],5+i*2,10,1,2); }
+  return c; })();
+
+/* ─── 地圖生成 ────────────────────────────────────────────────
+   30x30 切 3x3 區域 → 各區生成房間 → 區域鄰接圖取隨機生成樹保證連通
+   → 注入環路（避免死路必死）→ Z 字形通道。 */
+const MW=30, MH=30, ZW=10, ZH=10, MARGIN=1;
+const WALL=0, ROOM=1, CORR=2, DOWN=3;
+
+function genFloor(rng, depth){
+  const t = new Uint8Array(MW*MH);
+  const roomAt = new Int8Array(MW*MH).fill(-1);
+  const zones=[];
+  for(let zy=0;zy<3;zy++) for(let zx=0;zx<3;zx++)
+    zones.push({i:zy*3+zx, zx, zy, x0:zx*ZW, y0:zy*ZH, x1:zx*ZW+ZW-1, y1:zy*ZH+ZH-1});
+
+  const rooms={}, junc={};
+  const emptyN = Math.min(rng.i(0,3), 3);
+  const empties = new Set(rng.shuffle(zones.map(z=>z.i)).slice(0,emptyN));
+  for(const z of zones){
+    const ux0=z.x0+MARGIN, ux1=z.x1-MARGIN, uy0=z.y0+MARGIN, uy1=z.y1-MARGIN;
+    if(empties.has(z.i)){ junc[z.i]={x:rng.i(ux0+1,ux1-1), y:rng.i(uy0+1,uy1-1)}; continue; }
+    const w=rng.i(3,7), h=rng.i(3,7);
+    const x=rng.i(ux0,ux1-w+1), y=rng.i(uy0,uy1-h+1);
+    rooms[z.i]={x,y,w,h,doors:[]};
+  }
+  for(const k in rooms){ const r=rooms[k];
+    for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++){ t[y*MW+x]=ROOM; roomAt[y*MW+x]=+k; } }
+
+  // 生成樹 + 環路
+  const cand=[];
+  for(const a of zones) for(const b of zones)
+    if(a.i<b.i && Math.abs(a.zx-b.zx)+Math.abs(a.zy-b.zy)===1) cand.push([a.i,b.i]);
+  rng.shuffle(cand);
+  const par=[...Array(9).keys()];
+  const find=a=>{ while(par[a]!==a){ par[a]=par[par[a]]; a=par[a]; } return a; };
+  const tree=[], rest=[];
+  for(const e of cand){ const ra=find(e[0]), rb=find(e[1]);
+    if(ra!==rb){ par[ra]=rb; tree.push(e); } else rest.push(e); }
+  const loopP = Math.max(.08, .25 - depth*.005);
+  const edges = tree.concat(rest.filter(()=>rng.chance(loopP)));
+
+  const port=(zi,side)=>{
+    if(junc[zi]) return junc[zi];
+    const r=rooms[zi];
+    if(side==='R') return {x:r.x+r.w,   y:rng.i(r.y,r.y+r.h-1)};
+    if(side==='L') return {x:r.x-1,     y:rng.i(r.y,r.y+r.h-1)};
+    if(side==='D') return {x:rng.i(r.x,r.x+r.w-1), y:r.y+r.h};
+    return {x:rng.i(r.x,r.x+r.w-1), y:r.y-1};
+  };
+  const carveH=(a,b,y)=>{ for(let x=Math.min(a,b);x<=Math.max(a,b);x++) if(t[y*MW+x]===WALL) t[y*MW+x]=CORR; };
+  const carveV=(a,b,x)=>{ for(let y=Math.min(a,b);y<=Math.max(a,b);y++) if(t[y*MW+x]===WALL) t[y*MW+x]=CORR; };
+  const door=(zi,p)=>{ if(rooms[zi]) rooms[zi].doors.push(p.x+','+p.y); };
+
+  for(const [ia,ib] of edges){
+    const za=zones[ia], zb=zones[ib];
+    if(za.zy===zb.zy){
+      const L = za.zx<zb.zx?za:zb, R = za.zx<zb.zx?zb:za;
+      const pa=port(L.i,'R'), pb=port(R.i,'L'), mid=rng.i(pa.x,pb.x);
+      carveH(pa.x,mid,pa.y); carveV(pa.y,pb.y,mid); carveH(mid,pb.x,pb.y);
+      door(L.i,pa); door(R.i,pb);
+    } else {
+      const U = za.zy<zb.zy?za:zb, D = za.zy<zb.zy?zb:za;
+      const pa=port(U.i,'D'), pb=port(D.i,'U'), mid=rng.i(pa.y,pb.y);
+      carveV(pa.y,mid,pa.x); carveH(pa.x,pb.x,mid); carveV(mid,pb.y,pb.x);
+      door(U.i,pa); door(D.i,pb);
+    }
+  }
+
+  // 出生點與樓梯：樓梯放在區域圖上最遠處，避免「落地就下樓」的退化玩法
+  const keys=Object.keys(rooms);
+  const spawnKey = rng.pick(keys);
+  const sr = rooms[spawnKey];
+  const spawn = {x:rng.i(sr.x,sr.x+sr.w-1), y:rng.i(sr.y,sr.y+sr.h-1)};
+  const adj={}; for(const [a,b] of edges){ (adj[a]=adj[a]||[]).push(b); (adj[b]=adj[b]||[]).push(a); }
+  const dist={[+spawnKey]:0}; const q=[+spawnKey];
+  while(q.length){ const z=q.shift(); for(const n of (adj[z]||[])) if(dist[n]===undefined){ dist[n]=dist[z]+1; q.push(n); } }
+  const far = keys.filter(k=>k!==spawnKey).sort((a,b)=>(dist[b]||0)-(dist[a]||0)).slice(0,3);
+  const dk = far.length?rng.pick(far):spawnKey;
+  const dr = rooms[dk];
+  const stairs = {x:rng.i(dr.x,dr.x+dr.w-1), y:rng.i(dr.y,dr.y+dr.h-1)};
+  t[stairs.y*MW+stairs.x]=DOWN;
+
+  return {t, roomAt, rooms, spawn, stairs, depth};
+}
+
+const G = { rng: RNG(1) };
+const out = document.getElementById('out');
+function sec(t){ const h=document.createElement('h2'); h.textContent=t; out.appendChild(h);
+  const g=document.createElement('div'); g.className='grid'; out.appendChild(g); return g; }
+function add(g, cv, label){
+  const d=document.createElement('div'); d.className='cell';
+  const c=document.createElement('canvas'); c.width=16;c.height=16;
+  c.getContext('2d').drawImage(cv,0,0);
+  d.appendChild(c); const s=document.createElement('div'); s.textContent=label; d.appendChild(s);
+  g.appendChild(d);
+}
+const NAMES={player:'玩家',rat:'洞穴鼠',slime:'藍史萊姆',goblin:'綠哥布林',shroom:'醉步蕈',
+ imp:'投石妖精',grub:'食腐蟲',skeleton:'骷髏兵',wolf:'疾風狼',mage:'詛咒法師',
+ golem:'徘徊石像',turret:'水晶砲台',knight:'深淵騎士'};
+let g = sec('實體 13');
+for(const k in SPR) add(g, atlas[k], NAMES[k]||k);
+g = sec('地形');
+TILE_ART.floor.forEach((c,i)=>add(g,c,'房間地板'+i));
+TILE_ART.corr.forEach((c,i)=>add(g,c,'通道'+i));
+add(g,TILE_ART.wall,'牆'); add(g,TILE_ART.wallFace,'牆(有立面)'); add(g,TILE_ART.stairs,'樓梯');
+add(g,goldIcon,'金錢'); add(g,trapIcon,'陷阱');
+g = sec('草藥 14 種外觀');
+for(let i=0;i<14;i++) add(g, makeHerb(i), 'herb_'+String(i).padStart(2,'0'));
+g = sec('卷軸 11 種外觀');
+for(let i=0;i<11;i++) add(g, makeScroll(i), 'scroll_'+String(i).padStart(2,'0'));
+g = sec('杖 9 種外觀');
+for(let i=0;i<9;i++) add(g, makeWand(i), 'wand_'+String(i).padStart(2,'0'));
+g = sec('壺 6 種外觀');
+for(let i=0;i<6;i++) add(g, makePot(i), 'pot_'+String(i).padStart(2,'0'));
+g = sec('食物 / 武器 / 盾牌');
+for(let i=0;i<3;i++) add(g, makeFood(i), '食物'+i);
+for(let i=0;i<5;i++) add(g, makeWeapon(i), '武器'+i);
+for(let i=0;i<4;i++) add(g, makeShield(i), '盾牌'+i);
+</script>
