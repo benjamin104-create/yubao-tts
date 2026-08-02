@@ -15,6 +15,8 @@ dumbify           簡化句子
 anti-ai-writing   拆掉 AI 味
   ↓
 voice-dna         校成潔米爸的語氣
+  ↓
+執行              發布
 ```
 
 ## 每一站在做什麼
@@ -26,6 +28,7 @@ voice-dna         校成潔米爸的語氣
 | dumbify | 句子長度、詞彙、被動改主動 | 段落順序 |
 | anti-ai-writing | 句型層級的 AI 特徵 | 內容對錯 |
 | voice-dna | 語氣校準，最終驗收 | 結構 |
+| 執行 | 發布 | — |
 
 ## 為什麼 voice-dna 放最後
 
