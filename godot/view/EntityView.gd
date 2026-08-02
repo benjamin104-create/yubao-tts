@@ -61,18 +61,20 @@ func _add_actor(e: Entity) -> void:
 	actor.position = tile_center(e.pos)
 
 	var sprite := Sprite2D.new()
-	sprite.texture = TileArt.make_token(color)
-	actor.add_child(sprite)
-
-	var label := Label.new()
-	label.text = glyph
-	label.size = Vector2(TileArt.TILE, TileArt.TILE)
-	label.position = Vector2(-TileArt.TILE, -TileArt.TILE) * 0.5
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_color_override("font_color", Color(0.08, 0.06, 0.05))
-	label.add_theme_font_size_override("font_size", 13)
-	actor.add_child(label)
+	var art := TileArt.entity_texture("" if e.is_player \
+		else (e as MonsterEntity).def_id)
+	if art != null:
+		sprite.texture = art
+		# 多影格圖：先只取第 1 格，待動畫系統接上再跑其餘影格
+		if art.get_width() > TileArt.TILE:
+			sprite.region_enabled = true
+			sprite.region_rect = Rect2(0, 0, TileArt.TILE, art.get_height())
+		actor.add_child(sprite)
+	else:
+		# 還沒有美術：色塊 + 字母，一樣看得懂在打什麼
+		sprite.texture = TileArt.make_token(color)
+		actor.add_child(sprite)
+		actor.add_child(_make_glyph(glyph, Color(0.08, 0.06, 0.05), 13))
 
 	add_child(actor)
 	_actors[e.id] = actor
@@ -103,7 +105,15 @@ func _redraw_objects() -> void:
 		if not host.vision.is_visible(p):
 			continue
 		var it: ItemInstance = map.floor_items[p]
-		_add_marker(p, ITEM_GLYPH.get(it.category, "*"), TileArt.item_color(it.category))
+		var art := TileArt.item_texture(host.art_key(it))
+		if art != null:
+			var s2 := Sprite2D.new()
+			s2.texture = art
+			s2.position = tile_center(p)
+			_objects.add_child(s2)
+		else:
+			_add_marker(p, ITEM_GLYPH.get(it.category, "*"),
+				TileArt.item_color(it.category))
 	for p: Vector2i in map.floor_gold.keys():
 		if host.vision.is_visible(p):
 			_add_marker(p, "$", Color(0.95, 0.82, 0.35))
@@ -114,15 +124,21 @@ func _redraw_objects() -> void:
 
 
 func _add_marker(p: Vector2i, glyph: String, color: Color) -> void:
+	var label := _make_glyph(glyph, color, 14)
+	label.position += tile_center(p)
+	_objects.add_child(label)
+
+
+static func _make_glyph(glyph: String, color: Color, size: int) -> Label:
 	var label := Label.new()
 	label.text = glyph
 	label.size = Vector2(TileArt.TILE, TileArt.TILE)
-	label.position = tile_center(p) - Vector2(TileArt.TILE, TileArt.TILE) * 0.5
+	label.position = Vector2(-TileArt.TILE, -TileArt.TILE) * 0.5
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", 14)
-	_objects.add_child(label)
+	label.add_theme_font_size_override("font_size", size)
+	return label
 
 
 # ---------------------------------------------------------------- 動畫

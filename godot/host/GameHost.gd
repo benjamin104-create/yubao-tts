@@ -133,6 +133,11 @@ func display_name(item: ItemInstance) -> String:
 	return ident.display_name(item, db)
 
 
+## 道具該用哪一張美術圖。View 一律走這裡，不要自己拼字串。
+func art_key(item: ItemInstance) -> String:
+	return ident.art_key(item)
+
+
 func visible_monsters() -> Array:
 	var out: Array = []
 	for m: MonsterEntity in entities.monsters():

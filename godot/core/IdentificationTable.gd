@@ -10,6 +10,9 @@ extends RefCounted
 const MASKED := ["herb", "scroll", "wand", "pot"]
 
 var appearance: Dictionary = {}    # def_id -> 外觀名
+## def_id -> 外觀在池中的索引。美術檔名用索引而不是中文外觀名，
+## 檔名才會穩定（herb_03.png），也不會被作業系統的編碼問題咬到。
+var appearance_index: Dictionary = {}
 var identified: Dictionary = {}    # def_id -> true
 var notes: Dictionary = {}         # def_id -> 玩家標註
 
@@ -28,9 +31,24 @@ func shuffle_appearances(db: ItemDatabase, rng: DeterministicRng) -> void:
 		# 外觀池必須 >= 真實種類數，且多備假外觀防排除法（data_spec §1.2）
 		assert(pool.size() >= defs.size(),
 			"外觀池不足：%s 需要 %d 個，只有 %d 個" % [category, defs.size(), pool.size()])
-		rng.shuffle(pool)
+		var order := []
+		for i in pool.size():
+			order.append(i)
+		rng.shuffle(order)
 		for i in defs.size():
-			appearance[defs[i]["id"]] = pool[i]
+			var slot: int = order[i]
+			appearance[defs[i]["id"]] = pool[slot]
+			appearance_index[defs[i]["id"]] = slot
+
+
+## 該用哪一張圖。
+##
+## 外觀類道具「永遠」用外觀圖，鑑定與否都一樣 —— 鑑定揭露的是名字，
+## 不是外形。一瓶紅色的草不會因為你知道它是回復草就變個樣子。
+func art_key(inst: ItemInstance) -> String:
+	if inst.category in MASKED:
+		return "%s_%02d" % [inst.category, int(appearance_index.get(inst.def_id, 0))]
+	return inst.def_id
 
 
 func is_identified(def_id: String) -> bool:

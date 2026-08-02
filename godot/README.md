@@ -30,7 +30,19 @@ godot --headless --path godot --script res://tests/test_action_combat.gd
 # 實機試玩並截圖（需要顯示器；CI 上用 xvfb-run）
 xvfb-run -a --server-args="-screen 0 960x720x24" \
   godot --path godot --script res://tests/play_capture.gd
+
+# 錄一整段試玩（每回合一張），組成動畫 GIF 與接觸表
+xvfb-run -a --server-args="-screen 0 960x720x24" \
+  godot --path godot --script res://tests/play_demo.gd
+python3 tools/make_demo_media.py \
+  ~/.local/share/godot/app_userdata/"Mystery Dungeon Prototype"/frames out/ \
+  --key 0,4,18,27,41,78,90,103,153
 ```
+
+`play_demo.gd` 用固定 seed 錄整段（戰鬥、撿道具、開背包、下樓），
+`tools/make_demo_media.py` 把它組成 GIF。GIF 是回合制遊戲最適合的展示格式 ——
+每一格就是一個回合，播放速度直接反映「玩家按一次、世界動一次」的節奏。
+接觸表範例：`docs/art/gameplay_moments.png`
 
 `play_capture.gd` 用固定 seed 載入真正的 `Main.tscn`，走一段路、開背包、下樓，
 把畫面存成 PNG。headless 測試證明邏輯正確，這支證明畫面真的畫得出來 ——
@@ -112,6 +124,22 @@ m = json.load(open('godot/data/monsters.json'))
 ...
 EOF
 ```
+
+## 美術導入
+
+程式端已經備好，**不需要再改任何程式碼**：`TileArt` 先找 `godot/assets/`
+底下的資產，找不到才用程式產生的色塊 + 字母。所以美術可以一張一張補，
+中間任何時刻專案都跑得起來，也不會因為缺一張圖就 crash。
+
+完整規格、GPT 提示詞模板、轉換管線與驗收標準見
+**`docs/roguelike_art_guide.md`**。重點：
+
+- 需求是 **81 張道具圖**，不是 68 張 —— 未鑑定道具顯示的是外觀，
+  所以張數由**外觀池**決定而非道具種類。這種差異晚發現會直接爆預算。
+- 影像模型不會給你 24x24 的圖，會給你一張 1024x1024 的「像素風」。
+  必須走 `tools/pixelize.py`（區域平均降取樣 → 硬邊重建 → 32 色量化）。
+- 分次生成的圖不會像同一款遊戲。解法是**固定色盤** + **一次生成一整類 sheet**。
+- 外觀類道具的外形**不可暗示效果** —— 這是機制正確性問題，不是美觀問題。
 
 ## 尚未實作（明確標示，不靜默 no-op）
 
