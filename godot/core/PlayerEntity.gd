@@ -62,7 +62,12 @@ func get_hit_mod() -> int:
 
 func _weapon_atk() -> int:
 	var d := _def_of(weapon)
-	return int(d.get("atk", 0)) + int(d.get("atk_per_upgrade", 0)) * weapon.upgrade
+	var a := int(d.get("atk", 0)) + int(d.get("atk_per_upgrade", 0)) * weapon.upgrade
+	var ks := trait_of(weapon, "KILL_STACK")
+	if not ks.is_empty():
+		a += mini(int(weapon.kill_stacks * float(ks.get("atk_per_kill", 0.0))),
+			int(ks.get("cap", 0)))
+	return a
 
 
 func _shield_def() -> int:
@@ -77,6 +82,24 @@ func _def_of(inst: ItemInstance) -> Dictionary:
 	if db == null or inst == null:
 		return {}
 	return db.item_def(inst.def_id)
+
+
+## 取出裝備上的某個特性定義，找不到回傳空字典。
+func trait_of(inst: ItemInstance, kind: String) -> Dictionary:
+	if inst == null:
+		return {}
+	for t: Dictionary in _def_of(inst).get("traits", []):
+		if t.get("type", "") == kind:
+			return t
+	return {}
+
+
+func weapon_trait(kind: String) -> Dictionary:
+	return trait_of(weapon, kind)
+
+
+func shield_trait(kind: String) -> Dictionary:
+	return trait_of(shield, kind)
 
 
 # ---------------------------------------------------------------- 飽足度

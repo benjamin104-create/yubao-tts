@@ -18,6 +18,9 @@ var known_modifier := false
 var upgrade := 0
 var cursed := false
 var uses := 0               # 杖的剩餘次數
+## 成長之劍的擊殺累積。存在實體上而非定義上 —— 每一把劍各自成長，
+## 死亡不繼承（GDD §4.5）。
+var kill_stacks := 0
 var note := ""              # 玩家手動標註（TENTATIVE）
 
 # ---- 壺專用 ----
@@ -56,6 +59,7 @@ func duplicate_instance() -> ItemInstance:
 	c.upgrade = upgrade
 	c.cursed = cursed
 	c.uses = uses
+	c.kill_stacks = kill_stacks
 	c.note = note
 	c.pot_behavior = pot_behavior
 	c.pot_capacity = pot_capacity

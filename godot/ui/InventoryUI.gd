@@ -32,12 +32,11 @@ var _open_pot: ItemInstance = null         # 內容物視窗正在顯示的壺
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	custom_minimum_size = Vector2(300, 0)
+	# 版面由 Main._dock() 統一指定 —— 面板自己搶版面會讓兩邊互相覆蓋
 	visible = false
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(panel)
 
 	var box := VBoxContainer.new()

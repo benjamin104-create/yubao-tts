@@ -293,6 +293,14 @@ func _phase_deaths() -> Array:
 		events.append(GameEvent.new(GameEvent.Kind.ENTITY_DIED,
 			{ "entity_id": m.id, "pos": m.pos }, false))
 		events.append(GameEvent.msg("打倒了 %s。" % m.display_name))
+
+		# 掉落（含牠生前撿走的道具）
+		events.append_array(ActionResolver.resolve_drops(m, ctx))
+
+		# 成長之劍：每次擊殺累積攻擊力
+		if player.weapon != null and not player.weapon_trait("KILL_STACK").is_empty():
+			player.weapon.kill_stacks += 1
+
 		var levels := player.gain_exp(m.exp_value)
 		if levels > 0:
 			player.max_hp += (ctx["rng"] as DeterministicRng).randi_range(4, 8) * levels

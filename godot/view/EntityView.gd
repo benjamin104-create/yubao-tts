@@ -29,7 +29,8 @@ var _objects: Node2D
 func setup(p_host: GameHost) -> void:
 	host = p_host
 	_objects = Node2D.new()
-	_objects.z_index = 1
+	# 必須低於 actor：玩家站在道具上時要看得到自己，而不是被道具圖示蓋住
+	_objects.z_index = -1
 	add_child(_objects)
 	z_index = 10
 

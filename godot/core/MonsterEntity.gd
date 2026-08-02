@@ -10,6 +10,8 @@ var evade := 0
 var exp_value := 0
 var traits: Array = []
 var ranged: Dictionary = {}          # { range, damage_type, blocked_by }
+var on_hit_effects: Array = []       # 命中玩家時附加的效果
+var drop_table: Array = []           # 死亡掉落
 var melee_penalty := 1.0             # 遠程怪貼身時的攻擊力倍率
 var immobile := false
 
@@ -19,6 +21,10 @@ var memory_left := 0
 var aggro_left := 0                  # WANDERER 受擊後轉為追擊的剩餘回合
 var cooldown_left := 0               # RANGED 的射擊冷卻
 var last_dir := Vector2i.ZERO        # WANDERER 的慣性方向
+
+## 被 PICKUP_ITEMS 型怪物撿走的道具。牠死掉時會全部掉回地面 ——
+## 所以哥布林撿走你的東西時，你必須追上去把牠打死才拿得回來。
+var carried_items: Array = []
 
 
 static func from_def(def: Dictionary, at: Vector2i, new_id: int) -> MonsterEntity:
@@ -39,6 +45,8 @@ static func from_def(def: Dictionary, at: Vector2i, new_id: int) -> MonsterEntit
 	m.profile_id = def.get("ai_profile", "CHASER")
 	m.traits = def.get("traits", [])
 	m.ranged = def.get("ranged", {})
+	m.on_hit_effects = def.get("on_hit_effects", [])
+	m.drop_table = def.get("drop_table", [])
 	m.melee_penalty = float(def.get("melee_penalty", 1.0))
 	for t: Dictionary in m.traits:
 		if t.get("type", "") == "IMMOBILE":

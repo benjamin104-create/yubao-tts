@@ -18,12 +18,23 @@ godot --headless --path godot --import
 # 玩
 godot --path godot
 
-# Core 單元測試（83 項）
+# Core 單元測試（97 項）
 godot --headless --path godot --script res://tests/test_core.gd
 
 # 自動遊玩模擬（120 場，產出平衡指標）
 godot --headless --path godot --script res://tests/test_simulation.gd
+
+# 連擊狀態機測試（experiments/action_combat，34 項）
+godot --headless --path godot --script res://tests/test_action_combat.gd
+
+# 實機試玩並截圖（需要顯示器；CI 上用 xvfb-run）
+xvfb-run -a --server-args="-screen 0 960x720x24" \
+  godot --path godot --script res://tests/play_capture.gd
 ```
+
+`play_capture.gd` 用固定 seed 載入真正的 `Main.tscn`，走一段路、開背包、下樓，
+把畫面存成 PNG。headless 測試證明邏輯正確，這支證明畫面真的畫得出來 ——
+兩者是不同的事，而且版面錯誤只有後者抓得到（見下方「實機試玩抓到的問題」）。
 
 需要 Godot **4.3+**（`TileMapLayer` 從 4.3 開始提供）。若使用 4.0~4.2，
 把 `view/MapRenderer.gd` 與 `view/FogRenderer.gd` 改成 `extends TileMap`，
@@ -80,7 +91,27 @@ main/     組裝與輸入
   全螢幕 WorldDropZone（拖出背包 = 投擲或丟棄）。
 - **打擊回饋**：池化傷害飄字（一般／會心／治療／MISS）、攻防數值變化彈跳與
   浮動差值、稀有觸發的全螢幕閃光。
+- **原作特性**：怪物命中附加效果（食腐蟲吸飽足度／醉步蕈混亂／詛咒法師詛咒
+  裝備）、死亡掉落表、盜賊怪撿走地面道具且死後掉回、長槍貫穿、雙手武器佔用
+  盾牌欄、鏡之盾反射魔法、元素之盾抗性與護包、石像免疫擊退、疾風狼成群生成、
+  成長之劍擊殺累積、商人算盤金錢加成。
 - **呈現**：程式產生的 TileSet 與 token（零美術資產）、位移插值、動畫壓縮。
+
+## 資料表與程式碼的一致性稽核
+
+曾經有 10 項特性「JSON 宣告了、程式碼沒實作」—— 這比沒寫還糟，因為資料在
+說謊：食腐蟲的整個身分就是吸飽足度，但牠當時只是普通地打你。已全數補上並
+加了 14 項測試。稽核方式很簡單，值得在每次擴充資料後重跑一次：
+
+```bash
+# 列出 JSON 宣告的所有 trait，逐一 grep 程式碼有沒有引用
+python3 - <<'EOF'
+import json
+d = json.load(open('godot/data/items.json'))
+m = json.load(open('godot/data/monsters.json'))
+...
+EOF
+```
 
 ## 尚未實作（明確標示，不靜默 no-op）
 
@@ -121,6 +152,21 @@ main/     組裝與輸入
    不會被移除也不會給經驗值。修法是另開 `all_monsters()`。
    修好之後平均到達樓層從 1.0 變成 4.7，平均等級從 1.0 變成 2.4。
 
+## 實機試玩抓到的問題
+
+`play_capture.gd` 第一次跑出來，邏輯全對但**版面全錯**：背包跑到螢幕外的
+x=960、訊息列跑到 y=720、文字看不見。97 項 headless 測試全綠也抓不到這種事。
+
+根因是 `set_anchors_preset()` 只改 anchor 不改 offset，在節點尚未排版
+（size 仍為 0）時呼叫會得到退化的矩形。改用 `set_anchors_and_offsets_preset()`
+搭配 `PRESET_MODE_MINSIZE` 之後，size 對了但位置仍停在錨點上。最後改成明確
+指定四個 anchor 與四個 offset（`Main._dock()`）—— 版面這種東西寫死比猜 API
+語意可靠。
+
+另外兩個只有看畫面才會發現的：
+- 玩家站在道具上時被道具圖示蓋住（`_objects.z_index` 比 actor 高）
+- 地圖以外的區域露出 Godot 預設的灰藍色底（要 `set_default_clear_color`）
+
 ## 目前的模擬指標
 
 ```
@@ -129,9 +175,9 @@ main/     組裝與輸入
   ├ 餓死          : 0（0.0%）          ← 目標 < 8%
   └ 戰死          : 120
 平均存活回合      : 437
-平均到達樓層      : 4.8（最深 11）
-平均結束等級      : 2.5
-平均鑑定種類數    : 2.8
+平均到達樓層      : 4.7（最深 15）
+平均結束等級      : 2.4
+平均鑑定種類數    : 2.6
 ```
 
 bot 的策略只有「餓了吃、低血喝已知回復草、安全時盲喝未鑑定草藥、

@@ -43,6 +43,10 @@ var _aim_from_ground := false
 
 var _ui_theme: Theme
 
+const STATUS_H := 28
+const LOG_H := 140   # 6 行 x 19px + 內距，太小會把最舊與最新那行切掉
+const INVENTORY_W := 320
+
 
 func _ready() -> void:
 	_build_theme()
@@ -68,6 +72,9 @@ func _build_theme() -> void:
 
 
 func _build_world() -> void:
+	# 地圖以外的區域用純黑，否則會露出 Godot 預設的灰藍色底
+	RenderingServer.set_default_clear_color(Color.BLACK)
+
 	host = GameHost.new()
 	host.name = "GameHost"
 	add_child(host)
@@ -103,7 +110,7 @@ func _build_ui() -> void:
 	add_child(layer)
 
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = _ui_theme       # 主題掛在 UI 根 Control 上（Node2D 沒有 theme）
 	layer.add_child(root)
@@ -115,19 +122,20 @@ func _build_ui() -> void:
 	drop_zone.item_dropped_to_world.connect(_on_dropped_to_world)
 
 	status_bar = StatusBar.new()
-	status_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_dock(status_bar, 0.0, 0.0, 1.0, 0.0, 0, 0, 0, STATUS_H)
 	# HUD 對滑鼠透明，拖放才能穿透過去落到 WorldDropZone
 	status_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(status_bar)
 	status_bar.setup(host)
 
 	message_log = MessageLog.new()
-	message_log.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_dock(message_log, 0.0, 1.0, 1.0, 1.0, 0, -LOG_H, 0, 0)
 	message_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(message_log)
 
 	inventory_ui = InventoryUI.new()
 	root.add_child(inventory_ui)
+	_dock(inventory_ui, 1.0, 0.0, 1.0, 1.0, -INVENTORY_W, STATUS_H, 0, -LOG_H)
 	inventory_ui.setup(host)
 
 	ground_menu = GroundMenu.new()
@@ -146,6 +154,24 @@ func _build_ui() -> void:
 	inventory_ui.aim_requested.connect(_begin_aim)
 	ground_menu.intent_requested.connect(_submit)
 	ground_menu.wave_aim_requested.connect(_begin_ground_wave)
+
+
+## 明確設定四個 anchor 與四個 offset。
+##
+## 不用 set_anchors_preset / set_anchors_and_offsets_preset：前者只改 anchor
+## 不改 offset，後者的 MINSIZE 模式在這裡只給對了 size，位置仍停在錨點上
+## （背包被放到 x=960、訊息列被放到 y=720，兩個都在螢幕外）。
+## 版面這種東西寫死比猜 API 語意可靠。
+func _dock(c: Control, al: float, at: float, ar: float, ab: float,
+		ol: float, ot: float, orr: float, ob: float) -> void:
+	c.anchor_left = al
+	c.anchor_top = at
+	c.anchor_right = ar
+	c.anchor_bottom = ab
+	c.offset_left = ol
+	c.offset_top = ot
+	c.offset_right = orr
+	c.offset_bottom = ob
 
 
 func _on_floor_changed(f: int) -> void:

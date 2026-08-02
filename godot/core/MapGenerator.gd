@@ -333,12 +333,33 @@ static func _place_objects(rng: DeterministicRng, map: FloorMap,
 		var p := _free_tile(rng, map, occupied, 0)
 		if p != Vector2i(-1, -1):
 			map.traps[p] = "trap_generic"
-	for i in n_monsters:
+	var spawned := 0
+	while spawned < n_monsters:
 		# 絕不在玩家 3 格內生成 —— 開局被貼臉是純粹的挫折，不是難度
 		var p := _free_tile(rng, map, occupied, 3, map.player_spawn)
 		var def: Dictionary = db.roll_monster(rng, f)
-		if p != Vector2i(-1, -1) and not def.is_empty():
-			map.monster_spawns.append({ "pos": p, "id": def["id"] })
+		if p == Vector2i(-1, -1) or def.is_empty():
+			break
+		map.monster_spawns.append({ "pos": p, "id": def["id"] })
+		spawned += 1
+
+		# PACK：成群出現。疾風狼單隻不可怕，三隻倍速狼才是問題
+		var pack := {}
+		for t: Dictionary in def.get("traits", []):
+			if t.get("type", "") == "PACK":
+				pack = t
+		if pack.is_empty():
+			continue
+		var extra := rng.randi_range(int(pack.get("min", 2)), int(pack.get("max", 3))) - 1
+		for k in extra:
+			if spawned >= n_monsters:
+				break
+			# 同伴生在本體旁邊，才叫成群
+			var near := _free_tile_near(rng, map, occupied, p)
+			if near == Vector2i(-1, -1):
+				break
+			map.monster_spawns.append({ "pos": near, "id": def["id"] })
+			spawned += 1
 
 	# 商店必須恰有 1 個門口 —— 這是「不付錢就跑會被店主堵住」的前提
 	if f >= 3 and rng.chance(0.08):
@@ -372,6 +393,22 @@ static func _free_tile(rng: DeterministicRng, map: FloorMap, occupied: Dictionar
 		occupied[p] = true
 		return p
 	return Vector2i(-1, -1)
+
+
+## 在 origin 周圍 2 格內找一個空位，給 PACK 的同伴用。
+static func _free_tile_near(rng: DeterministicRng, map: FloorMap,
+		occupied: Dictionary, origin: Vector2i) -> Vector2i:
+	var candidates: Array[Vector2i] = []
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var p := origin + Vector2i(dx, dy)
+			if map.is_walkable(p) and not occupied.has(p):
+				candidates.append(p)
+	if candidates.is_empty():
+		return Vector2i(-1, -1)
+	var chosen: Vector2i = rng.choice(candidates)
+	occupied[chosen] = true
+	return chosen
 
 
 static func _bfs_zone_distance(edges: Array, start_zone: int) -> Dictionary:

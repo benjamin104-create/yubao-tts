@@ -17,7 +17,7 @@ signal item_dropped_to_world(item: ItemInstance, drop_position: Vector2)
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# 必須是 PASS 而不是 IGNORE：IGNORE 會讓節點完全退出滑鼠命中測試，
 	# 連拖放判定都收不到；PASS 則是「不攔截點擊，但仍參與拖放」。
 	mouse_filter = Control.MOUSE_FILTER_PASS

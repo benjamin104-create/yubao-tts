@@ -113,6 +113,25 @@ func roll_category(rng: DeterministicRng, category: String, f: int) -> Dictionar
 	return picked if picked != null else {}
 
 
+## 解析 drop_table 的 item 欄位。支援三種寫法：
+##   "any"                → 全表加權抽
+##   "weapon_or_shield"   → 指定類別（可用 _or_ 串接）
+##   "hrb_confuse"        → 指定的 def_id
+func roll_drop(rng: DeterministicRng, spec: String, f: int) -> Dictionary:
+	if items.has(spec):
+		return items[spec]
+	if spec == "any":
+		return roll_item(rng, f)
+	var pool: Array = []
+	for c: String in spec.split("_or_"):
+		pool.append_array(items_by_category.get(c, []))
+	var picked: Variant = rng.weighted_pick(_weighted_table(pool, f))
+	if picked == null:
+		# 該層段沒有符合條件的道具時退回全表，總比什麼都不掉好
+		return roll_item(rng, f)
+	return picked
+
+
 func roll_monster(rng: DeterministicRng, f: int) -> Dictionary:
 	var picked: Variant = rng.weighted_pick(_weighted_table(_monster_list, f))
 	return picked if picked != null else {}

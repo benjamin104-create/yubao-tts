@@ -25,6 +25,7 @@ func _init() -> void:
 	test_turn_loop(db)
 	test_pot_system(db)
 	test_ground_interaction(db)
+	test_torneko_mechanics(db)
 	test_determinism(db)
 
 	print("\n=== 結果：%d 通過，%d 失敗 ===" % [_pass, _fail])
@@ -442,6 +443,161 @@ func test_ground_interaction(db: ItemDatabase) -> void:
 	# ---- 未裝備的物品替換時不會誤卸裝備 ----
 	p.weapon = null
 	host.free()
+
+
+## 原作機制稽核：資料表宣告的每一個特性都必須真的有作用。
+## 「JSON 說會發生，程式卻沒做」比沒寫還糟 —— 資料在說謊。
+func test_torneko_mechanics(db: ItemDatabase) -> void:
+	section("原作機制：命中效果 / 掉落 / 竊取 / 裝備規則")
+	var host := GameHost.new()
+	host.start_run(88888, db)
+	var ctx := host.turns.ctx
+	var p := host.player
+
+	# ---- 食腐蟲吸飽足度（on_hit_effects） ----
+	var grub := MonsterEntity.from_def(db.monster_def("mon_rot_grub"),
+		_adjacent_free(host), host.entities.next_id())
+	host.entities.add(grub)
+	var satiety_before := p.satiety
+	ActionResolver.resolve_monster(grub, ActionIntent.attack(p.pos), ctx)
+	ok(p.satiety < satiety_before,
+		"食腐蟲命中會吸走飽足度（%.1f%% → %.1f%%）"
+			% [satiety_before / 1000.0, p.satiety / 1000.0])
+	host.entities.remove(grub)
+
+	# ---- 詛咒法師詛咒裝備 ----
+	p.weapon.cursed = false
+	var mage := MonsterEntity.from_def(db.monster_def("mon_hex_mage"),
+		_adjacent_free(host), host.entities.next_id())
+	host.entities.add(mage)
+	var cursed_once := false
+	for i in 200:
+		p.weapon.cursed = false
+		p.shield.cursed = false
+		ActionResolver.resolve_monster(mage, ActionIntent.attack(p.pos), ctx)
+		if p.weapon.cursed or p.shield.cursed:
+			cursed_once = true
+			break
+	ok(cursed_once, "詛咒法師命中會讓裝備變成詛咒")
+	p.weapon.cursed = false
+	p.shield.cursed = false
+	host.entities.remove(mage)
+
+	# ---- 掉落表 ----
+	var dropped := false
+	for i in 60:
+		var m := MonsterEntity.from_def(db.monster_def("mon_crystal_turret"),
+			_adjacent_free(host), host.entities.next_id())
+		host.map.floor_items.clear()
+		var events := ActionResolver.resolve_drops(m, ctx)
+		if not host.map.floor_items.is_empty():
+			dropped = true
+			break
+	ok(dropped, "怪物死亡會依 drop_table 掉落道具")
+
+	# ---- 盜賊怪撿走地面道具，死後掉回來 ----
+	host.map.floor_items.clear()
+	var loot_pos := _adjacent_free(host)
+	var loot := db.make_by_id("hrb_heal", host.rng)
+	host.map.floor_items[loot_pos] = loot
+
+	var goblin := MonsterEntity.from_def(db.monster_def("mon_green_goblin"),
+		loot_pos, host.entities.next_id())
+	host.entities.add(goblin)
+	host.vision.recompute(host.map, p.pos)
+	ActionResolver._step_on(goblin, ctx)
+	ok(not host.map.floor_items.has(loot_pos), "哥布林把地上的道具撿走了")
+	ok(goblin.carried_items.has(loot), "道具被記在牠身上")
+
+	ActionResolver.resolve_drops(goblin, ctx)
+	var recovered := false
+	for it: ItemInstance in host.map.floor_items.values():
+		if it == loot:
+			recovered = true
+	ok(recovered, "打倒牠之後道具掉回地面（追殺才拿得回來）")
+	host.entities.remove(goblin)
+
+	# ---- 雙手武器佔用盾牌欄 ----
+	var great := db.make_by_id("wpn_greatsword", host.rng)
+	great.cursed = false
+	p.inventory.add(great)
+	ActionResolver.resolve_player(ActionIntent.equip(great), ctx)
+	ok(p.weapon == great and p.shield == null, "裝備雙手武器會卸下盾牌")
+
+	var shield = db.make_by_id("shd_steel", host.rng)
+	p.inventory.add(shield)
+	ActionResolver.resolve_player(ActionIntent.equip(shield), ctx)
+	ok(p.shield == null, "拿著雙手武器時無法裝備盾牌")
+
+	# ---- 成長之劍累積 ----
+	var growth := db.make_by_id("wpn_growth_blade", host.rng)
+	growth.cursed = false
+	p.inventory.add(growth)
+	ActionResolver.resolve_player(ActionIntent.equip(growth), ctx)
+	var atk_before := p.get_atk()
+	growth.kill_stacks = 50
+	ok(p.get_atk() > atk_before,
+		"成長之劍隨擊殺累積攻擊力（%d → %d）" % [atk_before, p.get_atk()])
+	growth.kill_stacks = 100000
+	ok(p.get_atk() - atk_before <= 20, "累積量夾在 cap +20 以內")
+
+	# ---- 鏡之盾反射魔法 ----
+	ActionResolver.resolve_player(ActionIntent.equip(growth), ctx)   # 卸下雙手武器
+	var mirror := db.make_by_id("shd_mirror", host.rng)
+	mirror.cursed = false
+	p.inventory.add(mirror)
+	p.weapon = null
+	p.shield = mirror
+	var caster := MonsterEntity.from_def(db.monster_def("mon_hex_mage"),
+		_far_free(host), host.entities.next_id())
+	host.entities.add(caster)
+	var caster_hp := caster.hp
+	var player_hp := p.hp
+	ActionResolver.resolve_monster(caster, ActionIntent.ranged_attack(p.pos), ctx)
+	ok(caster.hp < caster_hp, "鏡之盾把魔法遠程原封反彈回施放者")
+	ok(p.hp == player_hp, "反射時玩家不受傷")
+
+	# ---- 徘徊石像免疫擊退 ----
+	var golem := MonsterEntity.from_def(db.monster_def("mon_wander_golem"),
+		_adjacent_free(host), host.entities.next_id())
+	host.entities.add(golem)
+	var golem_pos := golem.pos
+	ctx["target"] = golem
+	EffectResolver.apply([{ "op": "PUSH_TARGET", "distance": 10 }], ctx)
+	ok(golem.pos == golem_pos, "徘徊石像免疫擊退，紋風不動")
+	ctx.erase("target")
+
+	# ---- PACK：疾風狼成群生成 ----
+	var pack_found := false
+	for seed_v in range(60):
+		var m := MapGenerator.generate(seed_v, 14, db)
+		var counts := {}
+		for sp: Dictionary in m.monster_spawns:
+			counts[sp["id"]] = counts.get(sp["id"], 0) + 1
+		if counts.get("mon_gale_wolf", 0) >= 2:
+			pack_found = true
+			break
+	ok(pack_found, "疾風狼成群生成（PACK）")
+
+	host.free()
+
+
+func _adjacent_free(host: GameHost) -> Vector2i:
+	for d in Tiles.DIRS_8:
+		var p: Vector2i = host.player.pos + d
+		if host.map.is_walkable(p) and not host.entities.occupied(p):
+			return p
+	return host.player.pos
+
+
+## 找一格與玩家對齊、有直線視野、距離 3 格以上的位置，供遠程攻擊測試用。
+func _far_free(host: GameHost) -> Vector2i:
+	for dist in range(3, 8):
+		for d in Tiles.DIRS_8:
+			var p: Vector2i = host.player.pos + d * dist
+			if host.map.is_walkable(p) and not host.entities.occupied(p):
+				return p
+	return _adjacent_free(host)
 
 
 func test_determinism(db: ItemDatabase) -> void:

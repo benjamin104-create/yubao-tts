@@ -170,6 +170,11 @@ static func _apply_one(op: Dictionary, ctx: Dictionary) -> Array:
 						{ "target_id": m.id, "amount": dealt, "crit": false }, false))
 
 		"DESTROY_ITEM":
+			# 元素之盾保護背包不被火焰卷軸燒毀
+			var guard := player.shield_trait("PROTECT_INVENTORY")
+			if not guard.is_empty() and guard.get("against", "") == "burn":
+				ev.append(GameEvent.msg("盾牌擋下了火勢，背包安然無恙。"))
+				return ev
 			var pool := player.inventory.slots.filter(
 				func(i: ItemInstance) -> bool: return i.category == "scroll")
 			if not pool.is_empty():
@@ -284,6 +289,11 @@ static func _push(op: Dictionary, ctx: Dictionary) -> Array:
 	var map: FloorMap = ctx["map"]
 	var entities: EntityIndex = ctx["entities"]
 	var player: PlayerEntity = ctx["player"]
+
+	# 徘徊石像這類重量級敵人推不動
+	if target is MonsterEntity and (target as MonsterEntity).has_trait("KNOCKBACK_IMMUNE"):
+		return [GameEvent.msg("%s 紋風不動。" % target.display_name)]
+
 	var dir := Tiles.step_dir(player.pos, target.pos)
 	var from := target.pos
 	var moved := 0

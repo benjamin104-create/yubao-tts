@@ -56,7 +56,15 @@ static func _player_move(dir: Vector2i, ctx: Dictionary) -> Array:
 	var occupant := entities.at(to)
 	if occupant != null and not occupant.is_player:
 		# 撞擊即攻擊
-		return _melee(player, occupant, ctx)
+		var ev_attack := _melee(player, occupant, ctx)
+		# 貫穿（長槍）：同一次攻擊打到直線上的第 2 格，可隔著前排打後排
+		var pierce := player.weapon_trait("PIERCE")
+		if not pierce.is_empty():
+			for step in range(2, int(pierce.get("range", 2)) + 1):
+				var behind := entities.at(player.pos + dir * step)
+				if behind != null and not behind.is_player:
+					ev_attack.append_array(_melee(player, behind, ctx))
+		return ev_attack
 
 	if not map.is_walkable(to):
 		# 撞牆不消耗回合（回合的消耗由 TurnManager 依事件判斷）
@@ -86,6 +94,9 @@ static func _step_on(e: Entity, ctx: Dictionary) -> Array:
 	if map.floor_gold.has(e.pos) and e.is_player:
 		var amount: int = map.floor_gold[e.pos]
 		map.floor_gold.erase(e.pos)
+		var bonus := player.weapon_trait("GOLD_BONUS")
+		if not bonus.is_empty():
+			amount = int(amount * float(bonus.get("multiplier", 1.0)))
 		player.gold += amount
 		ev.append(GameEvent.msg("撿到了 %d G。" % amount))
 
@@ -101,6 +112,18 @@ static func _step_on(e: Entity, ctx: Dictionary) -> Array:
 		var it: ItemInstance = map.floor_items[e.pos]
 		ev.append(GameEvent.msg("踩在了「%s」上。（G 開啟腳下選單）"
 			% (ctx["ident"] as IdentificationTable).display_name(it, ctx["db"])))
+
+	# 盜賊型怪物會把地上的道具撿走 —— 想拿回來就得追上去把牠打死。
+	# 這是原作最經典的「被迫追擊」壓力來源。
+	if not e.is_player and map.floor_items.has(e.pos) and e is MonsterEntity:
+		var m := e as MonsterEntity
+		if m.has_trait("PICKUP_ITEMS"):
+			var loot: ItemInstance = map.floor_items[e.pos]
+			map.floor_items.erase(e.pos)
+			m.carried_items.append(loot)
+			if (ctx["vision"] as VisionSystem).is_visible(e.pos):
+				ev.append(GameEvent.msg("%s 撿走了「%s」！" % [m.display_name,
+					(ctx["ident"] as IdentificationTable).display_name(loot, ctx["db"])]))
 
 	if e.is_player and e.pos == map.stairs_down:
 		ev.append(GameEvent.msg("這裡有向下的樓梯。（> 下樓）"))
@@ -140,6 +163,10 @@ static func _melee(attacker: Entity, target: Entity, ctx: Dictionary) -> Array:
 		% [attacker.display_name, target.display_name, dealt,
 			"（會心一擊！）" if result["crit"] else "。"]))
 
+	# 怪物命中玩家時的附加效果（吸飽足度、混亂、詛咒裝備…）
+	if attacker is MonsterEntity and target.is_player:
+		ev.append_array(_apply_on_hit(attacker as MonsterEntity, target, ctx))
+
 	# 反擊（深淵騎士）—— 讓「純近戰硬拚」不再是最優解
 	if target is MonsterEntity and target.is_alive() and attacker.is_player:
 		var tm := target as MonsterEntity
@@ -153,6 +180,97 @@ static func _melee(attacker: Entity, target: Entity, ctx: Dictionary) -> Array:
 			ev.append(GameEvent.msg("%s 發動了反擊！" % tm.display_name))
 
 	return ev
+
+
+## 怪物命中玩家時的附加效果。這些效果就是每隻怪的身分 ——
+## 食腐蟲不吸飽足度就只是一隻軟弱的蟲，醉步蕈不下混亂就沒有存在意義。
+static func _apply_on_hit(m: MonsterEntity, target: Entity,
+		ctx: Dictionary) -> Array:
+	var ev: Array = []
+	var rng: DeterministicRng = ctx["rng"]
+	var player: PlayerEntity = ctx["player"]
+
+	for e: Dictionary in m.on_hit_effects:
+		if not rng.chance(float(e.get("chance", 1.0))):
+			continue
+
+		if e.has("status"):
+			var s := String(e["status"])
+			target.add_status(s, int(e.get("duration", 1)))
+			ev.append(GameEvent.new(GameEvent.Kind.STATUS_ADDED,
+				{ "entity_id": target.id, "status": s }, false))
+			ev.append(GameEvent.msg("%s 的攻擊讓你陷入了%s！"
+				% [m.display_name, EffectResolver._status_label(s)]))
+			continue
+
+		match String(e.get("op", "")):
+			"DRAIN_SATIETY":
+				var drain := int(e.get("value", 0))
+				var before := player.satiety
+				player.satiety = maxi(0, player.satiety - drain)
+				ev.append(GameEvent.new(GameEvent.Kind.SATIETY_CHANGED,
+					{ "satiety": player.satiety, "max": player.max_satiety }, false))
+				ev.append(GameEvent.msg("%s 吸走了你的體力！（飽足 -%.1f%%）"
+					% [m.display_name, (before - player.satiety) / 1000.0]))
+			"APPLY_CURSE":
+				var pool: Array = []
+				for it: ItemInstance in [player.weapon, player.shield]:
+					if it != null and not it.cursed:
+						pool.append(it)
+				if pool.is_empty():
+					continue
+				var victim: ItemInstance = rng.choice(pool)
+				victim.cursed = true
+				victim.known_modifier = true
+				ev.append(GameEvent.msg("「%s」被下了詛咒！"
+					% (ctx["ident"] as IdentificationTable).display_name(victim, ctx["db"])))
+	return ev
+
+
+## 怪物死亡掉落。含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡。
+static func resolve_drops(m: MonsterEntity, ctx: Dictionary) -> Array:
+	var ev: Array = []
+	var rng: DeterministicRng = ctx["rng"]
+	var db: ItemDatabase = ctx["db"]
+	var map: FloorMap = ctx["map"]
+	var ident: IdentificationTable = ctx["ident"]
+
+	var loot: Array = m.carried_items.duplicate()
+	m.carried_items.clear()
+
+	for entry: Dictionary in m.drop_table:
+		if not rng.chance(float(entry.get("chance", 0.0))):
+			continue
+		var def := db.roll_drop(rng, String(entry.get("item", "any")), map.floor_index)
+		if not def.is_empty():
+			loot.append(db.make_instance(def, rng))
+
+	for it: ItemInstance in loot:
+		var spot := _nearest_free_floor(map, m.pos, ctx)
+		if spot == Vector2i(-1, -1):
+			continue
+		map.floor_items[spot] = it
+		ev.append(GameEvent.new(GameEvent.Kind.ITEM_DROPPED,
+			{ "def_id": it.def_id, "pos": spot }))
+		if (ctx["vision"] as VisionSystem).is_visible(spot):
+			ev.append(GameEvent.msg("掉落了「%s」。" % ident.display_name(it, db)))
+	return ev
+
+
+## 從 origin 開始由近而遠找沒有道具的可站立格。
+static func _nearest_free_floor(map: FloorMap, origin: Vector2i,
+		ctx: Dictionary) -> Vector2i:
+	if map.is_walkable(origin) and not map.floor_items.has(origin):
+		return origin
+	for radius in range(1, 4):
+		for dy in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				if maxi(absi(dx), absi(dy)) != radius:
+					continue
+				var p := origin + Vector2i(dx, dy)
+				if map.is_walkable(p) and not map.floor_items.has(p):
+					return p
+	return Vector2i(-1, -1)
 
 
 static func _slayer_multiplier(p: PlayerEntity, m: MonsterEntity,
@@ -246,6 +364,20 @@ static func _equip(item: ItemInstance, ctx: Dictionary) -> Array:
 	if current != null and current.cursed:
 		current.known_modifier = true
 		ev.append(GameEvent.msg("身上的裝備被詛咒了，換不下來！"))
+		return ev
+
+	# 雙手武器佔用盾牌欄。想裝上去就得先卸下盾 —— 卸不下來（詛咒）就裝不上
+	if slot_is_weapon and not player.trait_of(item, "TWO_HANDED").is_empty():
+		if player.shield != null:
+			if player.shield.cursed:
+				player.shield.known_modifier = true
+				ev.append(GameEvent.msg("盾牌被詛咒了，雙手武器沒辦法拿起來！"))
+				return ev
+			ev.append(GameEvent.msg("這是雙手武器，卸下了盾牌。"))
+			player.shield = null
+	elif not slot_is_weapon and player.weapon != null \
+			and not player.trait_of(player.weapon, "TWO_HANDED").is_empty():
+		ev.append(GameEvent.msg("正拿著雙手武器，沒有空手可以持盾。"))
 		return ev
 
 	if slot_is_weapon:
@@ -648,14 +780,34 @@ static func resolve_monster(m: MonsterEntity, intent: ActionIntent,
 		ActionIntent.Kind.RANGED_ATTACK:
 			ev.append(GameEvent.new(GameEvent.Kind.ENTITY_ATTACKED,
 				{ "attacker_id": m.id, "target_id": player.id, "ranged": true }))
+			var dtype := String(m.ranged.get("damage_type", "physical"))
+
+			# 鏡之盾：魔法遠程原封反彈。DEF 比同期鋼盾還低的針對裝，
+			# 在詛咒法師層段把一整類威脅變成己方輸出
+			var reflect := player.shield_trait("REFLECT")
+			if not reflect.is_empty() and reflect.get("damage_type", "") == dtype:
+				var back := CombatResolver.roll_damage(ctx["rng"], m.get_atk(),
+					0, true, float(reflect.get("ratio", 1.0)))
+				var bounced := m.take_damage(back)
+				ev.append(GameEvent.new(GameEvent.Kind.DAMAGE_DEALT,
+					{ "target_id": m.id, "amount": bounced, "crit": false }, false))
+				ev.append(GameEvent.msg("盾牌反射了 %s 的攻擊！" % m.display_name))
+				return ev
+
 			var result := CombatResolver.resolve_attack(ctx["rng"], m, player)
 			if result["hit"]:
+				# 元素之盾等抗性
+				var resist := player.shield_trait("RESIST")
+				if not resist.is_empty() and resist.get("damage_type", "") == dtype:
+					result["damage"] = maxi(1, int(result["damage"]
+						* (1.0 - float(resist.get("reduction", 0.0)))))
 				var dealt: int = player.take_damage(result["damage"])
 				ev.append(GameEvent.new(GameEvent.Kind.DAMAGE_DEALT,
 					{ "target_id": player.id, "amount": dealt,
 						"crit": result["crit"], "ranged": true }, false))
 				ev.append(GameEvent.msg("%s 的遠程攻擊命中！受到 %d 點傷害。"
 					% [m.display_name, dealt]))
+				ev.append_array(_apply_on_hit(m, player, ctx))
 			else:
 				ev.append(GameEvent.msg("%s 的遠程攻擊落空了。" % m.display_name))
 

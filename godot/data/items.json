@@ -113,7 +113,7 @@
       "hit_mod": 0, "base_price": 3000,
       "floor_range": [4, 20], "spawn_weight": 8,
       "traits": [
-        { "type": "GOLD_BONUS", "multiplier": 1.5, "_comment": "擊殺獲得金錢 x1.5" }
+        { "type": "GOLD_BONUS", "multiplier": 1.5, "_comment": "拾取地面金錢 x1.5。原作打倒怪物不會掉錢，金錢只來自地面與商店，所以加成掛在拾取上" }
       ],
       "tags": ["build"]
     },
