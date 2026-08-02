@@ -17,15 +17,20 @@ const COMPRESSED := 0.04
 var host: GameHost
 var entity_view: EntityView
 var fog: FogRenderer
+var text_pool: FloatingTextPool
+var screen_flash: ScreenFlash
 
 var is_playing := false
 var allow_compression := false
 
 
-func setup(p_host: GameHost, p_view: EntityView, p_fog: FogRenderer) -> void:
+func setup(p_host: GameHost, p_view: EntityView, p_fog: FogRenderer,
+		p_pool: FloatingTextPool = null, p_flash: ScreenFlash = null) -> void:
 	host = p_host
 	entity_view = p_view
 	fog = p_fog
+	text_pool = p_pool
+	screen_flash = p_flash
 
 
 func play(events: Array) -> void:
@@ -60,6 +65,16 @@ func _step_duration(events: Array) -> float:
 	return COMPRESSED
 
 
+func _spawn_text(entity_id: int, text: String, type: FloatingText.Type) -> void:
+	if text_pool == null:
+		return
+	# 看不見的實體不飄字 —— 否則玩家能從霧裡的數字推斷怪物位置
+	var e := host.entities.by_id(entity_id)
+	if e != null and not e.is_player and not host.vision.is_visible(e.pos):
+		return
+	text_pool.spawn(text, type, entity_view.actor_position(entity_id))
+
+
 static func _has_visual_weight(e: GameEvent) -> bool:
 	match e.kind:
 		GameEvent.Kind.ENTITY_MOVED, GameEvent.Kind.ENTITY_ATTACKED, \
@@ -75,10 +90,24 @@ func _apply(e: GameEvent, step: float) -> void:
 			entity_view.move_actor(e.data["entity_id"], e.data["to"], step)
 
 		GameEvent.Kind.DAMAGE_DEALT:
-			var color := Color(1.6, 0.5, 0.5)
-			if e.data.get("crit", false):
-				color = Color(2.2, 1.6, 0.4)
-			entity_view.flash(e.data["target_id"], color)
+			var target_id: int = e.data["target_id"]
+			var crit: bool = e.data.get("crit", false)
+			entity_view.flash(target_id,
+				Color(2.2, 1.6, 0.4) if crit else Color(1.6, 0.5, 0.5))
+			_spawn_text(target_id, str(e.data.get("amount", 0)),
+				FloatingText.Type.CRITICAL if crit else FloatingText.Type.NORMAL)
+			# 只有玩家吃到會心才閃全螢幕 —— 這是「你差點死掉」的訊號，
+			# 不是每次打擊的裝飾
+			if crit and target_id == host.player.id and screen_flash != null:
+				screen_flash.flash(Color(0.9, 0.15, 0.1, 0.32))
+
+		GameEvent.Kind.ATTACK_MISSED:
+			_spawn_text(e.data["target_id"], "MISS", FloatingText.Type.MISS)
+
+		GameEvent.Kind.HP_CHANGED:
+			var delta: int = e.data.get("delta", 0)
+			if delta > 0:
+				_spawn_text(e.data["entity_id"], "+%d" % delta, FloatingText.Type.HEAL)
 
 		GameEvent.Kind.ENTITY_DIED:
 			entity_view.remove_actor(e.data["entity_id"])
@@ -95,6 +124,13 @@ func _apply(e: GameEvent, step: float) -> void:
 
 		GameEvent.Kind.LEVEL_UP:
 			entity_view.flash(host.player.id, Color(0.6, 1.8, 0.9))
+			_spawn_text(host.player.id, "LEVEL UP", FloatingText.Type.HEAL)
+			if screen_flash != null:
+				screen_flash.flash(Color(0.35, 0.95, 0.6, 0.22))
+
+		GameEvent.Kind.PLAYER_DIED:
+			if screen_flash != null:
+				screen_flash.flash(Color(0.75, 0.05, 0.05, 0.65), 0.9)
 
 		_:
 			pass

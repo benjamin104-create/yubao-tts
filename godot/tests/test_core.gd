@@ -24,6 +24,7 @@ func _init() -> void:
 	test_vision(db)
 	test_turn_loop(db)
 	test_pot_system(db)
+	test_ground_interaction(db)
 	test_determinism(db)
 
 	print("\n=== 結果：%d 通過，%d 失敗 ===" % [_pass, _fail])
@@ -374,6 +375,72 @@ func test_pot_system(db: ItemDatabase) -> void:
 	ActionResolver.put_into_pot(mat2, fusion, ctx)
 	ok(base.upgrade == 5, "強化值夾在上限 +5（實際 +%d）" % base.upgrade)
 
+	host.free()
+
+
+## 腳下物品：不撿起直接使用、原位替換。
+## 「背包滿了還是能用地上的東西」是原作最關鍵的戰術出口。
+func test_ground_interaction(db: ItemDatabase) -> void:
+	section("腳下物品")
+	var host := GameHost.new()
+	host.start_run(20260802, db)
+	var ctx := host.turns.ctx
+	var p := host.player
+
+	# ---- 背包塞滿，再把回復草放到腳下 ----
+	while p.inventory.has_space():
+		p.inventory.add(db.make_by_id("food_fruit", host.rng))
+	ok(not p.inventory.has_space(), "背包已塞滿 %d 格" % p.inventory.size())
+
+	var herb := db.make_by_id("hrb_heal", host.rng)
+	host.map.floor_items[p.pos] = herb
+	p.hp = 1
+	host.ident.identify("hrb_heal")
+
+	# 撿起應該失敗（沒空間），但直接使用要能成功
+	var pick_events := ActionResolver.resolve_player(ActionIntent.pickup(), ctx)
+	ok(TurnManager._contains_no_turn(pick_events), "背包滿時撿起失敗且不消耗回合")
+
+	ActionResolver.resolve_player(
+		ActionIntent.use_ground(herb, ActionIntent.Verb.EAT), ctx)
+	ok(p.hp > 1, "背包滿時仍能直接喝掉腳下的草藥（HP → %d）" % p.hp)
+	ok(not host.map.floor_items.has(p.pos), "使用後地面物品消失")
+	ok(p.inventory.size() == Inventory.CAPACITY, "直接使用不佔用背包格")
+
+	# ---- 揮杖：留在地面，只扣次數 ----
+	var wand := db.make_by_id("wnd_knockback", host.rng)
+	var uses_before: int = wand.uses
+	host.map.floor_items[p.pos] = wand
+	ActionResolver.resolve_player(
+		ActionIntent.use_ground(wand, ActionIntent.Verb.WAVE, Vector2i(1, 0)), ctx)
+	ok(wand.uses == uses_before - 1, "揮杖扣 1 次使用次數")
+	ok(host.map.floor_items.get(p.pos) == wand, "杖揮完仍留在地面上")
+
+	# ---- 原位替換 ----
+	var ground_sword := db.make_by_id("wpn_steel_sword", host.rng)
+	host.map.floor_items[p.pos] = ground_sword
+	var slot := 5
+	var swapped_out := p.inventory.at(slot)
+	var size_before := p.inventory.size()
+
+	ActionResolver.resolve_player(ActionIntent.swap_ground(swapped_out), ctx)
+	ok(p.inventory.at(slot) == ground_sword, "地面物品進入原本那個背包格（保持順序）")
+	ok(host.map.floor_items.get(p.pos) == swapped_out, "換出去的物品留在地面")
+	ok(p.inventory.size() == size_before, "一對一交換，背包容量不變")
+
+	# ---- 詛咒裝備不能替換 ----
+	var cursed := db.make_by_id("wpn_club", host.rng)
+	cursed.cursed = true
+	p.inventory.slots[0] = cursed
+	p.weapon = cursed
+	host.map.floor_items[p.pos] = db.make_by_id("wpn_bronze_sword", host.rng)
+
+	ActionResolver.resolve_player(ActionIntent.swap_ground(cursed), ctx)
+	ok(p.weapon == cursed and p.inventory.at(0) == cursed,
+		"詛咒裝備無法替換，仍留在身上")
+
+	# ---- 未裝備的物品替換時不會誤卸裝備 ----
+	p.weapon = null
 	host.free()
 
 

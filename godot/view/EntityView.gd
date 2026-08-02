@@ -150,6 +150,16 @@ func flash(entity_id: int, color: Color) -> void:
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.10)
 
 
+## 取得 actor 目前的世界座標（含插值中的位置）。飄字要跟著實際畫面位置
+## 冒出來，而不是 Core 的格子座標 —— 動畫還在播時兩者會差一格。
+func actor_position(entity_id: int) -> Vector2:
+	var actor: Node2D = _actors.get(entity_id)
+	if actor == null:
+		var e := host.entities.by_id(entity_id)
+		return tile_center(e.pos) if e != null else Vector2.ZERO
+	return actor.position
+
+
 func remove_actor(entity_id: int) -> void:
 	var actor: Node2D = _actors.get(entity_id)
 	if actor != null:

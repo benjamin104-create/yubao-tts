@@ -105,9 +105,15 @@ func _decide(host: GameHost) -> ActionIntent:
 				and WorldSnapshot.corner_rule_ok(host.map, p.pos, p.pos + d):
 			return ActionIntent.move(d)
 
-	# 4. 腳下有東西就撿（背包沒滿）
-	if host.map.floor_items.has(p.pos) and p.inventory.has_space():
-		return ActionIntent.pickup()
+	# 4. 腳下有東西：有空間就撿，沒空間就直接用掉（原作的關鍵戰術出口）
+	if host.map.floor_items.has(p.pos):
+		if p.inventory.has_space():
+			return ActionIntent.pickup()
+		var ground: ItemInstance = host.map.floor_items[p.pos]
+		if ground.category == "food" or ground.category == "herb":
+			return ActionIntent.use_ground(ground, ActionIntent.Verb.EAT)
+		if ground.category == "scroll":
+			return ActionIntent.use_ground(ground, ActionIntent.Verb.READ)
 
 	# 5. 站在樓梯上就下樓
 	if p.pos == host.map.stairs_down:

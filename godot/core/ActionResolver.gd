@@ -30,6 +30,10 @@ static func resolve_player(intent: ActionIntent, ctx: Dictionary) -> Array:
 			ev.append_array(_equip(intent.item, ctx))
 		ActionIntent.Kind.USE_ITEM:
 			ev.append_array(use_item(intent.item, intent.verb, intent.dir, ctx))
+		ActionIntent.Kind.USE_GROUND_ITEM:
+			ev.append_array(use_item(intent.item, intent.verb, intent.dir, ctx, true))
+		ActionIntent.Kind.SWAP_GROUND:
+			ev.append_array(swap_with_ground(intent.item, ctx))
 		ActionIntent.Kind.THROW_ITEM:
 			ev.append_array(_throw(intent.item, intent.dir, ctx))
 		ActionIntent.Kind.PUT_INTO_POT:
@@ -95,7 +99,7 @@ static func _step_on(e: Entity, ctx: Dictionary) -> Array:
 
 	if e.is_player and map.floor_items.has(e.pos):
 		var it: ItemInstance = map.floor_items[e.pos]
-		ev.append(GameEvent.msg("腳下有「%s」。（G 撿取）"
+		ev.append(GameEvent.msg("踩在了「%s」上。（G 開啟腳下選單）"
 			% (ctx["ident"] as IdentificationTable).display_name(it, ctx["db"])))
 
 	if e.is_player and e.pos == map.stairs_down:
@@ -270,8 +274,10 @@ static func _descend(ctx: Dictionary) -> Array:
 
 # ---------------------------------------------------------------- 四種動詞
 
+## from_ground = true 時，道具留在地面上、不佔背包 —— 這是原作最重要的
+## 戰術選擇之一：背包滿了或急著回血時，可以直接吃腳下的草藥。
 static func use_item(item: ItemInstance, verb: int, dir: Vector2i,
-		ctx: Dictionary) -> Array:
+		ctx: Dictionary, from_ground := false) -> Array:
 	var ev: Array = []
 	if item == null:
 		return ev
@@ -298,7 +304,7 @@ static func use_item(item: ItemInstance, verb: int, dir: Vector2i,
 			else:
 				return [GameEvent.new(GameEvent.Kind.MESSAGE,
 					{ "text": "這個東西不能吃。", "no_turn": true }, false)]
-			player.inventory.remove(item)
+			_consume(item, ctx, from_ground)
 
 		ActionIntent.Verb.READ:
 			if item.category != "scroll":
@@ -307,7 +313,7 @@ static func use_item(item: ItemInstance, verb: int, dir: Vector2i,
 			ev.append(GameEvent.msg("讀了「%s」。" % shown))
 			ctx["chosen_item"] = _auto_target_item(item.def_id, ctx)
 			ev.append_array(EffectResolver.apply(def.get("effects", []), ctx))
-			player.inventory.remove(item)
+			_consume(item, ctx, from_ground)
 
 		ActionIntent.Verb.WAVE:
 			if item.category != "wand":
@@ -435,6 +441,64 @@ static func _throw(item: ItemInstance, dir: Vector2i, ctx: Dictionary) -> Array:
 		ev.append(GameEvent.new(GameEvent.Kind.DAMAGE_DEALT,
 			{ "target_id": target.id, "amount": dealt, "crit": false }, false))
 
+	ev.append(GameEvent.new(GameEvent.Kind.INVENTORY_CHANGED))
+	return ev
+
+
+## 消耗一件道具。來源可能是背包，也可能是腳下的地面。
+static func _consume(item: ItemInstance, ctx: Dictionary, from_ground: bool) -> void:
+	var player: PlayerEntity = ctx["player"]
+	if from_ground:
+		(ctx["map"] as FloorMap).floor_items.erase(player.pos)
+	else:
+		player.inventory.remove(item)
+
+
+# ---------------------------------------------------------------- 腳下物品
+
+## 背包物品與腳下物品原位對調。
+##
+## 用 slots[index] = ground_item 而不是 remove + append —— 新物品會留在原本
+## 那個格子裡，不會打亂玩家整理好的背包順序。
+## 因為是一對一交換，背包容量不變，所以不需要檢查「背包是否已滿」。
+static func swap_with_ground(item: ItemInstance, ctx: Dictionary) -> Array:
+	var player: PlayerEntity = ctx["player"]
+	var map: FloorMap = ctx["map"]
+	var db: ItemDatabase = ctx["db"]
+	var ident: IdentificationTable = ctx["ident"]
+
+	if not map.floor_items.has(player.pos):
+		return [GameEvent.new(GameEvent.Kind.MESSAGE,
+			{ "text": "腳下沒有可以替換的東西。", "no_turn": true }, false)]
+
+	var index := player.inventory.index_of(item)
+	if index < 0:
+		return [GameEvent.new(GameEvent.Kind.MESSAGE,
+			{ "text": "那件東西不在背包裡。", "no_turn": true }, false)]
+
+	# 裝備中的物品要先卸下；詛咒裝備卸不下來就不能換
+	var equipped := item == player.weapon or item == player.shield
+	if equipped:
+		if item.cursed:
+			item.known_modifier = true
+			return [GameEvent.msg("「%s」被詛咒了，脫不下來！"
+				% ident.display_name(item, db))]
+		if item == player.weapon:
+			player.weapon = null
+		else:
+			player.shield = null
+
+	var ground_item: ItemInstance = map.floor_items[player.pos]
+	player.inventory.slots[index] = ground_item
+	map.floor_items[player.pos] = item
+
+	var ev: Array = []
+	if equipped:
+		ev.append(GameEvent.msg("卸下了「%s」。" % ident.display_name(item, db)))
+	ev.append(GameEvent.msg("將「%s」放在地上，換取了「%s」。" % [
+		ident.display_name(item, db), ident.display_name(ground_item, db)]))
+	# 原作規則：替換只把東西換進背包，不會自動裝備新物品 ——
+	# 這道防線讓玩家不會意外裝上地面的詛咒武器。
 	ev.append(GameEvent.new(GameEvent.Kind.INVENTORY_CHANGED))
 	return ev
 

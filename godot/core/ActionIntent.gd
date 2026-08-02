@@ -19,6 +19,10 @@ enum Kind {
 	EQUIP,
 	PUT_INTO_POT,
 	TAKE_FROM_POT,
+	## 不撿起、直接對腳下的道具使用。背包滿或急救時的關鍵戰術選擇。
+	USE_GROUND_ITEM,
+	## 背包物品與腳下物品原位對調。因為是一對一交換，背包容量不變。
+	SWAP_GROUND,
 }
 
 ## 四種道具使用動詞。同一件道具用不同動詞會有不同結果 ——
@@ -115,4 +119,21 @@ static func take_from_pot(it: ItemInstance, pot: ItemInstance) -> ActionIntent:
 	i.kind = Kind.TAKE_FROM_POT
 	i.item = it
 	i.container = pot
+	return i
+
+
+static func use_ground(it: ItemInstance, v: Verb, d := Vector2i.ZERO) -> ActionIntent:
+	var i := ActionIntent.new()
+	i.kind = Kind.USE_GROUND_ITEM
+	i.item = it
+	i.verb = v
+	i.dir = d
+	return i
+
+
+## item = 背包中要換出去的那件。腳下的物品由玩家座標決定，不需傳入。
+static func swap_ground(it: ItemInstance) -> ActionIntent:
+	var i := ActionIntent.new()
+	i.kind = Kind.SWAP_GROUND
+	i.item = it
 	return i

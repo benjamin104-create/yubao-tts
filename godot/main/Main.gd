@@ -27,13 +27,19 @@ var entity_view: EntityView
 var event_player: EventPlayer
 var camera: Camera2D
 
+var text_pool: FloatingTextPool
+var screen_flash: ScreenFlash
+
 var status_bar: StatusBar
 var message_log: MessageLog
 var inventory_ui: InventoryUI
+var ground_menu: GroundMenu
+var drop_zone: WorldDropZone
 
 ## 瞄準模式：選了杖或投擲之後，等玩家按方向鍵決定射向
 var _aim_item: ItemInstance = null
 var _aim_verb := ActionIntent.Verb.NONE
+var _aim_from_ground := false
 
 var _ui_theme: Theme
 
@@ -80,9 +86,8 @@ func _build_world() -> void:
 	world.add_child(entity_view)
 	entity_view.setup(host)
 
-	event_player = EventPlayer.new()
-	add_child(event_player)
-	event_player.setup(host, entity_view, fog)
+	text_pool = FloatingTextPool.new()
+	world.add_child(text_pool)
 
 	camera = Camera2D.new()
 	camera.zoom = Vector2(1.6, 1.6)
@@ -103,26 +108,49 @@ func _build_ui() -> void:
 	root.theme = _ui_theme       # 主題掛在 UI 根 Control 上（Node2D 沒有 theme）
 	layer.add_child(root)
 
+	# ★ 順序即層級：WorldDropZone 必須最先加入（= 渲染在最後方），
+	# 沒有落在背包或壺上的拖放才會自然穿透到它身上
+	drop_zone = WorldDropZone.new()
+	root.add_child(drop_zone)
+	drop_zone.item_dropped_to_world.connect(_on_dropped_to_world)
+
 	status_bar = StatusBar.new()
 	status_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	# HUD 對滑鼠透明，拖放才能穿透過去落到 WorldDropZone
+	status_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(status_bar)
 	status_bar.setup(host)
 
 	message_log = MessageLog.new()
 	message_log.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	message_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(message_log)
 
 	inventory_ui = InventoryUI.new()
 	root.add_child(inventory_ui)
 	inventory_ui.setup(host)
 
+	ground_menu = GroundMenu.new()
+	root.add_child(ground_menu)
+	ground_menu.setup(host)
+
+	screen_flash = ScreenFlash.new()
+	root.add_child(screen_flash)
+
+	event_player = EventPlayer.new()
+	add_child(event_player)
+	event_player.setup(host, entity_view, fog, text_pool, screen_flash)
+
 	event_player.message.connect(message_log.push)
 	inventory_ui.intent_requested.connect(_submit)
 	inventory_ui.aim_requested.connect(_begin_aim)
+	ground_menu.intent_requested.connect(_submit)
+	ground_menu.wave_aim_requested.connect(_begin_ground_wave)
 
 
 func _on_floor_changed(f: int) -> void:
 	map_renderer.draw_map(host.map)
+	text_pool.clear_all()
 	entity_view.rebuild()
 	fog.redraw(host.vision)
 	_center_camera()
@@ -152,8 +180,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			var item := _aim_item
 			var verb := _aim_verb
 			_aim_item = null
-			_submit(ActionIntent.throw_item(item, aim_dir) if verb == ActionIntent.Verb.THROW
-					else ActionIntent.use(item, verb, aim_dir))
+			var from_ground := _aim_from_ground
+			_aim_from_ground = false
+			if verb == ActionIntent.Verb.THROW:
+				_submit(ActionIntent.throw_item(item, aim_dir))
+			elif from_ground:
+				_submit(ActionIntent.use_ground(item, verb, aim_dir))
+			else:
+				_submit(ActionIntent.use(item, verb, aim_dir))
 			get_viewport().set_input_as_handled()
 		return
 
@@ -175,7 +209,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_SPACE:
 			_submit(ActionIntent.wait())
 		KEY_G:
-			_submit(ActionIntent.pickup())
+			# 站在道具上 → 開腳下選單（0 回合）；沒東西 → 照舊回報
+			if not ground_menu.open_at_player():
+				_submit(ActionIntent.pickup())
 		KEY_PERIOD, KEY_GREATER:
 			_submit(ActionIntent.descend())
 		_:
@@ -214,7 +250,32 @@ func _begin_aim(item: ItemInstance, verb: int) -> void:
 
 func _cancel_aim(reason: String) -> void:
 	_aim_item = null
+	_aim_from_ground = false
 	message_log.push(reason)
+
+
+func _begin_ground_wave(item: ItemInstance) -> void:
+	_aim_from_ground = true
+	_begin_aim(item, ActionIntent.Verb.WAVE)
+
+
+## 拖出背包視窗外放開：靠近玩家 = 丟在腳下，拉遠 = 朝該方向投擲。
+##
+## 方向用世界座標算。drop_position 是 WorldDropZone 的區域座標，不能直接
+## 拿去跟世界或螢幕座標相減 —— 兩者只有在 Drop 區剛好貼齊原點時才會相等。
+func _on_dropped_to_world(item: ItemInstance, _drop_position: Vector2) -> void:
+	var player_world := EntityView.tile_center(host.player.pos)
+	var delta := get_global_mouse_position() - player_world
+
+	if delta.length() < TileArt.TILE * 1.2:
+		_submit(ActionIntent.drop(item))
+		return
+
+	var dir := WorldDropZone.snap_to_8_way(delta)
+	if dir == Vector2i.ZERO:
+		_submit(ActionIntent.drop(item))
+	else:
+		_submit(ActionIntent.throw_item(item, dir))
 
 
 # ---------------------------------------------------------------- 回合
