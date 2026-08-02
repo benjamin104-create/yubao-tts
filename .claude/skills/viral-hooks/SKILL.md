@@ -87,6 +87,8 @@ description: 檢查並重寫內容的開場句，用在 IG 貼文、Threads、�
 20 身份對照｜「一人公司跟五人團隊，內容策略完全不一樣。」
 
 > 重寫前先讀 references/my-hooks.md，優先使用裡面的句型。
+> 短影音另外讀 references/reels-playbook.md（七大鉤子句式、選題引擎、剪輯節奏）。
+> 兩份衝突時以 my-hooks.md 為準——那份是本人的真實數據，playbook 是通用模板。
 
 ## 擴充你自己的鉤子庫
 
