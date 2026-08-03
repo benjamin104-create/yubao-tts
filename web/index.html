@@ -25,10 +25,25 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 #cabinet{
-  width:100%; max-width:760px; display:flex; flex-direction:column; gap:0;
+  width:100%; max-width:1180px; display:flex; flex-direction:column; gap:0;
   background:var(--ink); border:1px solid var(--edge);
   box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
 }
+/* 主體：左邊是地牢，右邊是小地圖與訊息簿。
+   把訊息簿移到側欄，畫面本身就能吃掉整個垂直空間。 */
+#body{display:grid; grid-template-columns:minmax(0,1fr) 316px; align-items:stretch}
+#main{display:flex; flex-direction:column; min-width:0}
+#rail{
+  display:flex; flex-direction:column; min-width:0;
+  background:var(--panel); border-left:1px solid var(--hair);
+}
+.card{padding:10px 12px; border-bottom:1px solid var(--hair)}
+.card h3{
+  margin:0 0 8px; font-family:var(--mono); font-size:9.5px; font-weight:400;
+  letter-spacing:.2em; color:var(--brass-dim); text-transform:uppercase;
+  display:flex; justify-content:space-between; align-items:baseline;
+}
+.card h3 em{font-style:normal; color:var(--parch-dim); letter-spacing:.08em}
 
 /* ── 招牌 ── */
 #sign{
@@ -65,20 +80,71 @@ body{
 
 /* ── 畫面 ── */
 #screenwrap{position:relative; background:#000; line-height:0; overflow:hidden}
-canvas{
+/* 只有主畫面拉滿寬度。這條規則以前是 `canvas{}`，
+   結果把小地圖也一起拉寬、糊成非整數倍縮放。 */
+#game{
   width:100%; display:block; image-rendering:pixelated;
   image-rendering:crisp-edges;
 }
+#mini, .row canvas{image-rendering:pixelated; image-rendering:crisp-edges}
 #vig{
   position:absolute; inset:0; pointer-events:none;
   box-shadow:inset 0 0 90px 24px rgba(0,0,0,.85);
 }
 #shake{position:relative; will-change:transform}
 
+/* ── 名牌：直接把「那是什麼」寫在畫面上 ──
+   16px 的精靈再怎麼畫，中文名稱都塞不進去。用 DOM 疊字才銳利。 */
+#tags{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.tag{
+  position:absolute; transform:translate(-50%,-100%);
+  white-space:nowrap; font-size:10.5px; line-height:1.1; padding:2px 5px;
+  background:rgba(6,8,9,.82); border:1px solid var(--edge); color:var(--parch);
+  letter-spacing:.02em; font-family:var(--sans);
+}
+.tag.mon{border-color:#8e3a32; color:#f0c4bd}
+.tag.item{border-color:var(--brass-dim); color:#f0d9a8}
+.tag.stair{border-color:#557a3a; color:#cfe6b4}
+
+/* ── 小地圖 ── */
+#mini{
+  display:block; margin:0 auto; background:#07090a;
+  border:1px solid var(--edge);
+  width:270px; max-width:100%; height:auto;
+}
+#legend{
+  display:flex; flex-wrap:wrap; gap:3px 12px; margin-top:8px;
+  font-family:var(--mono); font-size:9.5px; color:var(--parch-dim);
+}
+#legend span{display:flex; align-items:center; gap:4px}
+#legend i{width:7px; height:7px; display:block}
+
+/* ── 裝備一覽 ── */
+#eq{
+  margin:0; display:grid; grid-template-columns:auto minmax(0,1fr);
+  gap:5px 12px; font-size:12px; align-items:baseline;
+}
+#eq dt{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--parch-dim)}
+#eq dd{
+  margin:0; color:var(--parch); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+#eq dd.bad{color:var(--blood)}
+
+/* ── 狀態異常籌碼 ── */
+#stbar{display:flex; flex-wrap:wrap; gap:4px; min-height:0}
+#stbar b{
+  font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.08em;
+  padding:2px 6px; border:1px solid var(--blood); color:#f0c4bd;
+  background:rgba(168,60,50,.14);
+}
+#stbar b.ok{border-color:var(--moss); color:#cfe6b4; background:rgba(106,143,74,.14)}
+#stbar .none{font-family:var(--mono); font-size:10px; color:var(--parch-dim); opacity:.6}
+
 /* ── 訊息簿 ── */
 #log{
-  height:112px; overflow:hidden; padding:8px 14px;
-  background:var(--panel); border-top:1px solid var(--hair);
+  flex:1; min-height:132px; overflow:hidden; padding:10px 12px;
+  background:var(--panel);
   font-size:12.5px; line-height:1.55; display:flex; flex-direction:column;
   justify-content:flex-end; gap:1px;
 }
@@ -110,7 +176,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 
 /* ── 覆蓋面板 ── */
 #panel{
-  position:absolute; top:0; right:0; bottom:0; width:min(300px,72%);
+  position:absolute; top:0; right:0; bottom:0; width:min(340px,62%);
   background:linear-gradient(180deg,rgba(26,22,19,.985),rgba(12,10,9,.985));
   border-left:1px solid var(--hair); transform:translateX(101%);
   transition:transform .22s cubic-bezier(.3,.8,.4,1);
@@ -129,7 +195,9 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
   cursor:pointer; font-size:12.5px; border-left:2px solid transparent;
 }
 .row:hover{background:rgba(201,151,63,.09); border-left-color:var(--brass)}
-.row canvas{width:22px; height:22px; flex:none}
+/* 32px = 16px 圖示的整數 2 倍。非整數倍會讓像素圖糊掉，
+   而「分不清是哪一種道具」正是背包最不能出的問題。 */
+.row canvas{width:32px; height:32px; flex:none}
 .row .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .row .eq{font-family:var(--mono); font-size:9px; color:var(--brass); letter-spacing:.08em}
 .hint{padding:8px 14px; font-size:11px; color:var(--parch-dim); border-top:1px solid var(--hair)}
@@ -144,6 +212,19 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 #over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px; color:var(--blood)}
 #over p{margin:0 0 16px; font-size:13px; color:var(--parch-dim); line-height:1.7}
 #over b{color:var(--parch); font-family:var(--mono)}
+
+/* 窄螢幕：側欄改成疊在畫面下方，小地圖與訊息簿並排 */
+@media (max-width:900px){
+  body{padding:0; align-items:flex-start}
+  #body{grid-template-columns:1fr}
+  #rail{border-left:0; border-top:1px solid var(--hair); flex-direction:row}
+  #rail .card{border-bottom:0; border-right:1px solid var(--hair); flex:none}
+  #log{min-height:120px}
+}
+@media (max-width:520px){
+  #rail{flex-direction:column}
+  #rail .card{border-right:0; border-bottom:1px solid var(--hair)}
+}
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
 </style>
 
@@ -165,9 +246,12 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
     <div class="stat"><b>回合</b><span id="turn">0</span></div>
   </div>
 
+  <div id="body">
+  <div id="main">
   <div id="shake">
     <div id="screenwrap">
-      <canvas id="game" width="256" height="192"></canvas>
+      <canvas id="game" width="224" height="160"></canvas>
+      <div id="tags"></div>
       <div id="vig"></div>
       <div id="panel">
         <h2><span id="ptitle">背包</span><em id="pcount"></em></h2>
@@ -185,13 +269,13 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
     </div>
   </div>
 
-  <div id="log"></div>
-
   <div id="keys">
     <button data-act="pick"><span class="k">G</span>腳下</button>
     <button data-act="inv"><span class="k">I</span>背包</button>
     <button data-act="down"><span class="k">&gt;</span>下樓</button>
     <button data-act="wait"><span class="k">␣</span>待機</button>
+    <button data-act="tags"><span class="k">L</span>名稱</button>
+    <button data-act="mute"><span class="k">M</span>音效</button>
     <button data-act="help"><span class="k">?</span>操作</button>
   </div>
   <div id="dpad">
@@ -199,6 +283,37 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
     <button data-dir="-1,0">←</button><button data-act="wait">·</button><button data-dir="1,0">→</button>
     <button data-dir="-1,1">↙</button><button data-dir="0,1">↓</button><button data-dir="1,1">↘</button>
   </div>
+  </div><!-- /main -->
+
+  <div id="rail">
+    <div class="card">
+      <h3>樓層圖 <em id="mapstat"></em></h3>
+      <canvas id="mini" width="270" height="270"></canvas>
+      <div id="legend">
+        <span><i style="background:#4b5c66"></i>視野內</span>
+        <span><i style="background:#232c32"></i>走過</span>
+        <span><i style="background:#e8dcc0"></i>你</span>
+        <span><i style="background:#c9973f"></i>樓梯</span>
+        <span><i style="background:#a83c32"></i>怪物</span>
+        <span><i style="background:#dcae35"></i>道具</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>裝備</h3>
+      <dl id="eq">
+        <dt>武器</dt><dd id="eqw">徒手</dd>
+        <dt>盾牌</dt><dd id="eqs">無</dd>
+        <dt>背包</dt><dd id="eqi">0 / 20</dd>
+        <dt>經驗</dt><dd id="eqe">0 / 6</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>狀態</h3>
+      <div id="stbar"></div>
+    </div>
+    <div id="log"></div>
+  </div>
+  </div><!-- /body -->
 </div>
 
 <script>
@@ -220,11 +335,17 @@ const PAL = {
   'e':'#6b1a1e','f':'#9c2b2b','g':'#c94a3a','h':'#e87a4a','i':'#f5a95e',
   'j':'#1e5230','k':'#2f7d45','l':'#4aa85e','m':'#79c97a',
   'n':'#101c3a','o':'#1d3468','p':'#2f57a0','q':'#4a86cf','r':'#7cb8ea',
-  's':'#6b4a12','t':'#a87a1e','u':'#dcae35','v':'#f5dc7a'
+  's':'#6b4a12','t':'#a87a1e','u':'#dcae35','v':'#f5dc7a',
+  /* 地形專用冷色石階 —— 地板與生物必須是不同的色溫，否則
+     棕色的老鼠站在棕色的地板上就是一團看不出來的東西。
+     暖色（棕/紅/金）從此只屬於活的東西和道具。 */
+  'w':'#161d21','x':'#232c32','y':'#313d45','z':'#43525c'
 };
 const T = 16;               // 一格 16px
-const PANEL_TILES = 6.6;    // 背包面板寬度換算成格數
-const VW = 16, VH = 12;     // 視窗 16x12 格 = 256x192，格子夠厚才有 16-bit 的份量
+// 視窗 14x10 格 = 224x160，撐滿 860px 寬時一格約 61px。
+// 格數不能貪多：房間本來就只有 4~8 格寬，視窗開太大只是在看更多黑色。
+// 寧可格子大、看得清楚，也不要一片看不懂的細節。
+const VW = 14, VH = 10;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
@@ -499,36 +620,78 @@ function makePot(v){
   return c;
 }
 
+/* 五種卷軸形制 —— 直筒 / 攤開 / 綁緞帶 / 折疊信 / 卷軸盒。
+   同一條規則：外觀必須換輪廓。只換封蠟顏色的話，玩家會覺得
+   十一種卷軸長得一模一樣，「盲讀哪一張」的判斷就變成純猜。 */
 function makeScroll(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const seals=['g','p','l','u','q','f','m','r','h','5','t'];
   const seal=PAL[seals[v%seals.length]], paper=PAL['d'], shade=PAL['c'], dark=PAL['0'];
-  const shape=v%3;
-  const top = shape===1?3:(shape===2?4:2), h = shape===1?10:(shape===2?8:12);
-  px(x,dark,3,top,10,h);
-  px(x,paper,4,top+1,8,h-2);
-  px(x,shade,4,top+1,1,h-2);
-  px(x,shade,4,top+h-2,8,1);
-  for(let i=0;i<3;i++) px(x,PAL['9'],6,top+3+i*2,4,1);   // 字行
-  px(x,dark,3,top,10,1); px(x,dark,3,top+h-1,10,1);
-  if(shape===0){ px(x,seal,7,top+h-4,3,3); px(x,dark,7,top+h-4,3,1); }
-  else if(shape===1){ px(x,seal,2,top+4,12,2); px(x,dark,2,top+4,12,1); } // 緞帶
-  else { px(x,seal,11,top+1,2,h-2); }
+  const ink=PAL['9'];
+  const shape=v%5;
+
+  if(shape===0){                                    // 直筒：捲好的細長卷
+    px(x,dark,5,1,6,14);
+    px(x,paper,6,2,4,12); px(x,shade,6,2,1,12);
+    px(x,seal,5,1,6,2);  px(x,dark,5,1,6,1);
+    px(x,seal,5,13,6,2); px(x,dark,5,14,6,1);
+    px(x,ink,7,5,2,1); px(x,ink,7,8,2,1); px(x,ink,7,11,2,1);
+  } else if(shape===1){                             // 攤開：寬扁的一張紙
+    px(x,dark,1,4,14,8);
+    px(x,paper,2,5,12,6); px(x,shade,2,10,12,1);
+    for(let i=0;i<3;i++) px(x,ink,4,6+i*2,8-i*2,1);
+    px(x,seal,11,8,3,3); px(x,dark,11,8,3,1);
+  } else if(shape===2){                             // 綁緞帶：中間橫一條帶子
+    px(x,dark,4,1,8,14);
+    px(x,paper,5,2,6,12); px(x,shade,5,2,1,12);
+    px(x,ink,7,4,2,1); px(x,ink,7,11,2,1);
+    px(x,dark,1,6,14,4); px(x,seal,1,7,14,2); px(x,PAL['d'],2,7,2,1);
+  } else if(shape===3){                             // 折疊信：上緣一個三角封口
+    px(x,dark,2,4,12,10);
+    px(x,paper,3,5,10,8); px(x,shade,3,12,10,1);
+    for(let i=0;i<4;i++){ px(x,shade,3+i,5+i,1,1); px(x,shade,12-i,5+i,1,1); }
+    px(x,dark,7,7,3,3); px(x,seal,7,8,3,2);
+  } else {                                          // 卷軸盒：橫躺的圓筒，兩端有蓋
+    px(x,dark,1,4,14,8);
+    px(x,paper,2,6,12,4); px(x,shade,2,9,12,1); px(x,PAL['6'],3,6,10,1);
+    px(x,dark,1,4,3,8);  px(x,seal,2,5,2,6);
+    px(x,dark,12,4,3,8); px(x,seal,12,5,2,6);
+  }
   return c;
 }
+/* 三種杖身 x 三種杖頭 = 九種外觀，每一種的輪廓都不一樣。
+   只換杖頭顏色的話遠看還是同一根棍子。 */
 function makeWand(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const woods=['9','8','a','4','7','b','5','3','c'];
+  // 杖身用暖色與淺色，不用冷灰 —— 冷灰是地形的色溫，握在手上的木頭不該撞色
+  const woods=['9','8','a','b','c','6','d','5','v'];
   const tips=['r','v','m','g','q','u','h','l','6'];
   const wood=PAL[woods[v%woods.length]], tip=PAL[tips[v%tips.length]], dark=PAL['0'];
-  px(x,dark,6,4,4,11);
-  px(x,wood,7,5,2,9);
-  px(x,PAL['d'],7,6,1,6);
-  const shape=v%3;
-  if(shape===0){ px(x,dark,5,1,6,5); px(x,tip,6,2,4,3); px(x,PAL['6'],7,2,1,1); }
-  else if(shape===1){ px(x,dark,6,1,4,4); px(x,tip,6,2,4,2); px(x,tip,5,3,6,1); }
-  else { px(x,dark,5,2,6,3); px(x,tip,6,2,1,3); px(x,tip,9,2,1,3); px(x,tip,7,3,2,1); }
-  px(x,PAL['8'],6,13,4,1);
+  const shaft=Math.floor(v/3)%3, head=v%3;
+
+  if(shaft===0){                                    // 直杖
+    px(x,dark,6,4,4,11); px(x,wood,7,5,2,9); px(x,PAL['d'],7,6,1,5);
+    px(x,PAL['8'],6,13,4,1);
+  } else if(shaft===1){                             // 節杖：兩處膨大的節
+    px(x,dark,6,4,4,11); px(x,wood,7,5,2,9); px(x,PAL['d'],7,6,1,3);
+    for(const ky of [7,11]){                        // 節：外描邊 + 木頭鼓起，不能整塊塗黑
+      px(x,dark,5,ky,6,3);
+      px(x,wood,6,ky+1,4,1); px(x,wood,7,ky,2,1); px(x,wood,7,ky+2,2,1);
+    }
+  } else {                                          // 彎杖：逐列偏移，剪影是歪的但不斷開
+    const off = y => (y<7 ? 1 : (y<11 ? -1 : 1));
+    for(let y=4;y<15;y++)  px(x,dark, 6+off(y), y, 4, 1);
+    for(let y=5;y<14;y++)  px(x,wood, 7+off(y), y, 2, 1);
+    px(x,PAL['8'],7,13,4,1);
+  }
+  const hx = shaft===2 ? 8 : 7;                     // 彎杖的頭要跟著頂端偏移
+  if(head===0){                                     // 寶珠
+    px(x,dark,hx-2,0,5,5); px(x,tip,hx-1,1,3,3); px(x,PAL['6'],hx-1,1,1,1);
+  } else if(head===1){                              // 新月
+    px(x,dark,hx-2,0,5,4); px(x,tip,hx-1,1,3,1); px(x,tip,hx-2,2,1,1); px(x,tip,hx+2,2,1,1);
+  } else {                                          // 雙叉
+    px(x,dark,hx-2,0,5,4); px(x,tip,hx-1,0,1,3); px(x,tip,hx+1,0,1,3); px(x,tip,hx,2,1,1);
+  }
   return c;
 }
 function makeFood(v){
@@ -587,7 +750,7 @@ function makeShield(v){
 function makeFloor(seed, corridor){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r = RNG(seed*2654435761);
-  const base = corridor?'8':'9', lit = corridor?'9':'a', mortar = corridor?'7':'8';
+  const base = corridor?'x':'y', lit = corridor?'y':'z', mortar = corridor?'w':'x';
   x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
   // 磚縫
   x.fillStyle=PAL[mortar];
@@ -604,18 +767,18 @@ function makeFloor(seed, corridor){
 function makeWall(face){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r=RNG(99173);
-  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
-  // 石塊
-  x.fillStyle=PAL['2'];
+  // 牆比地板暗一階、磚縫比地板深 —— 「能走／不能走」要用明度分，不是用花紋分
+  x.fillStyle=PAL['0']; x.fillRect(0,0,T,T);
+  x.fillStyle=PAL['w'];
   x.fillRect(1,1,6,6); x.fillRect(9,1,6,6); x.fillRect(1,9,6,6); x.fillRect(9,9,6,6);
-  x.fillStyle=PAL['3'];
+  x.fillStyle=PAL['x'];
   x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
-  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['3']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['x']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
   if(face){
     // 立面：下方有地板時畫出厚度，深度感就出來了
-    x.fillStyle=PAL['4']; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL['3']; x.fillRect(0,11,T,2);
-    x.fillStyle=PAL['1']; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL['z']; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL['y']; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL['w']; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
     for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
   }
@@ -623,19 +786,37 @@ function makeWall(face){
 }
 function makeStairs(){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
+  // 樓梯是整層唯一的目標，必須一眼看到 —— 用整張圖裡沒有別人在用的
+  // 金色踏面 + 全黑深井，跟冷色地板拉開最大距離
+  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
+  x.fillStyle=PAL['0']; x.fillRect(1,1,14,14);
   for(let i=0;i<4;i++){
-    const y=2+i*3, w=13-i*2, sx=Math.floor((T-w)/2);
+    const y=2+i*3, w=12-i*2, sx=Math.floor((T-w)/2);
     x.fillStyle=PAL['0']; x.fillRect(sx,y,w,3);
-    x.fillStyle=PAL[['5','4','3','2'][i]]; x.fillRect(sx,y,w,1);
-    x.fillStyle=PAL[['3','2','1','1'][i]]; x.fillRect(sx+1,y+1,w-2,1);
+    x.fillStyle=PAL[['v','u','t','s'][i]]; x.fillRect(sx,y,w,1);
+    x.fillStyle=PAL[['t','s','s','0'][i]]; x.fillRect(sx+1,y+1,w-2,1);
   }
+  x.fillStyle=PAL['0']; x.fillRect(3,14,10,2);
+  return c;
+}
+// 未探索區域：不是純黑，是「還沒挖開的岩盤」。
+// 純黑會讓人以為畫面沒畫出來；有紋理的暗岩則讀成「這裡是實心的」，
+// 一整片黑佔掉半個螢幕的違和感就沒了。
+function makeRock(){
+  const S=32, c=document.createElement('canvas'); c.width=S; c.height=S;
+  const x=c.getContext('2d'), r=RNG(0x9e3779b1);
+  x.fillStyle='#07090b'; x.fillRect(0,0,S,S);
+  for(let i=0;i<70;i++){
+    x.fillStyle = r.chance(.6)?'#0b0e11':'#040506';
+    x.fillRect(r.i(0,S-1), r.i(0,S-1), r.i(1,3), 1);
+  }
+  for(let i=0;i<10;i++){ x.fillStyle='#101418'; x.fillRect(r.i(0,S-1), r.i(0,S-1), 1, 1); }
   return c;
 }
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
-  wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(),
+  wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(), rock:makeRock(),
 };
 const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
@@ -644,8 +825,9 @@ const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   return c; })();
 const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
-  px(x,PAL['0'],3,6,10,7); px(x,PAL['2'],4,7,8,5);
-  for(let i=0;i<4;i++){ px(x,PAL['5'],5+i*2,7,1,2); px(x,PAL['5'],5+i*2,10,1,2); }
+  px(x,PAL['0'],3,5,10,9); px(x,PAL['e'],4,6,8,7);
+  for(let i=0;i<4;i++){ px(x,PAL['6'],5+i*2,6,1,3); px(x,PAL['6'],5+i*2,10,1,3); }
+  px(x,PAL['g'],4,6,8,1);
   return c; })();
 
 /* ─── 地圖生成 ────────────────────────────────────────────────
@@ -667,7 +849,7 @@ function genFloor(rng, depth){
   for(const z of zones){
     const ux0=z.x0+MARGIN, ux1=z.x1-MARGIN, uy0=z.y0+MARGIN, uy1=z.y1-MARGIN;
     if(empties.has(z.i)){ junc[z.i]={x:rng.i(ux0+1,ux1-1), y:rng.i(uy0+1,uy1-1)}; continue; }
-    const w=rng.i(3,7), h=rng.i(3,7);
+    const w=rng.i(4,8), h=rng.i(4,7);
     const x=rng.i(ux0,ux1-w+1), y=rng.i(uy0,uy1-h+1);
     rooms[z.i]={x,y,w,h,doors:[]};
   }
@@ -865,7 +1047,14 @@ function rollDmg(atk, def, crit, mult){
 const needExp = lv => 6*lv*lv;
 
 /* ─── 訊息與飄字 ────────────────────────────────────────────── */
-function say(txt, cls){ G.log.push({txt, cls}); if(G.log.length>40) G.log.shift(); }
+// 連續重複的訊息摺成「×N」。撞五次牆就洗掉五行紀錄，
+// 真正重要的「陷阱！」反而被推出畫面 —— 那是訊息簿最糟的失效方式。
+function say(txt, cls){
+  const last = G.log[G.log.length-1];
+  if(last && last.txt===txt){ last.n = (last.n||1)+1; return; }
+  G.log.push({txt, cls});
+  if(G.log.length>40) G.log.shift();
+}
 function float(x,y,txt,col){ G.floats.push({x,y,txt,col,t:0}); }
 
 /* ─── 玩家行動 ─────────────────────────────────────────────── */
@@ -876,9 +1065,10 @@ function tryMove(dx,dy){
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
   const nx=p.x+dx, ny=p.y+dy;
   const m = monAt(nx,ny);
-  if(m){ attack(m); endTurn(); return; }
-  if(!walkable(nx,ny)){ say('前面是牆壁。'); return; }        // 撞牆不消耗回合
-  if(!cornerOK(p.x,p.y,nx,ny)){ say('沒辦法從這個角度過去。'); return; }
+  if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
+  if(!walkable(nx,ny)){ SFX.play('wall',120); say('前面是牆壁。'); return; }   // 撞牆不消耗回合
+  if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
+  SFX.play('step');
   G.anim.push({o:p, fx:p.x, fy:p.y, t:0});
   p.x=nx; p.y=ny;
   stepOn();
@@ -886,8 +1076,8 @@ function tryMove(dx,dy){
 }
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
-  if(G.gold[k]!==undefined){ p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
-  if(G.traps[k]){ delete G.traps[k];
+  if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
+  if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
     say(`踩到了陷阱！受到 ${d} 點傷害。`,'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
   if(G.items[k]) say(`踩在了「${nameOf(G.items[k])}」上。（腳下）`);
@@ -896,9 +1086,10 @@ function stepOn(){
 function attack(m, mult){
   const p=G.p;
   const hit = G.rng.i(1,100) <= Math.max(50, Math.min(99, 92 - (m.d.ev||0)));
-  if(!hit){ say(`對 ${m.d.nm} 的攻擊落空了。`); float(m.x,m.y,'MISS','#a99a7e'); return; }
+  if(!hit){ SFX.play('miss'); say(`對 ${m.d.nm} 的攻擊落空了。`); float(m.x,m.y,'MISS','#a99a7e'); return; }
   const crit = G.rng.chance(.05);
   const dmg = rollDmg(pAtk(), m.d.def, crit, mult);
+  SFX.play(crit?'crit':'hit');
   m.hp -= dmg;
   float(m.x,m.y,String(dmg), crit?'#f5dc7a':'#e8dcc0');
   G.shake = crit?7:3;
@@ -911,6 +1102,7 @@ function attack(m, mult){
   m.aggro = 15;
 }
 function kill(m){
+  SFX.play('kill');
   say(`打倒了 ${m.d.nm}。`,'good');
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
@@ -923,6 +1115,7 @@ function kill(m){
   while(p.lv<99 && p.exp >= needExp(p.lv)){
     p.exp -= needExp(p.lv); p.lv++;
     const g = G.rng.i(4,8); p.mhp += g; p.hp = p.mhp;
+    SFX.play('level');
     say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
   }
 }
@@ -1071,8 +1264,9 @@ function act(m,it){
       return;
     }
     const hit = G.rng.i(1,100) <= 92;
-    if(!hit){ say(`${m.d.nm} 的攻擊落空了。`); return; }
+    if(!hit){ SFX.play('miss',60); say(`${m.d.nm} 的攻擊落空了。`); return; }
     const dmg = rollDmg(m.d.atk, pDef(), false, mult);
+    SFX.play(ranged?'zap':'hurt', 60);
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     say(`${m.d.nm} 的${ranged?'遠程':''}攻擊命中，受到 ${dmg} 點傷害。`,'bad');
     const oh = m.d.onhit;
@@ -1137,7 +1331,7 @@ function iconOf(it){
 }
 function identify(it){
   const k = lookKey(it);
-  if(LOOK[it.cat] && !G.known[k]){ G.known[k]=1; say(`★ 看清楚了 —— 那是「${it.d.nm}」。`,'gold'); }
+  if(LOOK[it.cat] && !G.known[k]){ G.known[k]=1; SFX.play('ident'); say(`★ 看清楚了 —— 那是「${it.d.nm}」。`,'gold'); }
   it.known = 1;
 }
 function removeItem(it){ G.p.inv = G.p.inv.filter(i=>i!==it);
@@ -1147,12 +1341,14 @@ function useItem(it, fromGround){
   const p=G.p, d=it.d;
   let consumed = true, ok = true;
   if(it.cat==='food'){
+    SFX.play('eat');
     const over = Math.max(0, p.sat + d.sat - p.msat);
     p.sat = Math.min(p.msat, p.sat + d.sat);
     if(over>0){ const ex = Math.floor(over/10000)*1000; p.msat=Math.min(200000,p.msat+ex);
       if(ex) say('胃袋似乎變大了一點。','good'); }
     say(`吃掉了「${nameOf(it)}」。`);
   } else if(it.cat==='herb'){
+    SFX.play('quaff');
     say(`喝下了「${nameOf(it)}」。`);
     if(d.hp){ const h=Math.min(d.hp,p.mhp-p.hp); p.hp+=h; if(h){ say(`恢復了 ${h} 點體力。`,'good'); float(p.x,p.y,'+'+h,'#6a8f4a'); } }
     if(d.full){ p.hp=p.mhp; say('體力完全恢復了。','good'); }
@@ -1163,6 +1359,7 @@ function useItem(it, fromGround){
     if(d.self){ p.st[d.self.st]=d.self.dur; say(`陷入了${d.self.st}的狀態！`, d.self.st==='速'?'good':'bad'); }
     identify(it);
   } else if(it.cat==='scroll'){
+    SFX.play('read');
     say(`讀了「${nameOf(it)}」。`);
     ok = readScroll(d.id);
     if(ok) identify(it);
@@ -1235,7 +1432,7 @@ function readScroll(id){
 let pendWand = null;
 function fireWand(dx,dy){
   const it = pendWand; pendWand = null;
-  it.uses--;
+  it.uses--; SFX.play('zap');
   let x=G.p.x+dx, y=G.p.y+dy, target=null;
   for(let i=0;i<10;i++){
     if(!walkable(x,y)) break;
@@ -1271,6 +1468,7 @@ function fireWand(dx,dy){
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say('這裡沒有樓梯。'); return; }
+  SFX.play('stairs');
   G.depth++;
   buildFloor();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
@@ -1282,18 +1480,117 @@ function death(){
   G.over = true;
   const rev = G.p.inv.find(i=>i.cat==='herb' && i.id==='rev');
   if(rev){ removeItem(rev); G.p.hp = G.p.mhp; G.over=false;
-    G.known[lookKey(rev)]=1;
+    G.known[lookKey(rev)]=1; SFX.play('level');
     say('復活草發出光芒，你重新站了起來！','good'); return; }
+  SFX.play('death');
   document.getElementById('otext').innerHTML =
     `在地下 <b>${G.depth}</b> 層倒下　·　<b>${G.turn}</b> 回合　·　等級 <b>${G.p.lv}</b><br>` +
     `等級歸一、道具全失 —— 但你學到的東西會留下來。`;
   document.getElementById('over').classList.add('show');
 }
 
+/* ═══ 音效 ═══════════════════════════════════════════════════
+   全部用 WebAudio 即時合成，沒有任何外部檔案 —— 單檔遊戲不該為了
+   十幾個音效去背 200KB 的 wav，而且合成音本來就比取樣更貼 16-bit。
+   瀏覽器規定 AudioContext 必須由使用者手勢啟動，所以第一次按鍵才建立。 */
+const SFX = (()=>{
+  let ctx=null, master=null, noiseBuf=null, on=true;
+  let lastAt = {};                       // 同一種音效的最小間隔，避免同回合疊成爆音
+
+  function ensure(){
+    if(ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+    const n = Math.floor(ctx.sampleRate*.5);
+    noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = Math.random()*2-1;
+    return ctx;
+  }
+  function tone(f0, f1, dur, type, vol, delay){
+    const c = ensure(); if(!c) return;
+    const t0 = c.currentTime + (delay||0);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type||'square';
+    o.frequency.setValueAtTime(f0, t0);
+    if(f1) o.frequency.exponentialRampToValueAtTime(Math.max(20,f1), t0+dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur+.03);
+  }
+  function hiss(dur, vol, f0, f1, delay, q){
+    const c = ensure(); if(!c) return;
+    const t0 = c.currentTime + (delay||0);
+    const s = c.createBufferSource(); s.buffer = noiseBuf;
+    const bp = c.createBiquadFilter();
+    bp.type = q ? 'bandpass' : 'lowpass'; bp.Q.value = q || 1;
+    bp.frequency.setValueAtTime(f0, t0);
+    if(f1) bp.frequency.exponentialRampToValueAtTime(Math.max(60,f1), t0+dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    s.connect(bp); bp.connect(g); g.connect(master); s.start(t0); s.stop(t0+dur+.03);
+  }
+
+  const BANK = {
+    step:  ()=>hiss(.045,.045, 900, 320, 0, 1.4),
+    wall:  ()=>tone(120, 90, .06,'square',.06),
+    swing: ()=>hiss(.09,.10, 2600, 700, 0, .8),
+    hit:   ()=>{ hiss(.07,.20, 1500, 260); tone(190,80,.10,'square',.11); },
+    crit:  ()=>{ hiss(.09,.26, 2600, 300); tone(320,90,.16,'sawtooth',.14);
+                 tone(880,440,.14,'square',.08,.03); },
+    miss:  ()=>hiss(.07,.07, 1800, 1200, 0, 2.5),
+    hurt:  ()=>{ tone(150,55,.20,'sawtooth',.15); hiss(.10,.12, 500, 140); },
+    kill:  ()=>{ tone(420,70,.24,'triangle',.14); hiss(.16,.12, 900, 160, .02); },
+    level: ()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,0,.16,'square',.11,i*.075)); },
+    stairs:()=>{ [392,294,220,165].forEach((f,i)=>tone(f,0,.20,'triangle',.11,i*.085)); },
+    death: ()=>{ tone(220,55,.9,'sawtooth',.16); tone(110,40,1.2,'triangle',.13,.06); },
+    pick:  ()=>{ tone(660,0,.06,'square',.09); tone(990,0,.09,'square',.09,.055); },
+    drop:  ()=>tone(300,180,.09,'square',.08),
+    coin:  ()=>{ tone(1320,0,.05,'square',.08); tone(1760,0,.10,'square',.07,.045); },
+    quaff: ()=>{ tone(300,760,.22,'sine',.12); hiss(.10,.05, 700, 1600, .04); },
+    eat:   ()=>{ hiss(.07,.13, 700, 300); hiss(.07,.11, 600, 260, .10); },
+    read:  ()=>hiss(.28,.09, 2400, 900, 0, .7),
+    zap:   ()=>{ tone(180,1800,.16,'sawtooth',.13); hiss(.12,.08, 3000, 900, .04); },
+    throw: ()=>hiss(.13,.10, 1800, 500, 0, .9),
+    trap:  ()=>{ tone(90,60,.26,'square',.16); hiss(.16,.16, 400, 120); },
+    ident: ()=>{ [784,1047,1319].forEach((f,i)=>tone(f,0,.13,'triangle',.10,i*.06)); },
+    curse: ()=>{ tone(160,120,.5,'sawtooth',.13); tone(84,70,.6,'square',.10,.05); },
+    open:  ()=>tone(520,700,.05,'square',.05),
+  };
+
+  return {
+    play(name, minGap){
+      if(!on) return;
+      const f = BANK[name]; if(!f) return;
+      const now = performance.now();
+      if(minGap && lastAt[name] && now-lastAt[name] < minGap) return;
+      lastAt[name] = now;
+      try{ f(); }catch(e){}                 // 音效永遠不該把遊戲弄掛
+    },
+    toggle(){ on = !on; if(on) ensure()?.resume(); return on; },
+    get on(){ return on; },
+    unlock(){ const c = ensure(); if(c && c.state==='suspended') c.resume(); },
+  };
+})();
+
 /* ═══ 繪製 ═══════════════════════════════════════════════════ */
 const cv = document.getElementById('game'), cx = cv.getContext('2d');
 cx.imageSmoothingEnabled = false;
 let camX=0, camY=0;
+
+// 背包面板寬度換算成格數 —— 面板是 CSS 尺寸、畫面是像素尺寸，
+// 硬寫常數會在改版面時失準，直接量。
+function panelTiles(){
+  const w = cv.getBoundingClientRect().width;
+  if(!w) return 6.6;
+  return document.getElementById('panel').getBoundingClientRect().width / (w/VW);
+}
+let lastOx=0, lastOy=0, rockPat=null;
 
 function draw(dt){
   if(!G) return;
@@ -1301,13 +1598,19 @@ function draw(dt){
   // 夾住的話玩家走到邊角時房間會被推到畫面一側，另一半是死黑；
   // 而地圖外和未探索一樣是黑的，不夾反而構圖永遠是平衡的。
   // 背包開著時把鏡頭往右推，玩家才不會被面板蓋住。
-  const shift = panelMode ? PANEL_TILES/2 : 0;
+  const shift = panelMode ? panelTiles()/2 : 0;
   const tx = G.p.x - VW/2 + .5 + shift, ty = G.p.y - VH/2 + .5;
   camX += (tx - camX) * Math.min(1, dt*14);
   camY += (ty - camY) * Math.min(1, dt*14);
 
-  cx.fillStyle = '#000'; cx.fillRect(0,0,cv.width,cv.height);
   const ox = -Math.round(camX*T), oy = -Math.round(camY*T);
+  // 岩盤鋪底，隨鏡頭捲動 —— 對齊 32px 的圖樣週期就不會有接縫閃爍
+  if(!rockPat) rockPat = cx.createPattern(TILE_ART.rock, 'repeat');
+  cx.save();
+  cx.translate(ox % 32, oy % 32);
+  cx.fillStyle = rockPat;
+  cx.fillRect(-32, -32, cv.width+64, cv.height+64);
+  cx.restore();
 
   const x0=Math.max(0,Math.floor(camX)-1), x1=Math.min(MW-1,Math.ceil(camX+VW)+1);
   const y0=Math.max(0,Math.floor(camY)-1), y1=Math.min(MH-1,Math.ceil(camY+VH)+1);
@@ -1327,23 +1630,42 @@ function draw(dt){
   }
 
   // 地面物件（只在可見時畫 —— 記憶不記得道具與怪物）
+  // 每個可拾取的東西都墊一圈黃銅底座：即使圖示本身看不懂，
+  // 「這一格有東西可以撿」永遠是看得出來的。
+  const plate=(x,y,col)=>{
+    cx.fillStyle=col; cx.fillRect(ox+x*T+3, oy+y*T+13, 10, 2);
+    cx.fillRect(ox+x*T+2, oy+y*T+14, 12, 1);
+  };
   for(const k in G.gold){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2) cx.drawImage(goldIcon, ox+x*T, oy+y*T); }
+    if(G.seen[k]===2){ plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(goldIcon, ox+x*T, oy+y*T); } }
   for(const k in G.traps){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2) cx.drawImage(trapIcon, ox+x*T, oy+y*T); }
   for(const k in G.items){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2) cx.drawImage(iconOf(G.items[k]), ox+x*T, oy+y*T); }
+    if(G.seen[k]===2){ plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(iconOf(G.items[k]), ox+x*T, oy+y*T); } }
 
   // 實體（含位移插值）
-  const drawEnt=(o, img)=>{
+  const entPos=(o)=>{
     const a = G.anim.find(v=>v.o===o);
-    let dx=o.x, dy=o.y;
-    if(a){ const k=1-Math.min(1,a.t/.11); dx = o.x + (a.fx-o.x)*k; dy = o.y + (a.fy-o.y)*k; }
+    if(!a) return [o.x, o.y];
+    const k = 1-Math.min(1, a.t/.11);
+    return [o.x + (a.fx-o.x)*k, o.y + (a.fy-o.y)*k];
+  };
+  // 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
+  // 同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
+  const shadow=(dx,dy)=>{
+    cx.fillStyle='rgba(0,0,0,.42)';
+    cx.fillRect(Math.round(ox+dx*T)+3, Math.round(oy+dy*T)+13, 10, 3);
+    cx.fillRect(Math.round(ox+dx*T)+2, Math.round(oy+dy*T)+14, 12, 1);
+  };
+  const drawEnt=(o, img)=>{
+    const [dx,dy] = entPos(o);
     cx.drawImage(img, Math.round(ox+dx*T), Math.round(oy+dy*T));
   };
   for(const m of G.mons){
     if(G.seen[key(m.x,m.y)]!==2) continue;
     const img = atlas[m.d.id] || atlas.rat;
+    const [mx,my] = entPos(m);
+    shadow(mx,my);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
     drawEnt(m, img);
@@ -1357,14 +1679,36 @@ function draw(dt){
       cx.fillRect(ox+m.x*T+2, oy+m.y*T+14, w, 2);
     }
   }
-  drawEnt(G.p, atlas.player);
+  // 玩家：底下多一圈黃銅光環。畫面上永遠只有一個東西是這個顏色，
+  // 所以再亂的房間也能一眼找到自己在哪。
+  {
+    const [px2,py2] = entPos(G.p);
+    shadow(px2,py2);
+    const bx = Math.round(ox+px2*T), by = Math.round(oy+py2*T);
+    cx.fillStyle = 'rgba(201,151,63,.55)';
+    cx.fillRect(bx+3, by+15, 10, 1); cx.fillRect(bx+2, by+14, 1, 1); cx.fillRect(bx+13, by+14, 1, 1);
+    drawEnt(G.p, atlas.player);
+  }
 
   // 火把光暈：離玩家越遠越暗，房間也有邊界感
   const g = cx.createRadialGradient(
-    ox+G.p.x*T+8, oy+G.p.y*T+8, 20,
-    ox+G.p.x*T+8, oy+G.p.y*T+8, 112);
-  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.42)');
+    ox+G.p.x*T+8, oy+G.p.y*T+8, 22,
+    ox+G.p.x*T+8, oy+G.p.y*T+8, 104);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.38)');
   cx.fillStyle=g; cx.fillRect(0,0,cv.width,cv.height);
+
+  // 火把本身：玩家周圍一圈暖光。地形是冷色、光是暖色，
+  // 兩者一疊才有「這裡有人拿著火把站著」的感覺，而不是一張平的貼圖。
+  const lx = ox+G.p.x*T+8, ly = oy+G.p.y*T+8;
+  const flick = 1 + Math.sin(performance.now()*0.005)*0.03
+                  + Math.sin(performance.now()*0.017)*0.015;
+  const g2 = cx.createRadialGradient(lx, ly, 0, lx, ly, 74*flick);
+  g2.addColorStop(0,   'rgba(150,96,36,.34)');
+  g2.addColorStop(0.55,'rgba(110,64,22,.15)');
+  g2.addColorStop(1,   'rgba(0,0,0,0)');
+  cx.globalCompositeOperation = 'lighter';
+  cx.fillStyle = g2; cx.fillRect(0,0,cv.width,cv.height);
+  cx.globalCompositeOperation = 'source-over';
 
   // 飄字
   cx.font='7px ui-monospace, monospace'; cx.textAlign='center';
@@ -1377,6 +1721,106 @@ function draw(dt){
     cx.fillText(f.txt, ox+f.x*T+8, oy+f.y*T+3-f.t*16);
   }
   cx.globalAlpha=1;
+
+  lastOx=ox; lastOy=oy;
+  updateTags();
+}
+
+/* ─── 名牌：把「那是什麼」直接寫在畫面上 ──────────────────────
+   這是對「16x16 中文遊戲」最誠實的解法。原作靠玩家背圖鑑，
+   但那是三十年前、而且是全螢幕電視的年代。 */
+let tagsOn = true;
+const tagLayer = document.getElementById('tags');
+const tagPool = [];
+function updateTags(){
+  if(!tagLayer) return;
+  let n = 0;
+  if(tagsOn && !G.over){
+    const rect = cv.getBoundingClientRect();
+    const s = rect.width ? rect.width / cv.width : 0;
+    if(s){
+      const put = (wx, wy, txt, cls)=>{
+        // 只標畫面內的東西，畫面外的名牌會擠在邊緣變成一團垃圾
+        const sx = lastOx + wx*T + T/2, sy = lastOy + wy*T;
+        if(sx < -20 || sy < -20 || sx > cv.width+20 || sy > cv.height+20) return;
+        let el = tagPool[n];
+        if(!el){ el = document.createElement('div'); tagLayer.appendChild(el); tagPool[n] = el; }
+        n++;
+        el.className = 'tag ' + cls;
+        if(el.textContent !== txt) el.textContent = txt;
+        el.style.left = (sx*s) + 'px';
+        el.style.top  = (sy*s - 5) + 'px';   // 抬高一點，名牌才不會蓋住自己那一格
+        el.style.display = '';
+      };
+      for(const m of G.mons){
+        if(G.seen[key(m.x,m.y)]!==2) continue;
+        const st = Object.keys(m.st)[0];
+        put(m.x, m.y, st ? `${m.d.nm}·${st}` : m.d.nm, 'mon');
+      }
+      for(const k in G.items){
+        if(G.seen[k]!==2) continue;
+        const x=k%MW, y=(k/MW)|0;
+        if(Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) > 7) continue;
+        put(x, y, nameOf(G.items[k]), 'item');
+      }
+      for(const k in G.gold){
+        if(G.seen[k]!==2) continue;
+        put(k%MW, (k/MW)|0, G.gold[k]+' G', 'item');
+      }
+      for(const k in G.traps){
+        if(G.seen[k]!==2) continue;
+        put(k%MW, (k/MW)|0, '陷阱', 'mon');
+      }
+      const st = G.f.stairs;
+      if(G.seen[key(st.x,st.y)]) put(st.x, st.y, '下樓', 'stair');
+    }
+  }
+  for(let i=n;i<tagPool.length;i++) tagPool[i].style.display='none';
+}
+
+/* ─── 小地圖：走過哪裡、還沒走哪裡 ────────────────────────────
+   資料本來就在 G.seen（0 未探索 / 1 走過 / 2 視野內），
+   缺的只是把它畫出來。 */
+const mini = document.getElementById('mini');
+const mcx = mini ? mini.getContext('2d') : null;
+const MMS = 9;                       // 每格 9px：30x30 → 270x270
+function drawMini(){
+  if(!mcx || !G) return;
+  mcx.fillStyle = '#07090a'; mcx.fillRect(0,0,mini.width,mini.height);
+  let known = 0, total = 0;
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const k = key(x,y), s = G.seen[k], t = G.f.t[k];
+    if(t!==WALL){ total++; if(s) known++; }
+    if(!s) continue;
+    let col;
+    if(t===WALL)      col = s===2 ? '#1b2329' : '#141a1e';
+    else if(t===CORR) col = s===2 ? '#3d4a53' : '#1e262b';
+    else              col = s===2 ? '#4b5c66' : '#232c32';
+    mcx.fillStyle = col;
+    mcx.fillRect(x*MMS, y*MMS, MMS, MMS);
+  }
+  // 樓梯：看過就永遠記得，這是玩家最需要的一格
+  const st = G.f.stairs;
+  if(G.seen[key(st.x,st.y)]){
+    mcx.fillStyle = '#c9973f';
+    mcx.fillRect(st.x*MMS+1, st.y*MMS+1, MMS-2, MMS-2);
+    mcx.fillStyle = '#14110f';
+    mcx.fillRect(st.x*MMS+3, st.y*MMS+3, MMS-6, MMS-6);
+  }
+  // 道具與金幣：只畫視野內的，跟畫面規則一致（記憶不記得會動的東西）
+  const dot=(x,y,col,sz)=>{
+    const o = Math.floor((MMS-sz)/2);
+    mcx.fillStyle=col; mcx.fillRect(x*MMS+o, y*MMS+o, sz, sz);
+  };
+  for(const k in G.items) if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#dcae35',4);
+  for(const k in G.gold)  if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#f5dc7a',3);
+  for(const m of G.mons)  if(G.seen[key(m.x,m.y)]===2) dot(m.x,m.y,'#a83c32',5);
+  // 玩家：白點加一圈黑框，壓在所有東西上面
+  mcx.fillStyle='#14110f'; mcx.fillRect(G.p.x*MMS, G.p.y*MMS, MMS, MMS);
+  mcx.fillStyle='#e8dcc0'; mcx.fillRect(G.p.x*MMS+1, G.p.y*MMS+1, MMS-2, MMS-2);
+
+  const el = document.getElementById('mapstat');
+  if(el) el.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
 }
 
 let last=0;
@@ -1418,11 +1862,33 @@ function refresh(){
   $('gold').textContent = p.gold;
   $('turn').textContent = G.turn;
 
-  const lg = $('log'); lg.innerHTML='';
-  for(const m of G.log.slice(-6)){
-    const d=document.createElement('div');
-    d.textContent=m.txt; if(m.cls) d.className=m.cls; lg.appendChild(d);
+  // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
+  const sb = $('stbar'); sb.innerHTML='';
+  const GOOD = {'速':1,'力':1};
+  const keys = Object.keys(p.st);
+  if(!keys.length){ const s=document.createElement('span'); s.className='none'; s.textContent='正常'; sb.appendChild(s); }
+  for(const k of keys){
+    const b=document.createElement('b');
+    if(GOOD[k]) b.className='ok';
+    b.textContent = `${k} ${p.st[k]}`;
+    sb.appendChild(b);
   }
+
+  // 裝備一覽：原本只能開背包才知道自己拿著什麼，那是每回合都要看的資訊
+  $('eqw').textContent = p.weap ? nameOf(p.weap) : '徒手';
+  $('eqs').textContent = p.shld ? nameOf(p.shld) : '無';
+  $('eqw').className = p.weap && p.weap.cursed && p.weap.known ? 'bad' : '';
+  $('eqs').className = p.shld && p.shld.cursed && p.shld.known ? 'bad' : '';
+  $('eqi').textContent = `${p.inv.length} / 20`;
+  $('eqe').textContent = `${p.exp} / ${needExp(p.lv)}`;
+
+  const lg = $('log'); lg.innerHTML='';
+  for(const m of G.log.slice(-12)){
+    const d=document.createElement('div');
+    d.textContent = m.n>1 ? `${m.txt} ×${m.n}` : m.txt;
+    if(m.cls) d.className=m.cls; lg.appendChild(d);
+  }
+  drawMini();
   if(panelMode) renderPanel();
 }
 
@@ -1503,6 +1969,7 @@ function buildActions(it, ground){
   if(ground){
     btn('撿起', ()=>{
       if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
+      SFX.play('pick');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
       say(`撿起了「${nameOf(it)}」。`); closePanel(); endTurn();
     }, p.inv.length>=20);
@@ -1525,6 +1992,7 @@ function buildActions(it, ground){
     btn('放下', ()=>{
       if(G.items[key(p.x,p.y)]){ say('腳下已經有東西了。'); refresh(); return; }
       if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
+      SFX.play('drop');
       removeItem(it); G.items[key(p.x,p.y)] = it;
       say(`放下了「${nameOf(it)}」。`); closePanel(); endTurn();
     });
@@ -1539,6 +2007,7 @@ let swapMode = null, pendThrow = null;
 
 function doThrow(dx,dy){
   const it = pendThrow; pendThrow=null;
+  SFX.play('throw');
   removeItem(it);
   let x=G.p.x+dx, y=G.p.y+dy, target=null;
   for(let i=0;i<10;i++){
@@ -1554,6 +2023,7 @@ function doThrow(dx,dy){
       identify(it);
     } else {
       const dmg = rollDmg(8, target.d.def, false, 1);
+      SFX.play('hit');
       target.hp -= dmg; float(target.x,target.y,String(dmg),'#e8dcc0');
       say(`命中 ${target.d.nm}，造成 ${dmg} 點傷害。`);
       if(target.hp<=0) kill(target);
@@ -1577,6 +2047,22 @@ function handleDir(dx,dy){
   if(pendThrow){ doThrow(dx,dy); return; }
   tryMove(dx,dy);
 }
+// 瀏覽器規定音訊必須由使用者手勢啟動 —— 第一次互動時解鎖就好
+addEventListener('keydown', ()=>SFX.unlock(), {once:true});
+addEventListener('pointerdown', ()=>SFX.unlock(), {once:true});
+
+function toggleTags(){
+  tagsOn = !tagsOn;
+  SFX.play('open');
+  say(tagsOn ? '顯示名稱：開' : '顯示名稱：關','gold');
+  refresh();
+}
+function toggleMute(){
+  const on = SFX.toggle();
+  say(on ? '音效：開' : '音效：關','gold');
+  refresh();
+}
+
 addEventListener('keydown', ev=>{
   if(!G) return;
   if(ev.target.tagName==='INPUT') return;
@@ -1586,8 +2072,10 @@ addEventListener('keydown', ev=>{
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
   if(k===' '){ ev.preventDefault(); endTurn(); return; }
-  if(k==='g'||k==='G'){ openPanel('ground'); return; }
-  if(k==='i'||k==='I'){ panelMode==='inv'?closePanel():openPanel('inv'); return; }
+  if(k==='g'||k==='G'){ SFX.play('open'); openPanel('ground'); return; }
+  if(k==='i'||k==='I'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); return; }
+  if(k==='l'||k==='L'){ toggleTags(); return; }
+  if(k==='m'||k==='M'){ toggleMute(); return; }
   if(k==='>'||k==='.'){ descend(); return; }
 });
 document.querySelectorAll('[data-dir]').forEach(b=>{
@@ -1597,12 +2085,15 @@ document.querySelectorAll('[data-act]').forEach(b=>{
   b.onclick = ()=>{
     if(!G||G.over) return;
     const a=b.dataset.act;
-    if(a==='pick') openPanel('ground');
-    if(a==='inv') panelMode==='inv'?closePanel():openPanel('inv');
+    if(a==='pick'){ SFX.play('open'); openPanel('ground'); }
+    if(a==='inv'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); }
     if(a==='down') descend();
     if(a==='wait') endTurn();
+    if(a==='tags') toggleTags();
+    if(a==='mute') toggleMute();
     if(a==='help'){
-      say('方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　> 下樓　空白待機　Esc 取消','gold');
+      say('方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　> 下樓　空白待機','gold');
+      say('L 切換名稱標籤　M 切換音效　Esc 取消　右側是樓層圖','gold');
       refresh();
     }
   };

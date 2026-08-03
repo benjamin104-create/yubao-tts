@@ -1,14 +1,20 @@
-<meta charset="utf-8"><title>sprite sheet</title>
+<meta charset="utf-8"><title>sprite sheet — 深淵行商人</title>
 <style>
 body{background:#14110f;color:#e8dcc0;font-family:system-ui,sans-serif;margin:0;padding:20px}
+h1{font-size:15px;letter-spacing:.18em;color:#e8dcc0;font-weight:600;margin:0 0 4px}
+p.note{font-size:11.5px;color:#a99a7e;margin:0 0 18px;line-height:1.6}
 h2{font-size:13px;letter-spacing:.2em;color:#c9973f;margin:22px 0 10px;font-weight:600}
 .grid{display:flex;flex-wrap:wrap;gap:14px}
 .cell{text-align:center;font-size:10px;color:#a99a7e;width:104px}
-canvas{image-rendering:pixelated;width:96px;height:96px;background:#221c17;display:block;margin-bottom:4px}
-.floor canvas{background:none}
-</style><div id="out"></div>
+.cell canvas{image-rendering:pixelated;width:96px;height:96px;background:#232c32;display:block;margin-bottom:4px}
+</style>
+<h1>美術驗收表</h1>
+<p class="note">全部放大到 6 倍。驗收標準：關掉名稱也要認得出是什麼，
+同類道具之間要有輪廓差異（只換顏色不算）。<br>
+此頁由 <code>tools/build_sprite_sheet.py</code> 從 <code>web/index.html</code> 產生，
+不要手改 —— 改了下次重建就沒了。</p>
+<div id="out"></div>
 <script>
-
 "use strict";
 /* ══════════════════════════════════════════════════════════════
    深淵行商人 — 回合制網格地牢
@@ -27,11 +33,17 @@ const PAL = {
   'e':'#6b1a1e','f':'#9c2b2b','g':'#c94a3a','h':'#e87a4a','i':'#f5a95e',
   'j':'#1e5230','k':'#2f7d45','l':'#4aa85e','m':'#79c97a',
   'n':'#101c3a','o':'#1d3468','p':'#2f57a0','q':'#4a86cf','r':'#7cb8ea',
-  's':'#6b4a12','t':'#a87a1e','u':'#dcae35','v':'#f5dc7a'
+  's':'#6b4a12','t':'#a87a1e','u':'#dcae35','v':'#f5dc7a',
+  /* 地形專用冷色石階 —— 地板與生物必須是不同的色溫，否則
+     棕色的老鼠站在棕色的地板上就是一團看不出來的東西。
+     暖色（棕/紅/金）從此只屬於活的東西和道具。 */
+  'w':'#161d21','x':'#232c32','y':'#313d45','z':'#43525c'
 };
 const T = 16;               // 一格 16px
-const PANEL_TILES = 6.6;    // 背包面板寬度換算成格數
-const VW = 16, VH = 12;     // 視窗 16x12 格 = 256x192，格子夠厚才有 16-bit 的份量
+// 視窗 14x10 格 = 224x160，撐滿 860px 寬時一格約 61px。
+// 格數不能貪多：房間本來就只有 4~8 格寬，視窗開太大只是在看更多黑色。
+// 寧可格子大、看得清楚，也不要一片看不懂的細節。
+const VW = 14, VH = 10;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
@@ -306,36 +318,78 @@ function makePot(v){
   return c;
 }
 
+/* 五種卷軸形制 —— 直筒 / 攤開 / 綁緞帶 / 折疊信 / 卷軸盒。
+   同一條規則：外觀必須換輪廓。只換封蠟顏色的話，玩家會覺得
+   十一種卷軸長得一模一樣，「盲讀哪一張」的判斷就變成純猜。 */
 function makeScroll(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const seals=['g','p','l','u','q','f','m','r','h','5','t'];
   const seal=PAL[seals[v%seals.length]], paper=PAL['d'], shade=PAL['c'], dark=PAL['0'];
-  const shape=v%3;
-  const top = shape===1?3:(shape===2?4:2), h = shape===1?10:(shape===2?8:12);
-  px(x,dark,3,top,10,h);
-  px(x,paper,4,top+1,8,h-2);
-  px(x,shade,4,top+1,1,h-2);
-  px(x,shade,4,top+h-2,8,1);
-  for(let i=0;i<3;i++) px(x,PAL['9'],6,top+3+i*2,4,1);   // 字行
-  px(x,dark,3,top,10,1); px(x,dark,3,top+h-1,10,1);
-  if(shape===0){ px(x,seal,7,top+h-4,3,3); px(x,dark,7,top+h-4,3,1); }
-  else if(shape===1){ px(x,seal,2,top+4,12,2); px(x,dark,2,top+4,12,1); } // 緞帶
-  else { px(x,seal,11,top+1,2,h-2); }
+  const ink=PAL['9'];
+  const shape=v%5;
+
+  if(shape===0){                                    // 直筒：捲好的細長卷
+    px(x,dark,5,1,6,14);
+    px(x,paper,6,2,4,12); px(x,shade,6,2,1,12);
+    px(x,seal,5,1,6,2);  px(x,dark,5,1,6,1);
+    px(x,seal,5,13,6,2); px(x,dark,5,14,6,1);
+    px(x,ink,7,5,2,1); px(x,ink,7,8,2,1); px(x,ink,7,11,2,1);
+  } else if(shape===1){                             // 攤開：寬扁的一張紙
+    px(x,dark,1,4,14,8);
+    px(x,paper,2,5,12,6); px(x,shade,2,10,12,1);
+    for(let i=0;i<3;i++) px(x,ink,4,6+i*2,8-i*2,1);
+    px(x,seal,11,8,3,3); px(x,dark,11,8,3,1);
+  } else if(shape===2){                             // 綁緞帶：中間橫一條帶子
+    px(x,dark,4,1,8,14);
+    px(x,paper,5,2,6,12); px(x,shade,5,2,1,12);
+    px(x,ink,7,4,2,1); px(x,ink,7,11,2,1);
+    px(x,dark,1,6,14,4); px(x,seal,1,7,14,2); px(x,PAL['d'],2,7,2,1);
+  } else if(shape===3){                             // 折疊信：上緣一個三角封口
+    px(x,dark,2,4,12,10);
+    px(x,paper,3,5,10,8); px(x,shade,3,12,10,1);
+    for(let i=0;i<4;i++){ px(x,shade,3+i,5+i,1,1); px(x,shade,12-i,5+i,1,1); }
+    px(x,dark,7,7,3,3); px(x,seal,7,8,3,2);
+  } else {                                          // 卷軸盒：橫躺的圓筒，兩端有蓋
+    px(x,dark,1,4,14,8);
+    px(x,paper,2,6,12,4); px(x,shade,2,9,12,1); px(x,PAL['6'],3,6,10,1);
+    px(x,dark,1,4,3,8);  px(x,seal,2,5,2,6);
+    px(x,dark,12,4,3,8); px(x,seal,12,5,2,6);
+  }
   return c;
 }
+/* 三種杖身 x 三種杖頭 = 九種外觀，每一種的輪廓都不一樣。
+   只換杖頭顏色的話遠看還是同一根棍子。 */
 function makeWand(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const woods=['9','8','a','4','7','b','5','3','c'];
+  // 杖身用暖色與淺色，不用冷灰 —— 冷灰是地形的色溫，握在手上的木頭不該撞色
+  const woods=['9','8','a','b','c','6','d','5','v'];
   const tips=['r','v','m','g','q','u','h','l','6'];
   const wood=PAL[woods[v%woods.length]], tip=PAL[tips[v%tips.length]], dark=PAL['0'];
-  px(x,dark,6,4,4,11);
-  px(x,wood,7,5,2,9);
-  px(x,PAL['d'],7,6,1,6);
-  const shape=v%3;
-  if(shape===0){ px(x,dark,5,1,6,5); px(x,tip,6,2,4,3); px(x,PAL['6'],7,2,1,1); }
-  else if(shape===1){ px(x,dark,6,1,4,4); px(x,tip,6,2,4,2); px(x,tip,5,3,6,1); }
-  else { px(x,dark,5,2,6,3); px(x,tip,6,2,1,3); px(x,tip,9,2,1,3); px(x,tip,7,3,2,1); }
-  px(x,PAL['8'],6,13,4,1);
+  const shaft=Math.floor(v/3)%3, head=v%3;
+
+  if(shaft===0){                                    // 直杖
+    px(x,dark,6,4,4,11); px(x,wood,7,5,2,9); px(x,PAL['d'],7,6,1,5);
+    px(x,PAL['8'],6,13,4,1);
+  } else if(shaft===1){                             // 節杖：兩處膨大的節
+    px(x,dark,6,4,4,11); px(x,wood,7,5,2,9); px(x,PAL['d'],7,6,1,3);
+    for(const ky of [7,11]){                        // 節：外描邊 + 木頭鼓起，不能整塊塗黑
+      px(x,dark,5,ky,6,3);
+      px(x,wood,6,ky+1,4,1); px(x,wood,7,ky,2,1); px(x,wood,7,ky+2,2,1);
+    }
+  } else {                                          // 彎杖：逐列偏移，剪影是歪的但不斷開
+    const off = y => (y<7 ? 1 : (y<11 ? -1 : 1));
+    for(let y=4;y<15;y++)  px(x,dark, 6+off(y), y, 4, 1);
+    for(let y=5;y<14;y++)  px(x,wood, 7+off(y), y, 2, 1);
+    px(x,PAL['8'],7,13,4,1);
+  }
+  const hx = shaft===2 ? 8 : 7;                     // 彎杖的頭要跟著頂端偏移
+  if(head===0){                                     // 寶珠
+    px(x,dark,hx-2,0,5,5); px(x,tip,hx-1,1,3,3); px(x,PAL['6'],hx-1,1,1,1);
+  } else if(head===1){                              // 新月
+    px(x,dark,hx-2,0,5,4); px(x,tip,hx-1,1,3,1); px(x,tip,hx-2,2,1,1); px(x,tip,hx+2,2,1,1);
+  } else {                                          // 雙叉
+    px(x,dark,hx-2,0,5,4); px(x,tip,hx-1,0,1,3); px(x,tip,hx+1,0,1,3); px(x,tip,hx,2,1,1);
+  }
   return c;
 }
 function makeFood(v){
@@ -394,7 +448,7 @@ function makeShield(v){
 function makeFloor(seed, corridor){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r = RNG(seed*2654435761);
-  const base = corridor?'8':'9', lit = corridor?'9':'a', mortar = corridor?'7':'8';
+  const base = corridor?'x':'y', lit = corridor?'y':'z', mortar = corridor?'w':'x';
   x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
   // 磚縫
   x.fillStyle=PAL[mortar];
@@ -411,18 +465,18 @@ function makeFloor(seed, corridor){
 function makeWall(face){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r=RNG(99173);
-  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
-  // 石塊
-  x.fillStyle=PAL['2'];
+  // 牆比地板暗一階、磚縫比地板深 —— 「能走／不能走」要用明度分，不是用花紋分
+  x.fillStyle=PAL['0']; x.fillRect(0,0,T,T);
+  x.fillStyle=PAL['w'];
   x.fillRect(1,1,6,6); x.fillRect(9,1,6,6); x.fillRect(1,9,6,6); x.fillRect(9,9,6,6);
-  x.fillStyle=PAL['3'];
+  x.fillStyle=PAL['x'];
   x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
-  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['3']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['x']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
   if(face){
     // 立面：下方有地板時畫出厚度，深度感就出來了
-    x.fillStyle=PAL['4']; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL['3']; x.fillRect(0,11,T,2);
-    x.fillStyle=PAL['1']; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL['z']; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL['y']; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL['w']; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
     for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
   }
@@ -430,19 +484,37 @@ function makeWall(face){
 }
 function makeStairs(){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  x.fillStyle=PAL['1']; x.fillRect(0,0,T,T);
+  // 樓梯是整層唯一的目標，必須一眼看到 —— 用整張圖裡沒有別人在用的
+  // 金色踏面 + 全黑深井，跟冷色地板拉開最大距離
+  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
+  x.fillStyle=PAL['0']; x.fillRect(1,1,14,14);
   for(let i=0;i<4;i++){
-    const y=2+i*3, w=13-i*2, sx=Math.floor((T-w)/2);
+    const y=2+i*3, w=12-i*2, sx=Math.floor((T-w)/2);
     x.fillStyle=PAL['0']; x.fillRect(sx,y,w,3);
-    x.fillStyle=PAL[['5','4','3','2'][i]]; x.fillRect(sx,y,w,1);
-    x.fillStyle=PAL[['3','2','1','1'][i]]; x.fillRect(sx+1,y+1,w-2,1);
+    x.fillStyle=PAL[['v','u','t','s'][i]]; x.fillRect(sx,y,w,1);
+    x.fillStyle=PAL[['t','s','s','0'][i]]; x.fillRect(sx+1,y+1,w-2,1);
   }
+  x.fillStyle=PAL['0']; x.fillRect(3,14,10,2);
+  return c;
+}
+// 未探索區域：不是純黑，是「還沒挖開的岩盤」。
+// 純黑會讓人以為畫面沒畫出來；有紋理的暗岩則讀成「這裡是實心的」，
+// 一整片黑佔掉半個螢幕的違和感就沒了。
+function makeRock(){
+  const S=32, c=document.createElement('canvas'); c.width=S; c.height=S;
+  const x=c.getContext('2d'), r=RNG(0x9e3779b1);
+  x.fillStyle='#07090b'; x.fillRect(0,0,S,S);
+  for(let i=0;i<70;i++){
+    x.fillStyle = r.chance(.6)?'#0b0e11':'#040506';
+    x.fillRect(r.i(0,S-1), r.i(0,S-1), r.i(1,3), 1);
+  }
+  for(let i=0;i<10;i++){ x.fillStyle='#101418'; x.fillRect(r.i(0,S-1), r.i(0,S-1), 1, 1); }
   return c;
 }
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
-  wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(),
+  wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(), rock:makeRock(),
 };
 const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
@@ -451,94 +523,13 @@ const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   return c; })();
 const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
-  px(x,PAL['0'],3,6,10,7); px(x,PAL['2'],4,7,8,5);
-  for(let i=0;i<4;i++){ px(x,PAL['5'],5+i*2,7,1,2); px(x,PAL['5'],5+i*2,10,1,2); }
+  px(x,PAL['0'],3,5,10,9); px(x,PAL['e'],4,6,8,7);
+  for(let i=0;i<4;i++){ px(x,PAL['6'],5+i*2,6,1,3); px(x,PAL['6'],5+i*2,10,1,3); }
+  px(x,PAL['g'],4,6,8,1);
   return c; })();
 
-/* ─── 地圖生成 ────────────────────────────────────────────────
-   30x30 切 3x3 區域 → 各區生成房間 → 區域鄰接圖取隨機生成樹保證連通
-   → 注入環路（避免死路必死）→ Z 字形通道。 */
-const MW=30, MH=30, ZW=10, ZH=10, MARGIN=1;
-const WALL=0, ROOM=1, CORR=2, DOWN=3;
 
-function genFloor(rng, depth){
-  const t = new Uint8Array(MW*MH);
-  const roomAt = new Int8Array(MW*MH).fill(-1);
-  const zones=[];
-  for(let zy=0;zy<3;zy++) for(let zx=0;zx<3;zx++)
-    zones.push({i:zy*3+zx, zx, zy, x0:zx*ZW, y0:zy*ZH, x1:zx*ZW+ZW-1, y1:zy*ZH+ZH-1});
-
-  const rooms={}, junc={};
-  const emptyN = Math.min(rng.i(0,3), 3);
-  const empties = new Set(rng.shuffle(zones.map(z=>z.i)).slice(0,emptyN));
-  for(const z of zones){
-    const ux0=z.x0+MARGIN, ux1=z.x1-MARGIN, uy0=z.y0+MARGIN, uy1=z.y1-MARGIN;
-    if(empties.has(z.i)){ junc[z.i]={x:rng.i(ux0+1,ux1-1), y:rng.i(uy0+1,uy1-1)}; continue; }
-    const w=rng.i(3,7), h=rng.i(3,7);
-    const x=rng.i(ux0,ux1-w+1), y=rng.i(uy0,uy1-h+1);
-    rooms[z.i]={x,y,w,h,doors:[]};
-  }
-  for(const k in rooms){ const r=rooms[k];
-    for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++){ t[y*MW+x]=ROOM; roomAt[y*MW+x]=+k; } }
-
-  // 生成樹 + 環路
-  const cand=[];
-  for(const a of zones) for(const b of zones)
-    if(a.i<b.i && Math.abs(a.zx-b.zx)+Math.abs(a.zy-b.zy)===1) cand.push([a.i,b.i]);
-  rng.shuffle(cand);
-  const par=[...Array(9).keys()];
-  const find=a=>{ while(par[a]!==a){ par[a]=par[par[a]]; a=par[a]; } return a; };
-  const tree=[], rest=[];
-  for(const e of cand){ const ra=find(e[0]), rb=find(e[1]);
-    if(ra!==rb){ par[ra]=rb; tree.push(e); } else rest.push(e); }
-  const loopP = Math.max(.08, .25 - depth*.005);
-  const edges = tree.concat(rest.filter(()=>rng.chance(loopP)));
-
-  const port=(zi,side)=>{
-    if(junc[zi]) return junc[zi];
-    const r=rooms[zi];
-    if(side==='R') return {x:r.x+r.w,   y:rng.i(r.y,r.y+r.h-1)};
-    if(side==='L') return {x:r.x-1,     y:rng.i(r.y,r.y+r.h-1)};
-    if(side==='D') return {x:rng.i(r.x,r.x+r.w-1), y:r.y+r.h};
-    return {x:rng.i(r.x,r.x+r.w-1), y:r.y-1};
-  };
-  const carveH=(a,b,y)=>{ for(let x=Math.min(a,b);x<=Math.max(a,b);x++) if(t[y*MW+x]===WALL) t[y*MW+x]=CORR; };
-  const carveV=(a,b,x)=>{ for(let y=Math.min(a,b);y<=Math.max(a,b);y++) if(t[y*MW+x]===WALL) t[y*MW+x]=CORR; };
-  const door=(zi,p)=>{ if(rooms[zi]) rooms[zi].doors.push(p.x+','+p.y); };
-
-  for(const [ia,ib] of edges){
-    const za=zones[ia], zb=zones[ib];
-    if(za.zy===zb.zy){
-      const L = za.zx<zb.zx?za:zb, R = za.zx<zb.zx?zb:za;
-      const pa=port(L.i,'R'), pb=port(R.i,'L'), mid=rng.i(pa.x,pb.x);
-      carveH(pa.x,mid,pa.y); carveV(pa.y,pb.y,mid); carveH(mid,pb.x,pb.y);
-      door(L.i,pa); door(R.i,pb);
-    } else {
-      const U = za.zy<zb.zy?za:zb, D = za.zy<zb.zy?zb:za;
-      const pa=port(U.i,'D'), pb=port(D.i,'U'), mid=rng.i(pa.y,pb.y);
-      carveV(pa.y,mid,pa.x); carveH(pa.x,pb.x,mid); carveV(mid,pb.y,pb.x);
-      door(U.i,pa); door(D.i,pb);
-    }
-  }
-
-  // 出生點與樓梯：樓梯放在區域圖上最遠處，避免「落地就下樓」的退化玩法
-  const keys=Object.keys(rooms);
-  const spawnKey = rng.pick(keys);
-  const sr = rooms[spawnKey];
-  const spawn = {x:rng.i(sr.x,sr.x+sr.w-1), y:rng.i(sr.y,sr.y+sr.h-1)};
-  const adj={}; for(const [a,b] of edges){ (adj[a]=adj[a]||[]).push(b); (adj[b]=adj[b]||[]).push(a); }
-  const dist={[+spawnKey]:0}; const q=[+spawnKey];
-  while(q.length){ const z=q.shift(); for(const n of (adj[z]||[])) if(dist[n]===undefined){ dist[n]=dist[z]+1; q.push(n); } }
-  const far = keys.filter(k=>k!==spawnKey).sort((a,b)=>(dist[b]||0)-(dist[a]||0)).slice(0,3);
-  const dk = far.length?rng.pick(far):spawnKey;
-  const dr = rooms[dk];
-  const stairs = {x:rng.i(dr.x,dr.x+dr.w-1), y:rng.i(dr.y,dr.y+dr.h-1)};
-  t[stairs.y*MW+stairs.x]=DOWN;
-
-  return {t, roomAt, rooms, spawn, stairs, depth};
-}
-
-const G = { rng: RNG(1) };
+/* ─── 驗收頁渲染 ─────────────────────────────────────────────── */
 const out = document.getElementById('out');
 function sec(t){ const h=document.createElement('h2'); h.textContent=t; out.appendChild(h);
   const g=document.createElement('div'); g.className='grid'; out.appendChild(g); return g; }
@@ -557,7 +548,8 @@ for(const k in SPR) add(g, atlas[k], NAMES[k]||k);
 g = sec('地形');
 TILE_ART.floor.forEach((c,i)=>add(g,c,'房間地板'+i));
 TILE_ART.corr.forEach((c,i)=>add(g,c,'通道'+i));
-add(g,TILE_ART.wall,'牆'); add(g,TILE_ART.wallFace,'牆(有立面)'); add(g,TILE_ART.stairs,'樓梯');
+add(g,TILE_ART.wall,'牆'); add(g,TILE_ART.wallFace,'牆(有立面)');
+add(g,TILE_ART.stairs,'樓梯'); add(g,TILE_ART.rock,'未探索岩盤');
 add(g,goldIcon,'金錢'); add(g,trapIcon,'陷阱');
 g = sec('草藥 14 種外觀');
 for(let i=0;i<14;i++) add(g, makeHerb(i), 'herb_'+String(i).padStart(2,'0'));

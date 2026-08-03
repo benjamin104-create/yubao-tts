@@ -35,7 +35,12 @@ global.addEventListener = () => {};
 global.requestAnimationFrame = () => {};
 global.prompt = () => null;
 
-const js = fs.readFileSync(__dirname + '/game.js', 'utf8');
+// 直接從單檔 HTML 裡把 <script> 挖出來跑。
+// 不另外維護一份 game.js —— 兩份會不同步，而不同步的測試比沒有測試更糟。
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+const m = html.match(/<script>\n"use strict";([\s\S]*)<\/script>/);
+if(!m){ console.error('index.html 裡找不到遊戲腳本'); process.exit(2); }
+const js = m[1];
 // 讓內部函式可以從外面呼叫
 eval(js + '\n;globalThis.__api = {' +
   'G:()=>G, newGame, tryMove, endTurn, descend, useItem, DIRS, key, walkable,' +
