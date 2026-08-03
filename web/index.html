@@ -184,7 +184,7 @@ body{
 #tags{position:absolute; inset:0; pointer-events:none; overflow:hidden}
 .tag{
   position:absolute; transform:translate(-50%,-100%);
-  white-space:nowrap; font-size:10.5px; line-height:1.1; padding:2px 5px;
+  white-space:nowrap; font-size:10px; line-height:1.1; padding:2px 4px;
   background:rgba(6,8,9,.82); border:1px solid var(--edge); color:var(--parch);
   letter-spacing:.02em; font-family:var(--sans);
 }
@@ -1095,7 +1095,7 @@ function newGame(seed){
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
-    log:[], anim:[], shake:0, floats:[],
+    log:[], anim:[], shake:0, floats:[], parts:[], corpses:[],
   };
   G.p.inv.push(mk('weap','club',{known:1,eq:1}), mk('shld','leath',{known:1,eq:1}),
                mk('food','big'), mk('food','bread'), mk('herb','heal'));
@@ -1158,6 +1158,15 @@ function buildFloor(){
     if(!md) break;
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
+  }
+  // 牆上火把：只掛在房間的牆立面（下方是地板的牆），大約每 5 格一支。
+  // 通道刻意不掛 —— 通道的黑是設計，不是漏畫。
+  G.torches = [];
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    if(tileAt(x,y)!==WALL || !walkable(x,y+1)) continue;
+    if(roomOf(x,y+1) < 0) continue;
+    if((x*7 + y*13) % 5 !== 0) continue;
+    G.torches.push({x,y});
   }
   vision();
 }
@@ -1234,6 +1243,7 @@ function tryMove(dx,dy){
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
   SFX.play('step');
   G.anim.push({o:p, fx:p.x, fy:p.y, t:0});
+  burst(p.x, p.y, 2, '#5b6a72', 12, -4, 0.3);     // 腳下揚起的塵
   p.x=nx; p.y=ny;
   stepOn();
   endTurn();
@@ -1243,6 +1253,7 @@ function stepOn(){
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
   if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
+    p.flash = 0.12; burst(p.x, p.y, 10, '#c94a3a', 40, 10);
     say(`踩到了陷阱！受到 ${d} 點傷害。`,'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
   if(G.items[k]) say(`踩在了「${nameOf(G.items[k])}」上。（腳下）`);
   if(tileAt(p.x,p.y)===DOWN) say('這裡有向下的樓梯。（下樓）','gold');
@@ -1250,10 +1261,13 @@ function stepOn(){
 function attack(m, mult){
   const p=G.p;
   const hit = G.rng.i(1,100) <= Math.max(50, Math.min(99, 92 - (m.d.ev||0)));
+  p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
   if(!hit){ SFX.play('miss'); say(`對 ${m.d.nm} 的攻擊落空了。`); float(m.x,m.y,'MISS','#a99a7e'); return; }
   const crit = G.rng.chance(.05);
   const dmg = rollDmg(pAtk(), m.d.def, crit, mult);
   SFX.play(crit?'crit':'hit');
+  m.flash = 0.11;
+  burst(m.x, m.y, crit?11:6, crit ? '#f5dc7a' : '#e87a4a', crit?46:30, 8);
   m.hp -= dmg;
   float(m.x,m.y,String(dmg), crit?'#f5dc7a':'#e8dcc0');
   G.shake = crit?7:3;
@@ -1267,6 +1281,10 @@ function attack(m, mult){
 }
 function kill(m){
   SFX.play('kill');
+  if(G.corpses){                       // 沒有這段的話怪物是「消失」，不是「被打倒」
+    G.corpses.push({img: atlas[m.d.id] || atlas.rat, x:m.x, y:m.y, t:0});
+    burst(m.x, m.y, 14, '#c8c8d4', 52, 14, 0.5);
+  }
   say(`打倒了 ${m.d.nm}。`,'good');
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
@@ -1280,6 +1298,7 @@ function kill(m){
     p.exp -= needExp(p.lv); p.lv++;
     const g = G.rng.i(4,8); p.mhp += g; p.hp = p.mhp;
     SFX.play('level');
+    burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
     say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
   }
 }
@@ -1431,6 +1450,9 @@ function act(m,it){
     if(!hit){ SFX.play('miss',60); say(`${m.d.nm} 的攻擊落空了。`); return; }
     const dmg = rollDmg(m.d.atk, pDef(), false, mult);
     SFX.play(ranged?'zap':'hurt', 60);
+    m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
+    p.flash = 0.11;
+    burst(p.x, p.y, 7, '#a83c32', 34, 6);
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     say(`${m.d.nm} 的${ranged?'遠程':''}攻擊命中，受到 ${dmg} 點傷害。`,'bad');
     const oh = m.d.onhit;
@@ -1814,6 +1836,86 @@ const BGM = (()=>{
   };
 })();
 
+/* ═══ 動態美術層 ═════════════════════════════════════════════
+   一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
+   關鍵是**畫面上有沒有東西在動**。靜止的精靈再精緻也像素材圖，
+   會呼吸、會被打退、會噴火花的粗糙精靈反而像遊戲。
+   這一段全部是程序化的：零額外圖檔，但畫面從此不再是靜止的。 */
+
+let clock = 0;                       // 全域動畫時鐘（秒）
+
+/* 受擊白閃：把精靈當遮罩塗成純白，快取起來避免每幀重建 */
+const flashCache = {};
+function whiteOf(img, name){
+  if(flashCache[name]) return flashCache[name];
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  return flashCache[name] = c;
+}
+
+/* 火把：三張輪播的火焰。火焰不對稱才會像在燒，
+   完全對稱的火焰看起來像一片葉子。 */
+function makeTorch(f){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  px(x, PAL['0'], 6, 9, 4, 5);  px(x, PAL['9'], 7, 10, 2, 4);      // 壁座
+  px(x, PAL['8'], 5, 13, 6, 1); px(x, PAL['0'], 5, 14, 6, 1);
+  const S = [                                                       // 三張火焰的跨距
+    [[3,7,2],[4,6,4],[5,6,4],[6,5,5],[7,6,4],[8,7,2]],
+    [[2,8,2],[3,7,3],[4,6,4],[5,6,5],[6,6,4],[7,7,3],[8,7,2]],
+    [[3,6,3],[4,6,4],[5,5,5],[6,6,4],[7,6,3],[8,7,2]],
+  ][f];
+  for(const [y,x0,w] of S){ px(x, PAL['g'], x0, y, w, 1); }         // 外焰
+  for(const [y,x0,w] of S){ if(w>2) px(x, PAL['i'], x0+1, y, w-2, 1); }
+  px(x, PAL['v'], 7, 6, 2, 3);                                      // 焰心
+  return c;
+}
+const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
+
+/* 地面雜物：裂縫 / 碎石 / 苔 / 骨 / 水漬。
+   一整層只鋪同一張地磚，走起來會像跑步機；雜物是打破重複感最便宜的手段。 */
+function makeProp(i){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  // 全部壓在地形自己的冷色階裡。飽和的苔綠與水藍會被玩家讀成「可以撿的東西」，
+  // 那就違反了整套配色規則：暖色與飽和色只屬於活的東西和道具。
+  if(i === 0){ px(x,PAL['0'],4,9,1,3); px(x,PAL['0'],5,11,3,1); px(x,PAL['0'],8,10,1,2); }
+  else if(i === 1){ px(x,PAL['z'],3,11,2,1); px(x,PAL['y'],9,9,2,1); px(x,PAL['z'],11,12,1,1);
+                    px(x,PAL['0'],3,12,2,1); px(x,PAL['0'],9,10,2,1); }
+  else if(i === 2){ px(x,PAL['w'],4,10,4,2); px(x,PAL['j'],5,10,2,1);
+                    px(x,PAL['w'],10,8,3,2); px(x,PAL['j'],10,8,2,1); }
+  else if(i === 3){ px(x,PAL['0'],5,10,6,1); px(x,PAL['z'],5,9,6,1);
+                    px(x,PAL['z'],4,8,2,1); px(x,PAL['z'],10,8,2,1); px(x,PAL['0'],4,10,8,1); }
+  else { px(x,PAL['0'],4,10,7,2); px(x,PAL['w'],5,10,5,1); px(x,PAL['x'],6,10,2,1); }
+  return c;
+}
+const PROPS = [makeProp(0),makeProp(1),makeProp(2),makeProp(3),makeProp(4)];
+
+/* 粒子：踩地的塵、命中的火星、死亡的爆散。
+   全部共用一個陣列，畫面上永遠不會超過兩三百顆，直接畫矩形最快。 */
+function burst(x, y, n, col, spd, up, life){
+  if(!G || !G.parts) return;
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2, v = spd*(0.35+Math.random()*0.65);
+    G.parts.push({
+      px: x*T + 4 + Math.random()*8, py: y*T + 6 + Math.random()*7,
+      vx: Math.cos(a)*v, vy: Math.sin(a)*v - (up||0),
+      t: 0, life: life || (0.35+Math.random()*0.3),
+      col, s: Math.random()<.3 ? 2 : 1,
+    });
+  }
+}
+/* 空氣中的浮塵：跟著鏡頭在世界座標裡飄，不是貼在螢幕上。
+   貼在螢幕上的粒子會在鏡頭移動時「跟著走」，一眼就穿幫。 */
+const MOTES = [];
+for(let i=0;i<16;i++) MOTES.push({
+  x: Math.random(), y: Math.random(),
+  sp: .12+Math.random()*.22, ph: Math.random()*Math.PI*2, a: .18+Math.random()*.3,
+});
+
 /* ═══ 繪製 ═══════════════════════════════════════════════════ */
 const cv = document.getElementById('game'), cx = cv.getContext('2d');
 cx.imageSmoothingEnabled = false;
@@ -1861,8 +1963,20 @@ function draw(dt){
     } else {
       const arr = t===CORR ? TILE_ART.corr : TILE_ART.floor;
       cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
+      // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
+      const h = (x*73856093 ^ y*19349663) >>> 0;
+      if(h % 9 === 0) cx.drawImage(PROPS[(h>>4) % PROPS.length], px_, py);
     }
     if(s===1){ cx.fillStyle='rgba(0,0,0,.62)'; cx.fillRect(px_,py,T,T); }   // 記憶：只記地形
+  }
+
+  // 牆上的火把（只在看得見的時候燒）
+  const litTorches = [];
+  for(const tc of G.torches){
+    const s = G.seen[key(tc.x,tc.y)]; if(s !== 2) continue;
+    const f = ((clock*9 + tc.x*2 + tc.y*3) | 0) % 3;      // 每支火把的相位不同才不會同步跳動
+    cx.drawImage(TORCH[f], ox+tc.x*T, oy+tc.y*T);
+    litTorches.push(tc);
   }
 
   // 地面物件（只在可見時畫 —— 記憶不記得道具與怪物）
@@ -1872,19 +1986,41 @@ function draw(dt){
     cx.fillStyle=col; cx.fillRect(ox+x*T+3, oy+y*T+13, 10, 2);
     cx.fillRect(ox+x*T+2, oy+y*T+14, 12, 1);
   };
+  // 地上的東西會慢慢上下浮動 —— 靜止的圖示會被當成地板花紋，浮動的會被當成「可以撿」
+  const bobItem = (x,y)=> Math.sin(clock*2.2 + (x*3+y*5)) > .2 ? -1 : 0;
   for(const k in G.gold){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2){ plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(goldIcon, ox+x*T, oy+y*T); } }
+    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(goldIcon, ox+x*T, oy+y*T+b); } }
   for(const k in G.traps){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2) cx.drawImage(trapIcon, ox+x*T, oy+y*T); }
   for(const k in G.items){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2){ plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(iconOf(G.items[k]), ox+x*T, oy+y*T); } }
+    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(iconOf(G.items[k]), ox+x*T, oy+y*T+b); } }
 
-  // 實體（含位移插值）
+  // 屍體：死掉之後還要留 0.4 秒往上飄散，不然怪物是「消失」不是「被打倒」
+  for(const c of G.corpses){
+    const k = c.t/0.4;
+    cx.save(); cx.globalAlpha = Math.max(0, 1-k);
+    cx.drawImage(c.img, Math.round(ox+c.x*T), Math.round(oy+c.y*T - k*6));
+    cx.restore();
+  }
+
+  // 實體（含位移插值、待機起伏、攻擊前衝）
   const entPos=(o)=>{
     const a = G.anim.find(v=>v.o===o);
     if(!a) return [o.x, o.y];
     const k = 1-Math.min(1, a.t/.11);
     return [o.x + (a.fx-o.x)*k, o.y + (a.fy-o.y)*k];
+  };
+  // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
+  // 像素風的動畫本來就該是一格一格的，平滑插值反而會糊掉。
+  const bobOf = (o, ph)=>{
+    if(o.st && (o.st['睡'] || o.st['麻'])) return 0;
+    return Math.sin(clock*3.4 + ph) > .45 ? -1 : 0;
+  };
+  // 攻擊時往目標方向衝出去再回來（0→最遠→0），命中感有一半來自這個
+  const lungeOf = (o)=>{
+    if(!o.lunge) return [0,0];
+    const k = Math.sin(Math.min(1, o.lunge.t/.19) * Math.PI);
+    return [o.lunge.dx*k*5, o.lunge.dy*k*5];
   };
   // 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
   // 同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
@@ -1893,9 +2029,17 @@ function draw(dt){
     cx.fillRect(Math.round(ox+dx*T)+3, Math.round(oy+dy*T)+13, 10, 3);
     cx.fillRect(Math.round(ox+dx*T)+2, Math.round(oy+dy*T)+14, 12, 1);
   };
-  const drawEnt=(o, img)=>{
+  const drawEnt=(o, img, name, ph)=>{
     const [dx,dy] = entPos(o);
-    cx.drawImage(img, Math.round(ox+dx*T), Math.round(oy+dy*T));
+    const [lx2,ly2] = lungeOf(o);
+    const X = Math.round(ox+dx*T + lx2), Y = Math.round(oy+dy*T + ly2 + bobOf(o, ph||0));
+    cx.drawImage(img, X, Y);
+    if(o.flash > 0){                       // 受擊白閃：整個剪影瞬間打亮
+      cx.save();
+      cx.globalAlpha = Math.min(1, o.flash/0.09) * .85;
+      cx.drawImage(whiteOf(img, name), X, Y);
+      cx.restore();
+    }
   };
   for(const m of G.mons){
     if(G.seen[key(m.x,m.y)]!==2) continue;
@@ -1904,7 +2048,7 @@ function draw(dt){
     shadow(mx,my);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
-    drawEnt(m, img);
+    drawEnt(m, img, m.d.id, m.id*1.7);
     cx.restore();
     if(m.st['睡']){ cx.fillStyle=PAL['r']; cx.fillRect(ox+m.x*T+11, oy+m.y*T+1, 3,1); cx.fillRect(ox+m.x*T+12, oy+m.y*T+2, 1,1); }
     // 血條（只在受傷時出現，不佔用畫面）
@@ -1923,8 +2067,17 @@ function draw(dt){
     const bx = Math.round(ox+px2*T), by = Math.round(oy+py2*T);
     cx.fillStyle = 'rgba(201,151,63,.55)';
     cx.fillRect(bx+3, by+15, 10, 1); cx.fillRect(bx+2, by+14, 1, 1); cx.fillRect(bx+13, by+14, 1, 1);
-    drawEnt(G.p, atlas.player);
+    drawEnt(G.p, atlas.player, 'player', 0);
   }
+
+  // 粒子（塵、火星、爆散）
+  for(const p of G.parts){
+    const k = p.t/p.life;
+    cx.globalAlpha = Math.max(0, 1-k*k);       // 尾端快速收掉，不要拖泥帶水
+    cx.fillStyle = p.col;
+    cx.fillRect(Math.round(ox+p.px), Math.round(oy+p.py), p.s, p.s);
+  }
+  cx.globalAlpha = 1;
 
   // 火把光暈：離玩家越遠越暗，房間也有邊界感
   // 半徑依畫布尺寸換算 —— 直式手機的畫布比桌機小，寫死半徑會整片變黑
@@ -1946,7 +2099,32 @@ function draw(dt){
   g2.addColorStop(1,   'rgba(0,0,0,0)');
   cx.globalCompositeOperation = 'lighter';
   cx.fillStyle = g2; cx.fillRect(0,0,cv.width,cv.height);
+
+  // 牆上火把也要真的照亮周圍，否則就只是一張貼在牆上的圖。
+  // 每支的閃爍相位不同 —— 全部同步跳動會像壞掉的日光燈。
+  for(const tc of litTorches){
+    const fx = ox+tc.x*T+8, fy = oy+tc.y*T+7;
+    const fk = 1 + Math.sin(clock*7.3 + tc.x*2.1 + tc.y*3.7)*.09;
+    const tg = cx.createRadialGradient(fx, fy, 0, fx, fy, 46*fk);
+    tg.addColorStop(0,   'rgba(190,110,40,.34)');
+    tg.addColorStop(0.5, 'rgba(140,74,24,.14)');
+    tg.addColorStop(1,   'rgba(0,0,0,0)');
+    cx.fillStyle = tg; cx.fillRect(fx-52, fy-52, 104, 104);
+  }
   cx.globalCompositeOperation = 'source-over';
+
+  // 空氣中的浮塵：在火光範圍內才看得到，讓「有光的地方」有體積感
+  cx.fillStyle = '#d9b98a';
+  for(const m of MOTES){
+    const wx = (m.x + clock*0.006*m.sp) % 1;
+    const wy = (m.y + Math.sin(clock*m.sp + m.ph)*0.02 + clock*0.004) % 1;
+    const sx2 = wx*cv.width, sy2 = wy*cv.height;
+    const d = Math.hypot(sx2-lx, sy2-ly);
+    if(d > R*0.7) continue;
+    cx.globalAlpha = m.a * (1 - d/(R*0.7));
+    cx.fillRect(sx2|0, sy2|0, 1, 1);
+  }
+  cx.globalAlpha = 1;
 
   // 飄字
   cx.font='7px ui-monospace, monospace'; cx.textAlign='center';
@@ -1977,40 +2155,88 @@ function updateTags(){
     const rect = cv.getBoundingClientRect();
     const s = rect.width ? rect.width / cv.width : 0;
     if(s){
-      const put = (wx, wy, txt, cls)=>{
-        // 只標畫面內的東西，畫面外的名牌會擠在邊緣變成一團垃圾
+      // 先收集，再一次解決重疊。一格一格直接貼的話，三隻怪擠在一起時
+      // 名牌會疊成一面看不懂的字牆 —— 那比沒有名牌更糟。
+      const want = [];
+      const near = (x,y,r)=> Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) <= r;
+      const push = (wx, wy, txt, cls, owner)=>{
         const sx = lastOx + wx*T + T/2, sy = lastOy + wy*T;
         if(sx < -20 || sy < -20 || sx > cv.width+20 || sy > cv.height+20) return;
-        let el = tagPool[n];
-        if(!el){ el = document.createElement('div'); tagLayer.appendChild(el); tagPool[n] = el; }
-        n++;
-        el.className = 'tag ' + cls;
-        if(el.textContent !== txt) el.textContent = txt;
-        el.style.left = (sx*s) + 'px';
-        el.style.top  = (sy*s - 5) + 'px';   // 抬高一點，名牌才不會蓋住自己那一格
-        el.style.display = '';
+        // 中文約 11px、其他約 6.4px，加上左右內距與框線
+        let w = 10;
+        for(const ch of txt) w += ch.charCodeAt(0) > 0x2e80 ? 10.5 : 6.2;
+        // 上方是首選，下方是備位 —— 兩個都被佔了才往上疊
+        want.push({x:sx*s, y:sy*s - 5, alt:(sy + T)*s + 18, w, txt, cls, owner});
       };
+
       for(const m of G.mons){
         if(G.seen[key(m.x,m.y)]!==2) continue;
-        const st = Object.keys(m.st)[0];
-        put(m.x, m.y, st ? `${m.d.nm}·${st}` : m.d.nm, 'mon');
+        const stx = Object.keys(m.st)[0];
+        push(m.x, m.y, stx ? `${m.d.nm}·${stx}` : m.d.nm, 'mon', 'm'+m.id);
       }
+      // 道具名牌只標「走幾步就到得了」的範圍。整個房間的道具全標出來，
+      // 畫面會變成一張型錄，反而看不到怪物。
       for(const k in G.items){
         if(G.seen[k]!==2) continue;
         const x=k%MW, y=(k/MW)|0;
-        if(Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) > 7) continue;
-        put(x, y, nameOf(G.items[k]), 'item');
+        if(!near(x,y,4)) continue;
+        push(x, y, nameOf(G.items[k]), 'item');
       }
       for(const k in G.gold){
         if(G.seen[k]!==2) continue;
-        put(k%MW, (k/MW)|0, G.gold[k]+' G', 'item');
+        const x=k%MW, y=(k/MW)|0;
+        if(!near(x,y,4)) continue;
+        push(x, y, G.gold[k]+' G', 'item');
       }
       for(const k in G.traps){
         if(G.seen[k]!==2) continue;
-        put(k%MW, (k/MW)|0, '陷阱', 'mon');
+        push(k%MW, (k/MW)|0, '陷阱', 'mon');
       }
-      const st = G.f.stairs;
-      if(G.seen[key(st.x,st.y)]) put(st.x, st.y, '下樓', 'stair');
+      const stt = G.f.stairs;
+      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, '下樓', 'stair');
+
+      // 重疊解算：由上往下掃，跟已放好的框相撞就往上頂一層
+      const H = 18;
+      // 精靈本身也是障礙物。只讓名牌彼此閃避的話，名牌會準確地
+      // 停在上一格那隻怪的臉上 —— 沒有撞到別的名牌，但擋住了角色。
+      const placed = [];
+      const tw = T*s;
+      const block = (x,y,owner)=>{
+        const bx = (lastOx + x*T + T/2)*s, top = (lastOy + y*T)*s;
+        placed.push({x:bx, y:top + H,  w:tw, blocker:1, owner});
+        placed.push({x:bx, y:top + tw, w:tw, blocker:1, owner});
+      };
+      block(G.p.x, G.p.y, 'p');
+      for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2) block(m.x, m.y, 'm'+m.id);
+
+      want.sort((a,b)=> a.y - b.y);
+      // 自己的精靈不算擋自己的名牌 —— 不排除的話，名牌想放到腳下時
+      // 會被自己的下緣擋住，又被頂回頭上那隻怪的臉上。
+      const clash = t => placed.find(o =>
+        (!o.owner || o.owner !== t.owner) &&
+        Math.abs(o.y - t.y) < H && Math.abs(o.x - t.x) < (o.w + t.w)/2 + 3);
+      for(const t of want){
+        if(clash(t)){                       // 上方被佔 → 改放腳下
+          const up = t.y; t.y = t.alt;
+          if(clash(t)){                     // 兩邊都被佔 → 回到上方往外頂
+            t.y = up;
+            let guard = 0, hit;
+            while((hit = clash(t)) && ++guard <= 8) t.y = hit.y - H;
+          }
+        }
+        placed.push(t);
+      }
+      for(const t of placed){
+        if(t.blocker) continue;
+        let el = tagPool[n];
+        if(!el){ el = document.createElement('div'); tagLayer.appendChild(el); tagPool[n] = el; }
+        n++;
+        el.className = 'tag ' + t.cls;
+        if(el.textContent !== t.txt) el.textContent = t.txt;
+        el.style.left = t.x + 'px';
+        el.style.top  = t.y + 'px';
+        el.style.display = '';
+      }
     }
   }
   for(let i=n;i<tagPool.length;i++) tagPool[i].style.display='none';
@@ -2079,11 +2305,29 @@ addEventListener('orientationchange', fitViewport);
 let last=0;
 function loop(ts){
   const dt = Math.min(.05, (ts-last)/1000 || 0); last=ts;
+  clock += dt;
   if(G){
     for(const a of G.anim) a.t += dt;
     G.anim = G.anim.filter(a=>a.t<.11);
     for(const f of G.floats) f.t += dt;
     G.floats = G.floats.filter(f=>f.t<.85);
+
+    // 動態美術層的推進：前衝、白閃、屍體、粒子
+    const tickFx = o=>{
+      if(o.lunge){ o.lunge.t += dt; if(o.lunge.t > .19) o.lunge = null; }
+      if(o.flash > 0) o.flash -= dt;
+    };
+    tickFx(G.p);
+    for(const m of G.mons) tickFx(m);
+    for(const c of G.corpses) c.t += dt;
+    G.corpses = G.corpses.filter(c=>c.t < .4);
+    for(const p of G.parts){
+      p.t += dt;
+      p.px += p.vx*dt; p.py += p.vy*dt;
+      p.vy += 42*dt;                       // 一點重力，粒子才會落回地面而不是飄走
+      p.vx *= (1 - 1.6*dt);
+    }
+    G.parts = G.parts.filter(p=>p.t < p.life);
     if(G.shake>0){
       G.shake = Math.max(0, G.shake - dt*46);
       const s = G.shake;
