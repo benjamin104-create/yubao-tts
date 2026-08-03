@@ -44,22 +44,15 @@ const PAL = {
   '+':'#f2efe7','*':'#eaa88c','#':'#d97757','@':'#a8452c'
 };
 const T = 16;               // 一格 16px
-// 視窗 14x10 格 = 224x160，撐滿 860px 寬時一格約 61px。
-// 格數不能貪多：房間本來就只有 4~8 格寬，視窗開太大只是在看更多黑色。
-// 寧可格子大、看得清楚，也不要一片看不懂的細節。
-const VW = 14, VH = 10;
+// 視窗格數。格數不能貪多：房間本來就只有 4~8 格寬，
+// 視窗開太大只是在看更多黑色。寧可格子大、看得清楚。
+// 橫式 14x10、直式 10x13 —— 手機是直的，遊戲畫面就不該是橫的，
+// 否則畫面只剩薄薄一條，下面全是按鈕。
+let VW = 14, VH = 10;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
 const SPR = {
-/* 主角：陶土色的兜帽旅人，胸口一枚菱形星芒。
-   為什麼是菱形而不是圓點：16x16 裡圓形只會變成一坨，
-   菱形有四個尖角，縮到最小也還讀得出「這是一個記號」。 */
-player:[
-"................",".....@@@@@@.....","....@##**##@....","...@##++++##@...",
-"...@#++++++#@...","...@#+0++0+#@...","...@#++++++#@...","....@#++++#@....",
-".....@####@.....","..@###+#+#+##@..","..@####+++###@..","..@###+++++##@..",
-"..@####+++###@..","..@###+#+#+##@..","....@#@..@#@....","....@@@..@@@...."],
 rat:[
 "................","................","................","................",
 "...00......00...","..0aa0....0aa0..","..0aaa0000aaa0..",".0aaaaaaaaaaaa0.",
@@ -204,6 +197,47 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
+/* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
+   原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
+   技能點讓每一次升級都要做決定，而決定才是玩家記得住的東西。 */
+const SCHOOLS = [
+  {id:'heal', nm:'恢復', col:'#6a8f4a'},
+  {id:'bolt', nm:'雷',   col:'#7cb8ea'},
+  {id:'fire', nm:'火',   col:'#e87a4a'},
+  {id:'aqua', nm:'水',   col:'#4a86cf'},
+  {id:'wind', nm:'風',   col:'#79c97a'},
+];
+/* k: self=對自己 / beam=直線貫穿 / blast=直線命中後爆開 / room=全場可見 */
+const SPELLS = [
+  {sc:'heal', at:1, id:'cure',   nm:'治癒', mp:4,  k:'self',  desc:'恢復體力'},
+  {sc:'heal', at:3, id:'purge',  nm:'淨化', mp:7,  k:'self',  desc:'解除異常並小幅回復'},
+  {sc:'bolt', at:1, id:'spark',  nm:'電擊', mp:4,  k:'beam',  desc:'直線貫穿所有敵人'},
+  {sc:'bolt', at:3, id:'thund',  nm:'落雷', mp:9,  k:'room',  desc:'視野內全體受雷擊'},
+  {sc:'fire', at:1, id:'flame',  nm:'火球', mp:5,  k:'blast', desc:'命中後炸開周圍一圈'},
+  {sc:'fire', at:3, id:'inferno',nm:'煉獄', mp:10, k:'room',  desc:'視野內全體灼燒'},
+  {sc:'aqua', at:1, id:'shard',  nm:'冰錐', mp:4,  k:'blast', desc:'命中並凍住目標'},
+  {sc:'aqua', at:3, id:'freeze', nm:'冰封', mp:9,  k:'room',  desc:'視野內全體麻痺'},
+  {sc:'wind', at:1, id:'gust',   nm:'疾風', mp:3,  k:'beam',  desc:'直線擊退並造成傷害'},
+  {sc:'wind', at:3, id:'cyclone',nm:'龍捲', mp:9,  k:'room',  desc:'視野內全體被吹散'},
+];
+/* 幻獸：四系各一隻，需要該系 4 級。代價是三成胃袋 ——
+   在一款餓死是主要死因的遊戲裡，這才是真正需要猶豫的代價。 */
+const SUMMONS = [
+  {sc:'fire', id:'ifr', nm:'炎魔', atk:26, hp:40, ttl:18, col:'h'},
+  {sc:'aqua', id:'niv', nm:'冰姬', atk:22, hp:52, ttl:18, col:'r'},
+  {sc:'bolt', id:'ram', nm:'雷神', atk:32, hp:34, ttl:16, col:'q'},
+  {sc:'wind', id:'syl', nm:'風龍', atk:20, hp:44, ttl:22, col:'m'},
+];
+const SUMMON_COST = 0.30;
+const SUMMON_AT = 4;
+
+const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
+const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
+const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
+const maxMp = p => 8 + (p.lv-1)*3 + schoolTotal(p)*5;
+/* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
+const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
+
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
 const LOOK = {
@@ -251,6 +285,68 @@ function bake(rows, w=T, h=T){
   return c;
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
+
+/* ─── 主角：史萊姆本體 + 星芒核心 + 看得見的裝備 ────────────────
+   為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。
+   直接沿用他人的商標去吸引玩家，正是商標法最在意的用法；
+   神韻留下、標誌不用，才是能安心散布的做法。
+
+   為什麼要程序化而不是手打像素字串：裝備必須畫在身上。
+   拿了劍卻看不出來，玩家就感覺不到自己變強 —— 而「感覺變強」
+   正是這類遊戲唯一的驅動力。 */
+const HERO_BODY = [
+  [2,6,4],[3,5,6],[4,4,8],[5,3,10],[6,3,10],
+  [7,2,12],[8,2,12],[9,2,12],
+  [10,1,14],[11,1,14],[12,1,14],[13,1,14],[14,1,14],
+];
+function drawHeroWeapon(x, i){
+  const bl = ['9','5','6','6','r'][i], hi = ['8','9','5','t','u'][i];
+  px(x,PAL['0'],11,0,4,11);
+  px(x,PAL[bl],12,1,2,8); px(x,PAL['6'],12,1,1,5);       // 刃面高光
+  px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
+  px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
+}
+/* 盾牌要有盾牌的剪影。第一版是個長方形 —— 那讀起來是門板，不是盾。
+   下緣收尖這一個細節，就是「這是盾」跟「這是一塊板子」的差別。 */
+const HERO_SHIELD = [
+  [4,1,4],[5,0,6],[6,0,6],[7,0,6],[8,0,6],[9,0,6],
+  [10,1,5],[11,1,4],[12,2,3],[13,3,1],
+];
+function drawHeroShield(x, i){
+  const fa = ['9','a','5','r'][i], rm = ['8','9','4','6'][i];
+  const m = shapeMask(HERO_SHIELD);
+  paintMask(x, m, PAL[rm], PAL['0'], null, 99);
+  for(let y=1;y<T-1;y++) for(let j=0;j<T-1;j++)      // 內縮一圈當盾面
+    if(m[y][j] && m[y-1][j] && m[y+1][j] && (j===0 || m[y][j-1]) && m[y][j+1]){
+      x.fillStyle = PAL[fa]; x.fillRect(j,y,1,1);
+    }
+  px(x,PAL['d'],1,5,1,2);                             // 高光
+  if(i===3){ px(x,PAL['6'],1,7,3,3); px(x,PAL['r'],2,8,2,1); }   // 鏡之盾
+  else px(x,PAL['u'],2,7,2,2);                        // 盾徽
+}
+const heroCache = {};
+function heroSprite(wi, si){
+  const k = wi + '/' + si;
+  if(heroCache[k]) return heroCache[k];
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+
+  paintMask(x, shapeMask(HERO_BODY), PAL['#'], PAL['@'], null, 99);
+  px(x,PAL['*'],5,3,4,1); px(x,PAL['*'],4,4,3,1); px(x,PAL['*'],3,5,2,2);   // 左上受光
+  px(x,PAL['0'],4,7,3,3); px(x,PAL['0'],9,7,3,3);                            // 眼睛
+  px(x,PAL['+'],5,7,1,1); px(x,PAL['+'],10,7,1,1);                           // 眼神光
+
+  // 體內的八角星芒核心
+  const cxs = 7, cys = 12;
+  px(x,PAL['+'],cxs,cys-2,1,5); px(x,PAL['+'],cxs-2,cys,5,1);
+  for(const [dx,dy] of [[-2,-2],[-1,-1],[1,1],[2,2],[2,-2],[1,-1],[-1,1],[-2,2]])
+    px(x,PAL['+'],cxs+dx,cys+dy,1,1);
+
+  if(si >= 0) drawHeroShield(x, si);
+  if(wi >= 0) drawHeroWeapon(x, wi);
+  return heroCache[k] = c;
+}
+atlas.player = heroSprite(-1, -1);
 
 /* ─── 道具圖示：參數化生成 ────────────────────────────────────
    81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，

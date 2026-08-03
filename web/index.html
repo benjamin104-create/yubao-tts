@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>克勞德深淵 CLAUDE ABYSS — 回合制地牢</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
@@ -139,10 +140,15 @@ body{
   margin:0; font-family:var(--serif); font-size:19px; font-weight:600;
   letter-spacing:.14em; color:var(--parch);
 }
-#sign .sub{
-  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
-  color:var(--brass-dim); text-transform:uppercase;
+/* 樓層是這款遊戲唯一的進度指標，招牌上就該讓人一眼看到 */
+#depth{display:flex; align-items:baseline; gap:9px}
+#depth b{
+  font-family:var(--mono); font-size:26px; font-weight:600; line-height:1;
+  color:var(--brass); letter-spacing:.02em; font-variant-numeric:tabular-nums;
 }
+#depth b::before{content:'B'; font-size:13px; opacity:.65; margin-right:1px}
+#depth b::after{content:'F'; font-size:13px; opacity:.65; margin-left:1px}
+#depth em{font-style:normal; font-size:11.5px; letter-spacing:.14em; color:var(--parch-dim)}
 
 /* ── 狀態列 ── */
 #hud{
@@ -191,6 +197,7 @@ body{
 .tag.mon{border-color:#8e3a32; color:#f0c4bd}
 .tag.item{border-color:var(--brass-dim); color:#f0d9a8}
 .tag.stair{border-color:#557a3a; color:#cfe6b4}
+.tag.shop{border-color:var(--brass); color:#f5dc7a; background:rgba(40,22,8,.9)}
 
 /* ── 小地圖 ── */
 #mini{
@@ -254,6 +261,9 @@ button:hover{background:var(--stone-2); border-color:var(--brass-dim)}
 button:focus-visible{outline:2px solid var(--brass); outline-offset:1px}
 button:disabled{opacity:.35; cursor:default}
 button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-right:5px}
+/* 有技能點沒用掉時，魔法鈕會呼吸 —— 玩家不會漏掉可以變強的機會 */
+button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s ease-in-out infinite}
+@keyframes ping{50%{background:rgba(201,151,63,.18)}}
 
 /* ── 方向鍵（觸控） ── */
 #dpad{display:none; grid-template-columns:repeat(3,1fr); gap:5px; padding:0 14px 12px; background:var(--ink-2)}
@@ -289,6 +299,82 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 .hint{padding:8px 14px; font-size:11px; color:var(--parch-dim); border-top:1px solid var(--hair)}
 #acts{display:flex; flex-wrap:wrap; gap:5px; padding:9px 14px; border-top:1px solid var(--hair)}
 #acts button{font-size:11.5px; padding:5px 9px}
+
+/* 到達新樓層的進場卡：淡入 → 停 → 淡出。
+   這一秒半什麼都不做，但它讓「下樓」從一次座標搬移變成一個事件。 */
+#card{
+  position:absolute; inset:0; display:none; z-index:6; pointer-events:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  background:radial-gradient(60% 45% at 50% 50%, rgba(8,6,5,.82), rgba(8,6,5,0) 72%);
+}
+#card.show{display:flex; animation:cardIn 2.1s ease forwards}
+#card b{
+  font-family:var(--mono); font-size:clamp(38px,9vw,62px); font-weight:600; line-height:1;
+  color:#f6efe3; letter-spacing:.06em; text-shadow:0 0 26px rgba(217,119,87,.55);
+}
+#card em{
+  font-style:normal; font-family:var(--serif); font-size:clamp(15px,3.4vw,21px);
+  letter-spacing:.34em; text-indent:.34em; color:var(--brass);
+}
+#card i{
+  font-style:normal; font-family:var(--mono); font-size:clamp(8px,1.8vw,10px);
+  letter-spacing:.42em; text-indent:.42em; color:var(--parch-dim); opacity:.8;
+}
+@keyframes cardIn{
+  0%{opacity:0; transform:scale(1.06)}
+  16%{opacity:1; transform:scale(1)}
+  72%{opacity:1} 100%{opacity:0}
+}
+
+/* 瞄準方向盤：投擲、揮杖、施法都要選方向。
+   原本只能按方向鍵 —— 那等於告訴用滑鼠的人「這個功能不給你用」。 */
+#aim{
+  position:absolute; inset:0; display:none; z-index:8;
+  place-items:center; align-content:center; gap:10px;
+  background:rgba(6,8,9,.55);
+}
+#aim.show{display:grid}
+#aimgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
+#aimgrid button{
+  width:56px; height:56px; font-size:19px; font-family:var(--mono);
+  background:rgba(43,38,32,.95); border:1px solid var(--brass-dim); color:var(--parch);
+  touch-action:manipulation;
+}
+#aimgrid button:hover{background:var(--stone-2); border-color:var(--brass)}
+#aimx{color:var(--blood)!important; font-size:16px!important}
+#aimlbl{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.2em; color:var(--brass);
+  background:rgba(6,8,9,.8); padding:5px 12px; border:1px solid var(--edge);
+}
+
+#pclose{
+  padding:0; width:26px; height:26px; line-height:1; font-size:13px;
+  background:transparent; border:1px solid var(--edge); color:var(--parch-dim);
+  touch-action:manipulation;
+}
+#pclose:hover{color:var(--parch); border-color:var(--brass-dim)}
+
+/* 技能點與魔法 */
+#sp{
+  display:flex; align-items:center; gap:8px; padding:9px 14px;
+  border-bottom:1px solid var(--hair); font-size:12px;
+}
+#sp b{font-family:var(--mono); color:var(--brass); font-size:15px}
+.sch{display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:12.5px}
+.sch .nm{width:34px; color:var(--parch)}
+.sch .pips{display:flex; gap:3px; flex:1}
+.sch .pips i{width:11px; height:11px; border:1px solid var(--edge); display:block}
+.sch button{padding:3px 10px; font-size:12px; min-width:34px}
+.spell{
+  display:flex; align-items:baseline; gap:8px; padding:8px 14px; cursor:pointer;
+  border-left:2px solid transparent; font-size:12.5px;
+}
+.spell:hover{background:rgba(201,151,63,.09); border-left-color:var(--brass)}
+.spell.off{opacity:.38; cursor:default}
+.spell .nm{flex:none; color:var(--parch)}
+.spell .ds{flex:1; font-size:11px; color:var(--parch-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.spell .mp{font-family:var(--mono); font-size:11px; color:var(--azure)}
+#mpbar i{background:var(--azure)}
 
 #hint{
   position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
@@ -380,19 +466,20 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 
   <div id="sign">
     <h1>克勞德深淵</h1>
-    <div class="sub">B<span id="fnum">1</span>F</div>
+    <div id="depth"><b id="fnum">1</b><em id="zone">苔濕迴廊</em></div>
   </div>
 
   <div id="hud">
     <div class="stat"><b>LV</b><span id="lv">1</span></div>
     <div class="stat"><b>HP</b><span id="hp">15/15</span>
       <div class="bar" id="hpbar"><i style="width:100%"></i></div></div>
+    <div class="stat"><b>MP</b><span id="mp">8/8</span>
+      <div class="bar" id="mpbar"><i style="width:100%"></i></div></div>
     <div class="stat"><b>飽足</b><span id="full">100%</span>
       <div class="bar" id="fullbar"><i style="width:100%"></i></div></div>
     <div class="stat"><b>攻</b><span id="atk">10</span></div>
     <div class="stat"><b>防</b><span id="def">2</span></div>
     <div class="stat"><b>G</b><span id="gold">0</span></div>
-    <div class="stat"><b>回合</b><span id="turn">0</span></div>
   </div>
 
   <div id="body">
@@ -403,11 +490,21 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
       <div id="tags"></div>
       <div id="vig"></div>
       <div id="panel">
-        <h2><span id="ptitle">背包</span><em id="pcount"></em></h2>
+        <h2><span id="ptitle">背包</span><em id="pcount"></em>
+          <button id="pclose" aria-label="關閉">✕</button></h2>
         <div id="list"></div>
         <div id="acts"></div>
         <div class="hint" id="phint"></div>
       </div>
+      <div id="aim">
+        <div id="aimgrid">
+          <button data-dir="-1,-1">↖</button><button data-dir="0,-1">↑</button><button data-dir="1,-1">↗</button>
+          <button data-dir="-1,0">←</button><button id="aimx">✕</button><button data-dir="1,0">→</button>
+          <button data-dir="-1,1">↙</button><button data-dir="0,1">↓</button><button data-dir="1,1">↘</button>
+        </div>
+        <div id="aimlbl">選擇方向</div>
+      </div>
+      <div id="card"><b id="cardf">B1F</b><em id="cardz">苔濕迴廊</em><i id="cards">MOSSFALL GALLERY</i></div>
       <div id="hint"><b>滑動</b>移動　·　<b>輕點</b>走一步　·　<b>點自己</b>看腳下</div>
       <div id="over">
         <div>
@@ -424,6 +521,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
     <button data-act="inv"><span class="k">I</span>背包</button>
     <button data-act="down"><span class="k">&gt;</span>下樓</button>
     <button data-act="wait"><span class="k">␣</span>待機</button>
+    <button data-act="mag" id="magbtn"><span class="k">K</span>魔法</button>
     <button data-act="dpad" id="dpadbtn">方向鍵</button>
     <button data-act="tags"><span class="k">L</span>名稱</button>
     <button data-act="mute"><span class="k">M</span>音效</button>
@@ -511,14 +609,6 @@ let VW = 14, VH = 10;
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
 const SPR = {
-/* 主角：陶土色的兜帽旅人，胸口一枚菱形星芒。
-   為什麼是菱形而不是圓點：16x16 裡圓形只會變成一坨，
-   菱形有四個尖角，縮到最小也還讀得出「這是一個記號」。 */
-player:[
-"................",".....@@@@@@.....","....@##**##@....","...@##++++##@...",
-"...@#++++++#@...","...@#+0++0+#@...","...@#++++++#@...","....@#++++#@....",
-".....@####@.....","..@###+#+#+##@..","..@####+++###@..","..@###+++++##@..",
-"..@####+++###@..","..@###+#+#+##@..","....@#@..@#@....","....@@@..@@@...."],
 rat:[
 "................","................","................","................",
 "...00......00...","..0aa0....0aa0..","..0aaa0000aaa0..",".0aaaaaaaaaaaa0.",
@@ -663,6 +753,47 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
+/* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
+   原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
+   技能點讓每一次升級都要做決定，而決定才是玩家記得住的東西。 */
+const SCHOOLS = [
+  {id:'heal', nm:'恢復', col:'#6a8f4a'},
+  {id:'bolt', nm:'雷',   col:'#7cb8ea'},
+  {id:'fire', nm:'火',   col:'#e87a4a'},
+  {id:'aqua', nm:'水',   col:'#4a86cf'},
+  {id:'wind', nm:'風',   col:'#79c97a'},
+];
+/* k: self=對自己 / beam=直線貫穿 / blast=直線命中後爆開 / room=全場可見 */
+const SPELLS = [
+  {sc:'heal', at:1, id:'cure',   nm:'治癒', mp:4,  k:'self',  desc:'恢復體力'},
+  {sc:'heal', at:3, id:'purge',  nm:'淨化', mp:7,  k:'self',  desc:'解除異常並小幅回復'},
+  {sc:'bolt', at:1, id:'spark',  nm:'電擊', mp:4,  k:'beam',  desc:'直線貫穿所有敵人'},
+  {sc:'bolt', at:3, id:'thund',  nm:'落雷', mp:9,  k:'room',  desc:'視野內全體受雷擊'},
+  {sc:'fire', at:1, id:'flame',  nm:'火球', mp:5,  k:'blast', desc:'命中後炸開周圍一圈'},
+  {sc:'fire', at:3, id:'inferno',nm:'煉獄', mp:10, k:'room',  desc:'視野內全體灼燒'},
+  {sc:'aqua', at:1, id:'shard',  nm:'冰錐', mp:4,  k:'blast', desc:'命中並凍住目標'},
+  {sc:'aqua', at:3, id:'freeze', nm:'冰封', mp:9,  k:'room',  desc:'視野內全體麻痺'},
+  {sc:'wind', at:1, id:'gust',   nm:'疾風', mp:3,  k:'beam',  desc:'直線擊退並造成傷害'},
+  {sc:'wind', at:3, id:'cyclone',nm:'龍捲', mp:9,  k:'room',  desc:'視野內全體被吹散'},
+];
+/* 幻獸：四系各一隻，需要該系 4 級。代價是三成胃袋 ——
+   在一款餓死是主要死因的遊戲裡，這才是真正需要猶豫的代價。 */
+const SUMMONS = [
+  {sc:'fire', id:'ifr', nm:'炎魔', atk:26, hp:40, ttl:18, col:'h'},
+  {sc:'aqua', id:'niv', nm:'冰姬', atk:22, hp:52, ttl:18, col:'r'},
+  {sc:'bolt', id:'ram', nm:'雷神', atk:32, hp:34, ttl:16, col:'q'},
+  {sc:'wind', id:'syl', nm:'風龍', atk:20, hp:44, ttl:22, col:'m'},
+];
+const SUMMON_COST = 0.30;
+const SUMMON_AT = 4;
+
+const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
+const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
+const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
+const maxMp = p => 8 + (p.lv-1)*3 + schoolTotal(p)*5;
+/* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
+const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
+
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
 const LOOK = {
@@ -710,6 +841,68 @@ function bake(rows, w=T, h=T){
   return c;
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
+
+/* ─── 主角：史萊姆本體 + 星芒核心 + 看得見的裝備 ────────────────
+   為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。
+   直接沿用他人的商標去吸引玩家，正是商標法最在意的用法；
+   神韻留下、標誌不用，才是能安心散布的做法。
+
+   為什麼要程序化而不是手打像素字串：裝備必須畫在身上。
+   拿了劍卻看不出來，玩家就感覺不到自己變強 —— 而「感覺變強」
+   正是這類遊戲唯一的驅動力。 */
+const HERO_BODY = [
+  [2,6,4],[3,5,6],[4,4,8],[5,3,10],[6,3,10],
+  [7,2,12],[8,2,12],[9,2,12],
+  [10,1,14],[11,1,14],[12,1,14],[13,1,14],[14,1,14],
+];
+function drawHeroWeapon(x, i){
+  const bl = ['9','5','6','6','r'][i], hi = ['8','9','5','t','u'][i];
+  px(x,PAL['0'],11,0,4,11);
+  px(x,PAL[bl],12,1,2,8); px(x,PAL['6'],12,1,1,5);       // 刃面高光
+  px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
+  px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
+}
+/* 盾牌要有盾牌的剪影。第一版是個長方形 —— 那讀起來是門板，不是盾。
+   下緣收尖這一個細節，就是「這是盾」跟「這是一塊板子」的差別。 */
+const HERO_SHIELD = [
+  [4,1,4],[5,0,6],[6,0,6],[7,0,6],[8,0,6],[9,0,6],
+  [10,1,5],[11,1,4],[12,2,3],[13,3,1],
+];
+function drawHeroShield(x, i){
+  const fa = ['9','a','5','r'][i], rm = ['8','9','4','6'][i];
+  const m = shapeMask(HERO_SHIELD);
+  paintMask(x, m, PAL[rm], PAL['0'], null, 99);
+  for(let y=1;y<T-1;y++) for(let j=0;j<T-1;j++)      // 內縮一圈當盾面
+    if(m[y][j] && m[y-1][j] && m[y+1][j] && (j===0 || m[y][j-1]) && m[y][j+1]){
+      x.fillStyle = PAL[fa]; x.fillRect(j,y,1,1);
+    }
+  px(x,PAL['d'],1,5,1,2);                             // 高光
+  if(i===3){ px(x,PAL['6'],1,7,3,3); px(x,PAL['r'],2,8,2,1); }   // 鏡之盾
+  else px(x,PAL['u'],2,7,2,2);                        // 盾徽
+}
+const heroCache = {};
+function heroSprite(wi, si){
+  const k = wi + '/' + si;
+  if(heroCache[k]) return heroCache[k];
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+
+  paintMask(x, shapeMask(HERO_BODY), PAL['#'], PAL['@'], null, 99);
+  px(x,PAL['*'],5,3,4,1); px(x,PAL['*'],4,4,3,1); px(x,PAL['*'],3,5,2,2);   // 左上受光
+  px(x,PAL['0'],4,7,3,3); px(x,PAL['0'],9,7,3,3);                            // 眼睛
+  px(x,PAL['+'],5,7,1,1); px(x,PAL['+'],10,7,1,1);                           // 眼神光
+
+  // 體內的八角星芒核心
+  const cxs = 7, cys = 12;
+  px(x,PAL['+'],cxs,cys-2,1,5); px(x,PAL['+'],cxs-2,cys,5,1);
+  for(const [dx,dy] of [[-2,-2],[-1,-1],[1,1],[2,2],[2,-2],[1,-1],[-1,1],[-2,2]])
+    px(x,PAL['+'],cxs+dx,cys+dy,1,1);
+
+  if(si >= 0) drawHeroShield(x, si);
+  if(wi >= 0) drawHeroWeapon(x, wi);
+  return heroCache[k] = c;
+}
+atlas.player = heroSprite(-1, -1);
 
 /* ─── 道具圖示：參數化生成 ────────────────────────────────────
    81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，
@@ -1077,6 +1270,19 @@ function genFloor(rng, depth){
   return {t, roomAt, rooms, spawn, stairs, depth};
 }
 
+/* ─── 迷宮分區 ──────────────────────────────────────────────────
+   同一條地牢從頭到尾長一樣，玩家沒有「我走到哪了」的感覺。
+   分區給的是里程碑：名字一換，就知道自己推進了一個階段。 */
+const ZONES = [
+  {to:5,  nm:'苔濕迴廊', sub:'MOSSFALL GALLERY'},
+  {to:10, nm:'骸骨墓道', sub:'OSSUARY PASSAGE'},
+  {to:15, nm:'鏽鐵地穴', sub:'RUSTIRON CRYPT'},
+  {to:20, nm:'幽藍水牢', sub:'DROWNED CELLS'},
+  {to:26, nm:'熔核深層', sub:'MOLTEN CORE'},
+  {to:99, nm:'無光之底', sub:'THE LIGHTLESS FLOOR'},
+];
+const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
+
 /* ─── 遊戲狀態 ──────────────────────────────────────────────── */
 let G = null;
 const KIND = {herb:HERB, scroll:SCROLL, wand:WAND, pot:POT};
@@ -1093,8 +1299,10 @@ function newGame(seed){
     rng, seed, depth:1, turn:0, over:false,
     look, known:{}, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
+        mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0,
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
+    allies:[], shop:null,
     log:[], anim:[], shake:0, floats:[], parts:[], corpses:[],
   };
   G.p.inv.push(mk('weap','club',{known:1,eq:1}), mk('shld','leath',{known:1,eq:1}),
@@ -1130,11 +1338,26 @@ function rollItem(rng, depth){
   return it;
 }
 
+/* 商店進貨：偏消耗品。武器盾牌太貴，早期玩家一件都買不起，
+   結果整間店變成看得到吃不到的裝飾。 */
+function shopItem(rng, depth){
+  const table = [
+    ['herb',HERB,34],['scroll',SCROLL,24],['food',FOOD,20],
+    ['wand',WAND,8],['pot',POT,6],['weap',WEAP,4],['shld',SHLD,4],
+  ];
+  const pick = rng.weight(table, r=>r[2]);
+  const pool = pick[1].filter(d => (d.price||0) <= 900 + depth*260);
+  const d = rng.pick(pool.length ? pool : pick[1]);
+  const it = mk(pick[0], d.id);
+  if(pick[0]==='weap'||pick[0]==='shld') it.up = rng.i(0, Math.min(2, d.up));
+  return it;
+}
+
 function buildFloor(){
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
   G.f = genFloor(rng, G.depth);
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
-  G.items = {}; G.gold = {}; G.traps = {}; G.mons = [];
+  G.items = {}; G.gold = {}; G.traps = {}; G.mons = []; G.allies = []; G.shop = null; G.shopSeen = 0;
   G.seen = new Uint8Array(MW*MH);   // 0 未探索 1 已探索 2 可見
   const occ = new Set([key(G.p.x,G.p.y), key(G.f.stairs.x,G.f.stairs.y)]);
   const free = (minD)=>{
@@ -1149,7 +1372,7 @@ function buildFloor(){
   // 每層保證至少一份食物 —— 飢餓該來自「探索太久」的選擇，不是運氣
   const fp = free(0); if(fp) G.items[key(fp.x,fp.y)] = mk('food', rng.pick(FOOD).id);
   for(let i=0;i<rng.i(3,6)+Math.floor(G.depth/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.depth); }
-  for(let i=0;i<rng.i(1,3);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(10,40)*(1+Math.floor(G.depth/3)); }
+  for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.depth/2)); }
   for(let i=0;i<rng.i(1,2)+Math.floor(G.depth/5);i++){ const p=free(0); if(p) G.traps[key(p.x,p.y)]=1; }
   let n = Math.min(12, 2+Math.floor(G.depth/3));
   while(n>0){
@@ -1159,6 +1382,32 @@ function buildFloor(){
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
   }
+  // 隱藏商店：三層以後偶爾出現。守門店員站在唯一的出入口上，
+  // 所以「偷了就跑」不是速度問題，是要不要繞過他的問題。
+  if(G.depth >= 3 && rng.chance(.24)){
+    const keys = Object.keys(G.f.rooms).filter(k => {
+      const r = G.f.rooms[k];
+      return r.w >= 4 && r.h >= 3 && r.doors.length >= 1 && G.f.roomAt[key(G.p.x,G.p.y)] !== +k;
+    });
+    if(keys.length){
+      const rk = rng.pick(keys), r = G.f.rooms[rk];
+      const stock = [];
+      for(let i=0;i<rng.i(4,6);i++){
+        const x = rng.i(r.x, r.x+r.w-1), y = rng.i(r.y, r.y+r.h-1);
+        const k2 = key(x,y);
+        if(G.items[k2] || (x===G.p.x&&y===G.p.y)) continue;
+        const it = shopItem(rng, G.depth);
+        it.shop = true;
+        it.price = Math.max(40, Math.round((it.d.price || 200) * 1.15));
+        G.items[k2] = it; stock.push(k2);
+      }
+      delete G.gold[key(r.x,r.y)];
+      const [dx0,dy0] = rng.pick(r.doors).split(',').map(Number);
+      G.shop = {room:+rk, keeper:{x:dx0, y:dy0}, stock};
+      G.mons = G.mons.filter(m => roomOf(m.x,m.y) !== +rk);   // 店裡不生怪
+    }
+  }
+
   // 牆上火把：只掛在房間的牆立面（下方是地板的牆），大約每 5 格一支。
   // 通道刻意不掛 —— 通道的黑是設計，不是漏畫。
   G.torches = [];
@@ -1239,6 +1488,14 @@ function tryMove(dx,dy){
   const nx=p.x+dx, ny=p.y+dy;
   const m = monAt(nx,ny);
   if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
+  if(allyAt(nx,ny)){ say(`${allyAt(nx,ny).d.nm} 擋在前面。`); return; }
+  // 店員只擋「欠錢的人」。無條件擋路的話，只有一個出口的店會把
+  // 沒偷東西的玩家永久關在裡面 —— 那不是難度，那是 bug。
+  if(keeperAt(nx,ny)){
+    if(unpaid().length){ say('店員擋住去路：「先結帳。」','bad'); return; }
+    G.shop.keeper.x = p.x; G.shop.keeper.y = p.y;      // 與店員交換位置
+    say('店員讓出了通道。');
+  }
   if(!walkable(nx,ny)){ SFX.play('wall',120); say('前面是牆壁。'); return; }   // 撞牆不消耗回合
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
   SFX.play('step');
@@ -1248,14 +1505,41 @@ function tryMove(dx,dy){
   stepOn();
   endTurn();
 }
+/* 偷竊的懲罰：雷擊，直接結束這一趟。
+   罰得重是刻意的 —— 商店的張力全部來自「拿不拿得走」，
+   罰輕了就變成免費補給站，整個區域的意義就沒了。 */
+function steal(){
+  G.over = true;
+  SFX.play('death');
+  G.shake = 26;
+  burst(G.p.x, G.p.y, 60, '#f5dc7a', 90, 30, 1.1);
+  say('天花板裂開，一道雷落在你身上。','bad');
+  $('otitle').textContent = '天罰';
+  $('otext').innerHTML =
+    `你帶著沒有結帳的商品離開了店鋪。<br>` +
+    `在 <b>B${G.depth}F</b> 被雷劈成灰 —— <b>這一趟到此為止</b>。`;
+  $('over').classList.add('show');
+  refresh();
+}
+
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
+  if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room){ steal(); return; }
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
   if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
     p.flash = 0.12; burst(p.x, p.y, 10, '#c94a3a', 40, 10);
     say(`踩到了陷阱！受到 ${d} 點傷害。`,'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
-  if(G.items[k]) say(`踩在了「${nameOf(G.items[k])}」上。（腳下）`);
+  if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
+    G.shopSeen = 1;
+    say('這是一間店。','gold');
+    say('未結帳就離開店鋪範圍 —— 天罰會直接結束這一趟。','bad');
+  }
+  if(G.items[k]){
+    const it = G.items[k];
+    say(it.shop ? `「${nameOf(it)}」　售價 ${it.price} G。（腳下購買）`
+               : `踩在了「${nameOf(it)}」上。（腳下）`, it.shop ? 'gold' : null);
+  }
   if(tileAt(p.x,p.y)===DOWN) say('這裡有向下的樓梯。（下樓）','gold');
 }
 function attack(m, mult){
@@ -1294,12 +1578,18 @@ function kill(m){
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(`掉落了「${nameOf(it)}」。`); }
   }
   const p=G.p; p.exp += m.d.exp;
+  if(G.rng.chance(.65)){
+    const g = Math.max(3, Math.round(m.d.exp*1.5) + G.rng.i(5,20));
+    const spot = nearestFree(m.x,m.y) || {x:m.x,y:m.y};
+    G.gold[key(spot.x,spot.y)] = (G.gold[key(spot.x,spot.y)]||0) + g;
+  }
   while(p.lv<99 && p.exp >= needExp(p.lv)){
     p.exp -= needExp(p.lv); p.lv++;
     const g = G.rng.i(4,8); p.mhp += g; p.hp = p.mhp;
+    p.sp++; p.mmp = maxMp(p); p.mp = p.mmp;
     SFX.play('level');
     burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
-    say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
+    say(`等級提升到 ${p.lv}！獲得 1 點技能點。`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
   }
 }
 function nearestFree(x,y){
@@ -1320,6 +1610,8 @@ function endTurn(){
   // 狀態遞減
   for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k]; say(`${k}的狀態解除了。`); } }
   for(const m of G.mons){ for(const k in m.st) if(--m.st[k]<=0) delete m.st[k]; }
+
+  allyTurn();                       // 幻獸先動 —— 它是玩家花代價換來的先手
 
   // 怪物行動（速度用行動點累積器；倍速怪拆成前後半，玩家才算得清逃跑距離）
   const snap = {px:p.x, py:p.y};
@@ -1351,6 +1643,12 @@ function endTurn(){
   else if(!p.st['痛']){
     p.regen += p.mhp;
     while(p.regen >= 15000 && p.hp < p.mhp){ p.regen -= 15000; p.hp++; }
+  }
+  // 魔力回得比體力慢 —— 魔法要是能無限放，物理攻擊就沒有存在意義了
+  p.mmp = maxMp(p);
+  if(p.sat > 0 && p.mp < p.mmp){
+    p.mregen += 100;
+    while(p.mregen >= 1400 && p.mp < p.mmp){ p.mregen -= 1400; p.mp++; }
   }
   const interval = Math.max(60, 130 - G.depth*2);
   if(G.turn>0 && G.turn % interval === 0 && G.mons.length < 8+Math.floor(G.depth/3)){
@@ -1403,7 +1701,8 @@ function decide(m){
 }
 function canStep(m,d){
   const nx=m.x+d[0], ny=m.y+d[1];
-  return walkable(nx,ny) && !monAt(nx,ny) && !(nx===G.p.x&&ny===G.p.y) && cornerOK(m.x,m.y,nx,ny);
+  return walkable(nx,ny) && !monAt(nx,ny) && !allyAt(nx,ny)
+      && !(nx===G.p.x&&ny===G.p.y) && cornerOK(m.x,m.y,nx,ny);
 }
 function toward(m,tx,ty,align){
   let best=null, bs=-1e9;
@@ -1552,7 +1851,7 @@ function useItem(it, fromGround){
   } else if(it.cat==='wand'){
     consumed = false;
     if(it.uses<=0){ say('已經沒有效力了。'); return false; }
-    pendWand = it; say('選擇方向 —— 按方向鍵發動。','gold'); refresh(); return null;
+    pendWand = it; say(`${nameOf(it)} —— 選擇方向。`,'gold'); refresh(); return null;
   } else if(it.cat==='pot'){
     say('壺不能直接使用 —— 用「放入」把道具放進去。'); return false;
   } else { say('這個東西不能用。'); return false; }
@@ -1651,14 +1950,208 @@ function fireWand(dx,dy){
   endTurn();
 }
 
+/* ═══ 魔法與幻獸 ═════════════════════════════════════════════ */
+let pendSpell = null;
+
+/* 視野內的敵人 —— 全場型魔法的作用對象。用「看得見」而不是「同房間」，
+   玩家看到什麼就打到什麼，不需要另外解釋規則。 */
+const visibleMons = () => G.mons.filter(m => G.seen[key(m.x,m.y)] === 2);
+
+function spellById(id){ return SPELLS.find(s => s.id === id); }
+
+function castSpell(sp){
+  const p = G.p;
+  if(p.mp < sp.mp){ say('魔力不足。','bad'); return false; }
+  if(sp.k === 'self'){ p.mp -= sp.mp; doSpell(sp, 0, 0); endTurn(); return true; }
+  pendSpell = sp;
+  say(`${sp.nm} —— 選擇方向。`,'gold');
+  refresh();
+  return null;                       // null = 進入瞄準，由方向鍵/方向盤接手
+}
+function fireSpell(dx, dy){
+  const sp = pendSpell; pendSpell = null;
+  if(!sp) return;
+  G.p.mp -= sp.mp;
+  doSpell(sp, dx, dy);
+  endTurn();
+}
+
+function hurtMon(m, dmg, col, st, dur){
+  m.hp -= dmg; m.flash = 0.12;
+  float(m.x, m.y, String(dmg), col);
+  burst(m.x, m.y, 8, col, 34, 8);
+  if(st && !(m.d.imm||[]).includes(st)) m.st[st] = dur;
+  if(m.hp <= 0) kill(m);
+}
+/* 沿方向掃出一條線，回傳沿途的怪 */
+function beamLine(dx, dy, range, stopAtFirst){
+  const out = [];
+  let x = G.p.x + dx, y = G.p.y + dy;
+  for(let i=0;i<range;i++){
+    if(!walkable(x,y)) break;
+    const m = monAt(x,y);
+    if(m){ out.push(m); if(stopAtFirst) break; }
+    x += dx; y += dy;
+  }
+  return {mons:out, x, y};
+}
+function knock(m, dx, dy, n){
+  for(let i=0;i<n;i++){
+    const nx = m.x+dx, ny = m.y+dy;
+    if(!walkable(nx,ny) || monAt(nx,ny) || (nx===G.p.x&&ny===G.p.y)) break;
+    m.x = nx; m.y = ny;
+  }
+}
+
+function doSpell(sp, dx, dy){
+  const p = G.p;
+  SFX.play(sp.sc === 'heal' ? 'quaff' : 'zap');
+  const sl = p.sch[sp.sc] || 0;
+
+  switch(sp.id){
+    case 'cure': {
+      const h = Math.min(power(p, sp, 18, 12), p.mhp - p.hp);
+      p.hp += h; burst(p.x,p.y,14,'#6a8f4a',30,14);
+      say(h ? `恢復了 ${h} 點體力。` : '體力已經是滿的。', h?'good':null);
+      if(h) float(p.x,p.y,'+'+h,'#6a8f4a');
+      break;
+    }
+    case 'purge': {
+      const had = Object.keys(p.st).length;
+      p.st = {};
+      const h = Math.min(power(p, sp, 10, 6), p.mhp - p.hp);
+      p.hp += h; burst(p.x,p.y,18,'#f5dc7a',34,16);
+      say(had ? '異常狀態全部解除了。' : '身上很乾淨。','good');
+      break;
+    }
+    case 'spark': {
+      const {mons} = beamLine(dx, dy, 9, false);
+      if(!mons.length){ say('電光射向遠方。'); break; }
+      for(const m of mons) hurtMon(m, rollDmg(power(p,sp,16,9), m.d.def, false, 1), '#7cb8ea', '麻', 2);
+      say(`電擊貫穿了 ${mons.length} 個敵人。`,'good');
+      break;
+    }
+    case 'gust': {
+      const {mons} = beamLine(dx, dy, 8, false);
+      if(!mons.length){ say('風掠過空無一物的走廊。'); break; }
+      for(const m of mons){
+        hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+        if(m.hp > 0) knock(m, dx, dy, 3);
+      }
+      say(`疾風把 ${mons.length} 個敵人推了出去。`,'good');
+      break;
+    }
+    case 'flame': case 'shard': {
+      const ice = sp.id === 'shard';
+      const {mons, x, y} = beamLine(dx, dy, 9, true);
+      const hitAt = mons[0] ? {x:mons[0].x, y:mons[0].y} : {x, y};
+      burst(hitAt.x, hitAt.y, 22, ice ? '#7cb8ea' : '#f5a95e', 60, 10, .5);
+      G.shake = Math.max(G.shake, 6);
+      let n = 0;
+      for(const m of G.mons.slice()){
+        if(Math.max(Math.abs(m.x-hitAt.x), Math.abs(m.y-hitAt.y)) > (ice?0:1)) continue;
+        hurtMon(m, rollDmg(power(p,sp, ice?14:18, ice?8:10), m.d.def, false, 1),
+                ice ? '#7cb8ea' : '#e87a4a', ice ? '麻' : '痛', ice ? 4 : 5);
+        n++;
+      }
+      say(n ? `${sp.nm}命中了 ${n} 個敵人。` : `${sp.nm}炸在空無一物的地方。`, n?'good':null);
+      break;
+    }
+    case 'thund': case 'inferno': case 'freeze': case 'cyclone': {
+      const list = visibleMons();
+      if(!list.length){ say('視野裡沒有敵人。'); break; }
+      G.shake = Math.max(G.shake, 9);
+      for(const m of list.slice()){
+        if(sp.id === 'thund')
+          hurtMon(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
+        else if(sp.id === 'inferno')
+          hurtMon(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
+        else if(sp.id === 'freeze')
+          hurtMon(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
+        else {
+          hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+          if(m.hp > 0) knock(m, Math.sign(m.x-p.x)||1, Math.sign(m.y-p.y)||1, 4);
+        }
+      }
+      say(`${sp.nm}橫掃了 ${list.length} 個敵人！`,'good');
+      break;
+    }
+  }
+}
+
+/* ─── 幻獸 ─────────────────────────────────────────────────── */
+function callSummon(sm){
+  const p = G.p;
+  const cost = Math.floor(p.msat * SUMMON_COST);
+  if(p.sat < cost){ say('胃袋不夠 —— 召喚會把你餓垮。','bad'); return false; }
+  const spot = nearestFree(p.x, p.y);
+  if(!spot){ say('周圍沒有空間可以現身。','bad'); return false; }
+  p.sat -= cost;
+  const lv = p.sch[sm.sc] || 0;
+  G.allies.push({
+    d: sm, x: spot.x, y: spot.y, id: UID++,
+    hp: sm.hp + lv*8, mhp: sm.hp + lv*8,
+    atk: sm.atk + lv*4, ttl: sm.ttl, st:{},
+  });
+  SFX.play('level');
+  burst(spot.x, spot.y, 26, PAL[sm.col], 60, 20, .8);
+  G.shake = Math.max(G.shake, 8);
+  say(`${sm.nm}響應召喚而來！（${sm.ttl} 回合，胃袋 −30%）`,'gold');
+  endTurn();
+  return true;
+}
+const allyAt = (x,y) => G.allies.find(a => a.hp > 0 && a.x === x && a.y === y);
+const keeperAt = (x,y) => !!(G.shop && G.shop.keeper.x === x && G.shop.keeper.y === y);
+const unpaid = () => G.p.inv.filter(i => i.shop);
+
+/* 幻獸行動：找最近的敵人，貼上去打。不做花俏的走位 ——
+   玩家召喚它是為了「有人替我擋著並輸出」，不是為了看它繞路。 */
+function allyTurn(){
+  for(const a of G.allies){
+    if(a.hp <= 0) continue;
+    let best = null, bd = 1e9;
+    for(const m of G.mons){
+      const d = Math.max(Math.abs(m.x-a.x), Math.abs(m.y-a.y));
+      if(d < bd){ bd = d; best = m; }
+    }
+    if(best && bd <= 1 && cornerOK(a.x,a.y,best.x,best.y)){
+      a.lunge = {dx:Math.sign(best.x-a.x), dy:Math.sign(best.y-a.y), t:0};
+      const dmg = rollDmg(a.atk, best.d.def, G.rng.chance(.12), 1);
+      SFX.play('hit', 40);
+      hurtMon(best, dmg, PAL[a.d.col]);
+      say(`${a.d.nm} 對 ${best.d.nm} 造成 ${dmg} 點傷害。`,'good');
+    } else if(best){
+      let bs = -1e9, bdir = null;
+      for(const d of DIRS){
+        const nx = a.x+d[0], ny = a.y+d[1];
+        if(!walkable(nx,ny) || monAt(nx,ny) || allyAt(nx,ny)) continue;
+        if(nx===G.p.x && ny===G.p.y) continue;
+        if(!cornerOK(a.x,a.y,nx,ny)) continue;
+        const sc = -Math.max(Math.abs(nx-best.x), Math.abs(ny-best.y));
+        if(sc > bs){ bs = sc; bdir = d; }
+      }
+      if(bdir){ G.anim.push({o:a, fx:a.x, fy:a.y, t:0}); a.x += bdir[0]; a.y += bdir[1]; }
+    }
+    if(--a.ttl <= 0){
+      a.hp = 0;
+      burst(a.x, a.y, 18, PAL[a.d.col], 40, 12, .6);
+      say(`${a.d.nm} 的形體消散了。`);
+    }
+  }
+  G.allies = G.allies.filter(a => a.hp > 0);
+}
+
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say('這裡沒有樓梯。'); return; }
+  if(G.shop && unpaid().length){ steal(); return; }
   SFX.play('stairs');
   G.depth++;
   buildFloor();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
-  say(`來到了地下 ${G.depth} 層。`,'gold');
+  const z = zoneOf(G.depth);
+  say(`來到了 ${z.nm} B${G.depth}F。`,'gold');
+  showCard();
   G.turn++;
   refresh();
 }
@@ -1836,6 +2329,15 @@ const BGM = (()=>{
   };
 })();
 
+/* 目前該畫哪一張主角 —— 換裝備立刻反映在畫面上。
+   這支函式讀遊戲狀態，所以放在遊戲層，不放美術層。 */
+function heroNow(){
+  const p = G && G.p;
+  const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.id) : -1;
+  const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.id) : -1;
+  return heroSprite(wi, si);
+}
+
 /* ═══ 動態美術層 ═════════════════════════════════════════════
    一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
    關鍵是**畫面上有沒有東西在動**。靜止的精靈再精緻也像素材圖，
@@ -1874,6 +2376,55 @@ function makeTorch(f){
   return c;
 }
 const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
+
+/* 幻獸：四隻共用一套「懸浮元素體」的骨架，只換顏色與外圈形狀。
+   共用骨架是刻意的 —— 玩家要一眼認出「這是我召的東西」，
+   然後才是分辨是哪一隻。剪影一致、顏色分派，就是這個順序。 */
+function makeSummon(colKey, shape){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const col = PAL[colKey], dark = PAL['0'], lite = PAL['6'];
+  const CORE = [[5,7,2],[6,6,4],[7,5,6],[8,5,6],[9,6,4],[10,7,2]];
+  paintMask(x, shapeMask(CORE), col, dark, null, 99);
+  px(x,lite,7,6,1,2);
+  px(x,dark,6,7,1,1); px(x,dark,9,7,1,1);              // 眼
+  if(shape === 0){                                      // 炎：向上竄的火舌
+    px(x,col,7,2,2,3); px(x,lite,7,2,1,1);
+    px(x,col,5,4,1,2);  px(x,col,10,4,1,2);
+  } else if(shape === 1){                               // 冰：六角結晶環
+    px(x,col,2,7,2,2); px(x,col,12,7,2,2);
+    px(x,col,7,3,2,2); px(x,col,7,11,2,2);
+    px(x,lite,7,3,1,1);
+  } else if(shape === 2){                               // 雷：外圍的閃電折線
+    px(x,col,3,5,1,2); px(x,col,4,7,1,2); px(x,col,3,9,1,2);
+    px(x,col,12,5,1,2); px(x,col,11,7,1,2); px(x,col,12,9,1,2);
+    px(x,lite,7,1,2,2);
+  } else {                                              // 風：環繞的氣旋
+    px(x,col,3,6,3,1); px(x,col,2,8,3,1); px(x,col,3,10,3,1);
+    px(x,col,10,6,3,1); px(x,col,11,8,3,1); px(x,col,10,10,3,1);
+  }
+  px(x,dark,5,13,6,1); px(x,col,6,14,4,1);              // 底下的懸浮尾焰
+  return c;
+}
+const SUMMON_ART = {
+  ifr: makeSummon('h', 0), niv: makeSummon('r', 1),
+  ram: makeSummon('q', 2), syl: makeSummon('m', 3),
+};
+
+/* 店員：地牢裡唯一不會攻擊你的人形。用金紫配色跟所有怪物拉開距離 ——
+   玩家必須在第一眼就知道「這個不能打」。 */
+const KEEPER = (()=>{
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  px(x,PAL['0'],4,1,8,6);  px(x,PAL['o'],5,2,6,4);                 // 帽子
+  px(x,PAL['p'],5,2,6,1);  px(x,PAL['u'],5,5,6,1);
+  px(x,PAL['0'],4,6,8,5);  px(x,PAL['d'],5,7,6,3);                 // 臉
+  px(x,PAL['0'],6,8,1,1);  px(x,PAL['0'],9,8,1,1);
+  px(x,PAL['0'],3,10,10,5); px(x,PAL['o'],4,11,8,4);               // 長袍
+  px(x,PAL['u'],7,11,2,4);                                          // 前襟
+  px(x,PAL['t'],4,11,1,3); px(x,PAL['t'],11,11,1,3);
+  return c;
+})();
 
 /* 地面雜物：裂縫 / 碎石 / 苔 / 骨 / 水漬。
    一整層只鋪同一張地磚，走起來會像跑步機；雜物是打破重複感最便宜的手段。 */
@@ -1970,6 +2521,16 @@ function draw(dt){
     if(s===1){ cx.fillStyle='rgba(0,0,0,.62)'; cx.fillRect(px_,py,T,T); }   // 記憶：只記地形
   }
 
+  // 店鋪地板鋪一層暖色地毯：踏進去就知道規則不一樣了
+  if(G.shop){
+    const r = G.f.rooms[G.shop.room];
+    if(r) for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++){
+      if(G.seen[key(x,y)] !== 2) continue;
+      cx.fillStyle = 'rgba(168,60,50,.16)';
+      cx.fillRect(ox+x*T, oy+y*T, T, T);
+    }
+  }
+
   // 牆上的火把（只在看得見的時候燒）
   const litTorches = [];
   for(const tc of G.torches){
@@ -2059,6 +2620,28 @@ function draw(dt){
       cx.fillRect(ox+m.x*T+2, oy+m.y*T+14, w, 2);
     }
   }
+  // 店員
+  if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
+    const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
+    shadow(kx, ky);
+    cx.drawImage(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
+  }
+
+  // 幻獸：畫在怪物之後、玩家之前，並用自己的元素色打一圈光
+  for(const a of G.allies){
+    const [ax,ay] = entPos(a);
+    shadow(ax,ay);
+    const bx0 = Math.round(ox+ax*T), by0 = Math.round(oy+ay*T);
+    cx.fillStyle = PAL[a.d.col] + '66';
+    cx.fillRect(bx0+3, by0+15, 10, 1);
+    drawEnt(a, SUMMON_ART[a.d.id], 'sum'+a.d.id, a.id*1.3);
+    if(a.ttl <= 5){                       // 快消失了就閃 —— 這是最需要提前知道的資訊
+      cx.save(); cx.globalAlpha = .35 + Math.sin(clock*9)*.3;
+      cx.drawImage(whiteOf(SUMMON_ART[a.d.id],'sum'+a.d.id), bx0, by0);
+      cx.restore();
+    }
+  }
+
   // 玩家：底下多一圈黃銅光環。畫面上永遠只有一個東西是這個顏色，
   // 所以再亂的房間也能一眼找到自己在哪。
   {
@@ -2067,7 +2650,7 @@ function draw(dt){
     const bx = Math.round(ox+px2*T), by = Math.round(oy+py2*T);
     cx.fillStyle = 'rgba(201,151,63,.55)';
     cx.fillRect(bx+3, by+15, 10, 1); cx.fillRect(bx+2, by+14, 1, 1); cx.fillRect(bx+13, by+14, 1, 1);
-    drawEnt(G.p, atlas.player, 'player', 0);
+    drawEnt(G.p, heroNow(), 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-'), 0);
   }
 
   // 粒子（塵、火星、爆散）
@@ -2180,7 +2763,8 @@ function updateTags(){
         if(G.seen[k]!==2) continue;
         const x=k%MW, y=(k/MW)|0;
         if(!near(x,y,4)) continue;
-        push(x, y, nameOf(G.items[k]), 'item');
+        const it = G.items[k];
+        push(x, y, it.shop ? `${nameOf(it)}　${it.price}G` : nameOf(it), it.shop ? 'shop' : 'item');
       }
       for(const k in G.gold){
         if(G.seen[k]!==2) continue;
@@ -2192,6 +2776,9 @@ function updateTags(){
         if(G.seen[k]!==2) continue;
         push(k%MW, (k/MW)|0, '陷阱', 'mon');
       }
+      for(const a of G.allies) push(a.x, a.y, `${a.d.nm}·${a.ttl}`, 'stair', 'a'+a.id);
+      if(G.shop && G.seen[key(G.shop.keeper.x,G.shop.keeper.y)]===2)
+        push(G.shop.keeper.x, G.shop.keeper.y, '店員', 'shop', 'keeper');
       const stt = G.f.stairs;
       if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, '下樓', 'stair');
 
@@ -2208,6 +2795,7 @@ function updateTags(){
       };
       block(G.p.x, G.p.y, 'p');
       for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2) block(m.x, m.y, 'm'+m.id);
+      for(const a of G.allies) block(a.x, a.y, 'a'+a.id);
 
       want.sort((a,b)=> a.y - b.y);
       // 自己的精靈不算擋自己的名牌 —— 不排除的話，名牌想放到腳下時
@@ -2279,6 +2867,7 @@ function drawMini(){
   for(const k in G.items) if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#dcae35',4);
   for(const k in G.gold)  if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#f5dc7a',3);
   for(const m of G.mons)  if(G.seen[key(m.x,m.y)]===2) dot(m.x,m.y,'#a83c32',5);
+  for(const a of G.allies) dot(a.x,a.y,PAL[a.d.col],5);
   // 玩家：白點加一圈黑框，壓在所有東西上面
   mcx.fillStyle='#14110f'; mcx.fillRect(G.p.x*MMS, G.p.y*MMS, MMS, MMS);
   mcx.fillStyle='#e8dcc0'; mcx.fillRect(G.p.x*MMS+1, G.p.y*MMS+1, MMS-2, MMS-2);
@@ -2354,10 +2943,13 @@ function refresh(){
   $('full').textContent = p.sat<=0 ? '飢餓！' : (p.sat/1000).toFixed(0)+'%';
   $('full').className = p.sat<=0?'crit':(fp<=.3?'warn':'');
   $('fullbar').firstElementChild.style.width = Math.max(0,100*fp)+'%';
+  $('mp').textContent = `${p.mp}/${p.mmp}`;
+  $('mpbar').firstElementChild.style.width = Math.max(0,100*p.mp/Math.max(1,p.mmp))+'%';
+  $('magbtn').classList.toggle('ping', p.sp > 0);
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
-  $('turn').textContent = G.turn;
+  $('zone').textContent = zoneOf(G.depth).nm;
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
@@ -2400,6 +2992,80 @@ function closePanel(){ panelMode=null; sel=null; $('panel').classList.remove('op
 function renderPanel(){
   const list = $('list'), acts = $('acts'), p = G.p;
   list.innerHTML=''; acts.innerHTML='';
+  if(panelMode==='magic'){
+    $('ptitle').textContent = '魔法';
+    $('pcount').textContent = `MP ${p.mp} / ${p.mmp}`;
+    $('phint').textContent = p.sp ? `還有 ${p.sp} 點技能點可以分配。` : '打倒敵人升級可以獲得技能點。';
+
+    const spRow = document.createElement('div'); spRow.id = 'sp';
+    spRow.innerHTML = `<span>技能點</span><b>${p.sp}</b>`;
+    list.appendChild(spRow);
+
+    // 五系與加點。每一點都要立刻看得到威力差別，不然沒人願意投資。
+    for(const sc of SCHOOLS){
+      const lv = p.sch[sc.id] || 0;
+      const row = document.createElement('div'); row.className = 'sch';
+      const nm = document.createElement('div'); nm.className='nm'; nm.textContent = sc.nm;
+      nm.style.color = sc.col;
+      const pips = document.createElement('div'); pips.className='pips';
+      for(let i=0;i<5;i++){
+        const d = document.createElement('i');
+        if(i < lv) d.style.background = sc.col;
+        pips.appendChild(d);
+      }
+      row.appendChild(nm); row.appendChild(pips);
+      const b = document.createElement('button');
+      b.textContent = '＋';
+      b.disabled = p.sp <= 0 || lv >= 5;
+      b.onclick = ()=>{
+        p.sp--; p.sch[sc.id] = lv + 1;
+        p.mmp = maxMp(p); p.mp = Math.min(p.mmp, p.mp + 5);
+        SFX.play('ident');
+        say(`${sc.nm}系提升到 ${lv+1} 級。`,'good');
+        refresh();
+      };
+      row.appendChild(b);
+      list.appendChild(row);
+    }
+
+    const known = spellsFor(p);
+    const head = document.createElement('div'); head.className='hint';
+    head.textContent = known.length ? '學會的魔法' : '目前還沒有學會任何魔法 —— 先加點。';
+    list.appendChild(head);
+    for(const sp of known){
+      const row = document.createElement('div');
+      const ok = p.mp >= sp.mp;
+      row.className = 'spell' + (ok ? '' : ' off');
+      row.innerHTML =
+        `<span class="nm" style="color:${SCHOOLS.find(x=>x.id===sp.sc).col}">${sp.nm}</span>` +
+        `<span class="ds">${sp.desc}</span><span class="mp">${sp.mp} MP</span>`;
+      if(ok) row.onclick = ()=>{
+        const r = castSpell(sp);
+        if(r === null){ closePanel(); openAim('施法方向'); return; }
+        if(r) closePanel(); else refresh();
+      };
+      list.appendChild(row);
+    }
+
+    const av = summonsFor(p);
+    const sh = document.createElement('div'); sh.className='hint';
+    sh.textContent = av.length ? `幻獸　召喚代價：胃袋 ${Math.round(SUMMON_COST*100)}%`
+                               : `幻獸　需要任一系 ${SUMMON_AT} 級`;
+    list.appendChild(sh);
+    for(const sm of av){
+      const row = document.createElement('div');
+      const cost = Math.floor(p.msat * SUMMON_COST);
+      const ok = p.sat >= cost;
+      row.className = 'spell' + (ok ? '' : ' off');
+      row.innerHTML =
+        `<span class="nm" style="color:${PAL[sm.col]}">${sm.nm}</span>` +
+        `<span class="ds">攻 ${sm.atk}　${sm.ttl} 回合</span>` +
+        `<span class="mp">胃袋 −30%</span>`;
+      if(ok) row.onclick = ()=>{ if(callSummon(sm)) closePanel(); else refresh(); };
+      list.appendChild(row);
+    }
+    return;
+  }
   if(panelMode==='inv'){
     $('ptitle').textContent = '背包';
     $('pcount').textContent = `${p.inv.length} / 20`;
@@ -2441,7 +3107,7 @@ function buildActions(it, ground){
   const verb = {food:'吃', herb:'喝', scroll:'讀', wand:'揮動'}[it.cat];
   if(verb) btn(ground?verb+'（不撿起）':verb, ()=>{
     const r = useItem(it, ground);
-    if(r===null){ closePanel(); return; }      // 杖進入瞄準
+    if(r===null){ closePanel(); openAim('揮杖方向'); return; }   // 杖進入瞄準
     if(r){ if(!ground) {} closePanel(); endTurn(); } else refresh();
   });
   if(it.cat==='weap'||it.cat==='shld'){
@@ -2463,10 +3129,21 @@ function buildActions(it, ground){
       closePanel(); endTurn();
     });
   }
+  if(ground && it.shop){
+    btn(`購買（${it.price} G）`, ()=>{
+      if(p.gold < it.price){ say('金錢不足。','bad'); refresh(); return; }
+      if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
+      p.gold -= it.price; delete it.shop; delete it.price;
+      SFX.play('coin');
+      p.inv.push(it); delete G.items[key(p.x,p.y)];
+      say(`買下了「${nameOf(it)}」。`,'gold'); closePanel(); endTurn();
+    }, p.gold < it.price);
+  }
   if(ground){
-    btn('撿起', ()=>{
+    btn(it.shop ? '拿起（未結帳）' : '撿起', ()=>{
       if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
       SFX.play('pick');
+      if(it.shop) say('店員的視線跟了過來。','bad');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
       say(`撿起了「${nameOf(it)}」。`); closePanel(); endTurn();
     }, p.inv.length>=20);
@@ -2485,7 +3162,7 @@ function buildActions(it, ground){
         closePanel(); endTurn();
       });
     }
-    btn('投擲', ()=>{ pendThrow = it; closePanel(); say('選擇方向 —— 按方向鍵投擲。','gold'); refresh(); });
+    btn('投擲', ()=>{ pendThrow = it; closePanel(); openAim('投擲方向'); say('選擇投擲方向。','gold'); refresh(); });
     btn('放下', ()=>{
       if(G.items[key(p.x,p.y)]){ say('腳下已經有東西了。'); refresh(); return; }
       if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
@@ -2539,9 +3216,23 @@ const KEYDIR = {
   w:[0,-1], s:[0,1], a:[-1,0], d:[1,0],
   q:[-1,-1], e:[1,-1], z:[-1,1], c:[1,1],
 };
+/* 瞄準模式：投擲 / 揮杖 / 施法共用。
+   全部收斂到一個方向盤，鍵盤與滑鼠走同一條路徑，不會有一邊做得到、
+   另一邊做不到的功能。 */
+function openAim(label){
+  const el = $('aim'); if(!el) return;
+  $('aimlbl').textContent = label || '選擇方向';
+  el.classList.add('show');
+}
+function closeAim(){ const el = $('aim'); if(el) el.classList.remove('show'); }
+function cancelAim(){
+  pendWand = null; pendThrow = null; pendSpell = null;
+  closeAim(); say('取消了。'); refresh();
+}
 function handleDir(dx,dy){
-  if(pendWand){ fireWand(dx,dy); return; }
-  if(pendThrow){ doThrow(dx,dy); return; }
+  if(pendSpell){ closeAim(); fireSpell(dx,dy); return; }
+  if(pendWand){ closeAim(); fireWand(dx,dy); return; }
+  if(pendThrow){ closeAim(); doThrow(dx,dy); return; }
   tryMove(dx,dy);
 }
 // 瀏覽器規定音訊必須由使用者手勢啟動 —— 第一次互動時解鎖就好
@@ -2565,12 +3256,13 @@ addEventListener('keydown', ev=>{
   if(ev.target.tagName==='INPUT') return;
   const k = ev.key;
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
-  if(k==='Escape'){ pendWand=null; pendThrow=null; swapMode=null; closePanel(); refresh(); return; }
+  if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closePanel(); refresh(); return; }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
   if(k===' '){ ev.preventDefault(); endTurn(); return; }
   if(k==='g'||k==='G'){ SFX.play('open'); openPanel('ground'); return; }
   if(k==='i'||k==='I'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); return; }
+  if(k==='k'||k==='K'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); return; }
   if(k==='l'||k==='L'){ toggleTags(); return; }
   if(k==='m'||k==='M'){ toggleMute(); return; }
   if(k==='>'||k==='.'){ descend(); return; }
@@ -2578,6 +3270,8 @@ addEventListener('keydown', ev=>{
 document.querySelectorAll('[data-dir]').forEach(b=>{
   b.onclick = ()=>{ if(G&&!G.over&&!coverUp){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
 });
+$('aimx').onclick = cancelAim;
+$('pclose').onclick = ()=>{ SFX.play('open'); closePanel(); refresh(); };
 document.querySelectorAll('[data-act]').forEach(b=>{
   b.onclick = ()=>{
     if(!G||G.over||coverUp) return;
@@ -2586,6 +3280,7 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='inv'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); }
     if(a==='down') descend();
     if(a==='wait') endTurn();
+    if(a==='mag'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); }
     if(a==='dpad'){
       const on = $('dpad').classList.toggle('show');
       $('dpadbtn').textContent = on ? '收起方向鍵' : '方向鍵';
@@ -2607,6 +3302,18 @@ function restart(){
   newGame((Math.random()*1e9)|0);
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
   refresh();
+}
+
+/* ─── 進場卡 ────────────────────────────────────────────────── */
+function showCard(){
+  const el = $('card'); if(!el) return;
+  const z = zoneOf(G.depth);
+  $('cardf').textContent = 'B' + G.depth + 'F';
+  $('cardz').textContent = z.nm;
+  $('cards').textContent = z.sub;
+  el.classList.remove('show');
+  void el.offsetWidth;                 // 強制重排，動畫才會從頭播
+  el.classList.add('show');
 }
 
 /* ─── 側欄分頁（窄螢幕） ────────────────────────────────────── */
@@ -2645,6 +3352,7 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
 
   el.addEventListener('pointerdown', ev=>{
     if(coverUp || !G || G.over || blocked(ev.target)) return;
+    if(panelMode){ closePanel(); refresh(); return; }    // 點畫面 = 關視窗
     id = ev.pointerId; sx = cx_ = ev.clientX; sy = cy_ = ev.clientY;
     t0 = performance.now(); dragging = false;
     SFX.unlock();
@@ -2713,6 +3421,7 @@ let coverUp = true;
     BGM.start();
     refresh();
     // 滑動這件事在畫面上是看不見的，不講玩家不會知道
+    showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
   };
 })();

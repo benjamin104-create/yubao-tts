@@ -16,7 +16,7 @@ function fakeCtx(){
 }
 function fakeEl(){
   const el = {
-    style:{ setProperty(){}, removeProperty(){}, getPropertyValue(){ return ''; } }, dataset:{}, classList:{ add:()=>{}, remove:()=>{}, contains:()=>false },
+    style:{ setProperty(){}, removeProperty(){}, getPropertyValue(){ return ''; } }, dataset:{}, classList:{ add:()=>{}, remove:()=>{}, toggle:()=>false, contains:()=>false },
     children:[], firstElementChild:{ style:{} },
     width:0, height:0, textContent:'', innerHTML:'', className:'', disabled:false,
     getContext: fakeCtx,
