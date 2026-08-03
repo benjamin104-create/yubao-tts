@@ -1,0 +1,117 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;--gold:#9C8248;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);padding:100px 92px;display:flex;flex-direction:column}
+/* 背景大字「秋」 */
+.slide::before{content:"秋";position:absolute;right:-90px;bottom:-160px;
+  font-family:var(--serif);font-weight:900;font-size:620px;line-height:1;
+  color:rgba(241,233,217,.035);pointer-events:none}
+.slide > *{position:relative;z-index:1}
+
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+.lead{font-family:var(--serif);font-size:74px;font-weight:700;line-height:1.5;letter-spacing:.02em}
+.lead .hl{color:var(--brick)}
+.lead .dim{color:var(--dim)}
+.para{font-size:38px;line-height:2;color:var(--cream);opacity:.88;margin-top:56px;font-weight:300;letter-spacing:.04em}
+.para em{font-style:normal;color:var(--brick);font-weight:400}
+.four{display:flex;gap:0;margin-top:14px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.four div{flex:1;padding:34px 0;text-align:center;font-family:var(--serif);
+  font-size:52px;color:var(--dim);letter-spacing:.06em}
+.four div.on{color:var(--brick);font-weight:700}
+
+/* 封面 */
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:58px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:98px;line-height:1.38;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.92;color:var(--dim);margin-top:48px;font-weight:300}
+.cover .ask{margin-top:auto;border-top:1px solid var(--rule);padding-top:38px;
+  font-family:var(--serif);font-size:46px;line-height:1.62;color:var(--cream)}
+.swipe{margin-top:34px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+/* 結尾 */
+.end .q{font-family:var(--serif);font-weight:700;font-size:76px;line-height:1.56;letter-spacing:.02em}
+.end .q .hl{color:var(--brick)}
+.end .q .dim{color:var(--dim)}
+.end .sign{margin-top:54px;font-size:33px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:30px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:30px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:24px;letter-spacing:.16em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">立秋 · 08.07</div>
+  <h1>古人說秋天要「收」，<br><span class="hl">收的不是果實。</span></h1>
+  <div class="sub">這個字被誤會了兩千年。<br>它講的其實是一件很現代的事。</div>
+  <div class="ask">你上半年撒出去的那些，<br>收回來幾件了？</div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">其 一</div><div class="n">01 / 04</div></div>
+  <div class="body">
+    <div class="lead">古人把一年<br>分成四段。</div>
+    <div class="four"><div>春生</div><div>夏長</div><div class="on">秋收</div><div>冬藏</div></div>
+    <div class="para">這四個字看起來在講種田，<br>其實在講<em>一個人一年怎麼分配力氣</em>。</div>
+  </div>
+  <div class="foot"><span>立秋 · 08.07</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">其 二</div><div class="n">02 / 04</div></div>
+  <div class="body">
+    <div class="lead"><span class="dim">「秋收」不是</span><br>收成果，<br>是<span class="hl">收心</span>。</div>
+    <div class="para">把散在外面的力氣叫回來，<br>清點一下——<br><em>手上到底有什麼還沒做完</em>。</div>
+  </div>
+  <div class="foot"><span>立秋 · 08.07</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="head"><div class="k">其 三</div><div class="n">03 / 04</div></div>
+  <div class="body">
+    <div class="lead">為什麼要<br>特別立一個節氣<br><span class="dim">提醒這件事？</span></div>
+    <div class="para">因為人的本能是一直往外開。<br>開了十件事，<br><em>年底一件都沒收</em>。<br><br>古人比我們更早發現這個毛病，<br>所以把它寫進曆法裡，一年提醒一次。</div>
+  </div>
+  <div class="foot"><span>立秋 · 08.07</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 5 -->
+<div class="slide">
+  <div class="head"><div class="k">其 四</div><div class="n">04 / 04</div></div>
+  <div class="body">
+    <div class="lead">紫微斗數裡<br>也是<span class="hl">同一個節奏</span>。</div>
+    <div class="para">十二個宮位不是每一宮都在往前衝。<br>有些位置本來就是<em>整理用的</em>。<br><br>這套東西真正在教的，<br>從來不是預測，<br>是<em>什麼時候該用力、什麼時候該收手</em>。</div>
+  </div>
+  <div class="foot"><span>立秋 · 08.07</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 6 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">這 週 的 功 課</div><div class="n">08.07</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">不要開新的事。</span><br><br>把手上<br>沒做完的，<br><span class="hl">完成一件</span>。</div>
+    <div class="sign">只要一件就好。<br>那種放很久、每次想到都有點煩的那件。</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>留言：你想收哪一件？</span></div>
+</div>
+
+</body></html>
