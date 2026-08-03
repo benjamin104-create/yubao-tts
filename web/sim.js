@@ -16,7 +16,7 @@ function fakeCtx(){
 }
 function fakeEl(){
   const el = {
-    style:{}, dataset:{}, classList:{ add:()=>{}, remove:()=>{}, contains:()=>false },
+    style:{ setProperty(){}, removeProperty(){}, getPropertyValue(){ return ''; } }, dataset:{}, classList:{ add:()=>{}, remove:()=>{}, contains:()=>false },
     children:[], firstElementChild:{ style:{} },
     width:0, height:0, textContent:'', innerHTML:'', className:'', disabled:false,
     getContext: fakeCtx,
@@ -32,6 +32,9 @@ global.document = {
   addEventListener: () => {},
 };
 global.addEventListener = () => {};
+// 視窗尺寸：遊戲會依螢幕方向切換視野格數，打樁成一般桌機尺寸
+global.innerWidth = 1280;
+global.innerHeight = 900;
 global.requestAnimationFrame = () => {};
 global.prompt = () => null;
 

@@ -1,4 +1,5 @@
-<title>深淵行商人 — 回合制地牢</title>
+<title>克勞德深淵 CLAUDE ABYSS — 回合制地牢</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <style>
 :root{
@@ -25,10 +26,93 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 #cabinet{
+  position:relative; overflow:hidden;
   width:100%; max-width:1180px; display:flex; flex-direction:column; gap:0;
   background:var(--ink); border:1px solid var(--edge);
   box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
 }
+
+/* ══ 封面 ═══════════════════════════════════════════════════
+   一個目的：讓人想按下去。所以整張圖只有一個主角、一個標題、
+   一顆按鈕，其餘都是氣氛。 */
+#cover{
+  position:absolute; inset:0; z-index:40;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(14px,3.4vh,30px);
+  padding:26px 20px calc(26px + env(safe-area-inset-bottom));
+  background:radial-gradient(120% 90% at 50% 42%, #241d18 0%, #120e0c 48%, #070605 100%);
+  text-align:center; overflow:hidden;
+}
+#cover.gone{display:none}
+/* 岩壁：直接用遊戲裡的岩盤圖樣，封面與遊戲是同一種材質 */
+#coverrock{position:absolute; inset:0; opacity:.5; background-repeat:repeat}
+/* 從上方灑下來的光井 —— 主角站在光裡，眼睛就會先看到主角 */
+#covershaft{
+  position:absolute; left:50%; top:-14%; width:min(88%,560px); height:82%;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg,rgba(217,119,87,.26),rgba(217,119,87,.07) 46%,transparent 80%);
+  clip-path:polygon(30% 0, 70% 0, 92% 100%, 8% 100%);
+  filter:blur(14px); pointer-events:none;
+}
+#coverdust{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+#coverdust i{
+  position:absolute; width:2px; height:2px; background:var(--brass);
+  opacity:0; animation:fall linear infinite;
+}
+@keyframes fall{
+  0%{opacity:0; transform:translateY(-10px)}
+  12%{opacity:.55} 88%{opacity:.4}
+  100%{opacity:0; transform:translateY(var(--d,340px))}
+}
+
+#coverart{
+  position:relative; flex:none; width:clamp(96px,22vh,128px); height:clamp(96px,22vh,128px);
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  animation:bob 2.6s ease-in-out infinite;
+}
+@keyframes bob{50%{transform:translateY(-5px)}}
+#coverglow{
+  position:absolute; left:50%; top:34%; width:min(78vw,320px); height:min(78vw,320px);
+  transform:translate(-50%,-50%); pointer-events:none;
+  background:radial-gradient(circle,rgba(217,119,87,.30),transparent 66%);
+  animation:breathe 3.4s ease-in-out infinite;
+}
+@keyframes breathe{50%{opacity:.62; transform:translate(-50%,-50%) scale(1.09)}}
+
+#covertext{position:relative; display:grid; gap:12px; justify-items:center; max-width:520px}
+#cover h1{
+  margin:0; font-family:var(--serif); font-weight:600;
+  font-size:clamp(30px,7.2vw,50px); letter-spacing:.2em; text-indent:.2em;
+  color:#f6efe3; line-height:1.1;
+  text-shadow:0 0 22px rgba(217,119,87,.5), 0 3px 0 rgba(0,0,0,.6);
+}
+#cover .en{
+  font-family:var(--mono); font-size:clamp(10px,2.4vw,13px);
+  letter-spacing:.52em; text-indent:.52em; color:var(--brass);
+}
+#cover .lede{
+  margin:0; font-size:clamp(12.5px,3.2vw,15px); line-height:1.9; color:#cbbca0;
+  max-width:30ch;
+}
+#cover .lede b{color:#f2e3c4; font-weight:600}
+#coverrule{width:66px; height:1px; background:linear-gradient(90deg,transparent,var(--brass-dim),transparent)}
+
+#coverfoot{position:relative; display:grid; gap:14px; justify-items:center}
+#start{
+  font-family:var(--serif); font-size:16px; letter-spacing:.28em; text-indent:.28em;
+  color:#1a120d; background:linear-gradient(180deg,#e8a06f,var(--brass));
+  border:0; padding:15px 40px; cursor:pointer; font-weight:600;
+  box-shadow:0 0 0 1px rgba(246,239,227,.25), 0 10px 30px rgba(217,119,87,.35);
+  transition:transform .14s ease, box-shadow .14s ease;
+  touch-action:manipulation;
+}
+#start:hover{transform:translateY(-2px); box-shadow:0 0 0 1px rgba(246,239,227,.45), 0 14px 36px rgba(217,119,87,.5)}
+#start:active{transform:translateY(1px)}
+#covermeta{
+  display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
+}
+#covermeta span{border:1px solid var(--edge); padding:4px 9px; white-space:nowrap}
 /* 主體：左邊是地牢，右邊是小地圖與訊息簿。
    把訊息簿移到側欄，畫面本身就能吃掉整個垂直空間。 */
 #body{display:grid; grid-template-columns:minmax(0,1fr) 316px; align-items:stretch}
@@ -79,7 +163,7 @@ body{
 @keyframes pulse{50%{opacity:.45}}
 
 /* ── 畫面 ── */
-#screenwrap{position:relative; background:#000; line-height:0; overflow:hidden}
+#screenwrap{position:relative; background:#000; line-height:0; overflow:hidden; touch-action:none}
 /* 只有主畫面拉滿寬度。這條規則以前是 `canvas{}`，
    結果把小地圖也一起拉寬、糊成非整數倍縮放。 */
 #game{
@@ -89,7 +173,9 @@ body{
 #mini, .row canvas{image-rendering:pixelated; image-rendering:crisp-edges}
 #vig{
   position:absolute; inset:0; pointer-events:none;
-  box-shadow:inset 0 0 90px 24px rgba(0,0,0,.85);
+  /* 跟著畫面寬度縮放。寫死 90px 的話，在 390px 寬的手機上
+     等於把整個房間罩住，玩家會以為遊戲壞了。 */
+  box-shadow:inset 0 0 clamp(34px,9vw,90px) clamp(9px,2.4vw,24px) rgba(0,0,0,.82);
 }
 #shake{position:relative; will-change:transform}
 
@@ -172,7 +258,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 /* ── 方向鍵（觸控） ── */
 #dpad{display:none; grid-template-columns:repeat(3,1fr); gap:5px; padding:0 14px 12px; background:var(--ink-2)}
 #dpad button{padding:13px 0; font-family:var(--mono); font-size:15px}
-@media (hover:none) and (pointer:coarse){ #dpad{display:grid} }
+#dpad.show{display:grid}
 
 /* ── 覆蓋面板 ── */
 #panel{
@@ -204,6 +290,17 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 #acts{display:flex; flex-wrap:wrap; gap:5px; padding:9px 14px; border-top:1px solid var(--hair)}
 #acts button{font-size:11.5px; padding:5px 9px}
 
+#hint{
+  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+  display:none; white-space:nowrap; pointer-events:none; z-index:5;
+  padding:8px 15px; background:rgba(6,8,9,.86); border:1px solid var(--edge);
+  font-size:12px; line-height:1.2; color:var(--parch-dim); letter-spacing:.03em;
+  animation:hintout .6s ease 4.2s forwards;
+}
+#hint b{color:var(--brass); font-weight:600}
+#hint.show{display:block}
+@keyframes hintout{to{opacity:0; visibility:hidden}}
+
 #over{
   position:absolute; inset:0; display:none; place-items:center; text-align:center;
   background:rgba(8,6,5,.9); padding:24px;
@@ -213,25 +310,77 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
 #over p{margin:0 0 16px; font-size:13px; color:var(--parch-dim); line-height:1.7}
 #over b{color:var(--parch); font-family:var(--mono)}
 
-/* 窄螢幕：側欄改成疊在畫面下方，小地圖與訊息簿並排 */
+/* 側欄分頁鍵：只在窄螢幕出現 */
+#railtabs{display:none}
+#railtabs button{
+  flex:1; padding:12px 4px; font-size:12.5px; letter-spacing:.08em;
+  background:var(--ink-2); border:0; border-bottom:2px solid transparent;
+  color:var(--parch-dim); touch-action:manipulation;
+}
+#railtabs button.on{color:var(--brass); border-bottom-color:var(--brass); background:var(--panel)}
+
+/* ── 窄螢幕 / 手機 ──────────────────────────────────────────
+   手機上不能把小地圖、裝備、紀錄一路往下堆 —— 那會讓遊戲畫面
+   被擠到剩一條，而且每看一次地圖都要捲動。改成分頁，
+   遊戲畫面永遠固定在拇指上方。 */
 @media (max-width:900px){
   body{padding:0; align-items:flex-start}
+  #cabinet{max-width:none; border:0; box-shadow:none; min-height:100svh}
   #body{grid-template-columns:1fr}
-  #rail{border-left:0; border-top:1px solid var(--hair); flex-direction:row}
-  #rail .card{border-bottom:0; border-right:1px solid var(--hair); flex:none}
-  #log{min-height:120px}
-}
-@media (max-width:520px){
-  #rail{flex-direction:column}
-  #rail .card{border-right:0; border-bottom:1px solid var(--hair)}
+  #rail{border-left:0; border-top:1px solid var(--hair)}
+  #railtabs{display:flex}
+  #rail [data-pane]{display:none}
+  #rail [data-pane].on{display:block}
+  #rail .card[data-pane="eq"]{border-bottom:1px solid var(--hair)}
+  #log{min-height:150px; max-height:34vh; overflow-y:auto}
+  #hud{gap:3px 12px; font-size:11.5px; padding:7px 12px}
+  .bar{width:52px}
+  #sign{padding:9px 12px 8px}
+  #sign h1{font-size:16px}
+  /* 觸控目標一律 44px 起跳 —— 拇指沒有滑鼠那種精準度 */
+  #keys{
+    gap:6px; padding:8px 10px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    /* 右緣淡出，讓人看得出來後面還有按鈕 */
+    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+  }
+  #keys::-webkit-scrollbar{display:none}
+  #keys button{flex:0 0 auto; min-height:44px; padding:9px 13px; font-size:13px; white-space:nowrap}
+  #dpad{padding:2px 10px calc(10px + env(safe-area-inset-bottom)); gap:6px}
+  #dpad button{min-height:46px; font-size:17px}
+  #acts button{min-height:40px; padding:8px 12px; font-size:12.5px}
+  .row{padding:10px 14px; min-height:48px}
+  #panel{width:min(340px,84%)}
 }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
 </style>
 
 <div id="cabinet">
+  <div id="cover">
+    <div id="coverrock"></div>
+    <div id="covershaft"></div>
+    <div id="coverdust"></div>
+    <div id="coverglow"></div>
+    <canvas id="coverart" width="16" height="16" aria-hidden="true"></canvas>
+
+    <div id="covertext">
+      <div class="en">CLAUDE ABYSS</div>
+      <h1>克勞德深淵</h1>
+      <div id="coverrule"></div>
+      <p class="lede">等級歸零，裝備盡失 ——<br><b>只有你學到的東西留下。</b></p>
+    </div>
+
+    <div id="coverfoot">
+      <button id="start">開始下潛</button>
+      <div id="covermeta">
+        <span>回合制</span><span>隨機地牢</span><span>死亡即歸零</span>
+      </div>
+    </div>
+  </div>
+
   <div id="sign">
-    <h1>深淵行商人</h1>
-    <div class="sub">Floor <span id="fnum">1</span></div>
+    <h1>克勞德深淵</h1>
+    <div class="sub">B<span id="fnum">1</span>F</div>
   </div>
 
   <div id="hud">
@@ -259,6 +408,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
         <div id="acts"></div>
         <div class="hint" id="phint"></div>
       </div>
+      <div id="hint"><b>滑動</b>移動　·　<b>輕點</b>走一步　·　<b>點自己</b>看腳下</div>
       <div id="over">
         <div>
           <h3 id="otitle">你倒下了</h3>
@@ -274,6 +424,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
     <button data-act="inv"><span class="k">I</span>背包</button>
     <button data-act="down"><span class="k">&gt;</span>下樓</button>
     <button data-act="wait"><span class="k">␣</span>待機</button>
+    <button data-act="dpad" id="dpadbtn">方向鍵</button>
     <button data-act="tags"><span class="k">L</span>名稱</button>
     <button data-act="mute"><span class="k">M</span>音效</button>
     <button data-act="help"><span class="k">?</span>操作</button>
@@ -286,7 +437,12 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
   </div><!-- /main -->
 
   <div id="rail">
-    <div class="card">
+    <div id="railtabs" role="tablist">
+      <button data-tab="map" class="on">樓層圖</button>
+      <button data-tab="eq">裝備</button>
+      <button data-tab="log">紀錄</button>
+    </div>
+    <div class="card on" data-pane="map">
       <h3>樓層圖 <em id="mapstat"></em></h3>
       <canvas id="mini" width="270" height="270"></canvas>
       <div id="legend">
@@ -298,7 +454,7 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
         <span><i style="background:#dcae35"></i>道具</span>
       </div>
     </div>
-    <div class="card">
+    <div class="card" data-pane="eq">
       <h3>裝備</h3>
       <dl id="eq">
         <dt>武器</dt><dd id="eqw">徒手</dd>
@@ -307,11 +463,11 @@ button .k{font-family:var(--mono); color:var(--brass); font-size:10px; margin-ri
         <dt>經驗</dt><dd id="eqe">0 / 6</dd>
       </dl>
     </div>
-    <div class="card">
+    <div class="card" data-pane="eq">
       <h3>狀態</h3>
       <div id="stbar"></div>
     </div>
-    <div id="log"></div>
+    <div id="log" data-pane="log" class="on"></div>
   </div>
   </div><!-- /body -->
 </div>
@@ -339,22 +495,30 @@ const PAL = {
   /* 地形專用冷色石階 —— 地板與生物必須是不同的色溫，否則
      棕色的老鼠站在棕色的地板上就是一團看不出來的東西。
      暖色（棕/紅/金）從此只屬於活的東西和道具。 */
-  'w':'#161d21','x':'#232c32','y':'#313d45','z':'#43525c'
+  'w':'#161d21','x':'#232c32','y':'#313d45','z':'#43525c',
+  /* 主角專用的陶土色階。用符號當索引是刻意的 —— 讀精靈資料時，
+     一眼就知道哪幾格是主角的顏色，而且整張地牢裡沒有別的東西
+     用這四個色，主角永遠是畫面上最好認的那一個。 */
+  '+':'#f2efe7','*':'#eaa88c','#':'#d97757','@':'#a8452c'
 };
 const T = 16;               // 一格 16px
-// 視窗 14x10 格 = 224x160，撐滿 860px 寬時一格約 61px。
-// 格數不能貪多：房間本來就只有 4~8 格寬，視窗開太大只是在看更多黑色。
-// 寧可格子大、看得清楚，也不要一片看不懂的細節。
-const VW = 14, VH = 10;
+// 視窗格數。格數不能貪多：房間本來就只有 4~8 格寬，
+// 視窗開太大只是在看更多黑色。寧可格子大、看得清楚。
+// 橫式 14x10、直式 10x13 —— 手機是直的，遊戲畫面就不該是橫的，
+// 否則畫面只剩薄薄一條，下面全是按鈕。
+let VW = 14, VH = 10;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
 const SPR = {
+/* 主角：陶土色的兜帽旅人，胸口一枚菱形星芒。
+   為什麼是菱形而不是圓點：16x16 裡圓形只會變成一坨，
+   菱形有四個尖角，縮到最小也還讀得出「這是一個記號」。 */
 player:[
-"................","................",".....888888.....","....89999998....",
-"...8999ddd998...","...899ddddd98...","...89dd0d0dd8...","...89ddddddd8...",
-"....8ddddd8.....","....gggggggg....","...8gguuuugg8...","...8gguuuugg8...",
-"...8gggggggg8...","....8g8..8g8....","....999..999....","....888..888...."],
+"................",".....@@@@@@.....","....@##**##@....","...@##++++##@...",
+"...@#++++++#@...","...@#+0++0+#@...","...@#++++++#@...","....@#++++#@....",
+".....@####@.....","..@###+#+#+##@..","..@####+++###@..","..@###+++++##@..",
+"..@####+++###@..","..@###+#+#+##@..","....@#@..@#@....","....@@@..@@@...."],
 rat:[
 "................","................","................","................",
 "...00......00...","..0aa0....0aa0..","..0aaa0000aaa0..",".0aaaaaaaaaaaa0.",
@@ -1572,9 +1736,81 @@ const SFX = (()=>{
       lastAt[name] = now;
       try{ f(); }catch(e){}                 // 音效永遠不該把遊戲弄掛
     },
-    toggle(){ on = !on; if(on) ensure()?.resume(); return on; },
+    // 靜音改成把總音量轉到 0，而不是只擋住 play() ——
+    // 背景音樂是連續排程的，只擋 play() 的話按了靜音音樂還在響。
+    toggle(){
+      on = !on;
+      const c = ensure();
+      if(c){ if(c.state==='suspended') c.resume(); master.gain.value = on ? .5 : 0; }
+      return on;
+    },
     get on(){ return on; },
     unlock(){ const c = ensure(); if(c && c.state==='suspended') c.resume(); },
+    ctx(){ return ensure(); },
+    bus(){ ensure(); return master; },
+  };
+})();
+
+/* ═══ 背景音樂 ═══════════════════════════════════════════════
+   一樣是即時合成，零檔案。地牢音樂不需要旋律，需要的是「壓力」：
+   一個不會結束的低音持續音 + 稀疏到讓人不安的高音點綴。
+   小調五聲音階永遠不會踩到難聽的音程，所以隨機取音也不會出事。
+   樓層越深，根音越低、點綴越密 —— 玩家不用看數字也感覺得到變深了。 */
+const BGM = (()=>{
+  let running = false, gain = null, timer = null, bar = 0;
+  const PENT = [0, 3, 5, 7, 10];              // 小調五聲
+  const BAR = 4.6;                            // 一小節秒數
+
+  function ensure(){
+    const c = SFX.ctx(); if(!c) return null;
+    if(!gain){
+      gain = c.createGain();
+      gain.gain.setValueAtTime(0.0001, c.currentTime);
+      gain.gain.linearRampToValueAtTime(0.5, c.currentTime + 4);   // 慢慢淡進來，不要嚇到人
+      gain.connect(SFX.bus());
+    }
+    return c;
+  }
+  const hz = (root, semi) => root * Math.pow(2, semi/12);
+
+  function voice(c, t, f, dur, type, vol, cut){
+    const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + dur*0.25);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(gain);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  function schedule(){
+    const c = ensure(); if(!c){ running = false; return; }
+    const t = c.currentTime + 0.12;
+    const depth = (typeof G !== 'undefined' && G) ? G.depth : 1;
+    const root = 55 * Math.pow(2, -Math.min(5, Math.floor((depth-1)/4))/12);   // 每 4 層降半音
+
+    // 持續低音：兩個微微失諧的三角波疊在一起才會有厚度與輕微的拍頻
+    voice(c, t, root,        BAR*1.06, 'triangle', .30, 420);
+    voice(c, t, root*1.005,  BAR*1.06, 'triangle', .22, 380);
+    if(bar % 2 === 0) voice(c, t, hz(root, 7), BAR*0.9, 'sine', .14, 500);      // 五度
+
+    // 稀疏點綴：越深越密，但永遠留白多於發聲
+    const n = 1 + Math.min(3, Math.floor(depth/5)) + (Math.random()<.3 ? 1 : 0);
+    for(let i=0;i<n;i++){
+      const at  = t + Math.random()*BAR*0.85;
+      const oct = 3 + (Math.random()<.35 ? 1 : 0);
+      const f   = hz(root, PENT[(Math.random()*PENT.length)|0] + 12*oct);
+      voice(c, at, f, 1.1 + Math.random()*1.4, 'sine', .055, 2600);
+    }
+    bar++;
+    timer = setTimeout(schedule, BAR*1000);
+  }
+
+  return {
+    start(){ if(running) return; running = true; bar = 0; schedule(); },
+    stop(){ running = false; clearTimeout(timer); timer = null; },
+    get running(){ return running; },
   };
 })();
 
@@ -1691,10 +1927,12 @@ function draw(dt){
   }
 
   // 火把光暈：離玩家越遠越暗，房間也有邊界感
+  // 半徑依畫布尺寸換算 —— 直式手機的畫布比桌機小，寫死半徑會整片變黑
+  const R = Math.max(cv.width, cv.height) * 0.46;
   const g = cx.createRadialGradient(
-    ox+G.p.x*T+8, oy+G.p.y*T+8, 22,
-    ox+G.p.x*T+8, oy+G.p.y*T+8, 104);
-  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.38)');
+    ox+G.p.x*T+8, oy+G.p.y*T+8, R*0.22,
+    ox+G.p.x*T+8, oy+G.p.y*T+8, R);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.34)');
   cx.fillStyle=g; cx.fillRect(0,0,cv.width,cv.height);
 
   // 火把本身：玩家周圍一圈暖光。地形是冷色、光是暖色，
@@ -1702,7 +1940,7 @@ function draw(dt){
   const lx = ox+G.p.x*T+8, ly = oy+G.p.y*T+8;
   const flick = 1 + Math.sin(performance.now()*0.005)*0.03
                   + Math.sin(performance.now()*0.017)*0.015;
-  const g2 = cx.createRadialGradient(lx, ly, 0, lx, ly, 74*flick);
+  const g2 = cx.createRadialGradient(lx, ly, 0, lx, ly, R*0.72*flick);
   g2.addColorStop(0,   'rgba(150,96,36,.34)');
   g2.addColorStop(0.55,'rgba(110,64,22,.15)');
   g2.addColorStop(1,   'rgba(0,0,0,0)');
@@ -1822,6 +2060,21 @@ function drawMini(){
   const el = document.getElementById('mapstat');
   if(el) el.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
 }
+
+/* 直式手機給直式視窗。手機畫面本來就是直的，塞一個 14x10 的橫視窗
+   只會讓遊戲剩下薄薄一條、其餘全是按鈕。 */
+function fitViewport(){
+  const portrait = innerHeight > innerWidth && innerWidth <= 900;
+  const nw = portrait ? 10 : 14, nh = portrait ? 13 : 10;
+  if(nw === VW && nh === VH) return;
+  VW = nw; VH = nh;
+  cv.width = VW*T; cv.height = VH*T;
+  cx.imageSmoothingEnabled = false;       // 改 canvas.width 會把 context 狀態重設
+  rockPat = null;                         // 圖樣綁在舊的繪圖狀態上，一起重建
+  if(G){ camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5; }
+}
+addEventListener('resize', fitViewport);
+addEventListener('orientationchange', fitViewport);
 
 let last=0;
 function loop(ts){
@@ -2048,8 +2301,8 @@ function handleDir(dx,dy){
   tryMove(dx,dy);
 }
 // 瀏覽器規定音訊必須由使用者手勢啟動 —— 第一次互動時解鎖就好
-addEventListener('keydown', ()=>SFX.unlock(), {once:true});
-addEventListener('pointerdown', ()=>SFX.unlock(), {once:true});
+addEventListener('keydown', ()=>{ SFX.unlock(); BGM.start(); }, {once:true});
+addEventListener('pointerdown', ()=>{ SFX.unlock(); BGM.start(); }, {once:true});
 
 function toggleTags(){
   tagsOn = !tagsOn;
@@ -2064,7 +2317,7 @@ function toggleMute(){
 }
 
 addEventListener('keydown', ev=>{
-  if(!G) return;
+  if(!G || coverUp) return;
   if(ev.target.tagName==='INPUT') return;
   const k = ev.key;
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
@@ -2079,16 +2332,21 @@ addEventListener('keydown', ev=>{
   if(k==='>'||k==='.'){ descend(); return; }
 });
 document.querySelectorAll('[data-dir]').forEach(b=>{
-  b.onclick = ()=>{ if(G&&!G.over){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
+  b.onclick = ()=>{ if(G&&!G.over&&!coverUp){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
 });
 document.querySelectorAll('[data-act]').forEach(b=>{
   b.onclick = ()=>{
-    if(!G||G.over) return;
+    if(!G||G.over||coverUp) return;
     const a=b.dataset.act;
     if(a==='pick'){ SFX.play('open'); openPanel('ground'); }
     if(a==='inv'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); }
     if(a==='down') descend();
     if(a==='wait') endTurn();
+    if(a==='dpad'){
+      const on = $('dpad').classList.toggle('show');
+      $('dpadbtn').textContent = on ? '收起方向鍵' : '方向鍵';
+      SFX.play('open');
+    }
     if(a==='tags') toggleTags();
     if(a==='mute') toggleMute();
     if(a==='help'){
@@ -2107,7 +2365,116 @@ function restart(){
   refresh();
 }
 
+/* ─── 側欄分頁（窄螢幕） ────────────────────────────────────── */
+document.querySelectorAll('#railtabs button').forEach(b=>{
+  b.onclick = ()=>{
+    const t = b.dataset.tab;
+    document.querySelectorAll('#railtabs button').forEach(o=>o.classList.toggle('on', o===b));
+    document.querySelectorAll('#rail [data-pane]').forEach(p=>p.classList.toggle('on', p.dataset.pane===t));
+    SFX.play('open');
+  };
+});
+
+/* ─── 觸控：滑動走路、點擊走一步 ────────────────────────────
+   手機上方向鍵不是最自然的操作 —— 拇指想做的是「往那邊」。
+   壓著往一個方向滑 = 持續朝那個方向走；輕點某一格 = 朝那格走一步。
+   兩種都保留，因為狹窄通道裡點擊比滑動精準。 */
+(function touchControls(){
+  const el = $('screenwrap'); if(!el || !el.addEventListener) return;
+  const STEP_MS = 135, TH = 26;        // 連續移動的節奏與觸發門檻（CSS px）
+  let id = null, sx = 0, sy = 0, cx_ = 0, cy_ = 0, t0 = 0, dragging = false, timer = null;
+
+  const dirOf = (dx,dy)=>{
+    const k = Math.round(Math.atan2(dy,dx) / (Math.PI/4));
+    return DIRS[(k%8+8)%8];
+  };
+  function tick(){
+    if(!dragging || coverUp || !G || G.over) return;
+    const d = dirOf(cx_-sx, cy_-sy);
+    handleDir(d[0], d[1]);
+  }
+  function stop(){
+    dragging = false; id = null;
+    if(timer){ clearInterval(timer); timer = null; }
+  }
+  const blocked = t => !!(t.closest && (t.closest('#panel') || t.closest('#over') || t.closest('#cover')));
+
+  el.addEventListener('pointerdown', ev=>{
+    if(coverUp || !G || G.over || blocked(ev.target)) return;
+    id = ev.pointerId; sx = cx_ = ev.clientX; sy = cy_ = ev.clientY;
+    t0 = performance.now(); dragging = false;
+    SFX.unlock();
+  });
+  el.addEventListener('pointermove', ev=>{
+    if(ev.pointerId !== id) return;
+    cx_ = ev.clientX; cy_ = ev.clientY;
+    if(!dragging && Math.hypot(cx_-sx, cy_-sy) > TH){
+      dragging = true;
+      tick();                                  // 第一步立刻走，不要等節拍
+      timer = setInterval(tick, STEP_MS);
+    }
+  });
+  el.addEventListener('pointerup', ev=>{
+    if(ev.pointerId !== id) return;
+    const wasDrag = dragging, dt = performance.now() - t0;
+    stop();
+    if(wasDrag || dt > 400 || coverUp || !G || G.over) return;
+
+    // 輕點：換算成格座標，朝那一格走一步（點自己 = 開腳下選單）
+    const r = cv.getBoundingClientRect(); if(!r.width) return;
+    const s = r.width / cv.width;
+    const gx = Math.floor(((ev.clientX - r.left)/s - lastOx) / T);
+    const gy = Math.floor(((ev.clientY - r.top )/s - lastOy) / T);
+    if(gx === G.p.x && gy === G.p.y){ SFX.play('open'); openPanel('ground'); return; }
+    const dx = Math.sign(gx - G.p.x), dy = Math.sign(gy - G.p.y);
+    if(dx || dy) handleDir(dx, dy);
+  });
+  el.addEventListener('pointercancel', stop);
+  el.addEventListener('lostpointercapture', stop);
+})();
+
+/* ─── 封面 ──────────────────────────────────────────────────── */
+let coverUp = true;
+(function buildCover(){
+  const cov = $('cover');
+  if(!cov) { coverUp = false; return; }
+
+  // 主角放大 7 倍當主視覺。用的是遊戲裡「同一份」精靈資料 ——
+  // 封面畫得比遊戲好看是最廉價的謊，點進來只會失望。
+  const ca = $('coverart');
+  if(ca) ca.getContext('2d').drawImage(atlas.player, 0, 0);
+
+  // 岩壁用遊戲的岩盤圖樣，封面與地牢是同一種材質
+  const rock = $('coverrock');
+  if(rock && TILE_ART.rock.toDataURL) rock.style.backgroundImage = `url(${TILE_ART.rock.toDataURL()})`;
+
+  const dust = $('coverdust');
+  if(dust){
+    for(let i=0;i<22;i++){
+      const d = document.createElement('i');
+      d.style.left = (Math.random()*100).toFixed(1)+'%';
+      d.style.top  = (-5 + Math.random()*30).toFixed(1)+'%';
+      d.style.setProperty('--d', (170+Math.random()*300).toFixed(0)+'px');
+      d.style.animationDuration = (5.5+Math.random()*7).toFixed(1)+'s';
+      d.style.animationDelay = (-Math.random()*9).toFixed(1)+'s';
+      dust.appendChild(d);
+    }
+  }
+
+  $('start').onclick = ()=>{
+    coverUp = false;
+    cov.classList.add('gone');
+    SFX.unlock();                 // 按鈕本身就是瀏覽器要求的那個「使用者手勢」
+    SFX.play('stairs');
+    BGM.start();
+    refresh();
+    // 滑動這件事在畫面上是看不見的，不講玩家不會知道
+    if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
+  };
+})();
+
 /* ─── 啟動 ──────────────────────────────────────────────────── */
+fitViewport();
 newGame((Math.random()*1e9)|0);
 camX = G.p.x - VW/2 + .5;
 camY = G.p.y - VH/2 + .5;
