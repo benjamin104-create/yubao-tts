@@ -271,7 +271,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
    不必離開遊戲區 —— 而且滑動操作永遠有一個問題：手指蓋住的
    正好是你要看的那一格。按鍵沒有這個問題。 */
 #pad{
-  position:absolute; inset:0; z-index:14; display:none;
+  position:absolute; inset:0; z-index:20; display:none;
   pointer-events:none;                       /* 只有按鍵吃事件，空白處仍可點地圖 */
 }
 #pad.show{display:block}
@@ -318,7 +318,6 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 }
 #btnA{width:68px; height:68px; font-size:22px; border-color:rgba(201,151,63,.75); background:rgba(201,151,63,.24)}
 #btnB{border-color:rgba(168,60,50,.6); background:rgba(168,60,50,.2); color:#f0c4bd; margin-bottom:14px}
-#btnB.dim{opacity:.32}
 #padhint{
   position:absolute; left:50%; transform:translateX(-50%);
   bottom:max(12px, env(safe-area-inset-bottom));
@@ -384,6 +383,31 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
 /* 瞄準方向盤：投擲、揮杖、施法都要選方向。
    原本只能按方向鍵 —— 那等於告訴用滑鼠的人「這個功能不給你用」。 */
+/* ── 全螢幕樓層圖（連按兩下 B） ──
+   側欄那張小地圖在手機上要捲動才看得到。真正想看地圖的時候，
+   你要的是一整張攤開來，而不是角落那一小塊。 */
+#bigmap{
+  position:absolute; inset:0; z-index:16; display:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  background:rgba(8,7,6,.95); padding:16px;
+}
+#bigmap.show{display:flex}
+.bmhead{display:flex; align-items:baseline; gap:10px}
+.bmhead b{font-family:var(--mono); font-size:24px; color:var(--brass); line-height:1}
+.bmhead em{font-style:normal; font-family:var(--serif); font-size:14px; letter-spacing:.2em; color:var(--parch)}
+.bmhead i{font-style:normal; font-family:var(--mono); font-size:10px; color:var(--parch-dim)}
+#bigc{
+  image-rendering:pixelated; background:#07090a; border:1px solid var(--edge);
+  width:min(450px, 78vmin); height:auto;
+}
+.bmlegend{
+  display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:center;
+  font-family:var(--mono); font-size:10px; color:var(--parch-dim); max-width:420px;
+}
+.bmlegend span{display:flex; align-items:center; gap:4px}
+.bmlegend i{width:8px; height:8px; display:block}
+#bigx{padding:10px 26px; font-size:13px; min-height:44px; touch-action:manipulation}
+
 /* 瞄準層只負責「變暗 + 告訴你要選方向」，本身不吃事件 ——
    吃了的話它會蓋住虛擬手把，玩家連取消都按不到。 */
 #aim{
@@ -448,8 +472,53 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #hint.show{display:block}
 @keyframes hintout{to{opacity:0; visibility:hidden}}
 
+/* ── 村莊 ──
+   刻意跟地牢完全相反：暖色、有爐火、沒有暈影。
+   玩家一眼就該知道「這裡是安全的」。 */
+#village{
+  position:absolute; inset:0; z-index:24; display:none;
+  flex-direction:column; align-items:center; gap:9px;
+  padding:18px 16px calc(24px + env(safe-area-inset-bottom));
+  background:radial-gradient(90% 60% at 50% 22%, #3a2a1c 0%, #1d1510 46%, #0d0a08 100%);
+  text-align:center;
+}
+#village.show{display:flex}
+.vhead em{
+  font-style:normal; font-family:var(--mono); font-size:10px;
+  letter-spacing:.5em; text-indent:.5em; color:var(--brass);
+}
+.vhead h3{
+  margin:2px 0 4px; font-family:var(--serif); font-size:clamp(22px,5.5vw,32px);
+  letter-spacing:.22em; text-indent:.22em; color:#f6efe3; font-weight:600;
+  text-shadow:0 0 22px rgba(217,119,87,.5);
+}
+.vhead p{margin:0; font-size:12.5px; color:#cbbca0; line-height:1.7}
+.vgold{
+  font-family:var(--mono); font-size:12px; color:var(--parch-dim);
+  border:1px solid var(--edge); padding:6px 14px;
+}
+.vgold b{color:var(--brass); font-size:16px}
+#vstock, #vowned{width:100%; max-width:440px; display:grid; gap:4px}
+.vrow{
+  display:flex; align-items:center; gap:9px; padding:5px 10px; text-align:left;
+  background:rgba(20,17,14,.6); border:1px solid var(--edge); font-size:12.5px;
+}
+.vrow canvas{width:24px; height:24px; flex:none; image-rendering:pixelated}
+.vrow .nm{flex:1; min-width:0; color:var(--parch)}
+.vrow .st{font-family:var(--mono); font-size:11px; color:var(--parch-dim)}
+.vrow button{min-height:34px; padding:5px 12px; font-size:12px; touch-action:manipulation}
+.vrow.own{border-color:var(--brass-dim); background:rgba(60,40,16,.4)}
+.vrow.own .st{color:var(--brass)}
+.vhint{font-size:11.5px; color:var(--parch-dim); line-height:1.7; max-width:34ch}
+#vgo{
+  margin-top:2px; font-family:var(--serif); font-size:15px; letter-spacing:.24em;
+  text-indent:.24em; color:#1a120d; background:linear-gradient(180deg,#e8a06f,var(--brass));
+  border:0; padding:12px 30px; font-weight:600; min-height:46px; touch-action:manipulation;
+  box-shadow:0 8px 26px rgba(217,119,87,.32);
+}
+
 #over{
-  position:absolute; inset:0; display:none; place-items:center; text-align:center;
+  position:absolute; inset:0; z-index:26; display:none; place-items:center; text-align:center;
   background:rgba(8,6,5,.9); padding:24px;
 }
 #over.show{display:grid}
@@ -548,6 +617,18 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     </div>
   </div>
 
+  <div id="village">
+    <div class="vhead">
+      <em>SAFE HAVEN</em>
+      <h3>爐火村</h3>
+      <p id="vsub">你活著走出來了。</p>
+    </div>
+    <div class="vgold">持有金錢 <b id="vgold">0</b> G</div>
+    <div id="vstock"></div>
+    <div id="vowned"></div>
+    <button id="vgo">再次下潛　B1F</button>
+      </div>
+
   <div id="sign">
     <h1>克勞德深淵</h1>
     <div id="depth"><b id="fnum">1</b><em id="zone">苔濕迴廊</em></div>
@@ -593,9 +674,23 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
           <button class="dg" data-dir="1,1"   aria-label="右下">↘</button>
         </div>
         <div id="ab">
-          <button id="btnB" data-lbl="取消" aria-label="取消">B</button>
+          <button id="btnB" data-lbl="背包·地圖" aria-label="背包／地圖／取消">B</button>
           <button id="btnA" data-lbl="確定" aria-label="確定">A</button>
         </div>
+      </div>
+
+      <div id="bigmap">
+        <div class="bmhead"><b id="bigf">B1F</b><em id="bigz">苔濕迴廊</em><i id="bigstat"></i></div>
+        <canvas id="bigc" width="450" height="450"></canvas>
+        <div class="bmlegend">
+          <span><i style="background:#4b5c66"></i>視野內</span>
+          <span><i style="background:#232c32"></i>走過</span>
+          <span><i style="background:#e8dcc0"></i>你</span>
+          <span><i style="background:#c9973f"></i>樓梯</span>
+          <span><i style="background:#a83c32"></i>怪物</span>
+          <span><i style="background:#dcae35"></i>道具</span>
+        </div>
+        <button id="bigx">關閉</button>
       </div>
 
       <div id="aim">
@@ -1267,10 +1362,24 @@ function makeRock(){
   for(let i=0;i<10;i++){ x.fillStyle='#101418'; x.fillRect(r.i(0,S-1), r.i(0,S-1), 1, 1); }
   return c;
 }
+/* 回村的出口：向上的拱門。整座地牢所有的光都是往下的，
+   只有這一格是往上的 —— 那就是它的意思。 */
+function makeExit(){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
+  px(x,PAL['0'],2,2,12,14);
+  px(x,PAL['z'],3,3,10,12); px(x,PAL['y'],4,4,8,11);
+  px(x,PAL['v'],5,5,6,10); px(x,PAL['u'],5,5,6,2);       // 拱內的光
+  px(x,PAL['0'],5,5,1,1);  px(x,PAL['0'],10,5,1,1);
+  px(x,PAL['d'],7,7,2,8);
+  px(x,PAL['0'],2,14,12,2);
+  return c;
+}
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
   wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(), rock:makeRock(),
+  exit:makeExit(),
 };
 const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
@@ -1380,6 +1489,52 @@ const ZONES = [
 ];
 const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
 
+/* ═══ 村莊：唯一跨越死亡的東西 ═══════════════════════════════
+   走到 B20F 有出口可以離開迷宮，帶著錢回村。在村裡買的裝備能撐 3 趟。
+
+   為什麼是「撐 3 趟」而不是永久：永久的話，玩家會卡在「先刷錢再下去」
+   的迴圈裡，地牢本身反而變成手段。有耗損才會逼人繼續往下走。
+
+   死掉一樣什麼都不留 —— 想把戰利品變成裝備，就得自己走出去。 */
+const VILLAGE_KEY = 'claude-abyss-village';
+let VILLAGE = { gold: 0, stock: [], unlocked: false };
+const EXIT_FLOOR = 20;
+const RUNS_PER_GEAR = 3;
+
+function loadVillage(){
+  try{
+    const raw = localStorage.getItem(VILLAGE_KEY);
+    if(raw){
+      const v = JSON.parse(raw);
+      if(v && typeof v === 'object'){
+        VILLAGE = {gold: v.gold|0, stock: Array.isArray(v.stock)?v.stock:[], unlocked: !!v.unlocked};
+      }
+    }
+  }catch(e){}                       // 沙箱可能擋 localStorage —— 擋了就只存在記憶體裡
+}
+function saveVillage(){
+  try{ localStorage.setItem(VILLAGE_KEY, JSON.stringify(VILLAGE)); }catch(e){}
+}
+loadVillage();
+
+/* 村裡賣的東西：不加價（這是家，不是黑店），但只賣中階以上 —— 
+   低階的地牢裡撿得到，拿錢買它沒有意義。 */
+const VILLAGE_STOCK = [
+  {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'}, {cat:'weap', id:'mith'},
+  {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
+];
+const defOf = (cat,id) => (cat==='weap'?WEAP:SHLD).find(d=>d.id===id);
+
+/* 每趟扣一次耐久。扣在「真的下去」的時候，不是在頁面載入的時候 —— 
+   否則重新整理一次就吃掉一趟。 */
+function consumeRun(){
+  const gone = [];
+  for(const g of VILLAGE.stock){ g.runs--; if(g.runs <= 0) gone.push(g); }
+  VILLAGE.stock = VILLAGE.stock.filter(g => g.runs > 0);
+  saveVillage();
+  return gone;
+}
+
 /* ─── 遊戲狀態 ──────────────────────────────────────────────── */
 let G = null;
 const KIND = {herb:HERB, scroll:SCROLL, wand:WAND, pot:POT};
@@ -1405,6 +1560,13 @@ function newGame(seed){
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
   G.p.inv.push(mk('food','bread'));
+  // ……除非村裡買了裝備。那是唯一能跨越死亡的東西。
+  for(const g of VILLAGE.stock){
+    const it = mk(g.cat, g.id, {known:1, up:g.up|0});
+    G.p.inv.push(it);
+    if(g.cat==='weap' && !G.p.weap) G.p.weap = it;
+    if(g.cat==='shld' && !G.p.shld) G.p.shld = it;
+  }
   buildFloor();
   say('進入了地下城。方向鍵移動，撞到怪物即攻擊。', 'gold');
   return G;
@@ -1520,6 +1682,17 @@ function buildFloor(){
       const [dx0,dy0] = rng.pick(r.doors).split(',').map(Number);
       G.shop = {room:+rk, keeper:{x:dx0, y:dy0}, stock};
       G.mons = G.mons.filter(m => roomOf(m.x,m.y) !== +rk);   // 店裡不生怪
+    }
+  }
+
+  // 抵達 B20F：出生的房間裡開一道回村的出口
+  G.f.exit = null;
+  if(G.depth === EXIT_FLOOR){
+    const r0 = G.f.rooms[roomOf(G.p.x, G.p.y)];
+    for(let i=0;i<80 && !G.f.exit;i++){
+      const x = r0 ? rng.i(r0.x, r0.x+r0.w-1) : rng.i(0,MW-1);
+      const y = r0 ? rng.i(r0.y, r0.y+r0.h-1) : rng.i(0,MH-1);
+      if(walkable(x,y) && !(x===G.p.x&&y===G.p.y) && tileAt(x,y)!==DOWN) G.f.exit = {x,y};
     }
   }
 
@@ -1657,6 +1830,8 @@ function stepOn(){
                : `踩在了「${nameOf(it)}」上。（腳下）`, it.shop ? 'gold' : null);
   }
   if(tileAt(p.x,p.y)===DOWN) say('這裡有向下的樓梯。（下樓）','gold');
+  if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y)
+    say('回村的出口就在腳下。按 A 帶著戰利品離開迷宮。','gold');
 }
 function attack(m, mult){
   const p=G.p;
@@ -2754,6 +2929,19 @@ function draw(dt){
       cx.fillRect(ox+m.x*T+2, oy+m.y*T+14, w, 2);
     }
   }
+  // 回村的出口：整座地牢唯一往「上」的光
+  if(G.f.exit && G.seen[key(G.f.exit.x, G.f.exit.y)]){
+    const ex = ox+G.f.exit.x*T, ey = oy+G.f.exit.y*T;
+    cx.drawImage(TILE_ART.exit, ex, ey);
+    const pulse = .5 + Math.sin(clock*3)*.25;
+    cx.save(); cx.globalCompositeOperation='lighter';
+    const eg = cx.createRadialGradient(ex+8, ey+8, 0, ex+8, ey+8, 34);
+    eg.addColorStop(0, `rgba(245,220,122,${(.34*pulse).toFixed(3)})`);
+    eg.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = eg; cx.fillRect(ex-30, ey-30, 76, 76);
+    cx.restore();
+  }
+
   // 店員
   if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
     const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
@@ -2915,6 +3103,8 @@ function updateTags(){
         push(G.shop.keeper.x, G.shop.keeper.y, '店員', 'shop', 'keeper');
       const stt = G.f.stairs;
       if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, '下樓', 'stair');
+      if(G.f.exit && G.seen[key(G.f.exit.x,G.f.exit.y)])
+        push(G.f.exit.x, G.f.exit.y, '回到村莊', 'shop', 'exit');
 
       // 重疊解算：由上往下掃，跟已放好的框相撞就往上頂一層
       const H = 18;
@@ -2970,7 +3160,9 @@ function updateTags(){
 const mini = document.getElementById('mini');
 const mcx = mini ? mini.getContext('2d') : null;
 const MMS = 9;                       // 每格 9px：30x30 → 270x270
-function drawMini(){
+function drawMini(){ paintMap(mcx, mini, MMS); }
+
+function paintMap(mcx, mini, MMS){
   if(!mcx || !G) return;
   mcx.fillStyle = '#07090a'; mcx.fillRect(0,0,mini.width,mini.height);
   let known = 0, total = 0;
@@ -3008,6 +3200,8 @@ function drawMini(){
 
   const el = document.getElementById('mapstat');
   if(el) el.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
+  const el2 = document.getElementById('bigstat');
+  if(el2) el2.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
 }
 
 /* 直式手機給直式視窗。手機畫面本來就是直的，塞一個 14x10 的橫視窗
@@ -3083,7 +3277,7 @@ function refresh(){
   $('mp').textContent = `${p.mp}/${p.mmp}`;
   $('mpbar').firstElementChild.style.width = Math.max(0,100*p.mp/Math.max(1,p.mmp))+'%';
   $('magbtn').classList.toggle('ping', p.sp > 0);
-  $('btnB').classList.toggle('dim', !panelMode && !$('aim').classList.contains('show'));
+
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
@@ -3403,12 +3597,13 @@ addEventListener('keydown', ev=>{
   if(ev.target.tagName==='INPUT') return;
   const k = ev.key;
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
-  if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closePanel(); refresh(); return; }
+  if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
   if(k===' '){ ev.preventDefault(); endTurn(); return; }
   if(k==='g'||k==='G'){ SFX.play('open'); openPanel('ground'); return; }
   if(k==='i'||k==='I'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); return; }
+  if(k==='b'||k==='B'){ pressB(); return; }
   if(k==='k'||k==='K'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); return; }
   if(k==='l'||k==='L'){ toggleTags(); return; }
   if(k==='m'||k==='M'){ toggleMute(); return; }
@@ -3418,6 +3613,9 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
   b.onclick = ()=>{ if(G&&!G.over&&!coverUp){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
 });
 
+/* B 鍵的行為由手把區塊實作，但鍵盤也要能用，所以宣告在外層 */
+let pressB = ()=>{};
+
 /* ─── 虛擬手把 ──────────────────────────────────────────────────
    十字鍵按住會連續走。一步一點在地牢裡走三十格是折磨，
    但連走的節奏又不能快到讓人衝進怪堆裡 —— 145ms 是實測後的折衷。 */
@@ -3426,7 +3624,10 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
   const REPEAT = 145;
   let timer = null, held = null;
 
-  const live = ()=> G && !G.over && !coverUp;
+  // 打開大地圖或站在村莊裡時，方向鍵不該還在讓角色走路
+  const live = ()=> G && !G.over && !coverUp
+    && !$('bigmap').classList.contains('show')
+    && !$('village').classList.contains('show');
   function step(dir){
     if(!live()) return;
     handleDir(dir[0], dir[1]);
@@ -3473,6 +3674,7 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
       closePanel(); refresh(); return;
     }
     const p = G.p;
+    if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y){ leaveDungeon(); return; }
     if(tileAt(p.x,p.y) === DOWN){ descend(); return; }
     const k = key(p.x,p.y), it = G.items[k];
     if(it){
@@ -3493,14 +3695,26 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
     }
     endTurn();
   });
-  /* B＝取消：關視窗、退出瞄準。沒有東西可取消時會變暗 —— 
-     一顆永遠亮著卻沒反應的按鍵，比一顆變暗的按鍵更讓人困惑。 */
+  /* B：有東西可關就關；沒有的話按一下開背包、連按兩下開整張樓層圖。
+     雙擊做成「第二下改開地圖」而不是「等 300ms 看有沒有第二下」——
+     後者會讓每一次開背包都慢半拍，那種延遲是感覺得出來的。 */
+  let lastB = 0, bOpenedInv = false;
   $('btnB').addEventListener('pointerdown', ev=>{
     ev.preventDefault(); ev.stopPropagation();
+    pressB();
+  });
+  pressB = function(){
     if(!G) return;
     if($('aim').classList.contains('show')){ cancelAim(); return; }
-    if(panelMode){ SFX.play('open'); closePanel(); refresh(); return; }
-  });
+    const now = performance.now(), quick = now - lastB < 340;
+    lastB = now;
+    if(quick && bOpenedInv && panelMode === 'inv'){   // 第二下 → 換成地圖
+      bOpenedInv = false; closePanel(); openBigMap(); return;
+    }
+    if($('bigmap').classList.contains('show')){ closeBigMap(); return; }
+    if(panelMode){ SFX.play('open'); closePanel(); bOpenedInv = false; refresh(); return; }
+    SFX.play('open'); openPanel('inv'); bOpenedInv = true;
+  };
   // 吃掉手把區域的滑動，否則按著方向鍵會同時觸發畫面的拖曳移動
   for(const el of [$('cross'), $('ab')])
     el.addEventListener('pointerdown', ev=>ev.stopPropagation());
@@ -3509,6 +3723,7 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
   pad.classList.add('show');
 })();
 $('aimx').onclick = cancelAim;
+$('bigx').onclick = ()=>{ closeBigMap(); SFX.play('open'); };
 $('pclose').onclick = ()=>{ SFX.play('open'); closePanel(); refresh(); };
 document.querySelectorAll('[data-act]').forEach(b=>{
   b.onclick = ()=>{
@@ -3536,14 +3751,116 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     }
   };
 });
-$('restart').onclick = restart;
+$('vgo').onclick = ()=>{
+  closeVillage();
+  $('over').classList.remove('show');
+  restart();
+};
+$('restart').onclick = ()=>{
+  // 解鎖過村莊的話，死亡之後先回村 —— 買到的裝備還在，那是繼續玩下去的理由
+  if(VILLAGE.unlocked){
+    $('over').classList.remove('show');
+    $('vsub').textContent = '你倒在了地牢裡。村莊還在，鐵匠鋪也還開著。';
+    openVillage();
+    return;
+  }
+  restart();
+};
 function restart(){
   $('over').classList.remove('show');
-  closePanel(); pendWand=null; pendThrow=null; swapMode=null;
+  closePanel(); closeBigMap(); closeVillage();
+  pendWand=null; pendThrow=null; pendSpell=null; swapMode=null;
   newGame((Math.random()*1e9)|0);
+  const gone = consumeRun();
+  for(const g of gone) say(`「${defOf(g.cat,g.id).nm}」已經磨損殆盡。`,'bad');
+  BGM.start(); showCard();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
   refresh();
 }
+
+/* ─── 村莊 ──────────────────────────────────────────────────── */
+function leaveDungeon(){
+  VILLAGE.gold += G.p.gold;
+  VILLAGE.unlocked = true;
+  saveVillage();
+  G.over = true;                        // 停掉這一趟，但不是死亡
+  SFX.play('level'); BGM.stop();
+  burst(G.p.x, G.p.y, 40, '#f5dc7a', 70, 26, 1.0);
+  say(`帶著 ${G.p.gold} G 離開了迷宮。`,'gold');
+  $('vsub').textContent = `你從 B${G.depth}F 活著走了出來，帶回 ${G.p.gold} G。`;
+  openVillage();
+}
+function openVillage(){
+  renderVillage();
+  $('village').classList.add('show');
+  // 村莊是整頁的，外層若停在半空中會看不到標題與金錢
+  try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){}
+}
+function renderVillage(){
+  $('vgold').textContent = VILLAGE.gold;
+
+  const stock = $('vstock'); stock.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'vhint';
+  head.textContent = '鐵匠鋪　—　買下的裝備能撐 ' + RUNS_PER_GEAR + ' 趟迷宮，之後會磨損殆盡。';
+  stock.appendChild(head);
+
+  for(const g of VILLAGE_STOCK){
+    const d = defOf(g.cat, g.id);
+    const row = document.createElement('div'); row.className = 'vrow';
+    const c = document.createElement('canvas'); c.width = T; c.height = T;
+    const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
+    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
+    const nm = document.createElement('div'); nm.className='nm';
+    nm.textContent = d.nm;
+    const st = document.createElement('div'); st.className='st';
+    st.textContent = g.cat==='weap' ? `攻 +${d.atk}` : `防 +${d.def}`;
+    const b = document.createElement('button');
+    b.textContent = `${d.price} G`;
+    b.disabled = VILLAGE.gold < d.price;
+    b.onclick = ()=>{
+      if(VILLAGE.gold < d.price) return;
+      VILLAGE.gold -= d.price;
+      VILLAGE.stock.push({cat:g.cat, id:g.id, up:0, runs:RUNS_PER_GEAR});
+      saveVillage(); SFX.play('coin'); renderVillage();
+    };
+    row.appendChild(c); row.appendChild(nm); row.appendChild(st); row.appendChild(b);
+    stock.appendChild(row);
+  }
+
+  const owned = $('vowned'); owned.innerHTML = '';
+  const h2 = document.createElement('div'); h2.className='vhint';
+  h2.textContent = VILLAGE.stock.length
+    ? '帶下去的裝備' : '目前沒有可帶下去的裝備 —— 下一趟依然是赤手空拳。';
+  owned.appendChild(h2);
+  for(const g of VILLAGE.stock){
+    const d = defOf(g.cat, g.id);
+    const row = document.createElement('div'); row.className = 'vrow own';
+    const c = document.createElement('canvas'); c.width = T; c.height = T;
+    const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
+    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
+    const nm = document.createElement('div'); nm.className='nm'; nm.textContent = d.nm;
+    const st = document.createElement('div'); st.className='st';
+    st.textContent = `還能撐 ${g.runs} 趟`;
+    row.appendChild(c); row.appendChild(nm); row.appendChild(st);
+    owned.appendChild(row);
+  }
+}
+function closeVillage(){ $('village').classList.remove('show'); }
+
+/* ─── 全螢幕樓層圖 ──────────────────────────────────────────── */
+function openBigMap(){
+  const el = $('bigmap'); if(!el || !G) return;
+  const z = zoneOf(G.depth);
+  $('bigf').textContent = 'B' + G.depth + 'F';
+  $('bigz').textContent = z.nm;
+  const c = $('bigc'), s2 = 15;              // 30x30 -> 450x450
+  c.width = MW*s2; c.height = MH*s2;
+  paintMap(c.getContext('2d'), c, s2);
+  el.classList.add('show');
+  SFX.play('open');
+}
+function closeBigMap(){ const el = $('bigmap'); if(el) el.classList.remove('show'); }
 
 /* ─── 進場卡 ────────────────────────────────────────────────── */
 function showCard(){
@@ -3665,6 +3982,8 @@ let coverUp = true;
     refresh();
     // 滑動這件事在畫面上是看不見的，不講玩家不會知道
     showCard();
+    const gone = consumeRun();
+    for(const g of gone) say(`「${defOf(g.cat,g.id).nm}」已經磨損殆盡。`,'bad');
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
   };
 })();

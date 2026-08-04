@@ -131,8 +131,8 @@ const MONS = [
  {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
  {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂']},
- {id:'wolf',   nm:'疾風狼',   ai:'C', hp:28,atk:22,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:2},
- {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:18,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
+ {id:'wolf',   nm:'疾風狼',   ai:'C', hp:26,atk:16,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:1},
+ {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:15,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
  {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
  {id:'turret', nm:'水晶砲台', ai:'R', hp:45,atk:40,def:15,exp:300,spd:.5,  sight:10,ev:0, fl:[18,28],w:22, rng:8, still:1},
  {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
@@ -614,10 +614,24 @@ function makeRock(){
   for(let i=0;i<10;i++){ x.fillStyle='#101418'; x.fillRect(r.i(0,S-1), r.i(0,S-1), 1, 1); }
   return c;
 }
+/* 回村的出口：向上的拱門。整座地牢所有的光都是往下的，
+   只有這一格是往上的 —— 那就是它的意思。 */
+function makeExit(){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
+  px(x,PAL['0'],2,2,12,14);
+  px(x,PAL['z'],3,3,10,12); px(x,PAL['y'],4,4,8,11);
+  px(x,PAL['v'],5,5,6,10); px(x,PAL['u'],5,5,6,2);       // 拱內的光
+  px(x,PAL['0'],5,5,1,1);  px(x,PAL['0'],10,5,1,1);
+  px(x,PAL['d'],7,7,2,8);
+  px(x,PAL['0'],2,14,12,2);
+  return c;
+}
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
   wall:makeWall(0), wallFace:makeWall(1), stairs:makeStairs(), rock:makeRock(),
+  exit:makeExit(),
 };
 const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
