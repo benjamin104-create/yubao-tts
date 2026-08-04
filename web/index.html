@@ -266,9 +266,65 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 @keyframes ping{50%{background:rgba(201,151,63,.18)}}
 
 /* ── 方向鍵（觸控） ── */
-#dpad{display:none; grid-template-columns:repeat(3,1fr); gap:5px; padding:0 14px 12px; background:var(--ink-2)}
-#dpad button{padding:13px 0; font-family:var(--mono); font-size:15px}
-#dpad.show{display:grid}
+/* ══ 虛擬手把 ═══════════════════════════════════════════════
+   疊在畫面上、半透明。放在畫面「裡面」而不是下面，是因為手指
+   不必離開遊戲區 —— 而且滑動操作永遠有一個問題：手指蓋住的
+   正好是你要看的那一格。按鍵沒有這個問題。 */
+#pad{
+  position:absolute; inset:0; z-index:14; display:none;
+  pointer-events:none;                       /* 只有按鍵吃事件，空白處仍可點地圖 */
+}
+#pad.show{display:block}
+#cross, #ab{position:absolute; pointer-events:auto; user-select:none; -webkit-user-select:none}
+#cross{
+  left:max(14px, env(safe-area-inset-left));
+  bottom:max(14px, env(safe-area-inset-bottom));
+  display:grid; grid-template-columns:repeat(3,var(--k)); grid-template-rows:repeat(3,var(--k));
+  gap:4px; --k:44px;
+}
+#ab{
+  right:max(16px, env(safe-area-inset-right));
+  bottom:max(30px, calc(env(safe-area-inset-bottom) + 16px));
+  display:grid; grid-template-columns:auto auto; gap:12px; align-items:end;
+}
+#pad button{
+  font-family:var(--mono); color:rgba(244,236,218,.96);
+  background:rgba(20,17,14,.55); border:1px solid rgba(201,151,63,.55);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+  padding:0; line-height:1; touch-action:none; cursor:pointer;
+  transition:background .08s, transform .08s;
+}
+#pad button:active, #pad button.on{
+  background:rgba(201,151,63,.55); color:#14110f; transform:scale(.94);
+}
+#cross .dc{font-size:15px}
+/* 斜向放在十字的四個凹角，比主方向暗一階 ——
+   視覺上還是一個十字，但八方向都按得到。原作的走位有一半靠斜走。 */
+#cross .dg{font-size:14px; opacity:.62; background:rgba(20,17,14,.4); border-color:rgba(201,151,63,.3)}
+#cross .dg:active{opacity:1}
+#padwait{
+  font-size:20px; color:rgba(201,151,63,.75);
+  background:rgba(28,24,20,.28); border-color:rgba(201,151,63,.22);
+}
+#ab button{
+  width:58px; height:58px; border-radius:50%; font-size:17px; font-weight:600;
+  letter-spacing:.02em; position:relative;
+}
+/* 小標籤：A/B 對第一次玩的人不代表任何意思，要寫出來 */
+#ab button::after{
+  content:attr(data-lbl); position:absolute; left:50%; bottom:-15px;
+  transform:translateX(-50%); font-size:9px; letter-spacing:.14em;
+  color:rgba(232,220,192,.55); font-weight:400; white-space:nowrap;
+}
+#btnA{width:68px; height:68px; font-size:22px; border-color:rgba(201,151,63,.75); background:rgba(201,151,63,.24)}
+#btnB{border-color:rgba(168,60,50,.6); background:rgba(168,60,50,.2); color:#f0c4bd; margin-bottom:14px}
+#btnB.dim{opacity:.32}
+#padhint{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:max(12px, env(safe-area-inset-bottom));
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
+  color:rgba(232,220,192,.42); pointer-events:none; white-space:nowrap;
+}
 
 /* ── 覆蓋面板 ── */
 #panel{
@@ -328,12 +384,17 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
 /* 瞄準方向盤：投擲、揮杖、施法都要選方向。
    原本只能按方向鍵 —— 那等於告訴用滑鼠的人「這個功能不給你用」。 */
+/* 瞄準層只負責「變暗 + 告訴你要選方向」，本身不吃事件 ——
+   吃了的話它會蓋住虛擬手把，玩家連取消都按不到。 */
 #aim{
-  position:absolute; inset:0; display:none; z-index:8;
+  position:absolute; inset:0; display:none; z-index:12;
   place-items:center; align-content:center; gap:10px;
-  background:rgba(6,8,9,.55);
+  background:rgba(6,8,9,.55); pointer-events:none;
 }
 #aim.show{display:grid}
+#aim > *{pointer-events:auto}
+/* 手把開著時就用手把選方向 —— 畫面上同時出現兩個方向盤只會讓人猶豫 */
+#aim.lite #aimgrid{display:none}
 #aimgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
 #aimgrid button{
   width:56px; height:56px; font-size:19px; font-family:var(--mono);
@@ -432,8 +493,9 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   }
   #keys::-webkit-scrollbar{display:none}
   #keys button{flex:0 0 auto; min-height:44px; padding:9px 13px; font-size:13px; white-space:nowrap}
-  #dpad{padding:2px 10px calc(10px + env(safe-area-inset-bottom)); gap:6px}
-  #dpad button{min-height:46px; font-size:17px}
+  #cross{--k:50px; gap:4px}
+  #ab button{width:62px; height:62px}
+  #btnA{width:72px; height:72px}
   #acts button{min-height:40px; padding:8px 12px; font-size:12.5px}
   .row{padding:10px 14px; min-height:48px}
   #panel{width:min(340px,84%)}
@@ -496,6 +558,24 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
         <div id="acts"></div>
         <div class="hint" id="phint"></div>
       </div>
+      <div id="pad">
+        <div id="cross">
+          <button class="dg" data-dir="-1,-1" aria-label="左上">↖</button>
+          <button class="dc" data-dir="0,-1"  aria-label="上">▲</button>
+          <button class="dg" data-dir="1,-1"  aria-label="右上">↗</button>
+          <button class="dc" data-dir="-1,0"  aria-label="左">◀</button>
+          <button id="padwait" aria-label="待機">·</button>
+          <button class="dc" data-dir="1,0"   aria-label="右">▶</button>
+          <button class="dg" data-dir="-1,1"  aria-label="左下">↙</button>
+          <button class="dc" data-dir="0,1"   aria-label="下">▼</button>
+          <button class="dg" data-dir="1,1"   aria-label="右下">↘</button>
+        </div>
+        <div id="ab">
+          <button id="btnB" data-lbl="取消" aria-label="取消">B</button>
+          <button id="btnA" data-lbl="確定" aria-label="確定">A</button>
+        </div>
+      </div>
+
       <div id="aim">
         <div id="aimgrid">
           <button data-dir="-1,-1">↖</button><button data-dir="0,-1">↑</button><button data-dir="1,-1">↗</button>
@@ -505,7 +585,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
         <div id="aimlbl">選擇方向</div>
       </div>
       <div id="card"><b id="cardf">B1F</b><em id="cardz">苔濕迴廊</em><i id="cards">MOSSFALL GALLERY</i></div>
-      <div id="hint"><b>滑動</b>移動　·　<b>輕點</b>走一步　·　<b>點自己</b>看腳下</div>
+      <div id="hint">用<b>十字鍵</b>走　·　<b>A</b> 確定　·　<b>B</b> 取消</div>
       <div id="over">
         <div>
           <h3 id="otitle">你倒下了</h3>
@@ -522,15 +602,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <button data-act="down"><span class="k">&gt;</span>下樓</button>
     <button data-act="wait"><span class="k">␣</span>待機</button>
     <button data-act="mag" id="magbtn"><span class="k">K</span>魔法</button>
-    <button data-act="dpad" id="dpadbtn">方向鍵</button>
+    <button data-act="dpad" id="dpadbtn">收起手把</button>
     <button data-act="tags"><span class="k">L</span>名稱</button>
     <button data-act="mute"><span class="k">M</span>音效</button>
     <button data-act="help"><span class="k">?</span>操作</button>
-  </div>
-  <div id="dpad">
-    <button data-dir="-1,-1">↖</button><button data-dir="0,-1">↑</button><button data-dir="1,-1">↗</button>
-    <button data-dir="-1,0">←</button><button data-act="wait">·</button><button data-dir="1,0">→</button>
-    <button data-dir="-1,1">↙</button><button data-dir="0,1">↓</button><button data-dir="1,1">↘</button>
   </div>
   </div><!-- /main -->
 
@@ -2946,6 +3021,7 @@ function refresh(){
   $('mp').textContent = `${p.mp}/${p.mmp}`;
   $('mpbar').firstElementChild.style.width = Math.max(0,100*p.mp/Math.max(1,p.mmp))+'%';
   $('magbtn').classList.toggle('ping', p.sp > 0);
+  $('btnB').classList.toggle('dim', !panelMode && !$('aim').classList.contains('show'));
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
@@ -3221,7 +3297,9 @@ const KEYDIR = {
    另一邊做不到的功能。 */
 function openAim(label){
   const el = $('aim'); if(!el) return;
-  $('aimlbl').textContent = label || '選擇方向';
+  const padOn = $('pad').classList.contains('show');
+  $('aimlbl').textContent = (label || '選擇方向') + (padOn ? '　（十字鍵）' : '');
+  el.classList.toggle('lite', padOn);
   el.classList.add('show');
 }
 function closeAim(){ const el = $('aim'); if(el) el.classList.remove('show'); }
@@ -3270,6 +3348,81 @@ addEventListener('keydown', ev=>{
 document.querySelectorAll('[data-dir]').forEach(b=>{
   b.onclick = ()=>{ if(G&&!G.over&&!coverUp){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
 });
+
+/* ─── 虛擬手把 ──────────────────────────────────────────────────
+   十字鍵按住會連續走。一步一點在地牢裡走三十格是折磨，
+   但連走的節奏又不能快到讓人衝進怪堆裡 —— 145ms 是實測後的折衷。 */
+(function gamepad(){
+  const pad = $('pad'); if(!pad || !pad.addEventListener) return;
+  const REPEAT = 145;
+  let timer = null, held = null;
+
+  const live = ()=> G && !G.over && !coverUp;
+  function step(dir){
+    if(!live()) return;
+    handleDir(dir[0], dir[1]);
+  }
+  function release(){
+    if(timer){ clearInterval(timer); timer = null; }
+    if(held){ held.classList.remove('on'); held = null; }
+  }
+  for(const b of pad.querySelectorAll('[data-dir]')){
+    const dir = b.dataset.dir.split(',').map(Number);
+    b.onclick = null;                       // 改由 pointer 事件處理，避免點一下走兩步
+    b.addEventListener('pointerdown', ev=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(!live()) return;
+      release();
+      held = b; b.classList.add('on');
+      b.setPointerCapture && b.setPointerCapture(ev.pointerId);
+      SFX.unlock(); BGM.start();
+      step(dir);                            // 第一步立刻走，不等節拍
+      timer = setInterval(()=>{ if(!live()) release(); else step(dir); }, REPEAT);
+    });
+    // 不要監聽 pointerleave：setPointerCapture 本身就會觸發一次 leave，
+    // 長按會在第一步之後隨機停掉。捕捉之後手指滑出按鈕仍該繼續走。
+    for(const e of ['pointerup','pointercancel','lostpointercapture'])
+      b.addEventListener(e, release);
+  }
+  $('padwait').addEventListener('pointerdown', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    if(live()) endTurn();
+  });
+
+  /* A＝確定：看情況做「現在最該做的那件事」。
+     開著視窗就執行第一個動作、站在樓梯上就下樓、腳下有東西就打開選單，
+     什麼都沒有就待機一回合。一顆按鍵解決九成操作。 */
+  $('btnA').addEventListener('pointerdown', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    if(!live()) return;
+    if($('aim').classList.contains('show')) return;      // 瞄準時要選方向，不是按確定
+    if(panelMode){
+      const b2 = [...$('acts').querySelectorAll('button')].find(x=>!x.disabled);
+      if(b2){ b2.click(); return; }
+      const row = $('list').querySelector('.row');
+      if(row){ row.click(); return; }
+      closePanel(); refresh(); return;
+    }
+    const p = G.p;
+    if(tileAt(p.x,p.y) === DOWN){ descend(); return; }
+    if(G.items[key(p.x,p.y)]){ SFX.play('open'); openPanel('ground'); return; }
+    endTurn();
+  });
+  /* B＝取消：關視窗、退出瞄準。沒有東西可取消時會變暗 —— 
+     一顆永遠亮著卻沒反應的按鍵，比一顆變暗的按鍵更讓人困惑。 */
+  $('btnB').addEventListener('pointerdown', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    if(!G) return;
+    if($('aim').classList.contains('show')){ cancelAim(); return; }
+    if(panelMode){ SFX.play('open'); closePanel(); refresh(); return; }
+  });
+  // 吃掉手把區域的滑動，否則按著方向鍵會同時觸發畫面的拖曳移動
+  for(const el of [$('cross'), $('ab')])
+    el.addEventListener('pointerdown', ev=>ev.stopPropagation());
+
+  // 預設就打開 —— 這是主要操作方式，不該藏在設定裡
+  pad.classList.add('show');
+})();
 $('aimx').onclick = cancelAim;
 $('pclose').onclick = ()=>{ SFX.play('open'); closePanel(); refresh(); };
 document.querySelectorAll('[data-act]').forEach(b=>{
@@ -3282,15 +3435,17 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='wait') endTurn();
     if(a==='mag'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); }
     if(a==='dpad'){
-      const on = $('dpad').classList.toggle('show');
-      $('dpadbtn').textContent = on ? '收起方向鍵' : '方向鍵';
+      const on = $('pad').classList.toggle('show');
+      $('dpadbtn').textContent = on ? '收起手把' : '虛擬手把';
       SFX.play('open');
     }
     if(a==='tags') toggleTags();
     if(a==='mute') toggleMute();
     if(a==='help'){
-      say('方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　> 下樓　空白待機','gold');
-      say('L 切換名稱標籤　M 切換音效　Esc 取消　右側是樓層圖','gold');
+      say('畫面上的十字鍵可按住連走，中央圓點＝待機。','gold');
+      say('A＝確定（下樓／撿取／執行）　B＝取消（關視窗、退出瞄準）','gold');
+      say('鍵盤：方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　K 魔法　> 下樓','gold');
+      say('L 名稱標籤　M 音效　Esc 取消　右側是樓層圖','gold');
       refresh();
     }
   };
@@ -3348,7 +3503,8 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
     dragging = false; id = null;
     if(timer){ clearInterval(timer); timer = null; }
   }
-  const blocked = t => !!(t.closest && (t.closest('#panel') || t.closest('#over') || t.closest('#cover')));
+  const blocked = t => !!(t.closest && (t.closest('#panel') || t.closest('#over')
+                       || t.closest('#cover') || t.closest('#pad') || t.closest('#aim')));
 
   el.addEventListener('pointerdown', ev=>{
     if(coverUp || !G || G.over || blocked(ev.target)) return;

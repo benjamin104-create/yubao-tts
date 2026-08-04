@@ -22,6 +22,8 @@ function fakeEl(){
     getContext: fakeCtx,
     appendChild(c){ this.children.push(c); return c; },
     addEventListener(){}, onclick:null, focus(){},
+    querySelectorAll(){ return []; }, querySelector(){ return null; },
+    closest(){ return null; }, setPointerCapture(){},
   };
   return el;
 }
