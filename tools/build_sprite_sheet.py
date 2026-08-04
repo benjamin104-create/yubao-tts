@@ -57,7 +57,23 @@ function add(g, cv, label){
 const NAMES={player:'玩家',rat:'洞穴鼠',slime:'藍史萊姆',goblin:'綠哥布林',shroom:'醉步蕈',
  imp:'投石妖精',grub:'食腐蟲',skeleton:'骷髏兵',wolf:'疾風狼',mage:'詛咒法師',
  golem:'徘徊石像',turret:'水晶砲台',knight:'深淵騎士'};
-let g = sec('實體 13');
+let g = sec('生物骨架：顏色 / 年齡 / 帽子');
+add(g, makeBlob('#',{star:true,dark:'@'}), '主角');
+[['l','綠'],['q','藍'],['u','金'],['b','棕'],['6','灰'],['m','薄荷']].forEach(([c,n])=>
+  add(g, makeBlob(c), '村人·'+n));
+add(g, makeBlob('b',{age:'old'}), '老人');
+add(g, makeBlob('l',{age:'child'}), '小孩');
+[['helm','戰士盔'],['cone','黑魔尖帽'],['hood','白魔頭巾'],
+ ['cap','盜賊皮帽'],['plume','獵人羽帽'],['horn','狂戰角盔']].forEach(([h,n])=>
+  add(g, makeBlob('#',{star:true,dark:'@',hat:h}), n));
+
+g = sec('主角與裝備外觀');
+add(g, heroSprite(-1,-1,null), '徒手');
+['木棒','銅之劍','長槍','鋼之劍','秘銀之劍'].forEach((n,i)=>add(g, heroSprite(i,-1,null), n));
+['皮之盾','木之盾','鋼之盾','鏡之盾'].forEach((n,i)=>add(g, heroSprite(-1,i,null), n));
+add(g, heroSprite(4,3,'helm'), '秘銀+鏡盾+盔');
+
+g = sec('怪物 12');
 for(const k in SPR) add(g, atlas[k], NAMES[k]||k);
 g = sec('地形');
 TILE_ART.floor.forEach((c,i)=>add(g,c,'房間地板'+i));

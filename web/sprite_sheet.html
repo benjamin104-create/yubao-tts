@@ -197,6 +197,42 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
+/* ─── 職業與技能（FF5 式：戴帽子換職業，打怪累積 JP 學技能） ──
+   帽子＝職業。這件事在畫面上是看得見的 —— 玩家不用開選單就知道
+   自己現在是什麼、別人是什麼。
+
+   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。
+   「學得多、帶得少」正是 FF5 讓人反覆思考的地方。 */
+const HAT = [
+  {id:'helm',  nm:'鐵之盔',   job:'war', price:900,  jobnm:'戰士'},
+  {id:'cone',  nm:'黑之尖帽', job:'blk', price:1100, jobnm:'黑魔導'},
+  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導'},
+  {id:'cap',   nm:'皮之便帽', job:'thf', price:800,  jobnm:'盜賊'},
+  {id:'plume', nm:'羽飾獵帽', job:'hnt', price:1000, jobnm:'獵人'},
+  {id:'horn',  nm:'角之戰盔', job:'ber', price:1200, jobnm:'狂戰士'},
+];
+const JOB_NM = {none:'見習者'};
+for(const h of HAT) JOB_NM[h.job] = h.jobnm;
+
+const JP_TIER = 40;                 // 第二個技能需要的 JP
+/* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
+const ABIL = [
+  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, mp:4, k:'self',   desc:'5 回合內傷害減半'},
+  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       mp:6, k:'blast',  desc:'命中後炸開一圈'},
+  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, mp:0, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
+  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
+  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, mp:4, k:'self',   desc:'10 回合內速度加倍'},
+  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       mp:4, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, mp:5, k:'self',   desc:'揭露整層地圖'},
+  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
+  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
+];
+const abilById = id => ABIL.find(a => a.id === id);
+const SLOTS = 4;
+
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
    原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
    技能點讓每一次升級都要做決定，而決定才是玩家記得住的東西。 */
@@ -286,7 +322,80 @@ function bake(rows, w=T, h=T){
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
 
-/* ─── 主角：史萊姆本體 + 星芒核心 + 看得見的裝備 ────────────────
+/* ═══ 通用生物骨架 ═══════════════════════════════════════════
+   主角與所有村民共用同一個剪影：寬扁的身體、兩側短鰭、四隻小腳、
+   兩顆方眼睛。只換顏色、年齡變體與帽子。
+
+   共用剪影是刻意的 —— 玩家要先認出「這是同一族」，再分辨是誰。
+   剪影一致、顏色分派，順序不能反過來。 */
+const BLOB_BODY = [
+  [3,4,8],
+  [4,3,10],[5,3,10],[6,3,10],
+  [7,1,14],[8,1,14],
+  [9,3,10],[10,3,10],[11,3,10],
+];
+const BLOB_CHILD = [
+  [5,5,6],
+  [6,4,8],[7,4,8],
+  [8,2,12],[9,2,12],
+  [10,4,8],[11,4,8],
+];
+/* 六頂帽子＝六種職業。帽子畫在頭頂那一排，剪影要一眼分得出來 —— 
+   職業是靠帽子辨識的，帽子長得像就等於職業長得像。 */
+const HAT_ART = {
+  // 全部畫在 y1~y4，帽緣壓在身體頂緣（y3）上 —— 浮在頭上會像貼圖不像戴著
+  helm:  x=>{ px(x,PAL['0'],3,1,10,4); px(x,PAL['5'],4,2,8,2); px(x,PAL['6'],4,2,8,1);
+              px(x,PAL['0'],7,2,2,3); px(x,PAL['4'],2,4,12,1); px(x,PAL['0'],2,5,12,1); },
+  cone:  x=>{ px(x,PAL['0'],7,0,2,2); px(x,PAL['0'],6,1,4,1); px(x,PAL['0'],5,2,6,2);
+              px(x,PAL['o'],7,0,2,1); px(x,PAL['p'],6,1,4,1); px(x,PAL['o'],5,2,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['p'],2,4,12,1); px(x,PAL['u'],7,3,2,1); },
+  hood:  x=>{ px(x,PAL['0'],4,1,8,5); px(x,PAL['d'],5,2,6,3); px(x,PAL['6'],5,2,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['d'],3,4,10,1); px(x,PAL['g'],6,4,4,1); },
+  cap:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['9'],5,3,6,2); px(x,PAL['a'],5,3,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['8'],2,4,11,1); },
+  plume: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['j'],5,3,6,2); px(x,PAL['k'],5,3,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['j'],3,4,10,1);
+              px(x,PAL['0'],10,0,3,1); px(x,PAL['m'],10,1,3,1); px(x,PAL['l'],11,2,2,1); },
+  horn:  x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['e'],5,3,6,2); px(x,PAL['f'],5,3,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['e'],3,4,10,1);
+              px(x,PAL['0'],1,0,3,4); px(x,PAL['d'],1,1,2,2);
+              px(x,PAL['0'],12,0,3,4); px(x,PAL['d'],13,1,2,2); },
+};
+/* body: 色盤索引；age: 'adult'|'old'|'child'；star: 主角的星芒記號 */
+function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const child = age === 'child';
+  const m = shapeMask(child ? BLOB_CHILD : BLOB_BODY);
+  paintMask(x, m, PAL[body], PAL[dark], null, 99);
+
+  const ey = child ? 8 : 7, ex1 = child ? 5 : 5, ex2 = child ? 9 : 9;
+  px(x,PAL[dark],ex1,ey,2,2); px(x,PAL[dark],ex2,ey,2,2);
+  if(child){ px(x,PAL['6'],ex1,ey,1,1); px(x,PAL['6'],ex2,ey,1,1); }   // 小孩眼睛有光
+
+  // 腳：四根短柱，比身體暗一階
+  const ly = child ? 12 : 12, lh = child ? 1 : 2;
+  for(const lx of (child ? [5,7,9,10] : [4,6,9,11])) px(x,PAL[dark],lx,ly,1,lh);
+
+  px(x,PAL['6'],child?5:4,child?6:4,1,1);                              // 左上受光
+
+  if(age === 'old'){                                                    // 老人：白鬍與垂眼
+    px(x,PAL['6'],6,10,4,1); px(x,PAL['6'],5,11,6,1);
+    px(x,PAL[dark],5,11,1,1); px(x,PAL[dark],10,11,1,1);
+    px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
+  }
+  if(star){
+    // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
+    const sy = 10;
+    px(x,PAL['+'],7,sy-1,2,1);
+    px(x,PAL['+'],6,sy,4,1);
+    px(x,PAL['+'],7,sy+1,2,1);
+  }
+  if(hat && HAT_ART[hat]) HAT_ART[hat](x);
+  return c;
+}
+
+/* ─── 主角：共用骨架 + 星芒核心 + 看得見的裝備 ────────────────
    為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。
    直接沿用他人的商標去吸引玩家，正是商標法最在意的用法；
    神韻留下、標誌不用，才是能安心散布的做法。
@@ -294,11 +403,7 @@ for(const k in SPR) atlas[k] = bake(SPR[k]);
    為什麼要程序化而不是手打像素字串：裝備必須畫在身上。
    拿了劍卻看不出來，玩家就感覺不到自己變強 —— 而「感覺變強」
    正是這類遊戲唯一的驅動力。 */
-const HERO_BODY = [
-  [2,6,4],[3,5,6],[4,4,8],[5,3,10],[6,3,10],
-  [7,2,12],[8,2,12],[9,2,12],
-  [10,1,14],[11,1,14],[12,1,14],[13,1,14],[14,1,14],
-];
+
 function drawHeroWeapon(x, i){
   const bl = ['9','5','6','6','r'][i], hi = ['8','9','5','t','u'][i];
   px(x,PAL['0'],11,0,4,11);
@@ -325,28 +430,19 @@ function drawHeroShield(x, i){
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
 const heroCache = {};
-function heroSprite(wi, si){
-  const k = wi + '/' + si;
+function heroSprite(wi, si, hi){
+  const k = wi + '/' + si + '/' + (hi||'-');
   if(heroCache[k]) return heroCache[k];
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
 
-  paintMask(x, shapeMask(HERO_BODY), PAL['#'], PAL['@'], null, 99);
-  px(x,PAL['*'],5,3,4,1); px(x,PAL['*'],4,4,3,1); px(x,PAL['*'],3,5,2,2);   // 左上受光
-  px(x,PAL['0'],4,7,3,3); px(x,PAL['0'],9,7,3,3);                            // 眼睛
-  px(x,PAL['+'],5,7,1,1); px(x,PAL['+'],10,7,1,1);                           // 眼神光
-
-  // 體內的八角星芒核心
-  const cxs = 7, cys = 12;
-  px(x,PAL['+'],cxs,cys-2,1,5); px(x,PAL['+'],cxs-2,cys,5,1);
-  for(const [dx,dy] of [[-2,-2],[-1,-1],[1,1],[2,2],[2,-2],[1,-1],[-1,1],[-2,2]])
-    px(x,PAL['+'],cxs+dx,cys+dy,1,1);
+  x.drawImage(makeBlob('#', {star:true, dark:'@', hat:hi}), 0, 0);
 
   if(si >= 0) drawHeroShield(x, si);
   if(wi >= 0) drawHeroWeapon(x, wi);
   return heroCache[k] = c;
 }
-atlas.player = heroSprite(-1, -1);
+atlas.player = heroSprite(-1, -1, null);
 
 /* ─── 道具圖示：參數化生成 ────────────────────────────────────
    81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，
@@ -627,6 +723,19 @@ function makeExit(){
   px(x,PAL['0'],2,14,12,2);
   return c;
 }
+/* 帽子的道具圖示：直接畫那頂帽子，不另外設計 ——
+   地上看到的跟戴在頭上的必須是同一個東西 */
+function makeHat(i){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const tmp = document.createElement('canvas'); tmp.width = T; tmp.height = T;
+  const tx = tmp.getContext('2d');
+  const ids = ['helm','cone','hood','cap','plume','horn'];
+  HAT_ART[ids[i % ids.length]](tx);
+  x.drawImage(tmp, 0, 4);              // 往下移，圖示才落在格子中間
+  return c;
+}
+
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
@@ -660,7 +769,23 @@ function add(g, cv, label){
 const NAMES={player:'玩家',rat:'洞穴鼠',slime:'藍史萊姆',goblin:'綠哥布林',shroom:'醉步蕈',
  imp:'投石妖精',grub:'食腐蟲',skeleton:'骷髏兵',wolf:'疾風狼',mage:'詛咒法師',
  golem:'徘徊石像',turret:'水晶砲台',knight:'深淵騎士'};
-let g = sec('實體 13');
+let g = sec('生物骨架：顏色 / 年齡 / 帽子');
+add(g, makeBlob('#',{star:true,dark:'@'}), '主角');
+[['l','綠'],['q','藍'],['u','金'],['b','棕'],['6','灰'],['m','薄荷']].forEach(([c,n])=>
+  add(g, makeBlob(c), '村人·'+n));
+add(g, makeBlob('b',{age:'old'}), '老人');
+add(g, makeBlob('l',{age:'child'}), '小孩');
+[['helm','戰士盔'],['cone','黑魔尖帽'],['hood','白魔頭巾'],
+ ['cap','盜賊皮帽'],['plume','獵人羽帽'],['horn','狂戰角盔']].forEach(([h,n])=>
+  add(g, makeBlob('#',{star:true,dark:'@',hat:h}), n));
+
+g = sec('主角與裝備外觀');
+add(g, heroSprite(-1,-1,null), '徒手');
+['木棒','銅之劍','長槍','鋼之劍','秘銀之劍'].forEach((n,i)=>add(g, heroSprite(i,-1,null), n));
+['皮之盾','木之盾','鋼之盾','鏡之盾'].forEach((n,i)=>add(g, heroSprite(-1,i,null), n));
+add(g, heroSprite(4,3,'helm'), '秘銀+鏡盾+盔');
+
+g = sec('怪物 12');
 for(const k in SPR) add(g, atlas[k], NAMES[k]||k);
 g = sec('地形');
 TILE_ART.floor.forEach((c,i)=>add(g,c,'房間地板'+i));

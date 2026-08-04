@@ -114,6 +114,46 @@ body{
   font-family:var(--mono); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
 }
 #covermeta span{border:1px solid var(--edge); padding:4px 9px; white-space:nowrap}
+
+/* 名字與造型：排行榜要有人味，就得先讓人選自己是誰 */
+#ident{display:grid; gap:8px; justify-items:center}
+#pname{
+  width:200px; text-align:center; padding:9px 12px; font-size:13px;
+  font-family:var(--sans); color:var(--parch); background:rgba(10,8,7,.7);
+  border:1px solid var(--edge); letter-spacing:.06em;
+}
+#pname:focus{outline:none; border-color:var(--brass)}
+#cols{display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-width:260px}
+#cols button{
+  width:30px; height:30px; padding:0; border:1px solid var(--edge);
+  background:transparent; touch-action:manipulation;
+}
+#cols button canvas{width:24px; height:24px; image-rendering:pixelated; display:block; margin:auto}
+#cols button.on{border-color:var(--brass); background:rgba(201,151,63,.16)}
+
+/* ── 紀錄碑 ── */
+#board{
+  position:absolute; inset:0; z-index:28; display:none;
+  flex-direction:column; align-items:center; gap:10px;
+  padding:18px 16px calc(24px + env(safe-area-inset-bottom));
+  background:radial-gradient(90% 60% at 50% 20%, #241d18 0%, #120e0c 50%, #070605 100%);
+  text-align:center; overflow-y:auto;
+}
+#board.show{display:flex}
+#blist{width:100%; max-width:440px; display:grid; gap:4px}
+.brow{
+  display:flex; align-items:center; gap:9px; padding:6px 10px; text-align:left;
+  background:rgba(20,17,14,.6); border:1px solid var(--edge); font-size:12.5px;
+}
+.brow.me{border-color:var(--brass); background:rgba(60,40,16,.42)}
+.brow .rk{font-family:var(--mono); font-size:12px; color:var(--parch-dim); width:22px; text-align:right}
+.brow canvas{width:24px; height:24px; flex:none; image-rendering:pixelated}
+.brow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--parch)}
+.brow .de{font-family:var(--mono); font-size:10.5px; color:var(--parch-dim)}
+.brow .sc{font-family:var(--mono); font-size:13px; color:var(--brass); min-width:52px; text-align:right}
+#bx{padding:10px 26px; font-size:13px; min-height:44px; touch-action:manipulation}
+#over .score{font-family:var(--mono); font-size:13px; color:var(--brass)}
+#over .score b{font-size:19px; color:var(--brass)}
 /* 主體：左邊是地牢，右邊是小地圖與訊息簿。
    把訊息簿移到側欄，畫面本身就能吃掉整個垂直空間。 */
 #body{display:grid; grid-template-columns:minmax(0,1fr) 316px; align-items:stretch}
@@ -459,6 +499,12 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .spell .nm{flex:none; color:var(--parch)}
 .spell .ds{flex:1; font-size:11px; color:var(--parch-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .spell .mp{font-family:var(--mono); font-size:11px; color:var(--azure)}
+.slots{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:6px 14px}
+.slot{
+  min-height:38px; font-size:11.5px; padding:5px 2px; touch-action:manipulation;
+  border-style:dashed; color:var(--parch-dim);
+}
+.slot.on{border-style:solid; border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.12)}
 #mpbar i{background:var(--azure)}
 
 #hint{
@@ -483,6 +529,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   text-align:center;
 }
 #village.show{display:flex}
+#vfolk{display:flex; gap:6px; justify-content:center}
+#vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
+#vfolk canvas:nth-child(odd){animation:bob 3.1s ease-in-out infinite}
+#vfolk canvas:nth-child(even){animation:bob 2.6s ease-in-out infinite .4s}
 .vhead em{
   font-style:normal; font-family:var(--mono); font-size:10px;
   letter-spacing:.5em; text-indent:.5em; color:var(--brass);
@@ -510,6 +560,9 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .vrow.own{border-color:var(--brass-dim); background:rgba(60,40,16,.4)}
 .vrow.own .st{color:var(--brass)}
 .vhint{font-size:11.5px; color:var(--parch-dim); line-height:1.7; max-width:34ch}
+.vbtns{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:2px}
+.vbtns button{min-height:46px}
+#over button + button{margin-left:8px}
 #vgo{
   margin-top:2px; font-family:var(--serif); font-size:15px; letter-spacing:.24em;
   text-indent:.24em; color:#1a120d; background:linear-gradient(180deg,#e8a06f,var(--brass));
@@ -548,6 +601,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #cross{bottom:10px; left:12px; --k:46px}
   #ab{bottom:24px; right:16px}
   #card, #hint{bottom:172px}
+  /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
+  #panel, #over, #aim, #bigmap{bottom:172px}
   #card{top:0}
   /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
      點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
@@ -610,6 +665,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     </div>
 
     <div id="coverfoot">
+      <div id="ident">
+        <input id="pname" maxlength="12" placeholder="你的名字" autocomplete="off">
+        <div id="cols"></div>
+      </div>
       <button id="start">開始下潛</button>
       <div id="covermeta">
         <span>回合制</span><span>隨機地牢</span><span>死亡即歸零</span>
@@ -618,6 +677,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div>
 
   <div id="village">
+    <div id="vfolk"></div>
     <div class="vhead">
       <em>SAFE HAVEN</em>
       <h3>爐火村</h3>
@@ -626,8 +686,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div class="vgold">持有金錢 <b id="vgold">0</b> G</div>
     <div id="vstock"></div>
     <div id="vowned"></div>
-    <button id="vgo">再次下潛　B1F</button>
+    <div class="vbtns"><button id="vboard">紀錄碑</button><button id="vgo">再次下潛　B1F</button></div>
       </div>
+
+  <div id="board">
+    <div class="vhead"><em>HALL OF THE FALLEN</em><h3>紀錄碑</h3>
+      <p id="bsub">這座碑只刻在你的裝置上。</p></div>
+    <div id="blist"></div>
+    <button id="bx">關閉</button>
+  </div>
 
   <div id="sign">
     <h1>克勞德深淵</h1>
@@ -644,6 +711,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <div class="bar" id="fullbar"><i style="width:100%"></i></div></div>
     <div class="stat"><b>攻</b><span id="atk">10</span></div>
     <div class="stat"><b>防</b><span id="def">2</span></div>
+    <div class="stat"><b>職</b><span id="job">見習者</span></div>
     <div class="stat"><b>G</b><span id="gold">0</span></div>
   </div>
 
@@ -708,6 +776,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
           <h3 id="otitle">你倒下了</h3>
           <p id="otext"></p>
           <button id="restart"><span class="k">R</span>再下一次地牢</button>
+          <button id="oboard">紀錄碑</button>
         </div>
       </div>
     </div>
@@ -945,6 +1014,42 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
+/* ─── 職業與技能（FF5 式：戴帽子換職業，打怪累積 JP 學技能） ──
+   帽子＝職業。這件事在畫面上是看得見的 —— 玩家不用開選單就知道
+   自己現在是什麼、別人是什麼。
+
+   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。
+   「學得多、帶得少」正是 FF5 讓人反覆思考的地方。 */
+const HAT = [
+  {id:'helm',  nm:'鐵之盔',   job:'war', price:900,  jobnm:'戰士'},
+  {id:'cone',  nm:'黑之尖帽', job:'blk', price:1100, jobnm:'黑魔導'},
+  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導'},
+  {id:'cap',   nm:'皮之便帽', job:'thf', price:800,  jobnm:'盜賊'},
+  {id:'plume', nm:'羽飾獵帽', job:'hnt', price:1000, jobnm:'獵人'},
+  {id:'horn',  nm:'角之戰盔', job:'ber', price:1200, jobnm:'狂戰士'},
+];
+const JOB_NM = {none:'見習者'};
+for(const h of HAT) JOB_NM[h.job] = h.jobnm;
+
+const JP_TIER = 40;                 // 第二個技能需要的 JP
+/* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
+const ABIL = [
+  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, mp:4, k:'self',   desc:'5 回合內傷害減半'},
+  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       mp:6, k:'blast',  desc:'命中後炸開一圈'},
+  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, mp:0, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
+  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
+  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, mp:4, k:'self',   desc:'10 回合內速度加倍'},
+  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       mp:4, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, mp:5, k:'self',   desc:'揭露整層地圖'},
+  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
+  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
+];
+const abilById = id => ABIL.find(a => a.id === id);
+const SLOTS = 4;
+
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
    原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
    技能點讓每一次升級都要做決定，而決定才是玩家記得住的東西。 */
@@ -1034,7 +1139,80 @@ function bake(rows, w=T, h=T){
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
 
-/* ─── 主角：史萊姆本體 + 星芒核心 + 看得見的裝備 ────────────────
+/* ═══ 通用生物骨架 ═══════════════════════════════════════════
+   主角與所有村民共用同一個剪影：寬扁的身體、兩側短鰭、四隻小腳、
+   兩顆方眼睛。只換顏色、年齡變體與帽子。
+
+   共用剪影是刻意的 —— 玩家要先認出「這是同一族」，再分辨是誰。
+   剪影一致、顏色分派，順序不能反過來。 */
+const BLOB_BODY = [
+  [3,4,8],
+  [4,3,10],[5,3,10],[6,3,10],
+  [7,1,14],[8,1,14],
+  [9,3,10],[10,3,10],[11,3,10],
+];
+const BLOB_CHILD = [
+  [5,5,6],
+  [6,4,8],[7,4,8],
+  [8,2,12],[9,2,12],
+  [10,4,8],[11,4,8],
+];
+/* 六頂帽子＝六種職業。帽子畫在頭頂那一排，剪影要一眼分得出來 —— 
+   職業是靠帽子辨識的，帽子長得像就等於職業長得像。 */
+const HAT_ART = {
+  // 全部畫在 y1~y4，帽緣壓在身體頂緣（y3）上 —— 浮在頭上會像貼圖不像戴著
+  helm:  x=>{ px(x,PAL['0'],3,1,10,4); px(x,PAL['5'],4,2,8,2); px(x,PAL['6'],4,2,8,1);
+              px(x,PAL['0'],7,2,2,3); px(x,PAL['4'],2,4,12,1); px(x,PAL['0'],2,5,12,1); },
+  cone:  x=>{ px(x,PAL['0'],7,0,2,2); px(x,PAL['0'],6,1,4,1); px(x,PAL['0'],5,2,6,2);
+              px(x,PAL['o'],7,0,2,1); px(x,PAL['p'],6,1,4,1); px(x,PAL['o'],5,2,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['p'],2,4,12,1); px(x,PAL['u'],7,3,2,1); },
+  hood:  x=>{ px(x,PAL['0'],4,1,8,5); px(x,PAL['d'],5,2,6,3); px(x,PAL['6'],5,2,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['d'],3,4,10,1); px(x,PAL['g'],6,4,4,1); },
+  cap:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['9'],5,3,6,2); px(x,PAL['a'],5,3,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['8'],2,4,11,1); },
+  plume: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['j'],5,3,6,2); px(x,PAL['k'],5,3,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['j'],3,4,10,1);
+              px(x,PAL['0'],10,0,3,1); px(x,PAL['m'],10,1,3,1); px(x,PAL['l'],11,2,2,1); },
+  horn:  x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['e'],5,3,6,2); px(x,PAL['f'],5,3,6,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['e'],3,4,10,1);
+              px(x,PAL['0'],1,0,3,4); px(x,PAL['d'],1,1,2,2);
+              px(x,PAL['0'],12,0,3,4); px(x,PAL['d'],13,1,2,2); },
+};
+/* body: 色盤索引；age: 'adult'|'old'|'child'；star: 主角的星芒記號 */
+function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const child = age === 'child';
+  const m = shapeMask(child ? BLOB_CHILD : BLOB_BODY);
+  paintMask(x, m, PAL[body], PAL[dark], null, 99);
+
+  const ey = child ? 8 : 7, ex1 = child ? 5 : 5, ex2 = child ? 9 : 9;
+  px(x,PAL[dark],ex1,ey,2,2); px(x,PAL[dark],ex2,ey,2,2);
+  if(child){ px(x,PAL['6'],ex1,ey,1,1); px(x,PAL['6'],ex2,ey,1,1); }   // 小孩眼睛有光
+
+  // 腳：四根短柱，比身體暗一階
+  const ly = child ? 12 : 12, lh = child ? 1 : 2;
+  for(const lx of (child ? [5,7,9,10] : [4,6,9,11])) px(x,PAL[dark],lx,ly,1,lh);
+
+  px(x,PAL['6'],child?5:4,child?6:4,1,1);                              // 左上受光
+
+  if(age === 'old'){                                                    // 老人：白鬍與垂眼
+    px(x,PAL['6'],6,10,4,1); px(x,PAL['6'],5,11,6,1);
+    px(x,PAL[dark],5,11,1,1); px(x,PAL[dark],10,11,1,1);
+    px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
+  }
+  if(star){
+    // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
+    const sy = 10;
+    px(x,PAL['+'],7,sy-1,2,1);
+    px(x,PAL['+'],6,sy,4,1);
+    px(x,PAL['+'],7,sy+1,2,1);
+  }
+  if(hat && HAT_ART[hat]) HAT_ART[hat](x);
+  return c;
+}
+
+/* ─── 主角：共用骨架 + 星芒核心 + 看得見的裝備 ────────────────
    為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。
    直接沿用他人的商標去吸引玩家，正是商標法最在意的用法；
    神韻留下、標誌不用，才是能安心散布的做法。
@@ -1042,11 +1220,7 @@ for(const k in SPR) atlas[k] = bake(SPR[k]);
    為什麼要程序化而不是手打像素字串：裝備必須畫在身上。
    拿了劍卻看不出來，玩家就感覺不到自己變強 —— 而「感覺變強」
    正是這類遊戲唯一的驅動力。 */
-const HERO_BODY = [
-  [2,6,4],[3,5,6],[4,4,8],[5,3,10],[6,3,10],
-  [7,2,12],[8,2,12],[9,2,12],
-  [10,1,14],[11,1,14],[12,1,14],[13,1,14],[14,1,14],
-];
+
 function drawHeroWeapon(x, i){
   const bl = ['9','5','6','6','r'][i], hi = ['8','9','5','t','u'][i];
   px(x,PAL['0'],11,0,4,11);
@@ -1073,28 +1247,19 @@ function drawHeroShield(x, i){
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
 const heroCache = {};
-function heroSprite(wi, si){
-  const k = wi + '/' + si;
+function heroSprite(wi, si, hi){
+  const k = wi + '/' + si + '/' + (hi||'-');
   if(heroCache[k]) return heroCache[k];
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
 
-  paintMask(x, shapeMask(HERO_BODY), PAL['#'], PAL['@'], null, 99);
-  px(x,PAL['*'],5,3,4,1); px(x,PAL['*'],4,4,3,1); px(x,PAL['*'],3,5,2,2);   // 左上受光
-  px(x,PAL['0'],4,7,3,3); px(x,PAL['0'],9,7,3,3);                            // 眼睛
-  px(x,PAL['+'],5,7,1,1); px(x,PAL['+'],10,7,1,1);                           // 眼神光
-
-  // 體內的八角星芒核心
-  const cxs = 7, cys = 12;
-  px(x,PAL['+'],cxs,cys-2,1,5); px(x,PAL['+'],cxs-2,cys,5,1);
-  for(const [dx,dy] of [[-2,-2],[-1,-1],[1,1],[2,2],[2,-2],[1,-1],[-1,1],[-2,2]])
-    px(x,PAL['+'],cxs+dx,cys+dy,1,1);
+  x.drawImage(makeBlob('#', {star:true, dark:'@', hat:hi}), 0, 0);
 
   if(si >= 0) drawHeroShield(x, si);
   if(wi >= 0) drawHeroWeapon(x, wi);
   return heroCache[k] = c;
 }
-atlas.player = heroSprite(-1, -1);
+atlas.player = heroSprite(-1, -1, null);
 
 /* ─── 道具圖示：參數化生成 ────────────────────────────────────
    81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，
@@ -1375,6 +1540,19 @@ function makeExit(){
   px(x,PAL['0'],2,14,12,2);
   return c;
 }
+/* 帽子的道具圖示：直接畫那頂帽子，不另外設計 ——
+   地上看到的跟戴在頭上的必須是同一個東西 */
+function makeHat(i){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const tmp = document.createElement('canvas'); tmp.width = T; tmp.height = T;
+  const tx = tmp.getContext('2d');
+  const ids = ['helm','cone','hood','cap','plume','horn'];
+  HAT_ART[ids[i % ids.length]](tx);
+  x.drawImage(tmp, 0, 4);              // 往下移，圖示才落在格子中間
+  return c;
+}
+
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
@@ -1497,7 +1675,13 @@ const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
 
    死掉一樣什麼都不留 —— 想把戰利品變成裝備，就得自己走出去。 */
 const VILLAGE_KEY = 'claude-abyss-village';
-let VILLAGE = { gold: 0, stock: [], unlocked: false };
+/* name/col = 玩家的名字與造型顏色；board = 排行榜。
+   排行榜只存在這台裝置上 —— 靜態頁面沒有伺服器可以比對別人的成績。
+   要做成真正的全球榜，需要一個後端，見 README。 */
+let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [] };
+const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v'];
+const BLOB_COL_NM = {'#':'陶土','l':'苔綠','q':'湖藍','u':'琥珀','b':'土棕',
+                     '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金'};
 const EXIT_FLOOR = 20;
 const RUNS_PER_GEAR = 3;
 
@@ -1507,7 +1691,12 @@ function loadVillage(){
     if(raw){
       const v = JSON.parse(raw);
       if(v && typeof v === 'object'){
-        VILLAGE = {gold: v.gold|0, stock: Array.isArray(v.stock)?v.stock:[], unlocked: !!v.unlocked};
+        VILLAGE = {
+          gold: v.gold|0, stock: Array.isArray(v.stock)?v.stock:[], unlocked: !!v.unlocked,
+          name: typeof v.name === 'string' ? v.name : '',
+          col: BLOB_COLS.includes(v.col) ? v.col : '#',
+          board: Array.isArray(v.board) ? v.board : [],
+        };
       }
     }
   }catch(e){}                       // 沙箱可能擋 localStorage —— 擋了就只存在記憶體裡
@@ -1516,6 +1705,28 @@ function saveVillage(){
   try{ localStorage.setItem(VILLAGE_KEY, JSON.stringify(VILLAGE)); }catch(e){}
 }
 loadVillage();
+
+/* 積分：深度是主軸，其餘是「你在這一趟做了多少事」。
+   只算深度的話，衝樓梯是最優解，探索與轉職就沒有意義了。 */
+function runScore(){
+  const p = G.p;
+  const ident = Object.keys(G.known).length;
+  const learned = Object.keys(p.learned).length;
+  return G.depth*120 + p.lv*50 + Math.floor(p.gold/4) + ident*30 + learned*80;
+}
+function submitScore(how){
+  const p = G.p;
+  const entry = {
+    name: (VILLAGE.name || '無名的旅人').slice(0,12),
+    col: VILLAGE.col, score: runScore(), depth: G.depth, lv: p.lv,
+    job: JOB_NM[p.job] || '見習者', how, at: Date.now(),
+  };
+  VILLAGE.board.push(entry);
+  VILLAGE.board.sort((a,b)=> b.score - a.score);
+  VILLAGE.board = VILLAGE.board.slice(0, 20);
+  saveVillage();
+  return entry;
+}
 
 /* 村裡賣的東西：不加價（這是家，不是黑店），但只賣中階以上 —— 
    低階的地牢裡撿得到，拿錢買它沒有意義。 */
@@ -1552,6 +1763,7 @@ function newGame(seed){
     look, known:{}, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
+        hat:null, job:'none', jp:{}, learned:{}, slots:[null,null,null,null],
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
@@ -1574,7 +1786,7 @@ function newGame(seed){
 
 let UID=1;
 function mk(cat, id, o){
-  const src = {herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,weap:WEAP,shld:SHLD}[cat];
+  const src = {herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,weap:WEAP,shld:SHLD,hat:HAT}[cat];
   const d = src.find(s=>s.id===id) || src[0];
   const it = {uid:UID++, cat, id:d.id, d, up:0, cursed:false, uses:0, contents:[]};
   if(cat==='wand') it.uses = G? G.rng.i(4,7) : 5;
@@ -1585,7 +1797,7 @@ function mk(cat, id, o){
 function rollItem(rng, depth){
   const table = [
     ['herb',HERB,26],['scroll',SCROLL,20],['wand',WAND,10],['pot',POT,8],
-    ['food',FOOD,16],['weap',WEAP,10],['shld',SHLD,10],
+    ['food',FOOD,16],['weap',WEAP,10],['shld',SHLD,10],['hat',HAT,7],
   ];
   const pick = rng.weight(table, r=>r[2]);
   const d = rng.pick(pick[1]);
@@ -1594,6 +1806,7 @@ function rollItem(rng, depth){
     it.up = rng.i(0, Math.min(3, d.up));
     it.cursed = rng.chance(.12);
   }
+  if(pick[0]==='hat') it.known = 1;      // 帽子永遠看得出來是什麼 —— 職業要是猜的就沒意思了
   return it;
 }
 
@@ -1745,7 +1958,10 @@ function vision(){
 /* ─── 數值 ──────────────────────────────────────────────────── */
 const STR = p => 8 + Math.floor((p.lv-1)*4/3) + p.strb;
 function pAtk(){ const p=G.p; let a=STR(p);
-  if(p.weap) a += p.weap.d.atk + p.weap.up*2; return Math.max(1,a); }
+  if(p.weap) a += p.weap.d.atk + p.weap.up*2;
+  // 血怒：體力越低攻擊越高，最多 1.8 倍
+  if(p.st['怒']) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
+  return Math.max(1,a); }
 function pDef(){ const p=G.p; return p.shld ? Math.max(0,p.shld.d.def + p.shld.up*2) : 0; }
 const defFactor = d => Math.pow(15/16, Math.max(0,d));
 function rollDmg(atk, def, crit, mult){
@@ -1869,6 +2085,7 @@ function kill(m){
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(`掉落了「${nameOf(it)}」。`); }
   }
   const p=G.p; p.exp += m.d.exp;
+  if(p.job !== 'none'){ p.jp[p.job] = (p.jp[p.job] || 0) + m.d.exp; checkLearn(); }
   if(G.rng.chance(.65)){
     const g = Math.max(3, Math.round(m.d.exp*1.5) + G.rng.i(5,20));
     const spot = nearestFree(m.x,m.y) || {x:m.x,y:m.y};
@@ -2041,7 +2258,8 @@ function act(m,it){
     }
     const hit = G.rng.i(1,100) <= 92;
     if(!hit){ SFX.play('miss',60); say(`${m.d.nm} 的攻擊落空了。`); return; }
-    const dmg = rollDmg(m.d.atk, pDef(), false, mult);
+    let dmg = rollDmg(m.d.atk, pDef(), false, mult);
+    if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     SFX.play(ranged?'zap':'hurt', 60);
     m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
     p.flash = 0.11;
@@ -2049,7 +2267,8 @@ function act(m,it){
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     say(`${m.d.nm} 的${ranged?'遠程':''}攻擊命中，受到 ${dmg} 點傷害。`,'bad');
     const oh = m.d.onhit;
-    if(oh && G.rng.chance(oh.ch)){
+    if(oh && p.st['界'] && oh.st){ say('結界擋下了異常狀態。','good'); }
+    else if(oh && G.rng.chance(oh.ch)){
       if(oh.st){ p.st[oh.st]=oh.dur; say(`你陷入了${oh.st}的狀態！`,'bad'); }
       if(oh.drain){ p.sat=Math.max(0,p.sat-oh.drain); say(`${m.d.nm} 吸走了你的體力！`,'bad'); }
       if(oh.curse){ const t=[p.weap,p.shld].filter(i=>i&&!i.cursed);
@@ -2090,6 +2309,7 @@ function nameOf(it){
     }
   }
   let n = it.d.nm;
+  if(it.cat === 'hat') n += `（${it.d.jobnm}）`;
   if(it.cat==='wand' && G.known[lookKey(it)]) n += ` [${it.uses}]`;
   if(it.cat==='pot') n += ` [${it.contents.length}/${it.cap}]`;
   if((it.cat==='weap'||it.cat==='shld') && it.known){
@@ -2099,12 +2319,13 @@ function nameOf(it){
   return n;
 }
 function iconOf(it){
-  const idx = LOOK[it.cat] ? G.look[lookKey(it)] : {food:FOOD,weap:WEAP,shld:SHLD}[it.cat].findIndex(d=>d.id===it.id);
+  const idx = LOOK[it.cat] ? G.look[lookKey(it)] : {food:FOOD,weap:WEAP,shld:SHLD,hat:HAT}[it.cat].findIndex(d=>d.id===it.id);
   const cacheK = it.cat+'#'+idx;
   if(!atlas[cacheK]){
     atlas[cacheK] = it.cat==='herb'?makeHerb(idx) : it.cat==='scroll'?makeScroll(idx)
       : it.cat==='wand'?makeWand(idx) : it.cat==='pot'?makePot(idx)
-      : it.cat==='food'?makeFood(idx) : it.cat==='weap'?makeWeapon(idx) : makeShield(idx);
+      : it.cat==='food'?makeFood(idx) : it.cat==='weap'?makeWeapon(idx)
+      : it.cat==='hat'?makeHat(idx) : makeShield(idx);
   }
   return atlas[cacheK];
 }
@@ -2116,8 +2337,33 @@ function identify(it){
 /* 空手時撿到武器／盾牌就直接裝上。
    撿了一把劍、狀態列還是「攻 8」，多數人會以為是 bug 而不是「還沒裝備」。
    只在該欄位是空的時候自動裝 —— 換裝仍然是玩家的決定（可能是詛咒品）。 */
+/* 戴上帽子就換職業。原本學會的技能不會忘 —— 只是換了一批能繼續練的。 */
+function wearHat(it){
+  const p = G.p;
+  p.hat = it.d.id; p.job = it.d.job;
+  say(`戴上了「${it.d.nm}」—— 現在是${it.d.jobnm}。`,'gold');
+  SFX.play('ident');
+  checkLearn();
+}
+/* JP 到門檻就學會。學會了就永遠在池子裡，換職業也不會忘。 */
+function checkLearn(){
+  const p = G.p;
+  for(const a of ABIL){
+    if(a.job !== p.job || p.learned[a.id]) continue;
+    if((p.jp[p.job] || 0) < a.jp) continue;
+    p.learned[a.id] = 1;
+    say(`★ 學會了技能「${a.nm}」。`,'good');
+    SFX.play('level');
+    burst(p.x, p.y, 16, '#f5dc7a', 34, 18, .7);
+    const empty = p.slots.indexOf(null);
+    if(empty >= 0){ p.slots[empty] = a.id; say(`已裝載到第 ${empty+1} 格。`); }
+    else say(`技能欄已滿（${SLOTS} 格）—— 到魔法選單更換。`,'gold');
+  }
+}
+
 function autoEquip(it){
   const p = G.p;
+  if(it.cat === 'hat'){ wearHat(it); return true; }
   if(it.cat === 'weap' && !p.weap){ p.weap = it; it.known = 1; }
   else if(it.cat === 'shld' && !p.shld){ p.shld = it; it.known = 1; }
   else return false;
@@ -2386,6 +2632,95 @@ function doSpell(sp, dx, dy){
   }
 }
 
+/* ─── 職業技能的實際效果 ─────────────────────────────────────── */
+let pendAbil = null;
+function useAbil(a){
+  const p = G.p;
+  if(p.mp < a.mp){ say('魔力不足。','bad'); return false; }
+  if(a.k === 'self' || a.k === 'around' || a.k === 'melee'){
+    p.mp -= a.mp; doAbil(a, p.face[0], p.face[1]); endTurn(); return true;
+  }
+  pendAbil = a; say(`${a.nm} —— 選擇方向。`,'gold'); refresh(); return null;
+}
+function fireAbil(dx,dy){
+  const a = pendAbil; pendAbil = null; if(!a) return;
+  G.p.mp -= a.mp; doAbil(a, dx, dy); endTurn();
+}
+function doAbil(a, dx, dy){
+  const p = G.p;
+  SFX.play(a.k === 'self' ? 'quaff' : 'zap');
+  const front = monAt(p.x+dx, p.y+dy);
+  switch(a.id){
+    case 'smash':
+      if(!front){ say('面前沒有敵人。'); break; }
+      p.lunge = {dx,dy,t:0};
+      hurtMon(front, rollDmg(pAtk()*2.2, front.d.def, false, 1), '#f5dc7a');
+      G.shake = Math.max(G.shake, 8); say('渾身一擊！','good'); break;
+    case 'guard':
+      p.st['守'] = 5; say('擺出了防禦架式。','good'); break;
+    case 'blast': {
+      const {mons,x,y} = beamLine(dx,dy,9,true);
+      const at = mons[0] ? {x:mons[0].x,y:mons[0].y} : {x,y};
+      burst(at.x,at.y,24,'#f5a95e',60,10,.5); G.shake=Math.max(G.shake,7);
+      let n=0;
+      for(const m of G.mons.slice()){
+        if(Math.max(Math.abs(m.x-at.x),Math.abs(m.y-at.y))>1) continue;
+        hurtMon(m, rollDmg(28+p.lv*3, m.d.def, false, 1), '#e87a4a', '痛', 4); n++;
+      }
+      say(n?`爆裂命中 ${n} 個敵人。`:'爆裂炸在空處。', n?'good':null); break;
+    }
+    case 'drain': {
+      if(!front){ say('面前沒有敵人。'); break; }
+      const d = rollDmg(14+p.lv*2, front.d.def, false, 1);
+      hurtMon(front, d, '#2f57a0');
+      const gain = Math.min(Math.ceil(d/2), p.mmp - p.mp);
+      p.mp += gain; float(p.x,p.y,'+'+gain+' MP','#5b86b8');
+      say(`吸取了 ${gain} 點魔力。`,'good'); break;
+    }
+    case 'mend': {
+      const h = Math.min(24+p.lv*4, p.mhp-p.hp); p.hp += h;
+      const k0 = Object.keys(p.st).filter(k=>k!=='守'&&k!=='怒'&&k!=='界');
+      if(k0.length) delete p.st[k0[0]];
+      burst(p.x,p.y,14,'#6a8f4a',30,14);
+      say(h?`恢復了 ${h} 點體力。`:'體力已滿。', h?'good':null); break;
+    }
+    case 'ward': p.st['界'] = 8; say('身周浮現了結界。','good'); break;
+    case 'steal': {
+      if(!front){ say('面前沒有敵人。'); break; }
+      if(front.carry.length){
+        const it = front.carry.pop();
+        if(p.inv.length < 20){ p.inv.push(it); say(`偷到了「${nameOf(it)}」！`,'good'); }
+        else { G.items[key(p.x,p.y)] = it; say('背包滿了，東西掉在腳下。'); }
+      } else if(G.rng.chance(.4)){
+        const it = rollItem(G.rng, G.depth);
+        if(p.inv.length < 20){ p.inv.push(it); say(`偷到了「${nameOf(it)}」！`,'good'); }
+        else say('背包滿了，沒能拿走。');
+      } else say('什麼也沒偷到。');
+      front.aggro = 15; break;
+    }
+    case 'dash': p.st['速'] = 10; say('腳步輕了起來。','good'); break;
+    case 'pierce': {
+      const {mons} = beamLine(dx,dy,10,false);
+      if(!mons.length){ say('箭射向遠方。'); break; }
+      for(const m of mons) hurtMon(m, rollDmg(pAtk()*1.2, m.d.def, false, 1), '#79c97a');
+      say(`貫穿了 ${mons.length} 個敵人。`,'good'); break;
+    }
+    case 'survey':
+      for(let i=0;i<G.seen.length;i++) if(!G.seen[i]) G.seen[i] = 1;
+      say('鷹眼掃過整層 —— 地圖全部揭露。','good'); break;
+    case 'ramp': {
+      let n = 0;
+      for(const d of DIRS){
+        const m = monAt(p.x+d[0], p.y+d[1]);
+        if(m){ hurtMon(m, rollDmg(pAtk()*0.85, m.d.def, false, 1), '#c94a3a'); n++; }
+      }
+      G.shake = Math.max(G.shake, 9);
+      say(n?`亂舞掃中 ${n} 個敵人！`:'四周空無一物。', n?'good':null); break;
+    }
+    case 'rage': p.st['怒'] = 12; say('血液沸騰了起來。','good'); break;
+  }
+}
+
 /* ─── 幻獸 ─────────────────────────────────────────────────── */
 function callSummon(sm){
   const p = G.p;
@@ -2469,8 +2804,12 @@ function death(){
     G.known[lookKey(rev)]=1; SFX.play('level');
     say('復活草發出光芒，你重新站了起來！','good'); return; }
   SFX.play('death');
+  const sc = submitScore('倒下');
+  const rank = VILLAGE.board.indexOf(sc) + 1;
   const sp = schoolTotal(G.p);
+  document.getElementById('otitle').textContent = '你倒下了';
   document.getElementById('otext').innerHTML =
+    `<span class="score">積分 <b>${sc.score}</b>${rank && rank<=20 ? `　·　本機第 ${rank} 名` : ''}</span><br>` +
     `在 <b>B${G.depth}F</b> 倒下　·　等級 <b>${G.p.lv}</b>` +
     (sp ? `　·　技能 <b>${sp}</b> 點` : '') + `<br>` +
     `等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。`;
@@ -2644,7 +2983,7 @@ function heroNow(){
   const p = G && G.p;
   const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.id) : -1;
   const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.id) : -1;
-  return heroSprite(wi, si);
+  return heroSprite(wi, si, p && p.hat);
 }
 
 /* ═══ 動態美術層 ═════════════════════════════════════════════
@@ -3281,6 +3620,7 @@ function refresh(){
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
+  $('job').textContent = JOB_NM[p.job] || '見習者';
   $('zone').textContent = zoneOf(G.depth).nm;
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
@@ -3379,6 +3719,54 @@ function renderPanel(){
       list.appendChild(row);
     }
 
+    // ── 職業與技能欄 ──
+    const jh = document.createElement('div'); jh.className='hint';
+    const jpNow = p.jp[p.job] || 0;
+    const nextA = ABIL.find(a => a.job===p.job && !p.learned[a.id]);
+    jh.textContent = p.job === 'none'
+      ? '職業　—　找一頂帽子戴上就能轉職'
+      : `職業　${JOB_NM[p.job]}　JP ${jpNow}` + (nextA ? `　（${nextA.nm} 需要 ${nextA.jp}）` : '　已全部學會');
+    list.appendChild(jh);
+
+    const slotRow = document.createElement('div'); slotRow.className = 'slots';
+    for(let i=0;i<SLOTS;i++){
+      const id = p.slots[i], a2 = id && abilById(id);
+      const b2 = document.createElement('button');
+      b2.className = 'slot' + (a2 ? ' on' : '');
+      b2.textContent = a2 ? a2.nm : '空';
+      if(a2) b2.onclick = ()=>{ p.slots[i] = null; SFX.play('open'); refresh(); };
+      slotRow.appendChild(b2);
+    }
+    list.appendChild(slotRow);
+
+    const known2 = ABIL.filter(a => p.learned[a.id]);
+    if(!known2.length){
+      const e = document.createElement('div'); e.className='hint';
+      e.textContent = '還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。';
+      list.appendChild(e);
+    }
+    for(const a2 of known2){
+      const on = p.slots.includes(a2.id);
+      const row = document.createElement('div');
+      const ok = on && p.mp >= a2.mp;
+      row.className = 'spell' + (ok ? '' : ' off');
+      row.innerHTML =
+        `<span class="nm">${a2.nm}</span><span class="ds">${a2.desc}</span>` +
+        `<span class="mp">${on ? a2.mp + ' MP' : '未裝載'}</span>`;
+      row.onclick = ()=>{
+        if(!on){                                   // 沒裝載 → 裝進第一個空格
+          const e2 = p.slots.indexOf(null);
+          if(e2 < 0){ say(`技能欄只有 ${SLOTS} 格 —— 先點上面的技能卸下一個。`,'bad'); refresh(); return; }
+          p.slots[e2] = a2.id; SFX.play('ident'); refresh(); return;
+        }
+        if(p.mp < a2.mp){ say('魔力不足。','bad'); refresh(); return; }
+        const r = useAbil(a2);
+        if(r === null){ closePanel(); openAim(a2.nm + '方向'); return; }
+        if(r) closePanel(); else refresh();
+      };
+      list.appendChild(row);
+    }
+
     const av = summonsFor(p);
     const sh = document.createElement('div'); sh.className='hint';
     sh.textContent = av.length ? `幻獸　召喚代價：胃袋 ${Math.round(SUMMON_COST*100)}%`
@@ -3442,6 +3830,10 @@ function buildActions(it, ground){
     if(r===null){ closePanel(); openAim('揮杖方向'); return; }   // 杖進入瞄準
     if(r){ if(!ground) {} closePanel(); endTurn(); } else refresh();
   });
+  if(it.cat === 'hat'){
+    const on = p.hat === it.d.id;
+    btn(on ? '已戴上' : '戴上', ()=>{ wearHat(it); closePanel(); endTurn(); }, on);
+  }
   if(it.cat==='weap'||it.cat==='shld'){
     const eq = (it===p.weap||it===p.shld);
     btn(eq?'卸下':'裝備', ()=>{
@@ -3567,10 +3959,11 @@ function openAim(label){
 }
 function closeAim(){ const el = $('aim'); if(el) el.classList.remove('show'); }
 function cancelAim(){
-  pendWand = null; pendThrow = null; pendSpell = null;
+  pendWand = null; pendThrow = null; pendSpell = null; pendAbil = null;
   closeAim(); say('取消了。'); refresh();
 }
 function handleDir(dx,dy){
+  if(pendAbil){ closeAim(); fireAbil(dx,dy); return; }
   if(pendSpell){ closeAim(); fireSpell(dx,dy); return; }
   if(pendWand){ closeAim(); fireWand(dx,dy); return; }
   if(pendThrow){ closeAim(); doThrow(dx,dy); return; }
@@ -3724,6 +4117,9 @@ let pressB = ()=>{};
 })();
 $('aimx').onclick = cancelAim;
 $('bigx').onclick = ()=>{ closeBigMap(); SFX.play('open'); };
+$('bx').onclick = ()=>{ closeBoard(); SFX.play('open'); };
+$('oboard').onclick = openBoard;
+$('vboard').onclick = openBoard;
 $('pclose').onclick = ()=>{ SFX.play('open'); closePanel(); refresh(); };
 document.querySelectorAll('[data-act]').forEach(b=>{
   b.onclick = ()=>{
@@ -3780,6 +4176,7 @@ function restart(){
 
 /* ─── 村莊 ──────────────────────────────────────────────────── */
 function leaveDungeon(){
+  const sc = submitScore('生還');
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
   saveVillage();
@@ -3787,7 +4184,7 @@ function leaveDungeon(){
   SFX.play('level'); BGM.stop();
   burst(G.p.x, G.p.y, 40, '#f5dc7a', 70, 26, 1.0);
   say(`帶著 ${G.p.gold} G 離開了迷宮。`,'gold');
-  $('vsub').textContent = `你從 B${G.depth}F 活著走了出來，帶回 ${G.p.gold} G。`;
+  $('vsub').textContent = `你從 B${G.depth}F 活著走了出來，帶回 ${G.p.gold} G　·　積分 ${sc.score}`;
   openVillage();
 }
 function openVillage(){
@@ -3798,6 +4195,17 @@ function openVillage(){
 }
 function renderVillage(){
   $('vgold').textContent = VILLAGE.gold;
+
+  // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
+  const folk = $('vfolk');
+  if(folk && !folk.childElementCount){
+    for(const [col, age] of [['b','old'],['l','adult'],['q','child'],
+                             ['u','adult'],['6','old'],['m','child']]){
+      const c = document.createElement('canvas'); c.width=T; c.height=T;
+      c.getContext('2d').drawImage(makeBlob(col, {age}), 0, 0);
+      folk.appendChild(c);
+    }
+  }
 
   const stock = $('vstock'); stock.innerHTML = '';
   const head = document.createElement('div');
@@ -3847,6 +4255,39 @@ function renderVillage(){
   }
 }
 function closeVillage(){ $('village').classList.remove('show'); }
+
+/* ─── 紀錄碑 ────────────────────────────────────────────────── */
+const blobCache = {};
+function blobFor(col){
+  if(!blobCache[col]) blobCache[col] = makeBlob(col, {star:true, dark: col==='#' ? '@' : '0'});
+  return blobCache[col];
+}
+function openBoard(){
+  const list = $('blist'); list.innerHTML = '';
+  if(!VILLAGE.board.length){
+    const e = document.createElement('div'); e.className = 'vhint';
+    e.textContent = '還沒有任何紀錄。走進去，走出來，名字就會刻上。';
+    list.appendChild(e);
+  }
+  const newest = VILLAGE.board.reduce((a,b)=> !a || b.at > a.at ? b : a, null);
+  VILLAGE.board.forEach((e,i)=>{
+    const row = document.createElement('div');
+    row.className = 'brow' + (e === newest ? ' me' : '');
+    const rk = document.createElement('div'); rk.className='rk'; rk.textContent = (i+1)+'.';
+    const c = document.createElement('canvas'); c.width=T; c.height=T;
+    c.getContext('2d').drawImage(blobFor(BLOB_COLS.includes(e.col)?e.col:'#'), 0, 0);
+    const nm = document.createElement('div'); nm.className='nm'; nm.textContent = e.name;
+    const de = document.createElement('div'); de.className='de';
+    de.textContent = `B${e.depth}F · Lv${e.lv} · ${e.job} · ${e.how}`;
+    const sc = document.createElement('div'); sc.className='sc'; sc.textContent = e.score;
+    row.append(rk, c, nm, de, sc);
+    list.appendChild(row);
+  });
+  $('board').classList.add('show');
+  try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){}
+  SFX.play('open');
+}
+function closeBoard(){ $('board').classList.remove('show'); }
 
 /* ─── 全螢幕樓層圖 ──────────────────────────────────────────── */
 function openBigMap(){
@@ -3958,6 +4399,26 @@ let coverUp = true;
   // 岩壁用遊戲的岩盤圖樣，封面與地牢是同一種材質
   const rock = $('coverrock');
   if(rock && TILE_ART.rock.toDataURL) rock.style.backgroundImage = `url(${TILE_ART.rock.toDataURL()})`;
+
+  // 名字與造型：排行榜要有人味，就得先讓人選自己是誰
+  const nameEl = $('pname');
+  nameEl.value = VILLAGE.name || '';
+  nameEl.oninput = ()=>{ VILLAGE.name = nameEl.value.trim().slice(0,12); saveVillage(); };
+  const cols = $('cols');
+  for(const col of BLOB_COLS){
+    const b2 = document.createElement('button');
+    b2.title = BLOB_COL_NM[col];
+    const c = document.createElement('canvas'); c.width=T; c.height=T;
+    c.getContext('2d').drawImage(blobFor(col), 0, 0);
+    b2.appendChild(c);
+    if(col === VILLAGE.col) b2.classList.add('on');
+    b2.onclick = ()=>{
+      VILLAGE.col = col; saveVillage();
+      for(const o of cols.children) o.classList.toggle('on', o === b2);
+      SFX.play('open');
+    };
+    cols.appendChild(b2);
+  }
 
   const dust = $('coverdust');
   if(dust){
