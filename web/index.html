@@ -1396,15 +1396,15 @@ function newGame(seed){
     rng, seed, depth:1, turn:0, over:false,
     look, known:{}, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
-        mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0,
+        mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
     log:[], anim:[], shake:0, floats:[], parts:[], corpses:[],
   };
-  G.p.inv.push(mk('weap','club',{known:1,eq:1}), mk('shld','leath',{known:1,eq:1}),
-               mk('food','big'), mk('food','bread'), mk('herb','heal'));
-  G.p.weap = G.p.inv[0]; G.p.shld = G.p.inv[1];
+  // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
+  // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
+  G.p.inv.push(mk('food','bread'));
   buildFloor();
   say('進入了地下城。方向鍵移動，撞到怪物即攻擊。', 'gold');
   return G;
@@ -1468,6 +1468,13 @@ function buildFloor(){
   };
   // 每層保證至少一份食物 —— 飢餓該來自「探索太久」的選擇，不是運氣
   const fp = free(0); if(fp) G.items[key(fp.x,fp.y)] = mk('food', rng.pick(FOOD).id);
+  // 第一層保證有一把武器與一面盾牌，但放在「地上」而不是背包裡。
+  // 背包依然只有一個麵包（第一件武器因此是一個事件），
+  // 但不會出現連走三層都沒撿到武器、赤手空拳撞上骷髏兵的死局。
+  if(G.depth === 1){
+    const wp = free(0); if(wp) G.items[key(wp.x,wp.y)] = mk('weap','club',{known:1});
+    const sp2 = free(0); if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld','leath',{known:1});
+  }
   for(let i=0;i<rng.i(3,6)+Math.floor(G.depth/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.depth); }
   for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.depth/2)); }
   for(let i=0;i<rng.i(1,2)+Math.floor(G.depth/5);i++){ const p=free(0); if(p) G.traps[key(p.x,p.y)]=1; }
@@ -1583,6 +1590,7 @@ function tryMove(dx,dy){
   if(p.st['睡']||p.st['麻']){ say('身體動不了……','bad'); endTurn(); return; }
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
   const nx=p.x+dx, ny=p.y+dy;
+  p.face = [dx,dy];
   const m = monAt(nx,ny);
   if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
   if(allyAt(nx,ny)){ say(`${allyAt(nx,ny).d.nm} 擋在前面。`); return; }
@@ -1614,7 +1622,7 @@ function steal(){
   $('otitle').textContent = '天罰';
   $('otext').innerHTML =
     `你帶著沒有結帳的商品離開了店鋪。<br>` +
-    `在 <b>B${G.depth}F</b> 被雷劈成灰 —— <b>這一趟到此為止</b>。`;
+    `在 <b>B${G.depth}F</b> 被雷劈成灰 —— 等級、道具、技能<b>全部歸零</b>。`;
   $('over').classList.add('show');
   refresh();
 }
@@ -2259,9 +2267,11 @@ function death(){
     G.known[lookKey(rev)]=1; SFX.play('level');
     say('復活草發出光芒，你重新站了起來！','good'); return; }
   SFX.play('death');
+  const sp = schoolTotal(G.p);
   document.getElementById('otext').innerHTML =
-    `在地下 <b>${G.depth}</b> 層倒下　·　<b>${G.turn}</b> 回合　·　等級 <b>${G.p.lv}</b><br>` +
-    `等級歸一、道具全失 —— 但你學到的東西會留下來。`;
+    `在 <b>B${G.depth}F</b> 倒下　·　等級 <b>${G.p.lv}</b>` +
+    (sp ? `　·　技能 <b>${sp}</b> 點` : '') + `<br>` +
+    `等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。`;
   document.getElementById('over').classList.add('show');
 }
 
@@ -3282,8 +3292,14 @@ let swapMode = null, pendThrow = null;
 
 function doThrow(dx,dy){
   const it = pendThrow; pendThrow=null;
-  SFX.play('throw');
   removeItem(it);
+  throwItem(it, dx, dy);
+  endTurn();
+}
+/* 丟東西的飛行判定。背包裡丟出去、背包滿了把地上的東西往前撥開，
+   走的是同一段程式 —— 兩份會不同步，而不同步的規則玩家一定會發現。 */
+function throwItem(it, dx, dy){
+  SFX.play('throw');
   let x=G.p.x+dx, y=G.p.y+dy, target=null;
   for(let i=0;i<10;i++){
     if(!walkable(x,y)) break;
@@ -3305,10 +3321,9 @@ function doThrow(dx,dy){
     }
   } else {
     let lx=G.p.x, ly=G.p.y;
-    while(walkable(lx+dx,ly+dy)){ lx+=dx; ly+=dy; }
+    while(walkable(lx+dx,ly+dy) && !G.items[key(lx+dx,ly+dy)]){ lx+=dx; ly+=dy; }
     if(!G.items[key(lx,ly)]) G.items[key(lx,ly)] = it;
   }
-  endTurn();
 }
 
 /* ─── 輸入 ──────────────────────────────────────────────────── */
@@ -3430,7 +3445,22 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
     }
     const p = G.p;
     if(tileAt(p.x,p.y) === DOWN){ descend(); return; }
-    if(G.items[key(p.x,p.y)]){ SFX.play('open'); openPanel('ground'); return; }
+    const k = key(p.x,p.y), it = G.items[k];
+    if(it){
+      // 商店的東西不能一按就走 —— 拿不拿走是要玩家自己決定的事
+      if(it.shop){ SFX.play('open'); openPanel('ground'); return; }
+      if(p.inv.length < 20){
+        SFX.play('pick');
+        p.inv.push(it); delete G.items[k];
+        say(`撿起了「${nameOf(it)}」。`);
+        endTurn(); return;
+      }
+      // 背包滿了：往面向的方向拋出去，至少把腳下這一格空出來
+      delete G.items[k];
+      say('背包已經滿了 —— 把它往前拋開。','bad');
+      throwItem(it, p.face[0], p.face[1]);
+      endTurn(); return;
+    }
     endTurn();
   });
   /* B＝取消：關視窗、退出瞄準。沒有東西可取消時會變暗 —— 
@@ -3468,7 +3498,8 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='mute') toggleMute();
     if(a==='help'){
       say('畫面上的十字鍵可按住連走，中央圓點＝待機。','gold');
-      say('A＝確定（下樓／撿取／執行）　B＝取消（關視窗、退出瞄準）','gold');
+      say('A＝確定：站樓梯上就下樓、腳下有東西就直接撿（背包滿了會往前拋開）','gold');
+      say('B＝取消（關視窗、退出瞄準）　G 鍵開腳下選單可以不撿起直接使用','gold');
       say('鍵盤：方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　K 魔法　> 下樓','gold');
       say('L 名稱標籤　M 音效　Esc 取消　右側是樓層圖','gold');
       refresh();

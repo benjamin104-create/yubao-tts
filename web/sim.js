@@ -49,7 +49,8 @@ const js = m[1];
 // 讓內部函式可以從外面呼叫
 eval(js + '\n;globalThis.__api = {' +
   'G:()=>G, newGame, tryMove, endTurn, descend, useItem, DIRS, key, walkable,' +
-  'monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN, tileAt, rollItem, mk' +
+  'monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN, tileAt, rollItem, mk,' +
+  'WEAP, SHLD' +
   '};');
 const api = globalThis.__api;
 
@@ -104,6 +105,18 @@ for(let r=0; r<RUNS; r++){
         const unk = p.inv.find(i=>i.cat==='herb' && !G.known['herb/'+i.id]);
         if(unk){ api.useItem(unk,false); api.endTurn(); stats.used++; t++; continue; }
       }
+      // 裝上目前最好的武器與盾牌。
+      // 開場已經不再預先裝備，機器人不會自己穿的話，量到的是赤手空拳的數據。
+      const best = (cat, cur) => p.inv
+        .filter(i => i.cat === cat && !i.cursed)
+        .reduce((a2, b2) => {
+          const v = x => (cat === 'weap' ? x.d.atk : x.d.def) + x.up * 2;
+          return !a2 || v(b2) > v(a2) ? b2 : a2;
+        }, cur);
+      const bw = best('weap', p.weap), bs = best('shld', p.shld);
+      if(bw && bw !== p.weap){ p.weap = bw; bw.known = 1; api.endTurn(); t++; continue; }
+      if(bs && bs !== p.shld){ p.shld = bs; bs.known = 1; api.endTurn(); t++; continue; }
+
       // 相鄰有怪就打
       let hit = false;
       for(const d of api.DIRS){
