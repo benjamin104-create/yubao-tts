@@ -488,7 +488,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .sch{display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:12.5px}
 .sch .nm{width:34px; color:var(--parch)}
 .sch .pips{display:flex; gap:3px; flex:1}
-.sch .pips i{width:11px; height:11px; border:1px solid var(--edge); display:block}
+.sch .pips{gap:2px}
+.sch .pips i{width:8px; height:11px; border:1px solid var(--edge); display:block}
 .sch button{padding:3px 10px; font-size:12px; min-width:34px}
 .spell{
   display:flex; align-items:baseline; gap:8px; padding:8px 14px; cursor:pointer;
@@ -820,6 +821,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
         <dt>盾牌</dt><dd id="eqs">無</dd>
         <dt>背包</dt><dd id="eqi">0 / 20</dd>
         <dt>經驗</dt><dd id="eqe">0 / 6</dd>
+        <dt>口袋</dt><dd id="eqp">尚未取得</dd>
       </dl>
     </div>
     <div class="card" data-pane="eq">
@@ -1047,7 +1049,23 @@ const ABIL = [
   {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
   {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
 ];
-const abilById = id => ABIL.find(a => a.id === id);
+/* 五系奧義：該系練到 10 級才會出現，一攻一輔。
+   解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
+   格子不會變多，所以「練哪一系」跟「帶哪四個」是兩個獨立的取捨。 */
+const MASTER = [
+  {sc:'heal', id:'m_judge', nm:'聖光審判', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
+  {sc:'heal', id:'m_revive',nm:'復甦之息', mp:12, k:'self',  desc:'體力全滿並解除所有異常'},
+  {sc:'bolt', id:'m_smite', nm:'天雷殛',   mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
+  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
+  {sc:'fire', id:'m_pyre',  nm:'焚天',     mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
+  {sc:'fire', id:'m_core',  nm:'熔心',     mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
+  {sc:'aqua', id:'m_zero',  nm:'絕對零度', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
+  {sc:'aqua', id:'m_mirror',nm:'水鏡',     mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
+  {sc:'wind', id:'m_gale',  nm:'神風斬',   mp:13, k:'around',desc:'八方向同時貫穿'},
+  {sc:'wind', id:'m_shift', nm:'縮地',     mp:11, k:'self',  desc:'瞬間移動到本層樓梯'},
+];
+const ALL_ABIL = () => ABIL.concat(MASTER);
+const abilById = id => ALL_ABIL().find(a => a.id === id);
 const SLOTS = 4;
 
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
@@ -1084,6 +1102,8 @@ const SUMMONS = [
 const SUMMON_COST = 0.30;
 const SUMMON_AT = 4;
 
+const SCH_MAX = 10;          // 每系上限。到 10 會開出該系的兩個奧義
+const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點數
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
@@ -1678,7 +1698,12 @@ const VILLAGE_KEY = 'claude-abyss-village';
 /* name/col = 玩家的名字與造型顏色；board = 排行榜。
    排行榜只存在這台裝置上 —— 靜態頁面沒有伺服器可以比對別人的成績。
    要做成真正的全球榜，需要一個後端，見 README。 */
-let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [] };
+/* sp/sch = 魔法點數與五系等級。這兩個「不會因為任務失敗消失」，
+   所以存在村莊而不是角色身上 —— 它們是跨越死亡的長期成長。
+   pocket = 萬用口袋：等級 10 首次達成後開放，裡面的東西能撐過一次死亡。 */
+let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [],
+                sp: 0, sch: {heal:0,bolt:0,fire:0,aqua:0,wind:0},
+                pocket: {open:false, item:null} };
 const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v'];
 const BLOB_COL_NM = {'#':'陶土','l':'苔綠','q':'湖藍','u':'琥珀','b':'土棕',
                      '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金'};
@@ -1696,6 +1721,11 @@ function loadVillage(){
           name: typeof v.name === 'string' ? v.name : '',
           col: BLOB_COLS.includes(v.col) ? v.col : '#',
           board: Array.isArray(v.board) ? v.board : [],
+          sp: v.sp | 0,
+          sch: Object.assign({heal:0,bolt:0,fire:0,aqua:0,wind:0}, v.sch || {}),
+          pocket: (v.pocket && typeof v.pocket === 'object')
+            ? {open: !!v.pocket.open, item: v.pocket.item || null}
+            : {open:false, item:null},
         };
       }
     }
@@ -1735,6 +1765,10 @@ const VILLAGE_STOCK = [
   {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
 ];
 const defOf = (cat,id) => (cat==='weap'?WEAP:SHLD).find(d=>d.id===id);
+const ALL_DEF = () => ({herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,
+                        weap:WEAP,shld:SHLD,hat:HAT});
+const defNm = q => { const t = ALL_DEF()[q.cat]; const d = t && t.find(x=>x.id===q.id);
+                     return d ? d.nm : '？'; };
 
 /* 每趟扣一次耐久。扣在「真的下去」的時候，不是在頁面載入的時候 —— 
    否則重新整理一次就吃掉一趟。 */
@@ -1763,7 +1797,7 @@ function newGame(seed){
     look, known:{}, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
-        hat:null, job:'none', jp:{}, learned:{}, slots:[null,null,null,null],
+        hat:null, job:'none', jp:{}, learned:{}, slots:[null,null,null,null], mastered:{},
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
@@ -1772,6 +1806,20 @@ function newGame(seed){
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
   G.p.inv.push(mk('food','bread'));
+  // 魔法點數與五系等級存在村莊 —— 它們不會因為任務失敗消失
+  G.p.sp = VILLAGE.sp;
+  G.p.sch = Object.assign({}, VILLAGE.sch);
+  G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
+  checkMastery();
+  // 萬用口袋裡的東西撐過了這次死亡，交還給玩家
+  if(VILLAGE.pocket.item){
+    const q = VILLAGE.pocket.item;
+    const it = mk(q.cat, q.id, {known:1, up:q.up|0, uses:q.uses|0});
+    G.p.inv.push(it);
+    VILLAGE.pocket.item = null; saveVillage();
+    say(`萬用口袋保住了「${nameOf(it)}」。`,'gold');
+  }
+
   // ……除非村裡買了裝備。那是唯一能跨越死亡的東西。
   for(const g of VILLAGE.stock){
     const it = mk(g.cat, g.id, {known:1, up:g.up|0});
@@ -1961,6 +2009,7 @@ function pAtk(){ const p=G.p; let a=STR(p);
   if(p.weap) a += p.weap.d.atk + p.weap.up*2;
   // 血怒：體力越低攻擊越高，最多 1.8 倍
   if(p.st['怒']) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
+  if(p.st['熔']) a = Math.round(a * 1.5);                    // 熔心
   return Math.max(1,a); }
 function pDef(){ const p=G.p; return p.shld ? Math.max(0,p.shld.d.def + p.shld.up*2) : 0; }
 const defFactor = d => Math.pow(15/16, Math.max(0,d));
@@ -2094,10 +2143,20 @@ function kill(m){
   while(p.lv<99 && p.exp >= needExp(p.lv)){
     p.exp -= needExp(p.lv); p.lv++;
     const g = G.rng.i(6,11); p.mhp += g; p.hp = p.mhp;
-    p.sp++; p.mmp = maxMp(p); p.mp = p.mmp;
+    p.mmp = maxMp(p); p.mp = p.mmp;
     SFX.play('level');
     burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
-    say(`等級提升到 ${p.lv}！獲得 1 點技能點。`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
+    say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
+    if(p.lv >= SP_FROM_LV){
+      VILLAGE.sp++; p.sp = VILLAGE.sp; saveVillage();
+      say(`★ 魔法點數 +1（目前 ${VILLAGE.sp} 點）—— 這個不會因為失敗消失。`,'gold');
+      float(p.x,p.y,'MP+1','#4a86cf');
+    }
+    if(p.lv === SP_FROM_LV && !VILLAGE.pocket.open){
+      VILLAGE.pocket.open = true; saveVillage();
+      say('★ 你獲得了「萬用口袋」—— 放進去的一件東西能撐過一次死亡。','gold');
+      SFX.play('ident');
+    }
   }
 }
 function nearestFree(x,y){
@@ -2249,6 +2308,12 @@ function act(m,it){
   if(it.k==='melee'||it.k==='shoot'){
     const ranged = it.k==='shoot';
     const mult = (!ranged && m.d.rng) ? .5 : 1;   // 遠程怪貼身時打折 → 貼上去是正解
+    if(ranged && G.p.st['鏡']){
+      const back = rollDmg(m.d.atk*1.5, 0, true, 1);
+      hurtMon(m, back, '#4a86cf');
+      say(`水鏡反射了 ${m.d.nm} 的遠程攻擊！`,'good');
+      return;
+    }
     if(ranged && G.p.shld && G.p.shld.d.reflect){
       const back = rollDmg(m.d.atk, 0, true, 1);
       m.hp -= back; float(m.x,m.y,String(back),'#5b86b8');
@@ -2267,6 +2332,11 @@ function act(m,it){
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     say(`${m.d.nm} 的${ranged?'遠程':''}攻擊命中，受到 ${dmg} 點傷害。`,'bad');
     const oh = m.d.onhit;
+    if(p.st['雷']){                                          // 雷紋護體：受擊反彈
+      const back = rollDmg(20 + p.lv*3, m.d.def, true, 1);
+      hurtMon(m, back, '#7cb8ea');
+      say(`雷紋反彈，${m.d.nm} 受到 ${back} 點傷害。`,'good');
+    }
     if(oh && p.st['界'] && oh.st){ say('結界擋下了異常狀態。','good'); }
     else if(oh && G.rng.chance(oh.ch)){
       if(oh.st){ p.st[oh.st]=oh.dur; say(`你陷入了${oh.st}的狀態！`,'bad'); }
@@ -2345,6 +2415,20 @@ function wearHat(it){
   SFX.play('ident');
   checkLearn();
 }
+/* 五系練到 10 級就開出該系的兩個奧義，加入同一個技能池。 */
+function checkMastery(){
+  const p = G.p;
+  for(const a of MASTER){
+    if((p.sch[a.sc] || 0) < SCH_MAX || p.mastered[a.id]) continue;
+    p.mastered[a.id] = 1; p.learned[a.id] = 1;
+    say(`★ ${SCHOOLS.find(s=>s.id===a.sc).nm}系大成 —— 習得奧義「${a.nm}」。`,'gold');
+    SFX.play('level');
+    if(G.parts) burst(p.x, p.y, 24, '#f5dc7a', 46, 22, .9);
+    const e = p.slots.indexOf(null);
+    if(e >= 0) p.slots[e] = a.id;
+  }
+}
+
 /* JP 到門檻就學會。學會了就永遠在池子裡，換職業也不會忘。 */
 function checkLearn(){
   const p = G.p;
@@ -2515,7 +2599,8 @@ function spellById(id){ return SPELLS.find(s => s.id === id); }
 function castSpell(sp){
   const p = G.p;
   if(p.mp < sp.mp){ say('魔力不足。','bad'); return false; }
-  if(sp.k === 'self'){ p.mp -= sp.mp; doSpell(sp, 0, 0); endTurn(); return true; }
+  // room 打的是「視野內全體」，方向無關 —— 還要玩家選方向只是白按一次
+  if(sp.k === 'self' || sp.k === 'room'){ p.mp -= sp.mp; doSpell(sp, 0, 0); endTurn(); return true; }
   pendSpell = sp;
   say(`${sp.nm} —— 選擇方向。`,'gold');
   refresh();
@@ -2637,7 +2722,7 @@ let pendAbil = null;
 function useAbil(a){
   const p = G.p;
   if(p.mp < a.mp){ say('魔力不足。','bad'); return false; }
-  if(a.k === 'self' || a.k === 'around' || a.k === 'melee'){
+  if(a.k === 'self' || a.k === 'around' || a.k === 'melee' || a.k === 'room'){
     p.mp -= a.mp; doAbil(a, p.face[0], p.face[1]); endTurn(); return true;
   }
   pendAbil = a; say(`${a.nm} —— 選擇方向。`,'gold'); refresh(); return null;
@@ -2718,6 +2803,61 @@ function doAbil(a, dx, dy){
       say(n?`亂舞掃中 ${n} 個敵人！`:'四周空無一物。', n?'good':null); break;
     }
     case 'rage': p.st['怒'] = 12; say('血液沸騰了起來。','good'); break;
+
+    /* ── 五系奧義 ── */
+    case 'm_judge': {
+      const list = visibleMons(); if(!list.length){ say('視野裡沒有敵人。'); break; }
+      const hurt = 1 + (1 - p.hp/p.mhp) * 1.6;          // 你越傷，審判越重
+      G.shake = Math.max(G.shake, 12);
+      for(const m of list.slice())
+        hurtMon(m, rollDmg((26 + p.lv*4) * hurt, m.d.def, true, 1), '#f5dc7a');
+      say(`聖光審判降在 ${list.length} 個敵人身上！`,'good'); break;
+    }
+    case 'm_revive':
+      p.hp = p.mhp; p.st = {};
+      burst(p.x,p.y,30,'#f5dc7a',44,24,.9);
+      say('復甦之息 —— 體力全滿，異常盡除。','good'); break;
+    case 'm_smite': {
+      const {mons} = beamLine(dx,dy,12,false);
+      if(!mons.length){ say('雷光射向遠方。'); break; }
+      G.shake = Math.max(G.shake, 11);
+      for(const m of mons) hurtMon(m, rollDmg(46 + p.lv*5, m.d.def, true, 1), '#7cb8ea', '麻', 4);
+      say(`天雷殛貫穿了 ${mons.length} 個敵人！`,'good'); break;
+    }
+    case 'm_mail': p.st['雷'] = 15; say('雷紋纏上了身體。','good'); break;
+    case 'm_pyre': {
+      const list = visibleMons(); if(!list.length){ say('視野裡沒有敵人。'); break; }
+      G.shake = Math.max(G.shake, 12);
+      for(const m of list.slice())
+        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#e87a4a', '痛', 10);
+      say(`焚天燒過 ${list.length} 個敵人！`,'good'); break;
+    }
+    case 'm_core': p.st['熔'] = 15; say('身體像熔爐一樣燙了起來。','good'); break;
+    case 'm_zero': {
+      const list = visibleMons(); if(!list.length){ say('視野裡沒有敵人。'); break; }
+      G.shake = Math.max(G.shake, 10);
+      for(const m of list.slice())
+        hurtMon(m, rollDmg(22 + p.lv*3, m.d.def, false, 1), '#4a86cf', '麻', 8);
+      say(`絕對零度凍住了 ${list.length} 個敵人！`,'good'); break;
+    }
+    case 'm_mirror': p.st['鏡'] = 15; say('身周浮現了一層水膜。','good'); break;
+    case 'm_gale': {
+      let n = 0;
+      for(const d of DIRS){
+        const {mons} = beamLine(d[0], d[1], 7, false);
+        for(const m of mons){ hurtMon(m, rollDmg(pAtk()*1.1, m.d.def, false, 1), '#79c97a'); n++; }
+      }
+      G.shake = Math.max(G.shake, 10);
+      say(n ? `神風斬掃過 ${n} 個敵人！` : '八方無人。', n?'good':null); break;
+    }
+    case 'm_shift': {
+      const st2 = G.f.stairs;
+      G.anim.push({o:p, fx:p.x, fy:p.y, t:0});
+      burst(p.x,p.y,18,'#79c97a',40,14,.5);
+      p.x = st2.x; p.y = st2.y; vision();
+      burst(p.x,p.y,18,'#79c97a',40,14,.5);
+      say('縮地 —— 一步就站到了樓梯上。','good'); break;
+    }
   }
 }
 
@@ -2911,67 +3051,122 @@ const SFX = (()=>{
     unlock(){ const c = ensure(); if(c && c.state==='suspended') c.resume(); },
     ctx(){ return ensure(); },
     bus(){ ensure(); return master; },
+    noise(){ ensure(); return noiseBuf; },
   };
 })();
 
 /* ═══ 背景音樂 ═══════════════════════════════════════════════
-   一樣是即時合成，零檔案。地牢音樂不需要旋律，需要的是「壓力」：
-   一個不會結束的低音持續音 + 稀疏到讓人不安的高音點綴。
-   小調五聲音階永遠不會踩到難聽的音程，所以隨機取音也不會出事。
-   樓層越深，根音越低、點綴越密 —— 玩家不用看數字也感覺得到變深了。 */
-const BGM = (()=>{
-  let running = false, gain = null, timer = null, bar = 0;
-  const PENT = [0, 3, 5, 7, 10];              // 小調五聲
-  const BAR = 4.6;                            // 一小節秒數
+   第一版是「氛圍」：一個持續低音加隨機點綴。聽起來安靜，
+   但那不是地牢音樂 —— 不神祕系遊戲的曲子之所以記得住，是因為它有
+   **旋律、律動、走動的低音**，而不是一片和聲。
 
-  function ensure(){
-    const c = SFX.ctx(); if(!c) return null;
+   所以這一版是真的排一首曲子：四小節的和弦進行（i–VI–VII–i），
+   固定的主旋律動機、八分音符琶音、行進低音，加上底鼓與腳踏鈸。
+   隨機取音永遠寫不出讓人記得住的旋律 —— 旋律必須是寫死的。
+
+   一樣零音檔：全部是 WebAudio 即時合成的方波與三角波。 */
+const BGM = (()=>{
+  const BPM = 112, SPB = 60 / BPM / 4;        // 一步＝十六分音符
+  const BARS = 4, STEPS = 16, LOOP = BARS * STEPS;
+  const hz = n => 440 * Math.pow(2, (n - 69) / 12);
+
+  // 和弦進行：Am – F – G – Am。最好認的「冒險」進行，四小節就記得住。
+  const ROOT = [45, 41, 43, 45];              // 低音根音
+  const CHORD = [[57,60,64],[53,57,60],[55,59,62],[57,60,64]];
+
+  // 主旋律：[步, 音高, 長度(步)]。寫死的動機才有記憶點。
+  const LEAD = [
+    [[0,64,2],[2,69,2],[4,72,2],[6,71,2],[8,69,3],[12,64,3]],
+    [[0,65,2],[2,69,2],[4,72,2],[6,69,2],[8,65,3],[12,60,3]],
+    [[0,67,2],[2,71,2],[4,74,2],[6,71,2],[8,67,3],[12,62,3]],
+    [[0,69,2],[4,72,2],[6,71,1],[7,69,1],[8,67,2],[10,65,2],[12,64,4]],
+  ];
+  const BASS = [0,3,6,8,11,14];               // 行進低音的落點
+  const HAT  = [2,6,10,14];
+
+  let running = false, gain = null, timer = null, step = 0, nextT = 0;
+
+  function ctx(){ return SFX.ctx(); }
+  function bus(){
+    const c = ctx(); if(!c) return null;
     if(!gain){
       gain = c.createGain();
       gain.gain.setValueAtTime(0.0001, c.currentTime);
-      gain.gain.linearRampToValueAtTime(0.5, c.currentTime + 4);   // 慢慢淡進來，不要嚇到人
+      gain.gain.linearRampToValueAtTime(0.42, c.currentTime + 2.5);
       gain.connect(SFX.bus());
     }
-    return c;
+    return gain;
   }
-  const hz = (root, semi) => root * Math.pow(2, semi/12);
-
-  function voice(c, t, f, dur, type, vol, cut){
+  function voice(t, f, dur, type, vol, cut, glide){
+    const c = ctx(), g0 = bus(); if(!c || !g0) return;
     const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
     o.type = type; o.frequency.setValueAtTime(f, t);
+    if(glide) o.frequency.exponentialRampToValueAtTime(Math.max(20, glide), t + dur);
     lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut, t);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + dur*0.25);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(lp); lp.connect(g); g.connect(gain);
-    o.start(t); o.stop(t + dur + 0.05);
+    o.connect(lp); lp.connect(g); g.connect(g0);
+    o.start(t); o.stop(t + dur + 0.03);
+  }
+  function perc(t, dur, vol, f0, f1, q){
+    const c = ctx(), g0 = bus(); if(!c || !g0) return;
+    const s2 = c.createBufferSource(); s2.buffer = SFX.noise();
+    if(!s2.buffer) return;
+    const bp = c.createBiquadFilter();
+    bp.type = q ? 'bandpass' : 'lowpass'; bp.Q.value = q || 1;
+    bp.frequency.setValueAtTime(f0, t);
+    if(f1) bp.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s2.connect(bp); bp.connect(g); g.connect(g0);
+    s2.start(t); s2.stop(t + dur + 0.02);
   }
 
-  function schedule(){
-    const c = ensure(); if(!c){ running = false; return; }
-    const t = c.currentTime + 0.12;
+  function playStep(i, t){
+    const bar = (i / STEPS) | 0, k = i % STEPS;
+    // 樓層越深整體越低沉：每 5 層降半音，並把濾波拉低
     const depth = (typeof G !== 'undefined' && G) ? G.depth : 1;
-    const root = 55 * Math.pow(2, -Math.min(5, Math.floor((depth-1)/4))/12);   // 每 4 層降半音
+    const tr = -Math.min(7, Math.floor((depth - 1) / 5));
+    const dim = 1 - Math.min(.45, (depth - 1) * 0.03);
 
-    // 持續低音：兩個微微失諧的三角波疊在一起才會有厚度與輕微的拍頻
-    voice(c, t, root,        BAR*1.06, 'triangle', .30, 420);
-    voice(c, t, root*1.005,  BAR*1.06, 'triangle', .22, 380);
-    if(bar % 2 === 0) voice(c, t, hz(root, 7), BAR*0.9, 'sine', .14, 500);      // 五度
-
-    // 稀疏點綴：越深越密，但永遠留白多於發聲
-    const n = 1 + Math.min(3, Math.floor(depth/5)) + (Math.random()<.3 ? 1 : 0);
-    for(let i=0;i<n;i++){
-      const at  = t + Math.random()*BAR*0.85;
-      const oct = 3 + (Math.random()<.35 ? 1 : 0);
-      const f   = hz(root, PENT[(Math.random()*PENT.length)|0] + 12*oct);
-      voice(c, at, f, 1.1 + Math.random()*1.4, 'sine', .055, 2600);
+    if(BASS.includes(k)){                      // 行進低音
+      const n = ROOT[bar] + tr + (k === 11 ? 12 : 0) + (k === 6 || k === 14 ? 7 : 0);
+      voice(t, hz(n), SPB * 2.2, 'triangle', .30, 900 * dim);
     }
-    bar++;
-    timer = setTimeout(schedule, BAR*1000);
+    if(k % 2 === 0){                           // 八分琶音
+      const ch = CHORD[bar];
+      const n = ch[(k / 2) % ch.length] + tr;
+      voice(t, hz(n), SPB * 1.6, 'square', .055, 1700 * dim);
+    }
+    for(const [s3, n, d] of LEAD[bar]){        // 主旋律
+      if(s3 !== k) continue;
+      voice(t, hz(n + tr), SPB * d * 0.95, 'square', .085, 2600 * dim);
+      voice(t, hz(n + tr - 12), SPB * d * 0.9, 'triangle', .045, 1400 * dim);
+    }
+    if(k === 0 || k === 8) perc(t, .12, .30, 160, 45);        // 底鼓
+    if(HAT.includes(k))    perc(t, .045, .10, 7000, 4000, 2); // 腳踏鈸
+  }
+
+  function tick(){
+    const c = ctx(); if(!c){ running = false; return; }
+    // 前瞻排程：只靠 setTimeout 觸發音符會抖，必須提前把音排進音訊時鐘
+    while(nextT < c.currentTime + 0.14){
+      playStep(step, nextT);
+      nextT += SPB;
+      step = (step + 1) % LOOP;
+    }
+    timer = setTimeout(tick, 25);
   }
 
   return {
-    start(){ if(running) return; running = true; bar = 0; schedule(); },
+    start(){
+      if(running) return;
+      const c = ctx(); if(!c) return;
+      running = true; step = 0; nextT = c.currentTime + 0.1;
+      tick();
+    },
     stop(){ running = false; clearTimeout(timer); timer = null; },
     get running(){ return running; },
   };
@@ -3625,7 +3820,7 @@ function refresh(){
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
-  const GOOD = {'速':1,'力':1};
+  const GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1};
   const keys = Object.keys(p.st);
   if(!keys.length){ const s=document.createElement('span'); s.className='none'; s.textContent='正常'; sb.appendChild(s); }
   for(const k of keys){
@@ -3642,6 +3837,8 @@ function refresh(){
   $('eqs').className = p.shld && p.shld.cursed && p.shld.known ? 'bad' : '';
   $('eqi').textContent = `${p.inv.length} / 20`;
   $('eqe').textContent = `${p.exp} / ${needExp(p.lv)}`;
+  $('eqp').textContent = !VILLAGE.pocket.open ? `等級 ${SP_FROM_LV} 取得`
+    : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : '（空）');
 
   const lg = $('log'); lg.innerHTML='';
   for(const m of G.log.slice(-12)){
@@ -3667,10 +3864,13 @@ function renderPanel(){
   if(panelMode==='magic'){
     $('ptitle').textContent = '魔法';
     $('pcount').textContent = `MP ${p.mp} / ${p.mmp}`;
-    $('phint').textContent = p.sp ? `還有 ${p.sp} 點技能點可以分配。` : '打倒敵人升級可以獲得技能點。';
+    $('phint').textContent = p.sp
+      ? `還有 ${p.sp} 點魔法點數可以分配（不會因死亡消失）。`
+      : `等級 ${SP_FROM_LV} 之後每升一級 +1 魔法點數。`;
 
     const spRow = document.createElement('div'); spRow.id = 'sp';
-    spRow.innerHTML = `<span>技能點</span><b>${p.sp}</b>`;
+    spRow.innerHTML = `<span>魔法點數</span><b>${p.sp}</b>` +
+      `<span style="margin-left:auto;font-size:10.5px;color:var(--parch-dim)">每系上限 ${SCH_MAX}　滿級開奧義</span>`;
     list.appendChild(spRow);
 
     // 五系與加點。每一點都要立刻看得到威力差別，不然沒人願意投資。
@@ -3680,20 +3880,23 @@ function renderPanel(){
       const nm = document.createElement('div'); nm.className='nm'; nm.textContent = sc.nm;
       nm.style.color = sc.col;
       const pips = document.createElement('div'); pips.className='pips';
-      for(let i=0;i<5;i++){
+      for(let i=0;i<SCH_MAX;i++){
         const d = document.createElement('i');
         if(i < lv) d.style.background = sc.col;
+        if(i === SCH_MAX-1) d.style.borderColor = lv >= SCH_MAX ? sc.col : 'var(--brass-dim)';
         pips.appendChild(d);
       }
       row.appendChild(nm); row.appendChild(pips);
       const b = document.createElement('button');
       b.textContent = '＋';
-      b.disabled = p.sp <= 0 || lv >= 5;
+      b.disabled = p.sp <= 0 || lv >= SCH_MAX;
       b.onclick = ()=>{
         p.sp--; p.sch[sc.id] = lv + 1;
+        VILLAGE.sp = p.sp; VILLAGE.sch = Object.assign({}, p.sch); saveVillage();
         p.mmp = maxMp(p); p.mp = Math.min(p.mmp, p.mp + 5);
         SFX.play('ident');
         say(`${sc.nm}系提升到 ${lv+1} 級。`,'good');
+        checkMastery();
         refresh();
       };
       row.appendChild(b);
@@ -3739,7 +3942,9 @@ function renderPanel(){
     }
     list.appendChild(slotRow);
 
-    const known2 = ABIL.filter(a => p.learned[a.id]);
+    // 職業技能與五系奧義共用同一個池子與同樣的 4 個格子 ——
+    // 只過濾 ABIL 的話，練到滿級開出來的奧義會學會了卻永遠看不到。
+    const known2 = ALL_ABIL().filter(a => p.learned[a.id]);
     if(!known2.length){
       const e = document.createElement('div'); e.className='hint';
       e.textContent = '還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。';
@@ -3886,6 +4091,22 @@ function buildActions(it, ground){
         p.inv[i] = g; G.items[key(p.x,p.y)] = it;
         say(`將「${nameOf(it)}」放在地上，換取了「${nameOf(g)}」。`);
         closePanel(); endTurn();
+      });
+    }
+    if(VILLAGE.pocket.open){
+      const held = VILLAGE.pocket.item;
+      btn(held ? `換入口袋（現有 ${defNm(held)}）` : '放入萬用口袋', ()=>{
+        if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
+        if(held){                       // 換出來的東西回到背包
+          const back = mk(held.cat, held.id, {known:1, up:held.up|0, uses:held.uses|0});
+          p.inv.push(back);
+          say(`從口袋取回了「${nameOf(back)}」。`);
+        }
+        VILLAGE.pocket.item = {cat:it.cat, id:it.id, up:it.up|0, uses:it.uses|0};
+        saveVillage(); removeItem(it);
+        SFX.play('ident');
+        say(`把「${nameOf(it)}」收進了萬用口袋 —— 它撐得過一次死亡。`,'gold');
+        closePanel(); refresh();
       });
     }
     btn('投擲', ()=>{ pendThrow = it; closePanel(); openAim('投擲方向'); say('選擇投擲方向。','gold'); refresh(); });
