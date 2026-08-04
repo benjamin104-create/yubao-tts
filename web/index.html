@@ -784,8 +784,8 @@ const MONS = [
  {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
  {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂']},
- {id:'wolf',   nm:'疾風狼',   ai:'C', hp:28,atk:22,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:2},
- {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:18,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
+ {id:'wolf',   nm:'疾風狼',   ai:'C', hp:26,atk:16,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:1},
+ {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:15,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
  {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
  {id:'turret', nm:'水晶砲台', ai:'R', hp:45,atk:40,def:15,exp:300,spd:.5,  sight:10,ev:0, fl:[18,28],w:22, rng:8, still:1},
  {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
@@ -1472,8 +1472,19 @@ function buildFloor(){
   // 背包依然只有一個麵包（第一件武器因此是一個事件），
   // 但不會出現連走三層都沒撿到武器、赤手空拳撞上骷髏兵的死局。
   if(G.depth === 1){
-    const wp = free(0); if(wp) G.items[key(wp.x,wp.y)] = mk('weap','club',{known:1});
-    const sp2 = free(0); if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld','leath',{known:1});
+    // 放在「出生的那個房間」。丟在地圖另一頭等於沒放 ——
+    // 玩家會在找到之前就先撞上老鼠。
+    const r0 = G.f.rooms[roomOf(G.p.x, G.p.y)];
+    const inRoom = ()=>{
+      if(!r0) return free(0);
+      for(let i=0;i<60;i++){
+        const x = rng.i(r0.x, r0.x+r0.w-1), y = rng.i(r0.y, r0.y+r0.h-1);
+        if(!occ.has(key(x,y)) && walkable(x,y)){ occ.add(key(x,y)); return {x,y}; }
+      }
+      return free(0);
+    };
+    const wp = inRoom();  if(wp)  G.items[key(wp.x,wp.y)]   = mk('weap','club',{known:1});
+    const sp2 = inRoom(); if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld','leath',{known:1});
   }
   for(let i=0;i<rng.i(3,6)+Math.floor(G.depth/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.depth); }
   for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.depth/2)); }
@@ -1690,7 +1701,7 @@ function kill(m){
   }
   while(p.lv<99 && p.exp >= needExp(p.lv)){
     p.exp -= needExp(p.lv); p.lv++;
-    const g = G.rng.i(4,8); p.mhp += g; p.hp = p.mhp;
+    const g = G.rng.i(6,11); p.mhp += g; p.hp = p.mhp;
     p.sp++; p.mmp = maxMp(p); p.mp = p.mmp;
     SFX.play('level');
     burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
@@ -1746,8 +1757,11 @@ function endTurn(){
   if(before>0 && p.sat<=0) say('肚子餓扁了！再不吃東西就……','bad');
   if(p.sat<=0){ p.hp -= 1; }
   else if(!p.st['痛']){
+    // 門檻原本是 15000 —— 等級 1（上限 19）要 789 回合才回 1 點血，
+    // 等於完全沒有自然回復，任何受傷都是永久的。350 的話等級 1 約 18 回合
+    // 回 1 點、上限 100 時約 4 回合回 1 點，體力上限成長才有意義。
     p.regen += p.mhp;
-    while(p.regen >= 15000 && p.hp < p.mhp){ p.regen -= 15000; p.hp++; }
+    while(p.regen >= 350 && p.hp < p.mhp){ p.regen -= 350; p.hp++; }
   }
   // 魔力回得比體力慢 —— 魔法要是能無限放，物理攻擊就沒有存在意義了
   p.mmp = maxMp(p);
@@ -1924,6 +1938,19 @@ function identify(it){
   if(LOOK[it.cat] && !G.known[k]){ G.known[k]=1; SFX.play('ident'); say(`★ 看清楚了 —— 那是「${it.d.nm}」。`,'gold'); }
   it.known = 1;
 }
+/* 空手時撿到武器／盾牌就直接裝上。
+   撿了一把劍、狀態列還是「攻 8」，多數人會以為是 bug 而不是「還沒裝備」。
+   只在該欄位是空的時候自動裝 —— 換裝仍然是玩家的決定（可能是詛咒品）。 */
+function autoEquip(it){
+  const p = G.p;
+  if(it.cat === 'weap' && !p.weap){ p.weap = it; it.known = 1; }
+  else if(it.cat === 'shld' && !p.shld){ p.shld = it; it.known = 1; }
+  else return false;
+  say(`自動裝備了「${nameOf(it)}」。`,'good');
+  if(it.cursed) say('……手上傳來一陣寒意。這是被詛咒的裝備！','bad');
+  return true;
+}
+
 function removeItem(it){ G.p.inv = G.p.inv.filter(i=>i!==it);
   if(G.p.weap===it) G.p.weap=null; if(G.p.shld===it) G.p.shld=null; }
 
@@ -3256,7 +3283,9 @@ function buildActions(it, ground){
       SFX.play('pick');
       if(it.shop) say('店員的視線跟了過來。','bad');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
-      say(`撿起了「${nameOf(it)}」。`); closePanel(); endTurn();
+      say(`撿起了「${nameOf(it)}」。`);
+      if(!it.shop) autoEquip(it);
+      closePanel(); endTurn();
     }, p.inv.length>=20);
     btn('替換', ()=>{ swapMode = it; panelMode='inv'; sel=null; renderPanel();
       $('phint').textContent='選一件背包道具與腳下的交換。'; });
@@ -3453,6 +3482,7 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
         SFX.play('pick');
         p.inv.push(it); delete G.items[k];
         say(`撿起了「${nameOf(it)}」。`);
+        autoEquip(it);
         endTurn(); return;
       }
       // 背包滿了：往面向的方向拋出去，至少把腳下這一格空出來

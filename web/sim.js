@@ -84,6 +84,9 @@ function nextStep(G, from, goal){
 
 const RUNS = 60, MAX_TURNS = 1500;
 let stats = { deaths:0, starve:0, turns:0, floors:0, maxFloor:0, lv:0, items:0, used:0, errs:0, ident:0 };
+// 死在哪一層的分佈。平均樓層會把「開場就死」藏起來 ——
+// 玩家第一次的體驗是由前兩層決定的，那才是要盯的數字。
+const deathAt = {};
 
 for(let r=0; r<RUNS; r++){
   try{
@@ -126,8 +129,13 @@ for(let r=0; r<RUNS; r++){
       if(hit){ t++; continue; }
       // 腳下有東西就撿
       const k = api.key(p.x,p.y);
-      if(G.items[k] && p.inv.length < 20){
-        p.inv.push(G.items[k]); delete G.items[k]; api.endTurn(); stats.items++; t++; continue;
+      const here = G.items[k];
+      if(here && !here.shop && p.inv.length < 20){
+        p.inv.push(here); delete G.items[k];
+        // 空手時自動裝備，跟遊戲內的規則一致
+        if(here.cat==='weap' && !p.weap){ p.weap=here; here.known=1; }
+        if(here.cat==='shld' && !p.shld){ p.shld=here; here.known=1; }
+        api.endTurn(); stats.items++; t++; continue;
       }
       // 樓梯就下樓
       if(api.tileAt(p.x,p.y)===api.DOWN){ api.descend(); t++; continue; }
@@ -136,6 +144,7 @@ for(let r=0; r<RUNS; r++){
       if(p.inv.length < 20){
         let best=null, bd=1e9;
         for(const ik in G.items){
+          if(G.items[ik].shop) continue;          // 不去撿店裡的商品
           const ix = ik%api.MW, iy = (ik/api.MW)|0;
           const dd = Math.max(Math.abs(ix-p.x), Math.abs(iy-p.y));
           if(dd < bd){ bd=dd; best={x:ix,y:iy}; }
@@ -152,7 +161,8 @@ for(let r=0; r<RUNS; r++){
     stats.maxFloor = Math.max(stats.maxFloor, G.depth);
     stats.lv += G.p.lv;
     stats.ident += Object.keys(G.known).length;
-    if(G.over){ stats.deaths++; if(G.p.sat<=0) stats.starve++; }
+    if(G.over){ stats.deaths++; if(G.p.sat<=0) stats.starve++;
+      deathAt[G.depth] = (deathAt[G.depth]||0)+1; }
   }catch(e){
     stats.errs++;
     console.log('  ✗ 第 %d 場拋出例外：%s', r, e.message);
@@ -170,4 +180,13 @@ console.log('平均到達樓層  : %s（最深 %d）', (stats.floors/n).toFixed(
 console.log('平均結束等級  : %s', (stats.lv/n).toFixed(1));
 console.log('平均鑑定種類  : %s', (stats.ident/n).toFixed(1));
 console.log('撿取 %d 件　使用 %d 件', stats.items, stats.used);
+console.log('\n死亡樓層分佈：');
+const keys2 = Object.keys(deathAt).map(Number).sort((a,b)=>a-b);
+for(const d of keys2){
+  const c = deathAt[d];
+  console.log('  B%sF %s %d 場（%s%%）',
+    String(d).padStart(2), '#'.repeat(c), c, (100*c/n).toFixed(1));
+}
+const early = (deathAt[1]||0) + (deathAt[2]||0);
+console.log('  → 前兩層陣亡：%d 場（%s%%）', early, (100*early/n).toFixed(1));
 process.exit(stats.errs > 0 ? 1 : 0);
