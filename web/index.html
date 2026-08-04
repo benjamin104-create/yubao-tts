@@ -470,9 +470,27 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
    手機上不能把小地圖、裝備、紀錄一路往下堆 —— 那會讓遊戲畫面
    被擠到剩一條，而且每看一次地圖都要捲動。改成分頁，
    遊戲畫面永遠固定在拇指上方。 */
+/* 窄螢幕：手把不再疊在畫面上，改成畫布下方一條專屬區域。
+   小螢幕上疊著就是把房間蓋掉一半 —— 那比要滑動更糟。
+   做法是給 #screenwrap 加下內距，手把本來就靠 bottom 定位，自然落進去。 */
+@media (max-width:620px){
+  #screenwrap{padding-bottom:172px; background:#0a0908}
+  #vig{bottom:172px}
+  #cross{bottom:10px; left:12px; --k:46px}
+  #ab{bottom:24px; right:16px}
+  #card, #hint{bottom:172px}
+  #card{top:0}
+  /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
+     點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
+     招牌與狀態列全被捲到螢幕外。使用者回報的「畫面被切掉」就是這個。 */
+  #cover{justify-content:flex-start; padding-top:20px; gap:14px}
+  #coverart{width:88px; height:88px}
+  #coverglow{top:20%}
+}
+
 @media (max-width:900px){
   body{padding:0; align-items:flex-start}
-  #cabinet{max-width:none; border:0; box-shadow:none; min-height:100svh}
+  #cabinet{max-width:none; border:0; box-shadow:none}
   #body{grid-template-columns:1fr}
   #rail{border-left:0; border-top:1px solid var(--hair)}
   #railtabs{display:flex}
@@ -480,10 +498,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #rail [data-pane].on{display:block}
   #rail .card[data-pane="eq"]{border-bottom:1px solid var(--hair)}
   #log{min-height:150px; max-height:34vh; overflow-y:auto}
-  #hud{gap:3px 12px; font-size:11.5px; padding:7px 12px}
-  .bar{width:52px}
-  #sign{padding:9px 12px 8px}
-  #sign h1{font-size:16px}
+  #hud{gap:2px 10px; font-size:10.5px; padding:5px 12px}
+  .bar{width:44px; height:6px}
+  .stat b{font-size:9px}
+  #sign{padding:7px 12px 6px}
+  #sign h1{font-size:15px; letter-spacing:.1em}
+  #depth b{font-size:20px}
+  #depth em{font-size:10px; letter-spacing:.08em}
   /* 觸控目標一律 44px 起跳 —— 拇指沒有滑鼠那種精準度 */
   #keys{
     gap:6px; padding:8px 10px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
@@ -492,7 +513,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
   }
   #keys::-webkit-scrollbar{display:none}
-  #keys button{flex:0 0 auto; min-height:44px; padding:9px 13px; font-size:13px; white-space:nowrap}
+  #keys{padding:6px 10px}
+  #keys button{flex:0 0 auto; min-height:40px; padding:7px 12px; font-size:12.5px; white-space:nowrap}
   #cross{--k:50px; gap:4px}
   #ab button{width:62px; height:62px}
   #btnA{width:72px; height:72px}
@@ -2955,10 +2977,13 @@ function drawMini(){
    只會讓遊戲剩下薄薄一條、其餘全是按鈕。 */
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
-  const nw = portrait ? 10 : 14, nh = portrait ? 13 : 10;
+  const nw = portrait ? 11 : 14, nh = portrait ? 10 : 10;
   if(nw === VW && nh === VH) return;
   VW = nw; VH = nh;
   cv.width = VW*T; cv.height = VH*T;
+  // 明寫長寬比。只給 width:100% 時，畫布高度要靠瀏覽器從內在比例推算，
+  // 在 iframe 裡（Artifact 就是）不同引擎推算的結果不一致，畫面會被壓扁。
+  cv.style.aspectRatio = VW + ' / ' + VH;
   cx.imageSmoothingEnabled = false;       // 改 canvas.width 會把 context 狀態重設
   rockPat = null;                         // 圖樣綁在舊的繪圖狀態上，一起重建
   if(G){ camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5; }
@@ -3572,6 +3597,7 @@ let coverUp = true;
   $('start').onclick = ()=>{
     coverUp = false;
     cov.classList.add('gone');
+    try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){}
     SFX.unlock();                 // 按鈕本身就是瀏覽器要求的那個「使用者手勢」
     SFX.play('stairs');
     BGM.start();
