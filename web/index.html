@@ -131,6 +131,18 @@ body{
 #cols button canvas{width:24px; height:24px; image-rendering:pixelated; display:block; margin:auto}
 #cols button.on{border-color:var(--brass); background:rgba(201,151,63,.16)}
 
+/* ── 選單：手機上把側欄與控制列全部收進來 ──
+   手機的垂直空間裡，遊戲畫面本來只佔 30%，其餘全是介面。
+   把不是「當下要看」的東西收進選單，畫面才能變成主角。 */
+#mopen{
+  display:none; padding:0; width:36px; height:32px; font-size:18px; line-height:1;
+  background:transparent; border:1px solid var(--edge); color:var(--parch-dim);
+  touch-action:manipulation; margin-left:10px;
+}
+#menu{display:contents}
+.mhead{display:none}
+#ticker{display:none}
+
 /* ── 紀錄碑 ── */
 #board{
   position:absolute; inset:0; z-index:28; display:none;
@@ -597,13 +609,55 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
    小螢幕上疊著就是把房間蓋掉一半 —— 那比要滑動更糟。
    做法是給 #screenwrap 加下內距，手把本來就靠 bottom 定位，自然落進去。 */
 @media (max-width:620px){
-  #screenwrap{padding-bottom:172px; background:#0a0908}
-  #vig{bottom:172px}
-  #cross{bottom:10px; left:12px; --k:46px}
-  #ab{bottom:24px; right:16px}
-  #card, #hint{bottom:172px}
+  /* 機台不再撐滿螢幕高（那會在 iframe 裡跟外框互相追高），
+     所以頁面底色要跟機台一樣，才不會露出一條米色的空白 */
+  body{background:var(--ink)}
+  /* 標題列與狀態列合併成一條，攻／防／職／G 收進選單 */
+  #sign{padding:3px 10px}
+  #sign h1{font-size:12.5px; letter-spacing:.04em}
+  #depth b{font-size:17px}
+  #depth b::before, #depth b::after{font-size:10px}
+  #depth em{font-size:9.5px}
+  #mopen{display:block; height:28px; width:32px; font-size:16px}
+  #hud{gap:0 8px; padding:3px 10px 4px; font-size:10px}
+  #hud .stat:nth-child(n+5){display:none}      /* 只留 LV / HP / MP / 飽足 */
+  #hud .bar{width:38px; height:5px}
+
+  /* 側欄與控制列改由選單叫出來 */
+  #menu{
+    display:none; position:absolute; inset:0; z-index:25;
+    flex-direction:column; background:var(--ink);
+    overflow-y:auto; padding-bottom:env(safe-area-inset-bottom);
+  }
+  #menu.show{display:flex}
+  .mhead{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; border-bottom:1px solid var(--hair);
+    font-family:var(--serif); letter-spacing:.2em; color:var(--parch);
+  }
+  .mhead button{
+    width:34px; height:34px; padding:0; font-size:14px;
+    background:transparent; border:1px solid var(--edge); color:var(--parch-dim);
+  }
+  #menu #keys{flex-wrap:wrap; overflow:visible; mask-image:none; padding:10px}
+  #menu #keys button{flex:1 1 44%; min-height:46px}
+  #menu #rail{border:0; flex:1}
+
+  /* 畫面下方一行最新訊息 —— 不必開選單也知道剛才發生什麼 */
+  #ticker{
+    display:block; padding:3px 12px; background:var(--panel);
+    border-top:1px solid var(--hair); font-size:11.5px; line-height:1.3;
+    color:var(--parch-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  #ticker.good{color:var(--moss)} #ticker.bad{color:var(--blood)} #ticker.gold{color:var(--brass)}
+
+  #screenwrap{padding-bottom:162px; background:#0a0908}
+  #vig{bottom:162px}
+  #cross{bottom:8px; left:12px; --k:46px}
+  #ab{bottom:20px; right:16px}
+  #card, #hint{bottom:162px}
   /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
-  #panel, #over, #aim, #bigmap{bottom:172px}
+  #panel, #over, #aim, #bigmap{bottom:162px}
   #card{top:0}
   /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
      點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
@@ -697,9 +751,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <button id="bx">關閉</button>
   </div>
 
+  <div id="menu">
+    <div class="mhead"><b>選單</b><button id="mx">✕</button></div>
+    <div id="menuslot"></div>
+  </div>
+
   <div id="sign">
     <h1>克勞德深淵</h1>
     <div id="depth"><b id="fnum">1</b><em id="zone">苔濕迴廊</em></div>
+    <button id="mopen" aria-label="選單">≡</button>
   </div>
 
   <div id="hud">
@@ -795,6 +855,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <button data-act="help"><span class="k">?</span>操作</button>
   </div>
   </div><!-- /main -->
+
+  <div id="ticker"></div>
 
   <div id="rail">
     <div id="railtabs" role="tablist">
@@ -3742,7 +3804,7 @@ function paintMap(mcx, mini, MMS){
    只會讓遊戲剩下薄薄一條、其餘全是按鈕。 */
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
-  const nw = portrait ? 11 : 14, nh = portrait ? 10 : 10;
+  const nw = portrait ? 11 : 14, nh = portrait ? 12 : 10;
   if(nw === VW && nh === VH) return;
   VW = nw; VH = nh;
   cv.width = VW*T; cv.height = VH*T;
@@ -3839,6 +3901,13 @@ function refresh(){
   $('eqe').textContent = `${p.exp} / ${needExp(p.lv)}`;
   $('eqp').textContent = !VILLAGE.pocket.open ? `等級 ${SP_FROM_LV} 取得`
     : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : '（空）');
+
+  const last = G.log[G.log.length-1];
+  const tk = $('ticker');
+  if(tk && last){
+    tk.textContent = last.n>1 ? `${last.txt} ×${last.n}` : last.txt;
+    tk.className = last.cls || '';
+  }
 
   const lg = $('log'); lg.innerHTML='';
   for(const m of G.log.slice(-12)){
@@ -4319,6 +4388,7 @@ let pressB = ()=>{};
   });
   pressB = function(){
     if(!G) return;
+    if($('menu').classList.contains('show')){ closeMenu(); return; }
     if($('aim').classList.contains('show')){ cancelAim(); return; }
     const now = performance.now(), quick = now - lastB < 340;
     lastB = now;
@@ -4339,6 +4409,10 @@ let pressB = ()=>{};
 $('aimx').onclick = cancelAim;
 $('bigx').onclick = ()=>{ closeBigMap(); SFX.play('open'); };
 $('bx').onclick = ()=>{ closeBoard(); SFX.play('open'); };
+$('mopen').onclick = openMenu;
+$('mx').onclick = ()=>{ closeMenu(); SFX.play('open'); };
+addEventListener('resize', relayout);
+relayout();
 $('oboard').onclick = openBoard;
 $('vboard').onclick = openBoard;
 $('pclose').onclick = ()=>{ SFX.play('open'); closePanel(); refresh(); };
@@ -4476,6 +4550,25 @@ function renderVillage(){
   }
 }
 function closeVillage(){ $('village').classList.remove('show'); }
+
+/* ─── 選單：手機把側欄與控制列搬進來，桌機維持原位 ──────────────
+   CSS 沒辦法把元素搬到別的父層，所以這件事必須在 JS 做。
+   換了寬度就搬回去 —— 桌機有空間，不該多按一次才看得到地圖。 */
+function relayout(){
+  const menu = $('menu'), slot = $('menuslot'), keys = $('keys'), rail = $('rail'),
+        main = $('main'), body = $('body');
+  if(!menu || !slot || !keys || !rail) return;
+  const mobile = innerWidth <= 620;
+  if(mobile && keys.parentElement !== slot){
+    slot.appendChild(keys); slot.appendChild(rail);
+  } else if(!mobile && keys.parentElement === slot){
+    main.appendChild(keys); body.appendChild(rail);
+    menu.classList.remove('show');
+  }
+}
+function openMenu(){ relayout(); $('menu').classList.add('show'); SFX.play('open');
+  try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){} }
+function closeMenu(){ $('menu').classList.remove('show'); }
 
 /* ─── 紀錄碑 ────────────────────────────────────────────────── */
 const blobCache = {};
