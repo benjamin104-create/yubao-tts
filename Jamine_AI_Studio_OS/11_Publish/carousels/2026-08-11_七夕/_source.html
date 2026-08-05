@@ -1,0 +1,120 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);padding:100px 92px;display:flex;flex-direction:column}
+.slide::before{content:"巧";position:absolute;right:-80px;bottom:-150px;
+  font-family:var(--serif);font-weight:900;font-size:600px;line-height:1;
+  color:rgba(241,233,217,.035);pointer-events:none}
+.slide > *{position:relative;z-index:1}
+
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+.lead{font-family:var(--serif);font-size:72px;font-weight:700;line-height:1.5;letter-spacing:.02em}
+.lead .hl{color:var(--brick)}
+.lead .dim{color:var(--dim)}
+.para{font-size:37px;line-height:2.02;color:var(--cream);opacity:.88;margin-top:52px;font-weight:300;letter-spacing:.04em}
+.para em{font-style:normal;color:var(--brick);font-weight:400}
+.cite{margin-top:44px;border-left:3px solid var(--brick);padding:6px 0 6px 28px;
+  font-family:var(--serif);font-size:35px;line-height:1.78;color:var(--dim)}
+.cite b{display:block;font-size:25px;letter-spacing:.12em;color:var(--brick);
+  font-family:var(--sans);font-weight:500;margin-top:14px}
+
+/* 封面 */
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:60px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:96px;line-height:1.4;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.92;color:var(--dim);margin-top:48px;font-weight:300}
+.cover .ask{margin-top:auto;border-top:1px solid var(--rule);padding-top:38px;
+  font-family:var(--serif);font-size:44px;line-height:1.66;color:var(--cream)}
+.swipe{margin-top:32px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+/* 結尾 */
+.end .q{font-family:var(--serif);font-weight:700;font-size:72px;line-height:1.6;letter-spacing:.02em}
+.end .q .hl{color:var(--brick)}
+.end .q .dim{color:var(--dim)}
+.end .sign{margin-top:50px;font-size:32px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .cta{margin-top:38px;border:1px solid var(--rule);padding:28px 32px;
+  font-size:31px;line-height:1.7;color:var(--cream)}
+.end .cta b{color:var(--brick);font-weight:500}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:28px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:29px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:23px;letter-spacing:.14em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">七夕 · 08.19</div>
+  <h1>古代女生在七夕<br><span class="dim">求的不是姻緣。</span><br><span class="hl">是「我想變厲害」。</span></h1>
+  <div class="sub">情人節這件事，是後來才加上去的。</div>
+  <div class="ask">最早的七夕紀錄裡，<br>她們在比穿針。</div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">其 一</div><div class="n">01 / 04</div></div>
+  <div class="body">
+    <div class="lead">最早的七夕，<br>是一場<span class="hl">比賽</span>。</div>
+    <div class="cite">「漢彩女常以七月七日<br>穿七孔針於開襟樓，人俱習之。」<b>《西京雜記》</b></div>
+    <div class="para">目前所見最早的七夕習俗紀錄，<br>內容是<em>七月七號晚上比穿針</em>——<br>不是求對象，是比手藝。</div>
+  </div>
+  <div class="foot"><span>七夕 · 08.19</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">其 二</div><div class="n">02 / 04</div></div>
+  <div class="body">
+    <div class="lead">它本來的名字<br>叫<span class="hl">「乞巧」</span>。</div>
+    <div class="para">乞求的那個「巧」，<br>是手上的本事、是技術。<br><br>在那個女人能擁有的東西不多的年代，<br><em>手藝是少數真正屬於自己的東西</em>——<br>不會被嫁走，也不會被分掉。</div>
+  </div>
+  <div class="foot"><span>七夕 · 08.19</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="head"><div class="k">其 三</div><div class="n">03 / 04</div></div>
+  <div class="body">
+    <div class="lead"><span class="dim">那牛郎織女呢？</span><br>他們本來<br>是<span class="hl">兩顆星</span>。</div>
+    <div class="para">《史記・天官書》《漢書・天文志》<br>記的是牽牛、織女<em>雙星</em>。<br>到了漢代《淮南子》，<br>才出現「烏鵲填河而渡織女」。<br><br>先有星，才有故事。<br>愛情是後人讀出來的。</div>
+  </div>
+  <div class="foot"><span>七夕 · 08.19</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 5 -->
+<div class="slide">
+  <div class="head"><div class="k">其 四</div><div class="n">04 / 04</div></div>
+  <div class="body">
+    <div class="lead">所以這個節日<br>真正的主題<br><span class="dim">不是相聚。</span></div>
+    <div class="para">是<em>隔著距離，各自把自己的事做好</em>。<br><br>織女的本事是織。<br>一年只見一次，<br>不影響她<em>照樣會織</em>。</div>
+  </div>
+  <div class="foot"><span>七夕 · 08.19</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 6 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">今 年 的 七 夕</div><div class="n">08.19</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">與其問<br>「今年有沒有人陪」，</span><br><br>不如問<br><span class="hl">「我今年變厲害了嗎」</span>。</div>
+    <div class="sign">兩千年前她們就是這樣過的。<br>我們只是把它忘了。</div>
+    <div class="cta">這種被改寫過的文化史，<br>我整理在另一個帳號：<b>@jamine_pa</b>（潔米爸書房筆記）</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>你今年想「乞」哪個巧？</span></div>
+</div>
+
+</body></html>
