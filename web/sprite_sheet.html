@@ -230,7 +230,23 @@ const ABIL = [
   {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
   {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
 ];
-const abilById = id => ABIL.find(a => a.id === id);
+/* 五系奧義：該系練到 10 級才會出現，一攻一輔。
+   解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
+   格子不會變多，所以「練哪一系」跟「帶哪四個」是兩個獨立的取捨。 */
+const MASTER = [
+  {sc:'heal', id:'m_judge', nm:'聖光審判', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
+  {sc:'heal', id:'m_revive',nm:'復甦之息', mp:12, k:'self',  desc:'體力全滿並解除所有異常'},
+  {sc:'bolt', id:'m_smite', nm:'天雷殛',   mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
+  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
+  {sc:'fire', id:'m_pyre',  nm:'焚天',     mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
+  {sc:'fire', id:'m_core',  nm:'熔心',     mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
+  {sc:'aqua', id:'m_zero',  nm:'絕對零度', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
+  {sc:'aqua', id:'m_mirror',nm:'水鏡',     mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
+  {sc:'wind', id:'m_gale',  nm:'神風斬',   mp:13, k:'around',desc:'八方向同時貫穿'},
+  {sc:'wind', id:'m_shift', nm:'縮地',     mp:11, k:'self',  desc:'瞬間移動到本層樓梯'},
+];
+const ALL_ABIL = () => ABIL.concat(MASTER);
+const abilById = id => ALL_ABIL().find(a => a.id === id);
 const SLOTS = 4;
 
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
@@ -267,6 +283,8 @@ const SUMMONS = [
 const SUMMON_COST = 0.30;
 const SUMMON_AT = 4;
 
+const SCH_MAX = 10;          // 每系上限。到 10 會開出該系的兩個奧義
+const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點數
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);

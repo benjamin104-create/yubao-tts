@@ -619,9 +619,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #depth b::before, #depth b::after{font-size:10px}
   #depth em{font-size:9.5px}
   #mopen{display:block; height:28px; width:32px; font-size:16px}
-  #hud{gap:0 8px; padding:3px 10px 4px; font-size:10px}
-  #hud .stat:nth-child(n+5){display:none}      /* 只留 LV / HP / MP / 飽足 */
-  #hud .bar{width:38px; height:5px}
+  #hud{gap:1px 9px; padding:3px 10px 4px; font-size:10px}
+  /* 攻／防／錢是「現在能不能打、買不買得起」的答案，手機上更需要看到。
+     以前這裡把第 5 個之後全部藏起來，等於把玩家最常問的三件事藏起來。
+     只收掉「職」—— 那個在選單裡本來就有一整塊。 */
+  #hud .stat.job{display:none}
+  #hud .stat b{font-size:9px}
+  #hud .bar{width:34px; height:5px}
 
   /* 側欄與控制列改由選單叫出來 */
   #menu{
@@ -644,9 +648,11 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #menu #rail{border:0; flex:1}
 
   /* 畫面下方一行最新訊息 —— 不必開選單也知道剛才發生什麼 */
+  /* 高度寫死：訊息一進來就長高的話，畫布的高度計算會晚一步，
+     結果第一行訊息永遠被螢幕底端切掉。 */
   #ticker{
-    display:block; padding:3px 12px; background:var(--panel);
-    border-top:1px solid var(--hair); font-size:11.5px; line-height:1.3;
+    display:block; padding:4px 12px; background:var(--panel); box-sizing:border-box;
+    border-top:1px solid var(--hair); font-size:11.5px; line-height:15px; height:24px;
     color:var(--parch-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   #ticker.good{color:var(--moss)} #ticker.bad{color:var(--blood)} #ticker.gold{color:var(--brass)}
@@ -772,7 +778,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <div class="bar" id="fullbar"><i style="width:100%"></i></div></div>
     <div class="stat"><b>攻</b><span id="atk">10</span></div>
     <div class="stat"><b>防</b><span id="def">2</span></div>
-    <div class="stat"><b>職</b><span id="job">見習者</span></div>
+    <div class="stat job"><b>職</b><span id="job">見習者</span></div>
     <div class="stat"><b>G</b><span id="gold">0</span></div>
   </div>
 
@@ -1904,32 +1910,76 @@ function mk(cat, id, o){
   Object.assign(it, o||{});
   return it;
 }
+/* 依深度挑「這一層該有」的東西。
+   池子被上限清空時退回「最便宜的那一件」，而不是退回整份表 ——
+   舊寫法一旦上限太低就整份放行，等於完全沒有分級。 */
+function pickTier(rng, list, cap){
+  const pool = list.filter(d => (d.price||0) <= cap);
+  if(!pool.length){
+    let best = list[0];
+    for(const d of list) if((d.price||0) < (best.price||0)) best = d;
+    return best;
+  }
+  // 上限之內也不是等機率：越貴越少見，深度才會有「越下去東西越好」的手感。
+  return rng.weight(pool, d => 1 / (1 + (d.price||0) / 500));
+}
 function rollItem(rng, depth){
   const table = [
     ['herb',HERB,26],['scroll',SCROLL,20],['wand',WAND,10],['pot',POT,8],
-    ['food',FOOD,16],['weap',WEAP,10],['shld',SHLD,10],['hat',HAT,7],
+    ['food',FOOD,16],['weap',WEAP,10],['shld',SHLD,10],
   ];
   const pick = rng.weight(table, r=>r[2]);
-  const d = rng.pick(pick[1]);
+  // 道具分級：淺層掉不出秘銀之劍。以前整份表是平的，
+  // B1 就可能撿到終盤武器，後面 15 層等於沒有東西好期待。
+  // 一成的機率放行「超出這一層」的東西。分級是為了讓深度有意義，
+  // 但完全沒有意外之財的地下城也沒有人想再下去一次。
+  const cap = (400 + depth * 280) * (rng.chance(.10) ? 2.6 : 1);
+  const d = pickTier(rng, pick[1], cap);
   const it = mk(pick[0], d.id);
   if(pick[0]==='weap'||pick[0]==='shld'){
     it.up = rng.i(0, Math.min(3, d.up));
     it.cursed = rng.chance(.12);
   }
-  if(pick[0]==='hat') it.known = 1;      // 帽子永遠看得出來是什麼 —— 職業要是猜的就沒意思了
   return it;
+}
+
+/* ── 職業帽的稀有度 ────────────────────────────────────────────
+   帽子曾經在一般掉落表裡（權重 7），走三層就會撿到兩頂。
+   結果職業變成隨手可換的配件，而它應該是這款遊戲的招牌。
+   現在改成：一座迷宮＝20 層，第一座只放「一頂」，更深的迷宮兩頂，
+   樓層由本趟的種子決定，所以每一趟找帽子的路線都不一樣。 */
+const HAT_SEG = 20;
+function hatFloors(depth){
+  const seg = Math.floor((depth-1) / HAT_SEG);
+  const r = RNG((0x9e3779b9 * (seg+1) ^ (G ? G.seed : 1)) >>> 0);
+  const base = seg * HAT_SEG;
+  const a = base + r.i(3, 9);
+  if(seg === 0) return [a];                     // 第一座迷宮只有一頂
+  let b = base + r.i(10, 19);
+  if(b === a) b = base + ((b - base + 5) % HAT_SEG);
+  return [a, b];
+}
+function hatHere(depth){
+  if(!hatFloors(depth).includes(depth)) return null;
+  const r = RNG((0x85ebca6b * depth ^ (G ? G.seed : 1)) >>> 0);
+  return mk('hat', r.pick(HAT).id, {known:1});
 }
 
 /* 商店進貨：偏消耗品。武器盾牌太貴，早期玩家一件都買不起，
    結果整間店變成看得到吃不到的裝飾。 */
 function shopItem(rng, depth){
+  // 杖與壺最便宜的一件也要一千塊。淺層玩家身上只有兩三百，
+  // 上架了也只是櫥窗，所以八層以前乾脆不進這兩類貨。
   const table = [
     ['herb',HERB,34],['scroll',SCROLL,24],['food',FOOD,20],
-    ['wand',WAND,8],['pot',POT,6],['weap',WEAP,4],['shld',SHLD,4],
+    ['wand',WAND, depth>=8?8:0],['pot',POT, depth>=8?6:0],
+    ['weap',WEAP,4],['shld',SHLD,4],
   ];
   const pick = rng.weight(table, r=>r[2]);
-  const pool = pick[1].filter(d => (d.price||0) <= 900 + depth*260);
-  const d = rng.pick(pool.length ? pool : pick[1]);
+  // 上架的東西要「這一層的玩家買得起」。以前的上限是 900+260×層，
+  // B3 就會出現 2760 G 的杖 —— 那時候玩家身上大概兩百塊，
+  // 整間店等於一排看得到吃不到的裝飾。
+  const d = pickTier(rng, pick[1], 300 + depth*200);
   const it = mk(pick[0], d.id);
   if(pick[0]==='weap'||pick[0]==='shld') it.up = rng.i(0, Math.min(2, d.up));
   return it;
@@ -1970,6 +2020,19 @@ function buildFloor(){
     };
     const wp = inRoom();  if(wp)  G.items[key(wp.x,wp.y)]   = mk('weap','club',{known:1});
     const sp2 = inRoom(); if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld','leath',{known:1});
+  }
+  // 這一層該有職業帽的話，放進某個房間 —— 招牌不該掉在走廊上。
+  const hat = hatHere(G.depth);
+  if(hat){
+    const rks = Object.keys(G.f.rooms);
+    let spot = null;
+    for(let i=0;i<120 && !spot;i++){
+      const r = G.f.rooms[rng.pick(rks)]; if(!r) continue;
+      const x = rng.i(r.x, r.x+r.w-1), y = rng.i(r.y, r.y+r.h-1);
+      if(walkable(x,y) && !occ.has(key(x,y))){ occ.add(key(x,y)); spot = {x,y}; }
+    }
+    if(!spot) spot = free(0);
+    if(spot) G.items[key(spot.x,spot.y)] = hat;
   }
   for(let i=0;i<rng.i(3,6)+Math.floor(G.depth/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.depth); }
   for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.depth/2)); }
@@ -2112,6 +2175,12 @@ function tryMove(dx,dy){
     G.shop.keeper.x = p.x; G.shop.keeper.y = p.y;      // 與店員交換位置
     say('店員讓出了通道。');
   }
+  // 未結帳就要跨出店門：先問「確定 / 取消」。
+  // 以前這裡是直接落雷 —— 玩家連自己按下的那一步做了什麼都不知道。
+  if(G.shop && unpaid().length && roomOf(p.x,p.y) === G.shop.room
+     && roomOf(nx,ny) !== G.shop.room && walkable(nx,ny)){
+    SFX.play('open'); openPanel('bill'); return;
+  }
   if(!walkable(nx,ny)){ SFX.play('wall',120); say('前面是牆壁。'); return; }   // 撞牆不消耗回合
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
   SFX.play('step');
@@ -2129,6 +2198,7 @@ function steal(){
   SFX.play('death');
   G.shake = 26;
   burst(G.p.x, G.p.y, 60, '#f5dc7a', 90, 30, 1.1);
+  say('店員：「……你確定了。」','bad');
   say('天花板裂開，一道雷落在你身上。','bad');
   $('otitle').textContent = '天罰';
   $('otext').innerHTML =
@@ -2140,7 +2210,7 @@ function steal(){
 
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
-  if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room){ steal(); return; }
+  if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room) keeperReclaim();
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
   if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
@@ -2149,12 +2219,15 @@ function stepOn(){
   if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
     G.shopSeen = 1;
     say('這是一間店。','gold');
-    say('未結帳就離開店鋪範圍 —— 天罰會直接結束這一趟。','bad');
+    keeperSay(G.rng.pick(KEEP_HELLO));
+    say(`身上有 ${p.gold} G。背包裡的東西也可以賣給他。`,'gold');
   }
   if(G.items[k]){
     const it = G.items[k];
-    say(it.shop ? `「${nameOf(it)}」　售價 ${it.price} G。（腳下購買）`
-               : `踩在了「${nameOf(it)}」上。（腳下）`, it.shop ? 'gold' : null);
+    if(it.shop){
+      say(`「${nameOf(it)}」　售價 ${it.price} G。（腳下購買）`,'gold');
+      if(p.gold < it.price) keeperSay(`${it.price} G。你身上只有 ${p.gold} G。`);
+    } else say(`踩在了「${nameOf(it)}」上。（腳下）`);
   }
   if(tileAt(p.x,p.y)===DOWN) say('這裡有向下的樓梯。（下樓）','gold');
   if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y)
@@ -2947,6 +3020,73 @@ function callSummon(sm){
 const allyAt = (x,y) => G.allies.find(a => a.hp > 0 && a.x === x && a.y === y);
 const keeperAt = (x,y) => !!(G.shop && G.shop.keeper.x === x && G.shop.keeper.y === y);
 const unpaid = () => G.p.inv.filter(i => i.shop);
+const billTotal = () => unpaid().reduce((s,i) => s + (i.price|0), 0);
+const inShop = () => !!(G.shop && roomOf(G.p.x, G.p.y) === G.shop.room);
+
+/* 店員會講話。在這之前他只是一個站在門口的方塊：玩家不知道自己
+   踩進了什麼規則，走出去才被雷劈 —— 那是介面沒講清楚，不是難度。 */
+function keeperSay(line, kind){ say(`店員：「${line}」`, kind || 'gold'); }
+const KEEP_HELLO = [
+  '歡迎光臨。這麼深的地方，還肯走進來的人不多。',
+  '看看吧。踩在東西上面就能問價。',
+  '燈是我點的，價錢也是我開的。',
+];
+const KEEP_THANKS = [
+  '謝了，祝你活著回來。',
+  '好眼光。這件東西撐得住下面幾層。',
+  '成交。錢我收下了。',
+];
+
+/* 賣價：底價的一半，強化值另外算。買一件再賣回去會虧 ——
+   不然玩家就會站在店裡把錢磨出來，而不是下樓。 */
+function sellPrice(it){
+  if(it.shop) return 0;
+  const base = (it.d.price || 80) + (it.up|0) * 60;
+  return Math.max(10, Math.round(base * 0.5));
+}
+
+/* 把沒結帳的東西放回架上。找得到原位就放回原位，
+   原位被佔了就找店裡任何一格空地 —— 東西不能憑空消失。 */
+function shelfBack(it){
+  const spot = it.spot;
+  if(spot !== undefined && !G.items[spot]){ G.items[spot] = it; return true; }
+  const r = G.f.rooms[G.shop.room];
+  for(let y=r.y; y<r.y+r.h; y++) for(let x=r.x; x<r.x+r.w; x++){
+    const k = key(x,y);
+    if(walkable(x,y) && !G.items[k]){ G.items[k] = it; it.spot = k; return true; }
+  }
+  return false;
+}
+function returnGoods(){
+  const p = G.p, list = unpaid();
+  for(const it of list){
+    const i = p.inv.indexOf(it);
+    if(i >= 0) p.inv.splice(i, 1);
+    if(it === p.weap) p.weap = null;
+    if(it === p.shld) p.shld = null;
+    shelfBack(it);
+  }
+  SFX.play('pick');
+  keeperSay('放回去就好，我不追究。');
+}
+/* 被傳送 / 被吹飛出店外，不算偷 —— 店員追上來把貨拿回去就好。
+   走出去要不要付錢是玩家的選擇；被道具丟出去不是。 */
+function keeperReclaim(){
+  const n = unpaid().length;
+  if(!n) return;
+  returnGoods();
+  say(`店員追了上來，把 ${n} 件商品收了回去。`,'bad');
+}
+function payBill(){
+  const p = G.p, total = billTotal();
+  if(p.gold < total){ keeperSay('錢不夠。', 'bad'); return false; }
+  p.gold -= total;
+  for(const it of unpaid()){ delete it.shop; delete it.price; delete it.spot; it.known = 1; }
+  SFX.play('coin');
+  say(`結帳 ${total} G。`,'gold');
+  keeperSay(G.rng.pick(KEEP_THANKS));
+  return true;
+}
 
 /* 幻獸行動：找最近的敵人，貼上去打。不做花俏的走位 ——
    玩家召喚它是為了「有人替我擋著並輸出」，不是為了看它繞路。 */
@@ -2988,7 +3128,7 @@ function allyTurn(){
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say('這裡沒有樓梯。'); return; }
-  if(G.shop && unpaid().length){ steal(); return; }
+  if(G.shop && unpaid().length){ SFX.play('open'); openPanel('bill'); return; }
   SFX.play('stairs');
   G.depth++;
   buildFloor();
@@ -3802,10 +3942,28 @@ function paintMap(mcx, mini, MMS){
 
 /* 直式手機給直式視窗。手機畫面本來就是直的，塞一個 14x10 的橫視窗
    只會讓遊戲剩下薄薄一條、其餘全是按鈕。 */
+/* 手機直立時，畫布不能只看寬度。舊寫法是「寬度撐滿、高度由比例決定」，
+   於是在 393×664 這種矮螢幕上，招牌＋畫布＋手把區加起來比螢幕高 8px，
+   手把最下面一排就被切掉 —— 使用者回報的截圖正是這一格。
+   改成先算「還剩多少高度」，再回推畫面允許的最大寬度。
+   限制放在 #screenwrap 而不是 canvas 上，這樣手把、暈影、面板
+   全都跟著同一個框走，不會有東西留在框外。 */
+function fitCanvas(){
+  const wrap = $('screenwrap');
+  if(!wrap || !wrap.getBoundingClientRect) return;
+  if(innerWidth > 620){ wrap.style.maxWidth = ''; wrap.style.margin = ''; return; }
+  const padH = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
+  const top  = wrap.getBoundingClientRect().top +
+               (document.scrollingElement ? document.scrollingElement.scrollTop : 0);
+  const tick = $('ticker').offsetHeight || 0;
+  const maxW = Math.floor((innerHeight - top - padH - tick) * VW / VH);
+  wrap.style.margin = '0 auto';
+  wrap.style.maxWidth = (maxW > 240 && maxW < innerWidth) ? maxW + 'px' : '';
+}
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
   const nw = portrait ? 11 : 14, nh = portrait ? 12 : 10;
-  if(nw === VW && nh === VH) return;
+  if(nw === VW && nh === VH){ fitCanvas(); return; }
   VW = nw; VH = nh;
   cv.width = VW*T; cv.height = VH*T;
   // 明寫長寬比。只給 width:100% 時，畫布高度要靠瀏覽器從內在比例推算，
@@ -3814,6 +3972,7 @@ function fitViewport(){
   cx.imageSmoothingEnabled = false;       // 改 canvas.width 會把 context 狀態重設
   rockPat = null;                         // 圖樣綁在舊的繪圖狀態上，一起重建
   if(G){ camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5; }
+  fitCanvas();
 }
 addEventListener('resize', fitViewport);
 addEventListener('orientationchange', fitViewport);
@@ -3923,6 +4082,8 @@ let panelMode = null, sel = null;
 function openPanel(mode){
   panelMode = mode; sel = null;
   $('panel').classList.add('open');
+  // 操作提示條跟面板底線同高，兩個疊在一起會把面板最後一行蓋掉
+  $('hint').classList.remove('show');
   renderPanel();
 }
 function closePanel(){ panelMode=null; sel=null; $('panel').classList.remove('open'); }
@@ -4060,9 +4221,36 @@ function renderPanel(){
     }
     return;
   }
+  /* 結帳單。走出店門前唯一會擋住玩家的東西 ——
+     「確定 / 取消」要在落雷之前出現，而不是之後才解釋。 */
+  if(panelMode==='bill'){
+    const bill = unpaid(), total = billTotal();
+    $('ptitle').textContent = '結帳';
+    $('pcount').textContent = `所持 ${p.gold} G`;
+    $('phint').textContent = bill.length
+      ? `未結帳 ${bill.length} 件，共 ${total} G。`
+      : '已經沒有未結帳的東西了。';
+    for(const it of bill){
+      const row = document.createElement('div'); row.className='row';
+      const c = document.createElement('canvas'); c.width=T; c.height=T;
+      c.getContext('2d').drawImage(iconOf(it),0,0);
+      const nm = document.createElement('div'); nm.className='nm'; nm.textContent = nameOf(it);
+      const pr = document.createElement('span'); pr.className='eq'; pr.textContent = it.price + ' G';
+      row.appendChild(c); row.appendChild(nm); row.appendChild(pr);
+      list.appendChild(row);
+    }
+    if(!bill.length){ btn('關閉', ()=>{ closePanel(); refresh(); }); return; }
+    btn(`確定購買（${total} G）`, ()=>{
+      if(payBill()){ closePanel(); refresh(); } else refresh();
+    }, p.gold < total);
+    btn('放回架上', ()=>{ returnGoods(); closePanel(); refresh(); });
+    btn('取消（留在店裡）', ()=>{ closePanel(); refresh(); });
+    btn('硬闖出去（天罰）', ()=>{ closePanel(); steal(); });
+    return;
+  }
   if(panelMode==='inv'){
     $('ptitle').textContent = '背包';
-    $('pcount').textContent = `${p.inv.length} / 20`;
+    $('pcount').textContent = `${p.inv.length} / 20　${p.gold} G`;
     $('phint').textContent = sel ? nameOf(sel) : '點選道具查看可用的操作。';
     for(const it of p.inv){
       const row = document.createElement('div');
@@ -4080,7 +4268,7 @@ function renderPanel(){
   } else if(panelMode==='ground'){
     const it = G.items[key(p.x,p.y)];
     $('ptitle').textContent = '腳下';
-    $('pcount').textContent = '';
+    $('pcount').textContent = (it && it.shop) ? `所持 ${p.gold} G` : '';
     if(!it){ $('phint').textContent='腳下沒有東西。'; return; }
     $('phint').textContent = nameOf(it);
     const row=document.createElement('div'); row.className='row';
@@ -4131,17 +4319,23 @@ function buildActions(it, ground){
     btn(`購買（${it.price} G）`, ()=>{
       if(p.gold < it.price){ say('金錢不足。','bad'); refresh(); return; }
       if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
-      p.gold -= it.price; delete it.shop; delete it.price;
+      p.gold -= it.price; delete it.shop; delete it.price; delete it.spot;
       SFX.play('coin');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
-      say(`買下了「${nameOf(it)}」。`,'gold'); closePanel(); endTurn();
+      say(`買下了「${nameOf(it)}」。`,'gold');
+      keeperSay(G.rng.pick(KEEP_THANKS));
+      autoEquip(it);
+      closePanel(); endTurn();
     }, p.gold < it.price);
   }
   if(ground){
     btn(it.shop ? '拿起（未結帳）' : '撿起', ()=>{
       if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
       SFX.play('pick');
-      if(it.shop) say('店員的視線跟了過來。','bad');
+      if(it.shop){
+        it.spot = key(p.x,p.y);                 // 記住原位，之後要放得回去
+        keeperSay('拿著看沒關係，出門前記得結帳。');
+      }
       p.inv.push(it); delete G.items[key(p.x,p.y)];
       say(`撿起了「${nameOf(it)}」。`);
       if(!it.shop) autoEquip(it);
@@ -4151,12 +4345,25 @@ function buildActions(it, ground){
       $('phint').textContent='選一件背包道具與腳下的交換。'; });
     btn('踏過', closePanel);
   } else {
+    // 站在店裡才能賣。只能買不能賣的店，玩家撿了一整層的東西也只能丟掉。
+    if(inShop() && !it.shop){
+      const sp = sellPrice(it);
+      btn(`賣掉（${sp} G）`, ()=>{
+        if(it===p.weap || it===p.shld){ say('裝備中的東西要先卸下。'); refresh(); return; }
+        if(it.cursed){ it.known=1; say('被詛咒的東西，店員不敢收。','bad'); refresh(); return; }
+        p.gold += sp; removeItem(it); SFX.play('coin');
+        say(`賣掉了「${nameOf(it)}」，得到 ${sp} G。`,'gold');
+        keeperSay(G.rng.pick(['收下了。','這個我留著自己用。','再多帶一點下來。']));
+        closePanel(); endTurn();
+      }, it===p.weap || it===p.shld);
+    }
     if(swapMode){
       btn('與腳下交換', ()=>{
         const g = swapMode; swapMode=null;
         if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，脫不下來！','bad'); refresh(); return; }
         if(it===p.weap) p.weap=null; if(it===p.shld) p.shld=null;
         const i = p.inv.indexOf(it);
+        if(g.shop) g.spot = key(p.x,p.y);
         p.inv[i] = g; G.items[key(p.x,p.y)] = it;
         say(`將「${nameOf(it)}」放在地上，換取了「${nameOf(g)}」。`);
         closePanel(); endTurn();
@@ -4428,6 +4635,9 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='dpad'){
       const on = $('pad').classList.toggle('show');
       $('dpadbtn').textContent = on ? '收起手把' : '虛擬手把';
+      // 收起手把之後那 162px 就不該再留著 —— 讓畫面把它吃回去
+      $('screenwrap').style.paddingBottom = (innerWidth <= 620 && !on) ? '0px' : '';
+      fitCanvas();
       SFX.play('open');
     }
     if(a==='tags') toggleTags();
@@ -4565,6 +4775,7 @@ function relayout(){
     main.appendChild(keys); body.appendChild(rail);
     menu.classList.remove('show');
   }
+  fitCanvas();
 }
 function openMenu(){ relayout(); $('menu').classList.add('show'); SFX.play('open');
   try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){} }
