@@ -567,11 +567,14 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .slot.on{border-style:solid; border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.12)}
 #mpbar i{background:var(--azure)}
 
+/* 提示條會被翻譯撐開：英文比中文長快一倍，nowrap 的話兩端都會被切掉。
+   改成允許換行、寬度跟著畫布走 —— 讀得完比排成一行重要。 */
 #hint{
   position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
-  display:none; white-space:nowrap; pointer-events:none; z-index:5;
-  padding:8px 15px; background:rgba(6,8,9,.86); border:1px solid var(--edge);
-  font-size:12px; line-height:1.2; color:var(--parch-dim); letter-spacing:.03em;
+  display:none; pointer-events:none; z-index:5;
+  max-width:calc(100% - 20px); text-align:center; text-wrap:balance;
+  padding:7px 13px; background:rgba(6,8,9,.86); border:1px solid var(--edge);
+  font-size:11.5px; line-height:1.35; color:var(--parch-dim); letter-spacing:.02em;
   animation:hintout .6s ease 4.2s forwards;
 }
 #hint b{color:var(--brass); font-weight:600}
@@ -698,8 +701,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
      所以頁面底色要跟機台一樣，才不會露出一條米色的空白 */
   body{background:var(--ink)}
   /* 標題列與狀態列合併成一條，攻／防／職／G 收進選單 */
-  #sign{padding:3px 10px}
-  #sign h1{font-size:12.5px; letter-spacing:.04em}
+  /* 招牌只有一行的高度。標題（英文長很多）截斷，
+     「深度 N」在手機上收起來 —— 章節進度 3/3 已經講完同一件事。 */
+  #sign{padding:3px 10px; flex-wrap:nowrap}
+  #sign h1{
+    font-size:12.5px; letter-spacing:.04em; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #depth{flex:none; white-space:nowrap}
+  #depth em{max-width:44vw; overflow:hidden; text-overflow:ellipsis}
   #depth b{font-size:17px}
   #depth b::before, #depth b::after{font-size:10px}
   #depth em{font-size:9.5px}
@@ -1113,16 +1123,16 @@ const BOSS = [
   rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
   line:'湖面立起來了。'},
- {id:'b_phoenix',nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
-  revive:1, line:'牠燒起來的時候，是在重生。'},
+ {id:'b_phoenix', lives:1,nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
+  line:'牠燒起來的時候，是在重生。'},
  {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
   line:'「看得見我，就贏得了我。」'},
  {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
   counter:.35, line:'牠拔刀的速度比你眨眼快。'},
  {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
- {id:'b_queen',  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  phases:3, line:'打碎一次，她會再站起來。三次。'},
+ {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
+  line:'打碎一次，她會再站起來。三次。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, line:'光走直線 —— 所以不要站在直線上。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
@@ -1134,13 +1144,13 @@ const BOSS = [
     設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
     難度來自「要同時記得三件事」，不是來自數值。
     型態之間各補滿一次體力與魔力 —— 最終戰卡在補給不足上不有趣。 */
- {id:'b_mind1',  nm:'意識・凝視', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_mind1', mul:{hp:.7, atk:.9, def:.35},  nm:'意識・凝視', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:1, rng:99, cadence:3, telegraph:1, still:1, imm:['睡','亂','麻'],
   line:'它還沒有形體。只有一隻眼睛，正在看你。'},
- {id:'b_mind2',  nm:'意識・複寫', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_mind2', mul:{hp:.8, atk:1.0, def:.8},  nm:'意識・複寫', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:2, imm:['睡','亂','麻'],
   line:'三個你。只有一個不會跟著你動。'},
- {id:'b_mind',   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_mind', mul:{hp:1.3, atk:1.2, def:1.6},   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:3, opening:1, imm:['睡','亂','麻'],
   line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
 ];
@@ -1155,7 +1165,10 @@ const bossById = id => BOSS.find(b => b.id === id);
      等級 ≈ 深度/2　攻擊 ≈ 10+深度　防禦 ≈ 2+深度/4　體力 ≈ 19+深度×4.25
    目標手感：**打得完但打得久** —— 玩家約 8 回合打死它，
    它約 11 回合打死你。所以你有餘裕，但不能站著發呆。 */
-const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 14;
+/* SURVIVE 從 14 拉到 20，是因為原本的算式只算了頭目一個人打你。
+   頭目層還有兩隻雜魚，實測牠們貢獻了將近一半的傷害 ——
+   「頭目 14 回合打死你」在場上其實是「7 回合」。 */
+const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 20;
 /* 估算式是從模擬「量出來」的，不是猜的 —— 而且刻意估得保守
    （低估玩家 → 頭目偏弱）。機器人不會用技能也不會逃跑，
    真人比它強，所以對機器人剛好的難度對真人才是舒服的。 */
@@ -1165,7 +1178,7 @@ const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 14;
    換算深度 28.6 → 攻 51 / 防 15 / 體 157
    第一版低估了一半（攻寫成 10+0.62d），結果換算深度 28 的頭目
    只有 95 血、攻 13 —— 兩回合就倒，整場頭目戰等於不存在。 */
-const pAtkAt = d => 8  + d*1.5;
+const pAtkAt = d => 6  + d*1.4;   // 實測換算深度 28.6 時是 46，舊式高估了 5
 const pHpAt  = d => 20 + d*5.0;
 const pDefAt = d => 2  + d*0.45;
 function bossStats(depth){
@@ -1463,6 +1476,8 @@ m.reward|Obtained: {nm}|にゅうしゅ：{nm}
 m.nomp|Not enough magic.|MPが たりない。
 m.learn|Learned the skill "{nm}".|スキル「{nm}」を おぼえた。
 m.jobup|{nm} - job level {n}.|{nm}　しょくぎょうレベル {n}。
+m.jobneed|{nm} - {n} more level(s) to raise the job.|{nm}　あと {n} レベルで しょくぎょうレベルが あがる。
+m.hatprog|Wear it and every {p} levels raises the job. Progress {a}/{p}.|かぶって {p} レベルごとに しょくぎょうレベル +1。しんちょく {a}/{p}。
 m.jobmaster|{nm} - MASTER reached.|{nm}　マスターに とうたつ。
 m.slot|Loaded into slot {n}.|スロット {n} に セットした。
 m.wearhat|You put on "{nm}" - now a {job} ({rank}).|「{nm}」を かぶった —— いまは {job}（{rank}）。
@@ -1516,6 +1531,11 @@ ui.help|Controls|そうさ
 ui.pad|D-pad|パッド
 ui.padoff|Hide pad|パッドをしまう
 ui.lang|Language|言語
+ui.hint|D-pad moves · hold centre to <b>rest</b> · <b>A</b> ok　<b>B</b> back　<b>S</b> skills|十字キーで いどう・ちゅうおう ちょうおしで <b>きゅうけい</b>・<b>A</b> けってい　<b>B</b> とりけし　<b>S</b> スキル
+ui.lbl.a|confirm|けってい
+ui.lbl.b|bag / map|かばん・マップ
+ui.lbl.s|skills|スキル
+ui.depth|depth|ふかさ
 ui.master|Master|マスター
 ui.passive|passive|パッシブ
 ui.allmp|all MP|MP全部
@@ -1711,6 +1731,22 @@ k.hold|Hold it if you like. Just settle up before you leave.|もっていても 
 k.back|Just put it back. No hard feelings.|もどしてくれれば それでいい。
 k.shop|This is a shop.|ここは みせだ。
 k.money|You have {n} G. You can sell things here too.|しょじきん {n} G。かばんの ものも うれる。
+bl.b_warden|The stone is breathing. It has woken.|いしが いきをしている。めざめた。
+bl.b_treant|The mist parts - that is not a tree.|きりが はれる —— あれは きではない。
+bl.b_ballista|White tiles light up - that is the firing line.|しろい マスが ひかる —— それが しゃていだ。
+bl.b_pyro|Once every three turns. The pillars are the only answer.|3ターンに いちど。こたえは はしらだけ。
+bl.b_lord|The lake stands up.|みずうみが たちあがった。
+bl.b_phoenix|When it burns, it is being reborn.|もえるとき、それは うまれかわっている。
+bl.b_hanzo|"See me, and you beat me."|「みえるなら、かてる。」
+bl.b_oni|It draws faster than you blink.|まばたきより はやく ぬく。
+bl.b_gaoler|The key hangs at its waist.|かぎは こしに ぶらさがっている。
+bl.b_queen|Break her once and she stands again. Three times.|いちど くだいても また たつ。3かい。
+bl.b_prism|Light travels straight - so do not stand on the line.|ひかりは まっすぐ すすむ —— せんじょうに たつな。
+bl.b_mermaid|A song from the top of the spire.|とうの てっぺんの うたごえ。
+bl.b_gate|The last door.|さいごの とびら。
+bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
+bl.b_mind2|Three of you. Only one does not follow your steps.|3にんの きみ。ついてこないのは ひとりだけ。
+bl.b_mind|It stands at last. Every swing leaves it open for a turn.|ついに たちあがる。ひとふりごとに 1ターン すきが できる。
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -2734,6 +2770,7 @@ function newGame(seed){
   say(M('m.chapter','第 {n} 章　{nm}',{n:G.act+1, nm:locAct(a0)}), 'gold');
   say(TX('acti.' + a0.id, a0.intro), 'gold');
   say(TX('m.enter','方向鍵移動，撞到怪物即攻擊。'), 'gold');
+  if(G.bossLine){ say(TX('bl.' + G.bossLine.id, G.bossLine.line), 'bad'); G.bossLine = null; }
   return G;
 }
 
@@ -2897,7 +2934,10 @@ function buildFloor(){
   if(G.f.rest){
     for(let i=0;i<3;i++){ const q=free(0); if(q) G.items[key(q.x,q.y)] = mk('herb','heal',{known:1}); }
     const fq = free(0); if(fq) G.items[key(fq.x,fq.y)] = mk('food','big');
-    G.p.hp = G.p.mhp; G.p.mp = G.p.mmp;
+    // 體力、魔力、飽足度一起補滿。休息層的意義是「重新整隊」——
+    // 只補血不補糧的話，二十層的通天塔還是會被飢餓磨死，
+    // 而走通測試正是卡在那種「不是被打死，是被耗死」的失敗上。
+    G.p.hp = G.p.mhp; G.p.mp = G.p.mmp; G.p.sat = G.p.msat;
     G.traps = {};
   }
   /* 密度不能一路往上加。換算深度 20 的時候，這條式子會生出 8 隻，
@@ -2907,12 +2947,16 @@ function buildFloor(){
   const dens = G.md >= 15 ? 5 : 12;
   const isBossFloor = G.floor >= actAt(G.act).floors && actAt(G.act).boss;
   let n = G.f.rest ? 0 : Math.min(dens, 2+Math.floor(G.md/3));
-  // 頭目層的雜魚減半。頭目的房間不是怪物櫃 ——
-  // 而且玩家是走了一整章才到這裡的，那一章已經收過學費了。
+  /* 頭目層的雜魚減半，而且**從比較淺的名單裡抽**。
+     只減數量不夠：換算深度 28 的兩隻雜魚是深淵騎士（攻 48 ×2），
+     加上頭目一回合就是 47 點傷害，玩家 161 血撐三回合 ——
+     走通測試在通天塔連續四十次死在第 20 層，兇手是雜魚不是頭目。
+     頭目戰的難度應該來自頭目。 */
+  const mdSpawn = isBossFloor ? G.md * 0.55 : G.md;
   if(isBossFloor) n = Math.max(2, Math.floor(n/2));
   while(n>0){
     const p = free(3); if(!p) break;
-    const md = rng.weight(MONS, m => (G.md>=m.fl[0] && G.md<=m.fl[1]) ? m.w : 0);
+    const md = rng.weight(MONS, m => (mdSpawn>=m.fl[0] && mdSpawn<=m.fl[1]) ? m.w : 0);
     if(!md) break;
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
@@ -2922,6 +2966,30 @@ function buildFloor(){
   G.f.enterAt = Date.now();
   G.f.surge = 0;
 
+  /* ── 混沌之間：一座競技場，不是一層地城 ──────────────────────
+     截圖截出來的問題：最終戰的畫面跟第一章第一層長得一模一樣 ——
+     陷阱、金幣、野果、隨機房間。走了九十二層之後看到這個，
+     玩家不會覺得自己到了終點。
+
+     更嚴重的是「凝視」型態的設計前提是**柱子**：它每三回合掃一整行，
+     站到柱子後面（視線被擋）就打不到。但這裡從來沒有柱子 ——
+     等於給了玩家一道沒有正解的題目。這裡把柱子真的蓋出來。 */
+  if(actAt(G.act).id === 'chaos'){
+    G.traps = {}; G.gold = {}; G.items = {}; G.mons = [];
+    const r = G.f.rooms[roomOf(G.p.x, G.p.y)];
+    if(r){
+      // 四根柱子，離牆一格、彼此隔開 —— 太靠邊就繞不到後面
+      const px1 = r.x + 1, px2 = r.x + r.w - 2;
+      const py1 = r.y + 1, py2 = r.y + r.h - 2;
+      for(const [cx,cy] of [[px1,py1],[px2,py1],[px1,py2],[px2,py2]]){
+        if(cx === G.p.x && cy === G.p.y) continue;
+        if(cx > r.x && cx < r.x+r.w-1 && cy > r.y && cy < r.y+r.h-1)
+          G.f.t[key(cx,cy)] = WALL;
+      }
+    }
+    G.f.baseMons = 0;
+  }
+
   // ── 頭目層 ──
   // 頭目在場時樓梯是鎖的。「繞過頭目直接下樓」會讓整章的鋪陳白費。
   G.f.bossLock = 0;
@@ -2929,9 +2997,27 @@ function buildFloor(){
   if(G.floor >= act.floors && act.boss){
     const bd = bossById(act.boss);
     if(bd){
-      // 放在離玩家最遠的房間 —— 頭目該是你走過去找的，不是一開門就貼臉
+      // 混沌之間例外：柱子蓋在玩家的房間裡，頭目就必須在同一間 ——
+      // 不然「躲柱子」的正解會在另一個房間，玩家永遠用不到。
       let spot = null, bd2 = -1;
+      if(actAt(G.act).id === 'chaos'){
+        const ar = G.f.rooms[roomOf(G.p.x, G.p.y)];
+        if(ar){
+          // 先求「離玩家夠遠」，房間太小就退而求其次求「不重疊」——
+          // 但無論如何都要留在這一間，柱子才有用。
+          for(const minD of [4, 3, 1]){
+            for(let i=0;i<200 && !spot;i++){
+              const x = rng.i(ar.x, ar.x+ar.w-1), y = rng.i(ar.y, ar.y+ar.h-1);
+              if(!walkable(x,y) || monAt(x,y)) continue;
+              if(Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) < minD) continue;
+              spot = {x,y};
+            }
+            if(spot) break;
+          }
+        }
+      }
       for(const rk in G.f.rooms){
+        if(spot) break;
         const r = G.f.rooms[rk];
         const cx = r.x + (r.w>>1), cy = r.y + (r.h>>1);
         const d = Math.max(Math.abs(cx-G.p.x), Math.abs(cy-G.p.y));
@@ -2942,15 +3028,24 @@ function buildFloor(){
         spawnMon(bd, spot.x, spot.y);
         G.f.bossLock = 1;
         G.f.bossId = bd.id;
+        // 頭目的登場白。以前只有「意識」換型態時會講，
+        // 其他十三隻是無聲出場的 —— 寫了台詞卻沒有人講出來。
+        G.bossLine = bd;
       }
     }
   }
   // 隱藏商店：三層以後偶爾出現。守門店員站在唯一的出入口上，
   // 所以「偷了就跑」不是速度問題，是要不要繞過他的問題。
-  if(G.f.rest || (G.depth >= 3 && rng.chance(.24))){
+  if(actAt(G.act).id !== 'chaos' && (G.f.rest || (G.depth >= 3 && rng.chance(.24)))){
+    /* 不能挑到頭目所在的房間。挑到的話，下面那行「店裡不生怪」的
+       過濾會把頭目一起刪掉 —— 樓梯還是鎖著、頭目卻不存在，
+       整章從此走不完。這個 bug 是截圖截出來的：
+       混沌之間拍到「頭目鎖=true，場上只有兩隻深淵騎士」。 */
+    const bossRoom = G.f.bossLock ? roomOf(G.mons[G.mons.length-1].x, G.mons[G.mons.length-1].y) : -1;
     const keys = Object.keys(G.f.rooms).filter(k => {
       const r = G.f.rooms[k];
-      return r.w >= 4 && r.h >= 3 && r.doors.length >= 1 && G.f.roomAt[key(G.p.x,G.p.y)] !== +k;
+      return r.w >= 4 && r.h >= 3 && r.doors.length >= 1
+          && G.f.roomAt[key(G.p.x,G.p.y)] !== +k && bossRoom !== +k;
     });
     if(keys.length){
       const rk = rng.pick(keys), r = G.f.rooms[rk];
@@ -2967,7 +3062,9 @@ function buildFloor(){
       delete G.gold[key(r.x,r.y)];
       const [dx0,dy0] = rng.pick(r.doors).split(',').map(Number);
       G.shop = {room:+rk, keeper:{x:dx0, y:dy0}, stock};
-      G.mons = G.mons.filter(m => roomOf(m.x,m.y) !== +rk);   // 店裡不生怪
+      // 店裡不生怪 —— 但頭目永遠留著。上面已經避開頭目的房間了，
+      // 這裡再擋一次：一個會刪掉頭目的過濾器，錯一次就是一整章走不完。
+      G.mons = G.mons.filter(m => m.d.boss || roomOf(m.x,m.y) !== +rk);
     }
   }
 
@@ -2992,7 +3089,15 @@ function spawnMon(d,x,y){
   // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossStats()。
   if(d.boss){
     const s = bossStats(G.md);
-    d = Object.assign({}, d, s);
+    // 倍率讓同一個深度的頭目也能有不同的手感。
+    // 沒有它的話，「意識」的三個型態數值一模一樣 ——
+    // 最終戰就變成同一場仗打三次，而不是三道不同的題目。
+    const mm = d.mul || {};
+    d = Object.assign({}, d, {
+      hp:  Math.max(30, Math.round(s.hp  * (mm.hp  || 1))),
+      atk: Math.max(3,  Math.round(s.atk * (mm.atk || 1))),
+      def: Math.max(0,  Math.round(s.def * (mm.def || 1))),
+    });
   }
   G.mons.push({d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++});
 }
@@ -3182,7 +3287,7 @@ function bossDown(m){
     say('★ 體力與魔力完全恢復。','good');
     const spot = nearestFree(m.x, m.y) || {x:m.x, y:m.y};
     spawnMon(nd, spot.x, spot.y);
-    say(nd.line, 'bad');
+    say(TX('bl.' + nd.id, nd.line), 'bad');
     G.f.bossId = nd.id;
     return;                                   // 樓梯繼續鎖著
   }
@@ -3192,7 +3297,23 @@ function bossDown(m){
     say(act.id === 'chaos' ? '一切都安靜下來了。（站上樓梯結束）'
                            : TX('m.unlocked','壓力散去 —— 樓梯開了。（站上樓梯完成本章）'), 'gold');
 }
+/* 會站起來的頭目。不死鳥一次、鏡之女王兩次（＝要打碎三次）。
+   資料表上原本有 `revive:1` 與 `phases:3` 兩個欄位，但誰都沒有實作 ——
+   欄位存在卻沒有效果，比沒有欄位更糟：讀程式碼的人會以為它會動。 */
+function tryRevive(m){
+  if(!m.d.lives || (m.lives|0) >= m.d.lives) return false;
+  m.lives = (m.lives|0) + 1;
+  m.hp = Math.max(1, Math.round(m.mhp * 0.55));
+  m.st = {};
+  SFX.play('level');
+  burst(m.x, m.y, 30, '#f5a95e', 60, 20, 1.0);
+  G.shake = Math.max(G.shake, 12);
+  const left = m.d.lives - m.lives;
+  say(`${locName('mon', m.d)} 又站了起來${left ? `（還有 ${left} 次）` : '（最後一次）'}。`, 'bad');
+  return true;
+}
 function kill(m){
+  if(tryRevive(m)) return;
   SFX.play('kill');
   if(G.corpses){                       // 沒有這段的話怪物是「消失」，不是「被打倒」
     G.corpses.push({img: atlas[m.d.id] || atlas.rat, x:m.x, y:m.y, t:0});
@@ -3414,9 +3535,14 @@ function decide(m){
   const sees = sameRoom || (dist<=m.d.sight && lineClear(m.x,m.y,p.x,p.y));
 
   if(m.d.ai==='R' && !m.st['封']){
-    if(m.hp/m.mhp < .25 && !m.d.still) return {k:'move', d:away(m)};
+    /* 頭目不後退。走通測試在通天塔連續四十次都走到第 20 層才倒下 ——
+       人魚王后是遠程型，玩家一靠近牠就退開再射，近戰角色永遠追不上。
+       那不是難度，那是一場打不完的仗。雜魚可以放風箏，頭目不行：
+       頭目是「一定要正面解決」的那個東西。 */
+    const flee = !m.d.still && !m.d.boss;
+    if(m.hp/m.mhp < .25 && flee) return {k:'move', d:away(m)};
     if(dist<=1) return {k:'melee'};
-    if(dist<3 && !m.d.still) return {k:'move', d:away(m)};
+    if(dist<3 && flee) return {k:'move', d:away(m)};
     if(m.cd>0){ m.cd--; return m.d.still?{k:'wait'}:{k:'move', d:toward(m,p.x,p.y,true)}; }
     if(dist<=m.d.rng && aligned(m.x,m.y,p.x,p.y) && lineClear(m.x,m.y,p.x,p.y)){ m.cd=2; return {k:'shoot'}; }
     if(m.d.still) return {k:'wait'};
@@ -3674,7 +3800,8 @@ function wearHat(it){
   say(M('m.wearhat','戴上了「{nm}」—— 現在是{job}（{rank}）。',
     {nm:locName('hat',it.d), job:locJob(it.d.job), rank:jobRank(rec.lv)}),'gold');
   if(rec.lv < JOB_MAX)
-    say(`戴著它每升 ${JOB_PER_LV} 級，職業等級 +1。目前進度 ${rec.prog}/${JOB_PER_LV}。`,'gold');
+    say(M('m.hatprog','戴著它每升 {p} 級，職業等級 +1。目前進度 {a}/{p}。',
+      {p:JOB_PER_LV, a:rec.prog}),'gold');
   SFX.play('ident');
   syncJobSkills();
 }
@@ -3731,7 +3858,8 @@ function jobLevelUp(){
   if(rec.lv >= JOB_MAX) return;
   rec.prog++;
   if(rec.prog < JOB_PER_LV){
-    say(`${JOB_NM[p.job]}　再升 ${JOB_PER_LV - rec.prog} 級就能提升職業等級。`);
+    say(M('m.jobneed','{nm}　再升 {n} 級就能提升職業等級。',
+      {nm:locJob(p.job), n:JOB_PER_LV - rec.prog}));
     saveVillage(); return;
   }
   rec.prog = 0; rec.lv++;
@@ -4354,6 +4482,7 @@ function descend(){
   buildFloor();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
   say(M('m.floor','來到了 {nm} 第 {n} 層（深度 {d}）。',{nm:locAct(act),n:G.floor,d:G.depth}),'gold');
+  if(G.bossLine){ say(TX('bl.' + G.bossLine.id, G.bossLine.line), 'bad'); G.bossLine = null; }
   showCard();
   G.turn++;
   refresh();
@@ -5188,7 +5317,10 @@ function updateTags(){
         n++;
         el.className = 'tag ' + t.cls;
         if(el.textContent !== t.txt) el.textContent = t.txt;
-        el.style.left = t.x + 'px';
+        // 夾在畫布內。名牌用 translate(-50%) 置中，所以左右各要留半個寬度；
+        // 不夾的話靠邊的怪會顯示成「eton Soldier」這種讀到一半的名字。
+        const halfW = t.w / 2 + 2;
+        el.style.left = Math.max(halfW, Math.min(cv.width - halfW, t.x)) + 'px';
         el.style.top  = t.y + 'px';
         el.style.display = '';
       }
@@ -5285,7 +5417,24 @@ function fitPad(w, zone){
 }
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
-  const nw = portrait ? 11 : 14, nh = portrait ? 12 : 10;
+  const nw = portrait ? 11 : 14;
+  /* 直式的列數不寫死。畫布是「寬度撐滿、高度看比例」，
+     所以螢幕越高、剩下的黑邊越多 —— 780 高的手機原本要浪費 110px。
+     這裡反過來問：扣掉招牌、手把區、訊息列之後，
+     一格 (寬/11) 的高度還放得下幾列？ */
+  let nh = portrait ? 12 : 10;
+  if(portrait){
+    const wrap = $('screenwrap');
+    const pad = wrap && wrap.getBoundingClientRect ? wrap.getBoundingClientRect() : null;
+    if(pad){
+      const padH = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
+      const top = pad.top + (document.scrollingElement ? document.scrollingElement.scrollTop : 0);
+      const tick = $('ticker').offsetHeight || 0;
+      const avail = innerHeight - top - padH - tick;
+      const cell = Math.min(innerWidth, pad.width || innerWidth) / nw;
+      if(cell > 0) nh = Math.max(12, Math.min(16, Math.floor(avail / cell)));
+    }
+  }
   if(nw === VW && nh === VH){ fitCanvas(); return; }
   VW = nw; VH = nh;
   cv.width = VW*T; cv.height = VH*T;
@@ -5344,7 +5493,7 @@ let portLook = null;                 // 形象圖上一次畫的是哪一套裝�
 function refresh(){
   if(!G) return;
   const p=G.p;
-  $('fnum').textContent = G.depth;
+  $('fnum').textContent = G.floor;
   $('lv').textContent = p.lv;
   $('hp').textContent = `${Math.max(0,p.hp)}/${p.mhp}`;
   $('hpbar').firstElementChild.style.width = Math.max(0,100*p.hp/p.mhp)+'%';
@@ -5362,7 +5511,10 @@ function refresh(){
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
   $('job').textContent = locJob(p.job);
-  $('zone').textContent = locAct(actAt(G.act)) + `　${G.floor}/${actAt(G.act).floors}`;
+  /* 手機上只留章名與章內進度。「深度 93」是給想比較難度的人看的，
+     不是每一步都要讀的東西 —— 而它會把招牌擠成兩行。 */
+  $('zone').textContent = locAct(actAt(G.act)) + `　${G.floor}/${actAt(G.act).floors}` +
+    (innerWidth > 620 ? `　${TX('ui.depth','深度')} ${G.depth}` : '');
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
@@ -6060,6 +6212,13 @@ function applyLangText(){
     if(hud[i]) b2.textContent = TX(hud[i][0], hud[i][1]);
   });
   // 裝備一覽的欄位名
+  // 畫面上的提示條與 A/B/S 的小標籤。這三個是疊在遊戲畫面上的，
+  // 沒翻的話英文玩家會看到一排中文浮在自己的角色旁邊。
+  const hint = $('hint');
+  if(hint) hint.innerHTML = TX('ui.hint',
+    '十字鍵走　·　中央<b>長按休息</b>　·　<b>A</b> 確定　<b>B</b> 取消　<b>S</b> 技能');
+  const lbl = [['btnA','ui.lbl.a','確定'],['btnB','ui.lbl.b','背包·地圖'],['btnS','ui.lbl.s','技能']];
+  for(const [id,key,zh] of lbl){ const el = $(id); if(el && el.dataset) el.dataset.lbl = TX(key, zh); }
   const kb = $('langbtn');
   if(kb) kb.textContent = TX('ui.lang','語言') + '：' + (LANGS.find(l=>l[0]===LANG)||['','中文'])[1];
   const dts = document.querySelectorAll('#eq dt');
