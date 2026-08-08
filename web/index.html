@@ -1105,6 +1105,35 @@ const MONS = [
  {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
  {id:'turret', nm:'水晶砲台', ai:'R', hp:45,atk:40,def:15,exp:300,spd:.5,  sight:10,ev:0, fl:[18,28],w:22, rng:8, still:1},
  {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
+
+ /* ── 地域怪物 ──────────────────────────────────────────────
+    `zn` = 只在這些地貌出現。有了它，森林裡不會再爬出水晶砲台。
+    數值跟同深度的通用怪對齊，所以加進來不會動到既有的難度曲線 ——
+    改變的是「這一章看起來像哪裡」，不是「這一章有多難」。
+
+    後段幾隻刻意不是動物，是**概念**：命題、悖論、公理。
+    這個故事講的是從學習走到理解，那麼最後擋在路上的
+    就不該是更大隻的野獸，而是更難的問題。 */
+ {id:'wasp',   nm:'針尾蜂',   ai:'C', hp:12,atk:8, def:2, exp:14, spd:2,   sight:6, ev:12,fl:[2,9],  w:70, zn:['forest','beast'], bd:'bug', col:'u'},
+ {id:'dryad',  nm:'樹靈',     ai:'W', hp:22,atk:9, def:6, exp:26, spd:1,   sight:3, ev:0, fl:[3,12], w:60, zn:['forest','beast'], bd:'spirit', col:'m', imm:['亂']},
+ {id:'mossy',  nm:'苔背熊',   ai:'C', hp:34,atk:14,def:8, exp:48, spd:1,   sight:5, ev:0, fl:[5,15], w:55, zn:['forest','beast'], bd:'quad', col:'k'},
+ {id:'hawk',   nm:'岩鷹',     ai:'C', hp:20,atk:13,def:4, exp:34, spd:2,   sight:9, ev:16,fl:[4,14], w:65, zn:['mountain'], bd:'bird', col:'b'},
+ {id:'ibex',   nm:'角山羊',   ai:'C', hp:30,atk:15,def:9, exp:44, spd:1,   sight:6, ev:4, fl:[5,16], w:60, zn:['mountain'], bd:'quad', col:'c'},
+ {id:'scree',  nm:'落石魔',   ai:'W', hp:44,atk:18,def:14,exp:70, spd:.5,  sight:3, ev:0, fl:[8,20], w:45, zn:['mountain'], bd:'construct', col:'5', imm:['睡','亂','麻']},
+ {id:'eel',    nm:'淺灘鰻',   ai:'C', hp:26,atk:16,def:6, exp:46, spd:1,   sight:6, ev:10,fl:[6,17], w:60, zn:['lake'], bd:'serpent', col:'q'},
+ {id:'crab',   nm:'鎧甲蟹',   ai:'W', hp:38,atk:13,def:16,exp:58, spd:.5,  sight:3, ev:0, fl:[7,19], w:50, zn:['lake'], bd:'bug', col:'r'},
+ {id:'salam',  nm:'火蜥',     ai:'C', hp:32,atk:20,def:8, exp:64, spd:1,   sight:6, ev:6, fl:[8,20], w:55, zn:['briar'], bd:'quad', col:'h', onhit:{st:'燒',dur:4,ch:.3}},
+ {id:'ash',    nm:'灰燼靈',   ai:'W', hp:26,atk:17,def:5, exp:56, spd:1,   sight:4, ev:14,fl:[8,20], w:50, zn:['briar'], bd:'spirit', col:'i'},
+ {id:'tengu',  nm:'鴉天狗',   ai:'C', hp:40,atk:26,def:12,exp:120,spd:2,   sight:8, ev:20,fl:[12,24],w:55, zn:['wood'], bd:'bird', col:'3'},
+ {id:'tanuki', nm:'化狸',     ai:'W', hp:36,atk:22,def:10,exp:110,spd:1,   sight:5, ev:8, fl:[11,23],w:50, zn:['wood'], bd:'quad', col:'a', steal:1},
+ {id:'prism',  nm:'稜光體',   ai:'R', hp:34,atk:26,def:12,exp:150,spd:1,   sight:11,ev:6, fl:[14,26],w:50, zn:['mirror','crystal'], bd:'construct', col:'r', rng:6},
+ {id:'refr',   nm:'折射獸',   ai:'C', hp:42,atk:28,def:14,exp:170,spd:1,   sight:8, ev:18,fl:[15,27],w:45, zn:['mirror','crystal'], bd:'spirit', col:'6'},
+ {id:'seraph', nm:'熾天使',   ai:'C', hp:56,atk:32,def:16,exp:320,spd:1,   sight:9, ev:8, fl:[19,30],w:45, zn:['spire'], bd:'bird', col:'v', glow:'+'},
+ {id:'warden', nm:'守序構裝', ai:'C', hp:70,atk:30,def:20,exp:340,spd:1,   sight:7, ev:0, fl:[20,30],w:40, zn:['spire'], bd:'construct', col:'d', imm:['睡','亂','麻'], glow:'q'},
+ /* 虛空的三隻不是生物，是問題。這是整個故事的收束： */
+ {id:'axiom',  nm:'公理',     ai:'W', hp:70,atk:36,def:26,exp:400,spd:.5,  sight:4, ev:0, fl:[22,30],w:40, zn:['void'], bd:'construct', col:'6', imm:['睡','亂','麻'], glow:'+'},
+ {id:'parad',  nm:'悖論',     ai:'C', hp:56,atk:44,def:16,exp:420,spd:1,   sight:99,ev:22,fl:[23,30],w:38, zn:['void'], bd:'spirit', col:'p', glow:'v'},
+ {id:'unnamed',nm:'未名者',   ai:'C', hp:96,atk:46,def:22,exp:520,spd:1,   sight:9, ev:0, fl:[24,30],w:34, zn:['void'], bd:'giant', col:'4', glow:'g'},
 ];
 
 /* ═══ 頭目 ═══════════════════════════════════════════════════
@@ -1158,6 +1187,19 @@ const BOSS = [
   line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
 ];
 const bossById = id => BOSS.find(b => b.id === id);
+
+/* 這一層抽得到哪些怪。
+   有 `zn` 的只在指定地貌出現；沒有 `zn` 的到處都有，但在**有專屬名單的
+   地貌裡權重砍半** —— 這樣森林裡還是會有哥布林（世界要有連續性），
+   但主要看到的是蜂、樹靈與苔背熊。
+   全域怪完全排除的話，每一章會變成各自獨立的圖鑑，反而不像同一個世界。 */
+function monWeight(m, md, theme){
+  if(md < m.fl[0] || md > m.fl[1]) return 0;
+  if(m.zn) return m.zn.includes(theme) ? m.w * 1.6 : 0;
+  return THEME_HAS_ROSTER[theme] ? m.w * 0.5 : m.w;
+}
+const THEME_HAS_ROSTER = {};
+for(const m of MONS) if(m.zn) for(const z of m.zn) THEME_HAS_ROSTER[z] = 1;
 
 /* ── 頭目的數值是算出來的，不是手打的 ────────────────────────
    第一版是十五組手打的數字，結果第二章的森之主血量剛好是玩家
@@ -1882,6 +1924,25 @@ lg.stairs|stairs|かいだん
 lg.mon|monster|モンスター
 lg.item|item|アイテム
 p.pocketat|Unlocked at level {n}|レベル {n} で かいほう
+mon.wasp|Needletail Wasp|はりおバチ
+mon.dryad|Dryad|きのせい
+mon.mossy|Mossback Bear|こけせなグマ
+mon.hawk|Crag Hawk|いわタカ
+mon.ibex|Horned Ibex|つのヤギ
+mon.scree|Screefiend|らくせきま
+mon.eel|Shoal Eel|あさせウナギ
+mon.crab|Armoured Crab|よろいガニ
+mon.salam|Salamander|ひトカゲ
+mon.ash|Ash Wisp|はいのれい
+mon.tengu|Crow Tengu|からすてんぐ
+mon.tanuki|Trickster Tanuki|ばけダヌキ
+mon.prism|Prismling|りょうこうたい
+mon.refr|Refractor|くっせつじゅう
+mon.seraph|Seraph|してんし
+mon.warden|Order Construct|ちつじょこうそう
+mon.axiom|Axiom|こうり
+mon.parad|Paradox|はいり
+mon.unnamed|The Unnamed|なもなきもの
 st.速|Haste|かそく
 st.力|Power|ちから
 st.守|Guard|ガード
@@ -3173,7 +3234,7 @@ function buildFloor(){
   if(isBossFloor) n = Math.max(2, Math.floor(n/2));
   while(n>0){
     const p = free(3); if(!p) break;
-    const md = rng.weight(MONS, m => (mdSpawn>=m.fl[0] && mdSpawn<=m.fl[1]) ? m.w : 0);
+    const md = rng.weight(MONS, m => monWeight(m, mdSpawn, themeNow()));
     if(!md) break;
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
@@ -3323,6 +3384,8 @@ const key=(x,y)=>y*MW+x;
 const tileAt=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? WALL : G.f.t[key(x,y)];
 const walkable=(x,y)=> tileAt(x,y)!==WALL;
 const roomOf=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? -1 : G.f.roomAt[key(x,y)];
+// 這一章的地貌。放在遊戲層 —— 美術層不能引用 G，那是切點的分界。
+const themeNow = () => ACT_THEME[actAt(G.act).id] || 'stone';
 const monAt=(x,y)=> G.mons.find(m=>m.hp>0 && m.x===x && m.y===y);
 const isDoor=(x,y)=>{ const k=x+','+y; for(const i in G.f.rooms) if(G.f.rooms[i].doors.includes(k)) return true; return false; };
 
@@ -3646,7 +3709,7 @@ function endTurn(){
     for(let y=0;y<MH;y++) for(let x=0;x<MW;x++)
       if(walkable(x,y) && G.seen[key(x,y)]!==2 && !monAt(x,y)) spots.push({x,y});
     if(spots.length){
-      const md = G.rng.weight(MONS, m => (G.md>=m.fl[0] && G.md<=m.fl[1]) ? m.w : 0);
+      const md = G.rng.weight(MONS, m => monWeight(m, G.md, themeNow()));
       if(md){ const s=G.rng.pick(spots); spawnMon(md,s.x,s.y); }
     }
   }
@@ -4188,7 +4251,7 @@ function readScroll(id){
       for(const d of DIRS){ if(n>=3) break;
         const x=p.x+d[0], y=p.y+d[1];
         if(walkable(x,y) && !monAt(x,y)){
-          const md = G.rng.weight(MONS, m=>(G.md>=m.fl[0]&&G.md<=m.fl[1])?m.w:0);
+          const md = G.rng.weight(MONS, m => monWeight(m, G.md, themeNow()));
           if(md){ spawnMon(md,x,y); n++; } } }
       say('敵人從卷軸中湧了出來！','bad'); return true;
     }
@@ -5137,6 +5200,91 @@ function makeProp(i){
   return c;
 }
 const PROPS = [makeProp(0),makeProp(1),makeProp(2),makeProp(3),makeProp(4)];
+
+/* ═══ 生物剪影生成器 ═══════════════════════════════════════════
+   十四隻新怪物如果手打 16x16 的像素字串，是十四份難維護的資料，
+   而且畫出來多半會變成「換了顏色的同一隻」。改成生成器：
+   先決定**體態**（鳥／四足／蛇／蟲／靈體／巨獸／構裝），
+   再套顏色。體態不同，關掉名字也認得出來 —— 那才是剪影的意義。
+
+   跟主角共用同一套規則：腳在下面、左上受光、自動描邊。 */
+const BEAST = {
+  bird: [                                   // 展翅：翼展比身體寬，頭高、腳細
+    [2,7,2],[3,6,4],
+    [4,1,14],[5,2,12],
+    [6,5,6],[7,5,6],[8,6,4],
+    [9,6,4],[10,7,2],
+    [11,6,1],[11,9,1],[12,5,1],[12,10,1],
+  ],
+  quad: [                                   // 四足：身體橫躺、頭在前下方
+    [4,10,4],[5,9,6],
+    [6,2,13],[7,1,14],[8,1,14],[9,2,12],
+    [10,2,2],[10,6,2],[10,10,2],[10,13,2],
+    [11,2,2],[11,6,2],[11,10,2],[11,13,2],
+    [12,2,1],[12,7,1],[12,11,1],[12,14,1],
+  ],
+  serpent: [                                // 盤蛇：細長的身體纏成兩圈，頭從左上抬起
+    [1,2,4],[2,1,3],[3,1,3],
+    [4,2,4],[5,4,4],[6,6,4],
+    [7,7,7],[8,4,11],
+    [9,3,4],[9,10,4],
+    [10,2,3],[10,12,3],
+    [11,3,10],[12,5,7],[13,7,3],
+  ],
+  bug: [                                    // 節肢：分節的殼 + 多對腳
+    [3,6,4],[4,5,6],
+    [5,4,8],[6,3,10],[7,3,10],[8,4,8],[9,5,6],
+    [6,1,2],[6,13,2],[8,0,2],[8,14,2],
+    [10,3,1],[10,6,1],[10,9,1],[10,12,1],
+    [11,2,1],[11,6,1],[11,9,1],[11,13,1],
+  ],
+  spirit: [                                 // 靈體：上寬下尖，沒有腳
+    [2,6,4],[3,4,8],
+    [4,3,10],[5,2,12],[6,2,12],[7,3,10],
+    [8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2],[13,7,1],
+  ],
+  giant: [                                  // 巨獸：方肩、粗肢、小頭
+    [1,6,4],[2,5,6],
+    [3,2,12],[4,1,14],[5,1,14],[6,1,14],[7,2,12],
+    [8,0,3],[8,13,3],[9,0,3],[9,13,3],
+    [8,4,8],[9,4,8],[10,4,8],
+    [11,3,3],[11,10,3],[12,3,3],[12,10,3],[13,3,2],[13,11,2],
+  ],
+  construct:[                               // 構裝：幾何塊體，浮空
+    [2,6,4],[3,6,4],
+    [4,3,10],[5,3,10],
+    [6,1,3],[6,6,4],[6,12,3],
+    [7,1,3],[7,5,6],[7,12,3],
+    [8,4,8],[9,4,8],
+    [10,5,6],[11,6,4],[12,7,2],
+  ],
+};
+/* eye: 眼睛位置與數量。剪影認得出「是什麼族」，眼睛認得出「在看你」。 */
+const BEAST_EYE = {
+  bird:[[6,5],[6,9]], quad:[[10,4],[10,6]], serpent:[[2,2],[2,4]],
+  bug:[[5,5],[5,9]], spirit:[[5,4],[5,10]], giant:[[2,6],[2,9]],
+  construct:[[3,7]],
+};
+function makeBeast(kind, col, dark, glow){
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const m = shapeMask(BEAST[kind] || BEAST.quad);
+  paintMask(x, m, PAL[col], PAL[dark || '0'], null, 99);
+  for(const [ey,ex] of (BEAST_EYE[kind] || [])){
+    // 眼睛先鋪一格亮的再壓瞳孔。純暗色的眼睛在深色身體上等於沒有畫 ——
+    // 剪影告訴你「這是什麼族」，眼睛告訴你「牠正在看你」。
+    px(x, PAL[glow || '6'], ex, ey, 2, 2);
+    px(x, PAL[dark || '0'], ex + 1, ey + 1, 1, 1);
+  }
+  // 左上受光：所有生物共用同一個光源，這是整套美術唯一的一致性來源
+  const top = maskTop(m);
+  px(x, PAL['6'], 4, top + 1, 1, 1);
+  return c;
+}
+
+// 地域怪物沒有手繪資料，用剪影生成器現做。
+// 必須放在 BEAST 定義之後 —— 函式會被提升，const 不會。
+for(const m of MONS) if(m.bd) atlas[m.id] = makeBeast(m.bd, m.col, '0', m.glow);
 
 /* ═══ 章節專屬的牆與地面物件 ═════════════════════════════════
    只換顏色是不夠的。玩家看得出來的是**剪影**：一塊 2x2 的磚頭
