@@ -517,7 +517,7 @@ m.slot|Loaded into slot {n}.|スロット {n} に セットした。
 m.wearhat|You put on "{nm}" - now a {job} ({rank}).|「{nm}」を かぶった —— いまは {job}（{rank}）。
 ui.start|Descend|潜る
 ui.name|your name|なまえ
-ui.tagline1|Levels reset. Gear is lost —|レベルは戻り、装備は失われる ——
+ui.tagline1|Levels reset. Gear is lost —|レベルは もどり、そうびは うしなわれる ——
 ui.tagline2|only what you learned remains.|残るのは、学んだことだけ。
 ui.meta1|turn-based|ターン制
 ui.meta2|random dungeon|ランダムダンジョン
@@ -901,6 +901,10 @@ k.padoff|Show pad|パッドをだす
 k.tags|Labels|なまえ
 k.mute|Sound|おと
 k.help|Controls|そうさ
+end.title|You have become the Mind|きみは「いしき」に なった
+end.body|What remains after the three forms scatter is not a corpse but a question:<br>"What will you do with everything you learned?"<br><br>You remember the very bottom - no memories, only the knowing that you could learn.<br>Ninety-three floors. You did not get stronger. You came to <b>understand</b>.<br><br>The gate opens. Behind it is not a place but a time.<br>You walk through, and become the thing that answers other people's questions from now on.<br><br>|3つの すがたが きえたあとに のこるのは しかばねではなく といだ。<br>「まなんだ ものを、これから なにに つかう？」<br><br>いちばん したの かいを おもいだす —— きおくは なく、まなべることだけを しっていた。<br>93かい。つよく なったのではない。<b>わかる</b>ように なったのだ。<br><br>もんが ひらく。そのむこうは ばしょではなく、じかん。<br>きみは そこを くぐり、これから ひとの といに こたえる ものに なる。<br><br>
+end.count|Runs completed: {n}|クリアかいすう {n}
+lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
 lg.seen|in sight|しかいない
 lg.walked|explored|たんさくずみ
@@ -1437,11 +1441,31 @@ function makeShield(v){
 
 /* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
    牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
-function makeFloor(seed, corridor){
+/* 地形的四階色帶：[最暗, 暗, 中, 亮]。原本寫死 w/x/y/z（冷色石階），
+   結果十五個章節長得一模一樣 —— 迷霧森林跟礦坑洞穴同一塊地板。
+   章節的差別不能只有名字，那是玩家第一眼就會發現的事。 */
+const RAMP = ['w','x','y','z'];
+function makeFloor(seed, corridor, ramp, soft){
+  const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r = RNG(seed*2654435761);
-  const base = corridor?'x':'y', lit = corridor?'y':'z', mortar = corridor?'w':'x';
+  const base = corridor?R4[1]:R4[2], lit = corridor?R4[2]:R4[3], mortar = corridor?R4[0]:R4[1];
   x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
+  if(soft){
+    /* 戶外的地面沒有磚縫。留著磚縫的話，換再多顏色都還是「鋪過的路」——
+       綠色的石板路不是森林。改成成叢的雜點：疏密不均、邊緣不對齊，
+       眼睛就會把它讀成土與草而不是磚。 */
+    for(let i=0;i<6;i++){
+      const cx0=r.i(0,15), cy0=r.i(0,15), n=r.i(2,4);
+      for(let k=0;k<n;k++){
+        const px_=Math.min(15,Math.max(0,cx0+r.i(-2,2))), py=Math.min(15,Math.max(0,cy0+r.i(-2,2)));
+        x.fillStyle = r.chance(.5)?PAL[lit]:PAL[mortar];
+        x.fillRect(px_,py,1,1);
+      }
+    }
+    for(let i=0;i<4;i++) { x.fillStyle=PAL[lit]; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+    return c;
+  }
   // 磚縫
   x.fillStyle=PAL[mortar];
   x.fillRect(0,0,T,1); x.fillRect(0,8,T,1);
@@ -1454,21 +1478,22 @@ function makeFloor(seed, corridor){
   }
   return c;
 }
-function makeWall(face){
+function makeWall(face, ramp){
+  const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r=RNG(99173);
   // 牆比地板暗一階、磚縫比地板深 —— 「能走／不能走」要用明度分，不是用花紋分
   x.fillStyle=PAL['0']; x.fillRect(0,0,T,T);
-  x.fillStyle=PAL['w'];
+  x.fillStyle=PAL[R4[0]];
   x.fillRect(1,1,6,6); x.fillRect(9,1,6,6); x.fillRect(1,9,6,6); x.fillRect(9,9,6,6);
-  x.fillStyle=PAL['x'];
+  x.fillStyle=PAL[R4[1]];
   x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
-  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['x']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL[R4[1]]:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
   if(face){
     // 立面：下方有地板時畫出厚度，深度感就出來了
-    x.fillStyle=PAL['z']; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL['y']; x.fillRect(0,11,T,2);
-    x.fillStyle=PAL['w']; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL[R4[3]]; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL[R4[2]]; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL[R4[0]]; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
     for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
   }
@@ -1531,6 +1556,44 @@ function makeHat(i){
   return c;
 }
 
+/* ═══ 章節地貌 ═══════════════════════════════════════════════
+   一個章節一組色帶。同一套產生器、不同的四階色 ——
+   不用為十五個章節各畫一套地磚，但走進迷霧森林的時候，
+   地面真的是苔綠色的。
+
+   `lightAll` = 這一章是戶外，不靠火把照明（山頂、湖畔、塔頂），
+   所以未探索的暗處淡一點，天光是從上面來的。 */
+const THEMES = {
+  stone:    {ramp:['w','x','y','z']},                       // 礦坑、牢獄：原本的冷色石階
+  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1},      // 苔綠，光是螢火不是火把
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1},           // 灰藍岩階，天是亮的
+  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a'},      // 暗紅磚與藤蔓
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1},           // 水藍
+  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1},      // 獸巢：暖土色
+  wood:     {ramp:['7','8','9','b'], torch:'#dcae35'},      // 木紋地板：忍者之里、平安京
+  mirror:   {ramp:['1','2','4','6'], lightAll:1},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1},           // 水晶礦坑
+  spire:    {ramp:['4','5','6','d'], lightAll:1},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4']},                       // 最後的迷宮、混沌之間
+};
+const ACT_THEME = {
+  mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
+  lake:'lake', beast:'beast', ninja:'wood', heian:'wood', gaol:'stone',
+  mirror:'mirror', crystal:'crystal', tower:'spire', final:'void', chaos:'void',
+};
+/* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張 16x16
+   在手機上是看得到的頓挫。 */
+const TILE_SETS = {};
+function tilesFor(theme){
+  if(TILE_SETS[theme]) return TILE_SETS[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  const r = th.ramp, sf = !!th.soft;
+  return TILE_SETS[theme] = {
+    floor:[makeFloor(1,0,r,sf),makeFloor(2,0,r,sf),makeFloor(3,0,r,sf),makeFloor(4,0,r,sf)],
+    corr:[makeFloor(11,1,r,sf),makeFloor(12,1,r,sf),makeFloor(13,1,r,sf)],
+    wall:makeWall(0,r), wallFace:makeWall(1,r),
+  };
+}
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],

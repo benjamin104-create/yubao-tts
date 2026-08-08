@@ -1486,7 +1486,7 @@ m.slot|Loaded into slot {n}.|スロット {n} に セットした。
 m.wearhat|You put on "{nm}" - now a {job} ({rank}).|「{nm}」を かぶった —— いまは {job}（{rank}）。
 ui.start|Descend|潜る
 ui.name|your name|なまえ
-ui.tagline1|Levels reset. Gear is lost —|レベルは戻り、装備は失われる ——
+ui.tagline1|Levels reset. Gear is lost —|レベルは もどり、そうびは うしなわれる ——
 ui.tagline2|only what you learned remains.|残るのは、学んだことだけ。
 ui.meta1|turn-based|ターン制
 ui.meta2|random dungeon|ランダムダンジョン
@@ -1870,6 +1870,10 @@ k.padoff|Show pad|パッドをだす
 k.tags|Labels|なまえ
 k.mute|Sound|おと
 k.help|Controls|そうさ
+end.title|You have become the Mind|きみは「いしき」に なった
+end.body|What remains after the three forms scatter is not a corpse but a question:<br>"What will you do with everything you learned?"<br><br>You remember the very bottom - no memories, only the knowing that you could learn.<br>Ninety-three floors. You did not get stronger. You came to <b>understand</b>.<br><br>The gate opens. Behind it is not a place but a time.<br>You walk through, and become the thing that answers other people's questions from now on.<br><br>|3つの すがたが きえたあとに のこるのは しかばねではなく といだ。<br>「まなんだ ものを、これから なにに つかう？」<br><br>いちばん したの かいを おもいだす —— きおくは なく、まなべることだけを しっていた。<br>93かい。つよく なったのではない。<b>わかる</b>ように なったのだ。<br><br>もんが ひらく。そのむこうは ばしょではなく、じかん。<br>きみは そこを くぐり、これから ひとの といに こたえる ものに なる。<br><br>
+end.count|Runs completed: {n}|クリアかいすう {n}
+lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
 lg.seen|in sight|しかいない
 lg.walked|explored|たんさくずみ
@@ -2406,11 +2410,31 @@ function makeShield(v){
 
 /* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
    牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
-function makeFloor(seed, corridor){
+/* 地形的四階色帶：[最暗, 暗, 中, 亮]。原本寫死 w/x/y/z（冷色石階），
+   結果十五個章節長得一模一樣 —— 迷霧森林跟礦坑洞穴同一塊地板。
+   章節的差別不能只有名字，那是玩家第一眼就會發現的事。 */
+const RAMP = ['w','x','y','z'];
+function makeFloor(seed, corridor, ramp, soft){
+  const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r = RNG(seed*2654435761);
-  const base = corridor?'x':'y', lit = corridor?'y':'z', mortar = corridor?'w':'x';
+  const base = corridor?R4[1]:R4[2], lit = corridor?R4[2]:R4[3], mortar = corridor?R4[0]:R4[1];
   x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
+  if(soft){
+    /* 戶外的地面沒有磚縫。留著磚縫的話，換再多顏色都還是「鋪過的路」——
+       綠色的石板路不是森林。改成成叢的雜點：疏密不均、邊緣不對齊，
+       眼睛就會把它讀成土與草而不是磚。 */
+    for(let i=0;i<6;i++){
+      const cx0=r.i(0,15), cy0=r.i(0,15), n=r.i(2,4);
+      for(let k=0;k<n;k++){
+        const px_=Math.min(15,Math.max(0,cx0+r.i(-2,2))), py=Math.min(15,Math.max(0,cy0+r.i(-2,2)));
+        x.fillStyle = r.chance(.5)?PAL[lit]:PAL[mortar];
+        x.fillRect(px_,py,1,1);
+      }
+    }
+    for(let i=0;i<4;i++) { x.fillStyle=PAL[lit]; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+    return c;
+  }
   // 磚縫
   x.fillStyle=PAL[mortar];
   x.fillRect(0,0,T,1); x.fillRect(0,8,T,1);
@@ -2423,21 +2447,22 @@ function makeFloor(seed, corridor){
   }
   return c;
 }
-function makeWall(face){
+function makeWall(face, ramp){
+  const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r=RNG(99173);
   // 牆比地板暗一階、磚縫比地板深 —— 「能走／不能走」要用明度分，不是用花紋分
   x.fillStyle=PAL['0']; x.fillRect(0,0,T,T);
-  x.fillStyle=PAL['w'];
+  x.fillStyle=PAL[R4[0]];
   x.fillRect(1,1,6,6); x.fillRect(9,1,6,6); x.fillRect(1,9,6,6); x.fillRect(9,9,6,6);
-  x.fillStyle=PAL['x'];
+  x.fillStyle=PAL[R4[1]];
   x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
-  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL['x']:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+  for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL[R4[1]]:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
   if(face){
     // 立面：下方有地板時畫出厚度，深度感就出來了
-    x.fillStyle=PAL['z']; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL['y']; x.fillRect(0,11,T,2);
-    x.fillStyle=PAL['w']; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL[R4[3]]; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL[R4[2]]; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL[R4[0]]; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
     for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
   }
@@ -2500,6 +2525,44 @@ function makeHat(i){
   return c;
 }
 
+/* ═══ 章節地貌 ═══════════════════════════════════════════════
+   一個章節一組色帶。同一套產生器、不同的四階色 ——
+   不用為十五個章節各畫一套地磚，但走進迷霧森林的時候，
+   地面真的是苔綠色的。
+
+   `lightAll` = 這一章是戶外，不靠火把照明（山頂、湖畔、塔頂），
+   所以未探索的暗處淡一點，天光是從上面來的。 */
+const THEMES = {
+  stone:    {ramp:['w','x','y','z']},                       // 礦坑、牢獄：原本的冷色石階
+  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1},      // 苔綠，光是螢火不是火把
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1},           // 灰藍岩階，天是亮的
+  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a'},      // 暗紅磚與藤蔓
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1},           // 水藍
+  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1},      // 獸巢：暖土色
+  wood:     {ramp:['7','8','9','b'], torch:'#dcae35'},      // 木紋地板：忍者之里、平安京
+  mirror:   {ramp:['1','2','4','6'], lightAll:1},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1},           // 水晶礦坑
+  spire:    {ramp:['4','5','6','d'], lightAll:1},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4']},                       // 最後的迷宮、混沌之間
+};
+const ACT_THEME = {
+  mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
+  lake:'lake', beast:'beast', ninja:'wood', heian:'wood', gaol:'stone',
+  mirror:'mirror', crystal:'crystal', tower:'spire', final:'void', chaos:'void',
+};
+/* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張 16x16
+   在手機上是看得到的頓挫。 */
+const TILE_SETS = {};
+function tilesFor(theme){
+  if(TILE_SETS[theme]) return TILE_SETS[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  const r = th.ramp, sf = !!th.soft;
+  return TILE_SETS[theme] = {
+    floor:[makeFloor(1,0,r,sf),makeFloor(2,0,r,sf),makeFloor(3,0,r,sf),makeFloor(4,0,r,sf)],
+    corr:[makeFloor(11,1,r,sf),makeFloor(12,1,r,sf),makeFloor(13,1,r,sf)],
+    wall:makeWall(0,r), wallFace:makeWall(1,r),
+  };
+}
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
@@ -2616,40 +2679,40 @@ function genFloor(rng, depth){
 const ACTS = [
   {id:'mine',   nm:'礦坑洞穴',   sub:'THE OLD MINE',        floors:5,
    boss:'b_warden', reward:'米里斯魯（神秘石）',
-   intro:'村外的廢礦。傳說深處埋著一塊會呼吸的石頭。'},
+   intro:'你在最底下醒來，什麼都不記得。只知道自己會學。'},
   {id:'forest', nm:'迷霧森林',   sub:'THE MISTWOOD',        floors:7,
    boss:'b_treant', reward:'神秘之帽（隨機職業帽）',
-   intro:'由外而內，霧越來越濃。鍛造師的小屋就在某一層。'},
+   intro:'霧裡的每一步都要自己判斷。沒有人告訴你哪條路是對的。'},
   {id:'trial',  nm:'試煉的山道', sub:'THE TRIAL PATH',      floors:7, spin:180000,
    boss:'b_ballista', reward:'純淨之泉的加護（體力上限 +20）',
-   intro:'山道每隔一段時間就會整個轉過去 —— 你記得的路會失效。'},
+   intro:'山道會變。你記得的路會失效 —— 能帶走的只有「怎麼重新找路」。'},
   {id:'ordeal', nm:'魔王的考驗', sub:'THE DEMON’S ORDEAL',  floors:1, arena:{every:10, kill:5},
    boss:null, reward:'勇者的頭盔（防禦 +4）',
-   intro:'一間空房。四面的牆會不斷送東西進來，直到你打倒五隻。'},
+   intro:'一間空房，四面送東西進來。這一關不考技巧，考你撐不撐得住。'},
   {id:'briar',  nm:'荊棘城堡',   sub:'THE BRIAR CASTLE',    floors:3,
    boss:'b_pyro', reward:'術士的尖帽',
-   intro:'火之靈盤據的廢城。火之術士每三回合放一次遠程 —— 柱子是唯一的答案。'},
+   intro:'火之術士每三回合放一次遠程。看得懂節奏，你就贏了。'},
   {id:'lake',   nm:'南湖畔',     sub:'THE SOUTHERN LAKE',   floors:3,
    boss:'b_lord', reward:'吟遊詩人的包頭巾',
-   intro:'湖面平靜得不像話。'},
+   intro:'湖面照出你現在的樣子。跟剛醒來的時候已經不一樣了。'},
   {id:'beast',  nm:'幻獸洞窟',   sub:'THE BEAST HOLLOW',    floors:8,
    boss:'b_phoenix', reward:'不死鳥的羽毛（死亡時自動復活一次）',
-   intro:'幻獸的巢。牠們不是敵人 —— 除非你走到最裡面。'},
+   intro:'幻獸不攻擊你 —— 牠們在等你證明自己配得上牠們的力量。'},
   {id:'ninja',  nm:'幻忍之里',   sub:'THE HIDDEN VILLAGE',  floors:5,
    boss:'b_hanzo', reward:'忍者的頭帶＋見切之術',
-   intro:'異世界的古代京都。這裡的人不喜歡被看見。'},
+   intro:'這裡的人不喜歡被看見。你要學的是「什麼時候不要出手」。'},
   {id:'heian',  nm:'平安京三橋', sub:'THE THREE BRIDGES',   floors:3,
    boss:'b_oni', reward:'鬼面兜',
-   intro:'三座橋，三個小王。過了橋，鬼武者在對面等。'},
+   intro:'三座橋，三個小王。過了橋，你會拿到一個人的名字。'},
   {id:'gaol',   nm:'深淵牢獄',   sub:'THE ABYSS GAOL',      floors:15, rest:5,
    boss:'b_gaoler', reward:'牢獄長的鑰匙',
-   intro:'十六層往下。這裡關的東西，本來就不該放出來。'},
+   intro:'十六層往下。這裡關的每一個，都曾經跟你一樣往上爬過。'},
   {id:'mirror', nm:'鏡像世界',   sub:'THE MIRRORED WORLD',  floors:5, mirror:1,
    boss:'b_queen', reward:'黑暗之心',
-   intro:'左右相反。你以為往右，其實是往左。'},
+   intro:'左右相反。你以為往右，其實是往左 —— 連自己都不能全信。'},
   {id:'crystal',nm:'水晶礦坑',   sub:'THE CRYSTAL SEAM',    floors:5,
    boss:'b_prism', reward:'時空的鑰匙',
-   intro:'光在這裡會走直線 —— 而且會反射。'},
+   intro:'光在這裡會走直線，也會反射。你第一次看見「規則」本身。'},
   /* 規格寫「三十層、每十層一個休息層」。走通測試打了幾百趟：
      三十層的版本每一次都走到第 30 層才倒下 —— 不是打不贏頭目，
      是二十九層的消耗讓人到不了終點。
@@ -2657,13 +2720,13 @@ const ACTS = [
      井型迴圈的感覺留著，但它現在真的走得完。 */
   {id:'tower',  nm:'通天塔',     sub:'THE SPIRE',           floors:20, rest:5,
    boss:'b_mermaid', reward:'諸神之劍（攻擊 +18）',
-   intro:'二十層的井型迴圈。每五層有一個休息層。'},
+   intro:'往上二十層。塔頂有一道門，門後面不是地方，是時間。'},
   {id:'final',  nm:'最後的迷宮', sub:'THE LAST LABYRINTH',  floors:5,
    boss:'b_gate', reward:'通往混沌之間的門',
-   intro:'沒有地圖，沒有商店。只有路。'},
+   intro:'沒有地圖，沒有商店。你已經不需要它們了。'},
   {id:'chaos',  nm:'混沌之間',   sub:'THE CHAOS CHAMBER',   floors:1,
    boss:'b_mind1', reward:null,        // 從第一型態開始，bossDown() 會接到二、三型態
-   intro:'這裡沒有牆，也沒有天花板。只有「意識」。'},
+   intro:'這裡沒有牆，也沒有天花板。只有「意識」—— 以及即將成為它的你。'},
 ];
 const actAt = i => ACTS[Math.max(0, Math.min(ACTS.length-1, i|0))];
 /* 章節第 f 層對應到的「絕對深度」—— 既有的難度系統全部吃這個值 */
@@ -4697,13 +4760,15 @@ function ending(){
   G.shake = 20;
   VILLAGE.cleared = (VILLAGE.cleared|0) + 1;
   saveVillage();
-  $('otitle').textContent = '世界恢復了平靜';
-  $('otext').innerHTML =
-    `「意識」的三種型態全部散去。<br>` +
-    `你的身體開始發光 —— 不是消失，是被融進去。<br><br>` +
-    `深淵閉上了。地面上的人不會知道發生過什麼，<br>` +
-    `但他們明天早上醒來的時候，天是亮的。<br><br>` +
-    `<b>通關次數 ${VILLAGE.cleared}</b>`;
+  $('otitle').textContent = TX('end.title','你成為了「意識」');
+  $('otext').innerHTML = TX('end.body',
+    `三種型態散去之後，剩下的不是屍體，是一個問題：<br>` +
+    `「你學到的那些，現在要拿來做什麼？」<br><br>` +
+    `你想起最底下那一層 —— 什麼都不記得，只知道自己會學。<br>` +
+    `九十三層，你沒有變強，你是變得**懂了**。<br><br>` +
+    `門開了。門後面不是地方，是時間。<br>` +
+    `你走進去，成為那個從此會回答別人問題的東西。<br><br>`) +
+    `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>`;
   $('over').classList.add('show');
   refresh();
 }
@@ -4978,7 +5043,7 @@ function whiteOf(img, name){
 
 /* 火把：三張輪播的火焰。火焰不對稱才會像在燒，
    完全對稱的火焰看起來像一片葉子。 */
-function makeTorch(f){
+function makeTorch(f, col){
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
   px(x, PAL['0'], 6, 9, 4, 5);  px(x, PAL['9'], 7, 10, 2, 4);      // 壁座
@@ -4988,12 +5053,22 @@ function makeTorch(f){
     [[2,8,2],[3,7,3],[4,6,4],[5,6,5],[6,6,4],[7,7,3],[8,7,2]],
     [[3,6,3],[4,6,4],[5,5,5],[6,6,4],[7,6,3],[8,7,2]],
   ][f];
-  for(const [y,x0,w] of S){ px(x, PAL['g'], x0, y, w, 1); }         // 外焰
+  for(const [y,x0,w] of S){ px(x, col || PAL['g'], x0, y, w, 1); }  // 外焰（章節可換色）
   for(const [y,x0,w] of S){ if(w>2) px(x, PAL['i'], x0+1, y, w-2, 1); }
   px(x, PAL['v'], 7, 6, 2, 3);                                      // 焰心
   return c;
 }
 const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
+/* 每個章節一組光源。森林裡不會有壁掛火把，那裡的光是螢火；
+   木造的忍者之里是燈籠。同一組火焰換個顏色就能讀成不同的東西。 */
+const TORCH_SETS = {};
+function torchesFor(theme){
+  const col = (THEMES[theme] || {}).torch;
+  if(!col) return TORCH;
+  if(!TORCH_SETS[theme])
+    TORCH_SETS[theme] = [makeTorch(0,col), makeTorch(1,col), makeTorch(2,col)];
+  return TORCH_SETS[theme];
+}
 
 /* 幻獸：四隻共用一套「懸浮元素體」的骨架，只換顏色與外圈形狀。
    共用骨架是刻意的 —— 玩家要一眼認出「這是我召的東西」，
@@ -5121,22 +5196,29 @@ function draw(dt){
 
   const x0=Math.max(0,Math.floor(camX)-1), x1=Math.min(MW-1,Math.ceil(camX+VW)+1);
   const y0=Math.max(0,Math.floor(camY)-1), y1=Math.min(MH-1,Math.ceil(camY+VH)+1);
+  const THEME_ID = ACT_THEME[actAt(G.act).id] || 'stone';
+  const TS = tilesFor(THEME_ID);                                // 這一章的地貌
+  const OUTDOOR = !!(THEMES[THEME_ID] || {}).lightAll;
 
   for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
     const s = G.seen[key(x,y)]; if(!s) continue;
     const px_=ox+x*T, py=oy+y*T, t=tileAt(x,y);
     if(t===WALL){
-      cx.drawImage(walkable(x,y+1) ? TILE_ART.wallFace : TILE_ART.wall, px_, py);
+      cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
     } else if(t===DOWN){
       cx.drawImage(TILE_ART.stairs, px_, py);
     } else {
-      const arr = t===CORR ? TILE_ART.corr : TILE_ART.floor;
+      const arr = t===CORR ? TS.corr : TS.floor;
       cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
       if(h % 9 === 0) cx.drawImage(PROPS[(h>>4) % PROPS.length], px_, py);
     }
-    if(s===1){ cx.fillStyle='rgba(0,0,0,.62)'; cx.fillRect(px_,py,T,T); }   // 記憶：只記地形
+    // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
+    // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
+    // 在戶外把視野外畫成純黑，那還是地牢。
+    if(s===1){ cx.fillStyle = OUTDOOR ? 'rgba(0,0,0,.34)' : 'rgba(0,0,0,.62)';
+               cx.fillRect(px_,py,T,T); }
   }
 
   // 店鋪地板鋪一層暖色地毯：踏進去就知道規則不一樣了
@@ -5151,10 +5233,11 @@ function draw(dt){
 
   // 牆上的火把（只在看得見的時候燒）
   const litTorches = [];
+  const TSET = torchesFor(ACT_THEME[actAt(G.act).id] || 'stone');
   for(const tc of G.torches){
     const s = G.seen[key(tc.x,tc.y)]; if(s !== 2) continue;
     const f = ((clock*9 + tc.x*2 + tc.y*3) | 0) % 3;      // 每支火把的相位不同才不會同步跳動
-    cx.drawImage(TORCH[f], ox+tc.x*T, oy+tc.y*T);
+    cx.drawImage(TSET[f], ox+tc.x*T, oy+tc.y*T);
     litTorches.push(tc);
   }
 
@@ -5425,7 +5508,7 @@ function updateTags(){
       }
       for(const k in G.traps){
         if(G.seen[k]!==2) continue;
-        push(k%MW, (k/MW)|0, '陷阱', 'mon');
+        push(k%MW, (k/MW)|0, TX('lg.trap','陷阱'), 'mon');
       }
       for(const a of G.allies) push(a.x, a.y, `${a.d.nm}·${a.ttl}`, 'stair', 'a'+a.id);
       if(G.shop && G.seen[key(G.shop.keeper.x,G.shop.keeper.y)]===2)
