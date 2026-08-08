@@ -130,7 +130,7 @@ const MONS = [
  {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:{st:'亂',dur:8,ch:.25}},
  {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
- {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂']},
+ {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂'], undead:1},
  {id:'wolf',   nm:'疾風狼',   ai:'C', hp:26,atk:16,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:1},
  {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:15,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
  {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
@@ -197,24 +197,51 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
-/* ─── 職業與技能（FF5 式：戴帽子換職業，打怪累積 JP 學技能） ──
+/* ─── 職業與技能 ─────────────────────────────────────────────
    帽子＝職業。這件事在畫面上是看得見的 —— 玩家不用開選單就知道
    自己現在是什麼、別人是什麼。
 
-   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。
-   「學得多、帶得少」正是 FF5 讓人反覆思考的地方。 */
+   職業等級只有 3 級，而且**必須戴著那頂帽子才會升**：
+   戴著它每升 2 個角色等級 → 職業等級 +1。1 級與 2 級各學一個技能，
+   3 級是 Master，給一個永久被動 —— 那是「把一個職業練到底」的回報。
+
+   練滿一個職業要戴著同一頂帽子升 6 級。這很慢，是刻意的：
+   一座迷宮只掉一頂帽子，所以「這一趟要練哪一個職業」是真的要選。
+   為了讓那個投資值得，職業進度存在村莊裡，死亡不會歸零。
+
+   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。 */
 const HAT = [
   {id:'helm',  nm:'鐵之盔',   job:'war', price:900,  jobnm:'戰士'},
-  {id:'cone',  nm:'黑之尖帽', job:'blk', price:1100, jobnm:'黑魔導'},
-  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導'},
-  {id:'cap',   nm:'皮之便帽', job:'thf', price:800,  jobnm:'盜賊'},
+  {id:'beret', nm:'吟遊軟帽', job:'brd', price:900,  jobnm:'吟遊詩人'},
+  {id:'rhat',  nm:'赤羽寬帽', job:'red', price:1200, jobnm:'赤魔導士'},
+  {id:'crown', nm:'異想角冠', job:'sum', price:1300, jobnm:'召喚士'},
+  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導士'},
   {id:'plume', nm:'羽飾獵帽', job:'hnt', price:1000, jobnm:'獵人'},
-  {id:'horn',  nm:'角之戰盔', job:'ber', price:1200, jobnm:'狂戰士'},
+  // 隱藏職業：不進一般的帽子池，只在更深的迷宮出現
+  {id:'band',  nm:'幻忍頭帶', job:'nin', price:1800, jobnm:'忍者',   hidden:1},
+  {id:'oni',   nm:'鬼面兜',   job:'oni', price:2000, jobnm:'鬼武者', hidden:1},
+  {id:'cone',  nm:'術士尖帽', job:'sor', price:1900, jobnm:'術士',   hidden:1},
 ];
+const OPEN_HAT = HAT.filter(h => !h.hidden);
 const JOB_NM = {none:'見習者'};
 for(const h of HAT) JOB_NM[h.job] = h.jobnm;
+const JOB_MAX = 3;                  // 3 級＝Master
+const JOB_PER_LV = 2;               // 戴著帽子每升 2 個角色等級 → 職業 +1
+const jobRank = lv => lv >= JOB_MAX ? 'Master' : ('Lv' + lv);
 
-const JP_TIER = 40;                 // 第二個技能需要的 JP
+/* Master（職業 3 級）的永久被動。練滿之後不戴帽子也生效 ——
+   那是「這個職業我已經是它了」的意思。 */
+const MASTER_PASSIVE = {
+  war: '防禦力 +3',
+  brd: '每回合微量回復魔力',
+  red: '所有技能的魔力消耗 −1',
+  sum: '幻獸的持續回合 +50%',
+  wht: '自然回復速度加倍',
+  hnt: '視野 +2',
+  nin: '不會踩中陷阱',
+  oni: '擊殺敵人時回復少量體力',
+  sor: '魔力上限 +20%',
+};
 /* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
 /* ── 技能的魔力代價：規則本身就是設計說明 ──────────────────────
    t='atk' 攻擊型 / t='def' 防禦輔助型 —— 依強弱扣固定量，強的貴
@@ -222,19 +249,34 @@ const JP_TIER = 40;                 // 第二個技能需要的 JP
    t='esc' 逃跑 / t='rev' 復活 —— 最後一張牌。一次抽走大半甚至全部魔力，
                   所以它救得了你一次，救不了你第二次
    mpPct：扣掉「最大魔力的百分比」　mpAll：清空，且魔力低於一半時發不動 */
+/* 每個職業兩個技能：lv=1 的在職業 1 級學會，lv=2 的在 2 級學會。 */
 const ABIL = [
-  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
-  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
-  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       t:'atk',  mp:8, k:'blast',  desc:'命中後炸開一圈'},
-  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, t:'atk',  mp:3, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
-  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
-  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
-  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       t:'atk',  mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
-  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, t:'esc',  mpPct:.6, k:'self', desc:'10 回合內速度加倍（逃跑用，代價極高）'},
-  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
-  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
-  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       t:'atk',  mp:7, k:'around', desc:'攻擊周圍所有敵人'},
-  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, t:'pass', mp:0, k:'self',   desc:'被動：體力越低攻擊越高（最多 1.8 倍）'},
+  {job:'war', lv:1, id:'smash',  nm:'渾身一擊', t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', lv:2, id:'guard',  nm:'堅守',     t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
+
+  {job:'brd', lv:1, id:'lull',   nm:'安魂曲',   t:'atk',  mp:6, k:'room',   desc:'視野內的敵人陷入沉睡'},
+  {job:'brd', lv:2, id:'anthem', nm:'戰意之歌', t:'def',  mp:5, k:'self',   desc:'12 回合內攻擊力提升'},
+
+  {job:'red', lv:1, id:'duplex', nm:'二刀連擊', t:'atk',  mp:6, k:'melee',  desc:'對面前的敵人連續攻擊兩次'},
+  {job:'red', lv:2, id:'veil',   nm:'赤之守護', t:'def',  mp:5, k:'self',   desc:'6 回合內傷害減半，並立刻回一點魔力'},
+
+  {job:'sum', lv:1, id:'circle', nm:'召喚陣',   t:'atk',  mp:9, k:'self',   desc:'以魔力代替胃袋召喚幻獸'},
+  {job:'sum', lv:2, id:'deluge', nm:'大洪水',   t:'atk',  mp:12,k:'room',   desc:'視野內全體大傷（不死系無效）'},
+
+  {job:'wht', lv:1, id:'mend',   nm:'療傷',     t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', lv:2, id:'ward',   nm:'結界',     t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+
+  {job:'hnt', lv:1, id:'pierce', nm:'貫穿射',   t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', lv:2, id:'survey', nm:'鷹眼',     t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
+
+  {job:'nin', lv:1, id:'clone',  nm:'影分身',   t:'def',  mp:5, k:'self',   desc:'8 回合內大幅提升迴避'},
+  {job:'nin', lv:2, id:'foresee',nm:'見切之術', t:'esc',  mpPct:.6, k:'self', desc:'脫離戰場並讓追兵失去目標（逃跑用）'},
+
+  {job:'oni', lv:1, id:'onicut', nm:'鬼斬',     t:'atk',  mp:8, k:'melee',  desc:'三倍傷害，自己承受八分之一反噬'},
+  {job:'oni', lv:2, id:'asura',  nm:'修羅',     t:'pass', mp:0, k:'self',   desc:'被動：體力低於一半時攻擊 +50%'},
+
+  {job:'sor', lv:1, id:'pyro',   nm:'火之奧義', t:'atk',  mp:10,k:'beam',   desc:'直線貫穿並附加灼燒'},
+  {job:'sor', lv:2, id:'reflect',nm:'咒返',     t:'def',  mp:8, k:'self',   desc:'10 回合內遠程與魔法攻擊反彈回去'},
 ];
 /* 五系奧義：該系練到 10 級才會出現，一攻一輔。
    解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
@@ -261,7 +303,9 @@ function abilCost(a, p){
   if(a.t === 'pass') return 0;
   if(a.mpAll) return Math.ceil(p.mmp * .5);
   if(a.mpPct) return Math.ceil(p.mmp * a.mpPct);
-  return a.mp || 0;
+  // 赤魔導士 Master：每個技能便宜 1 點（最低還是要 1）
+  const off = (typeof hasMaster === 'function' && hasMaster('red')) ? 1 : 0;
+  return Math.max(1, (a.mp || 0) - off);
 }
 function payAbil(a, p){
   if(a.t === 'pass') return;
@@ -314,7 +358,8 @@ const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點�
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
-const maxMp = p => 8 + (p.lv-1)*3 + schoolTotal(p)*5;
+const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
+                              * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
 
@@ -410,15 +455,36 @@ const HAT_ART = {
               px(x,PAL['0'],2,4,12,2); px(x,PAL['p'],2,4,12,1); px(x,PAL['u'],7,3,2,1); },
   hood:  x=>{ px(x,PAL['0'],4,1,8,5); px(x,PAL['d'],5,2,6,3); px(x,PAL['6'],5,2,6,1);
               px(x,PAL['0'],3,4,10,2); px(x,PAL['d'],3,4,10,1); px(x,PAL['g'],6,4,4,1); },
-  cap:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['9'],5,3,6,2); px(x,PAL['a'],5,3,6,1);
-              px(x,PAL['0'],2,4,12,2); px(x,PAL['8'],2,4,11,1); },
+  // 吟遊詩人：軟呢貝雷帽，帽身偏一邊，右側一撮綠羽
+  beret: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['o'],5,3,6,2); px(x,PAL['p'],5,3,5,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['o'],3,4,10,1);
+              px(x,PAL['0'],11,1,3,2); px(x,PAL['l'],11,2,3,1); px(x,PAL['m'],12,1,2,1); },
+  // 赤魔導士：寬簷紅帽 + 白羽。帽簷要比別人寬，剪影才認得出來
+  rhat:  x=>{ px(x,PAL['0'],4,1,8,4); px(x,PAL['f'],5,2,6,3); px(x,PAL['g'],5,2,6,1);
+              px(x,PAL['0'],1,4,14,2); px(x,PAL['f'],1,4,14,1); px(x,PAL['e'],1,5,14,1);
+              px(x,PAL['0'],10,0,4,2); px(x,PAL['6'],10,1,4,1); px(x,PAL['d'],11,0,2,1); },
+  // 召喚士：三叉角冠。金色 + 中央一顆藍寶石
+  crown: x=>{ px(x,PAL['0'],3,1,10,4);
+              px(x,PAL['t'],4,3,8,2); px(x,PAL['u'],4,3,8,1);
+              px(x,PAL['0'],4,0,2,3); px(x,PAL['u'],4,1,1,2);
+              px(x,PAL['0'],7,0,2,3); px(x,PAL['v'],7,0,2,2);
+              px(x,PAL['0'],10,0,2,3); px(x,PAL['u'],11,1,1,2);
+              px(x,PAL['q'],7,3,2,1);
+              px(x,PAL['0'],3,5,10,1); },
+  // 忍者：一條頭帶，兩端在右後方飄。剪影最低調的一頂 —— 那正是忍者
+  band:  x=>{ px(x,PAL['0'],3,3,10,3); px(x,PAL['2'],4,4,8,1); px(x,PAL['4'],4,4,8,1);
+              px(x,PAL['1'],4,5,8,1);
+              px(x,PAL['0'],12,3,3,2); px(x,PAL['4'],12,4,2,1);
+              px(x,PAL['0'],12,6,3,2); px(x,PAL['4'],12,6,2,1);
+              px(x,PAL['f'],7,4,2,1); },                              // 額心一點赤
   plume: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['j'],5,3,6,2); px(x,PAL['k'],5,3,6,1);
               px(x,PAL['0'],3,4,10,2); px(x,PAL['j'],3,4,10,1);
               px(x,PAL['0'],10,0,3,1); px(x,PAL['m'],10,1,3,1); px(x,PAL['l'],11,2,2,1); },
-  horn:  x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['e'],5,3,6,2); px(x,PAL['f'],5,3,6,1);
-              px(x,PAL['0'],3,4,10,2); px(x,PAL['e'],3,4,10,1);
-              px(x,PAL['0'],1,0,3,4); px(x,PAL['d'],1,1,2,2);
-              px(x,PAL['0'],12,0,3,4); px(x,PAL['d'],13,1,2,2); },
+  // 鬼武者：鬼面兜。黑漆頭盔 + 兩支金色鬼角 + 面頰的赤色鬼面
+  oni:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['1'],5,3,6,2); px(x,PAL['3'],5,3,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['1'],2,4,12,1); px(x,PAL['e'],4,5,8,1);
+              px(x,PAL['0'],1,0,3,4); px(x,PAL['u'],1,1,2,2); px(x,PAL['v'],1,1,1,1);
+              px(x,PAL['0'],12,0,3,4); px(x,PAL['u'],13,1,2,2); px(x,PAL['v'],13,1,1,1); },
 };
 /* body: 色盤索引；age: 'adult'|'old'|'child'；star: 主角的星芒記號 */
 function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
@@ -792,8 +858,10 @@ function makeHat(i){
   const x = c.getContext('2d');
   const tmp = document.createElement('canvas'); tmp.width = T; tmp.height = T;
   const tx = tmp.getContext('2d');
-  const ids = ['helm','cone','hood','cap','plume','horn'];
-  HAT_ART[ids[i % ids.length]](tx);
+  // 直接讀 HAT，不要另外抄一份 id 清單 ——
+  // 抄一份的下場是加了新職業之後，地上的圖示還是舊的那六頂。
+  const art = HAT_ART[(HAT[i % HAT.length] || HAT[0]).id];
+  (art || HAT_ART.helm)(tx);
   x.drawImage(tmp, 0, 4);              // 往下移，圖示才落在格子中間
   return c;
 }

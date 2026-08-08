@@ -1049,7 +1049,7 @@ const MONS = [
  {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:{st:'亂',dur:8,ch:.25}},
  {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
- {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂']},
+ {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂'], undead:1},
  {id:'wolf',   nm:'疾風狼',   ai:'C', hp:26,atk:16,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:1},
  {id:'mage',   nm:'詛咒法師', ai:'R', hp:26,atk:15,def:9, exp:140,spd:1,   sight:9, ev:4, fl:[12,20],w:35, rng:7, onhit:{curse:1,ch:.2}},
  {id:'golem',  nm:'徘徊石像', ai:'W', hp:60,atk:30,def:20,exp:180,spd:.5,  sight:2, ev:0, fl:[14,24],w:30, imm:['睡','亂','麻']},
@@ -1116,24 +1116,51 @@ const SHLD = [
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
 ];
 
-/* ─── 職業與技能（FF5 式：戴帽子換職業，打怪累積 JP 學技能） ──
+/* ─── 職業與技能 ─────────────────────────────────────────────
    帽子＝職業。這件事在畫面上是看得見的 —— 玩家不用開選單就知道
    自己現在是什麼、別人是什麼。
 
-   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。
-   「學得多、帶得少」正是 FF5 讓人反覆思考的地方。 */
+   職業等級只有 3 級，而且**必須戴著那頂帽子才會升**：
+   戴著它每升 2 個角色等級 → 職業等級 +1。1 級與 2 級各學一個技能，
+   3 級是 Master，給一個永久被動 —— 那是「把一個職業練到底」的回報。
+
+   練滿一個職業要戴著同一頂帽子升 6 級。這很慢，是刻意的：
+   一座迷宮只掉一頂帽子，所以「這一趟要練哪一個職業」是真的要選。
+   為了讓那個投資值得，職業進度存在村莊裡，死亡不會歸零。
+
+   學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。 */
 const HAT = [
   {id:'helm',  nm:'鐵之盔',   job:'war', price:900,  jobnm:'戰士'},
-  {id:'cone',  nm:'黑之尖帽', job:'blk', price:1100, jobnm:'黑魔導'},
-  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導'},
-  {id:'cap',   nm:'皮之便帽', job:'thf', price:800,  jobnm:'盜賊'},
+  {id:'beret', nm:'吟遊軟帽', job:'brd', price:900,  jobnm:'吟遊詩人'},
+  {id:'rhat',  nm:'赤羽寬帽', job:'red', price:1200, jobnm:'赤魔導士'},
+  {id:'crown', nm:'異想角冠', job:'sum', price:1300, jobnm:'召喚士'},
+  {id:'hood',  nm:'白之頭巾', job:'wht', price:1100, jobnm:'白魔導士'},
   {id:'plume', nm:'羽飾獵帽', job:'hnt', price:1000, jobnm:'獵人'},
-  {id:'horn',  nm:'角之戰盔', job:'ber', price:1200, jobnm:'狂戰士'},
+  // 隱藏職業：不進一般的帽子池，只在更深的迷宮出現
+  {id:'band',  nm:'幻忍頭帶', job:'nin', price:1800, jobnm:'忍者',   hidden:1},
+  {id:'oni',   nm:'鬼面兜',   job:'oni', price:2000, jobnm:'鬼武者', hidden:1},
+  {id:'cone',  nm:'術士尖帽', job:'sor', price:1900, jobnm:'術士',   hidden:1},
 ];
+const OPEN_HAT = HAT.filter(h => !h.hidden);
 const JOB_NM = {none:'見習者'};
 for(const h of HAT) JOB_NM[h.job] = h.jobnm;
+const JOB_MAX = 3;                  // 3 級＝Master
+const JOB_PER_LV = 2;               // 戴著帽子每升 2 個角色等級 → 職業 +1
+const jobRank = lv => lv >= JOB_MAX ? 'Master' : ('Lv' + lv);
 
-const JP_TIER = 40;                 // 第二個技能需要的 JP
+/* Master（職業 3 級）的永久被動。練滿之後不戴帽子也生效 ——
+   那是「這個職業我已經是它了」的意思。 */
+const MASTER_PASSIVE = {
+  war: '防禦力 +3',
+  brd: '每回合微量回復魔力',
+  red: '所有技能的魔力消耗 −1',
+  sum: '幻獸的持續回合 +50%',
+  wht: '自然回復速度加倍',
+  hnt: '視野 +2',
+  nin: '不會踩中陷阱',
+  oni: '擊殺敵人時回復少量體力',
+  sor: '魔力上限 +20%',
+};
 /* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
 /* ── 技能的魔力代價：規則本身就是設計說明 ──────────────────────
    t='atk' 攻擊型 / t='def' 防禦輔助型 —— 依強弱扣固定量，強的貴
@@ -1141,19 +1168,34 @@ const JP_TIER = 40;                 // 第二個技能需要的 JP
    t='esc' 逃跑 / t='rev' 復活 —— 最後一張牌。一次抽走大半甚至全部魔力，
                   所以它救得了你一次，救不了你第二次
    mpPct：扣掉「最大魔力的百分比」　mpAll：清空，且魔力低於一半時發不動 */
+/* 每個職業兩個技能：lv=1 的在職業 1 級學會，lv=2 的在 2 級學會。 */
 const ABIL = [
-  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
-  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
-  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       t:'atk',  mp:8, k:'blast',  desc:'命中後炸開一圈'},
-  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, t:'atk',  mp:3, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
-  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
-  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
-  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       t:'atk',  mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
-  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, t:'esc',  mpPct:.6, k:'self', desc:'10 回合內速度加倍（逃跑用，代價極高）'},
-  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
-  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
-  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       t:'atk',  mp:7, k:'around', desc:'攻擊周圍所有敵人'},
-  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, t:'pass', mp:0, k:'self',   desc:'被動：體力越低攻擊越高（最多 1.8 倍）'},
+  {job:'war', lv:1, id:'smash',  nm:'渾身一擊', t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', lv:2, id:'guard',  nm:'堅守',     t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
+
+  {job:'brd', lv:1, id:'lull',   nm:'安魂曲',   t:'atk',  mp:6, k:'room',   desc:'視野內的敵人陷入沉睡'},
+  {job:'brd', lv:2, id:'anthem', nm:'戰意之歌', t:'def',  mp:5, k:'self',   desc:'12 回合內攻擊力提升'},
+
+  {job:'red', lv:1, id:'duplex', nm:'二刀連擊', t:'atk',  mp:6, k:'melee',  desc:'對面前的敵人連續攻擊兩次'},
+  {job:'red', lv:2, id:'veil',   nm:'赤之守護', t:'def',  mp:5, k:'self',   desc:'6 回合內傷害減半，並立刻回一點魔力'},
+
+  {job:'sum', lv:1, id:'circle', nm:'召喚陣',   t:'atk',  mp:9, k:'self',   desc:'以魔力代替胃袋召喚幻獸'},
+  {job:'sum', lv:2, id:'deluge', nm:'大洪水',   t:'atk',  mp:12,k:'room',   desc:'視野內全體大傷（不死系無效）'},
+
+  {job:'wht', lv:1, id:'mend',   nm:'療傷',     t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', lv:2, id:'ward',   nm:'結界',     t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+
+  {job:'hnt', lv:1, id:'pierce', nm:'貫穿射',   t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', lv:2, id:'survey', nm:'鷹眼',     t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
+
+  {job:'nin', lv:1, id:'clone',  nm:'影分身',   t:'def',  mp:5, k:'self',   desc:'8 回合內大幅提升迴避'},
+  {job:'nin', lv:2, id:'foresee',nm:'見切之術', t:'esc',  mpPct:.6, k:'self', desc:'脫離戰場並讓追兵失去目標（逃跑用）'},
+
+  {job:'oni', lv:1, id:'onicut', nm:'鬼斬',     t:'atk',  mp:8, k:'melee',  desc:'三倍傷害，自己承受八分之一反噬'},
+  {job:'oni', lv:2, id:'asura',  nm:'修羅',     t:'pass', mp:0, k:'self',   desc:'被動：體力低於一半時攻擊 +50%'},
+
+  {job:'sor', lv:1, id:'pyro',   nm:'火之奧義', t:'atk',  mp:10,k:'beam',   desc:'直線貫穿並附加灼燒'},
+  {job:'sor', lv:2, id:'reflect',nm:'咒返',     t:'def',  mp:8, k:'self',   desc:'10 回合內遠程與魔法攻擊反彈回去'},
 ];
 /* 五系奧義：該系練到 10 級才會出現，一攻一輔。
    解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
@@ -1180,7 +1222,9 @@ function abilCost(a, p){
   if(a.t === 'pass') return 0;
   if(a.mpAll) return Math.ceil(p.mmp * .5);
   if(a.mpPct) return Math.ceil(p.mmp * a.mpPct);
-  return a.mp || 0;
+  // 赤魔導士 Master：每個技能便宜 1 點（最低還是要 1）
+  const off = (typeof hasMaster === 'function' && hasMaster('red')) ? 1 : 0;
+  return Math.max(1, (a.mp || 0) - off);
 }
 function payAbil(a, p){
   if(a.t === 'pass') return;
@@ -1233,7 +1277,8 @@ const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點�
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
-const maxMp = p => 8 + (p.lv-1)*3 + schoolTotal(p)*5;
+const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
+                              * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
 
@@ -1329,15 +1374,36 @@ const HAT_ART = {
               px(x,PAL['0'],2,4,12,2); px(x,PAL['p'],2,4,12,1); px(x,PAL['u'],7,3,2,1); },
   hood:  x=>{ px(x,PAL['0'],4,1,8,5); px(x,PAL['d'],5,2,6,3); px(x,PAL['6'],5,2,6,1);
               px(x,PAL['0'],3,4,10,2); px(x,PAL['d'],3,4,10,1); px(x,PAL['g'],6,4,4,1); },
-  cap:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['9'],5,3,6,2); px(x,PAL['a'],5,3,6,1);
-              px(x,PAL['0'],2,4,12,2); px(x,PAL['8'],2,4,11,1); },
+  // 吟遊詩人：軟呢貝雷帽，帽身偏一邊，右側一撮綠羽
+  beret: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['o'],5,3,6,2); px(x,PAL['p'],5,3,5,1);
+              px(x,PAL['0'],3,4,10,2); px(x,PAL['o'],3,4,10,1);
+              px(x,PAL['0'],11,1,3,2); px(x,PAL['l'],11,2,3,1); px(x,PAL['m'],12,1,2,1); },
+  // 赤魔導士：寬簷紅帽 + 白羽。帽簷要比別人寬，剪影才認得出來
+  rhat:  x=>{ px(x,PAL['0'],4,1,8,4); px(x,PAL['f'],5,2,6,3); px(x,PAL['g'],5,2,6,1);
+              px(x,PAL['0'],1,4,14,2); px(x,PAL['f'],1,4,14,1); px(x,PAL['e'],1,5,14,1);
+              px(x,PAL['0'],10,0,4,2); px(x,PAL['6'],10,1,4,1); px(x,PAL['d'],11,0,2,1); },
+  // 召喚士：三叉角冠。金色 + 中央一顆藍寶石
+  crown: x=>{ px(x,PAL['0'],3,1,10,4);
+              px(x,PAL['t'],4,3,8,2); px(x,PAL['u'],4,3,8,1);
+              px(x,PAL['0'],4,0,2,3); px(x,PAL['u'],4,1,1,2);
+              px(x,PAL['0'],7,0,2,3); px(x,PAL['v'],7,0,2,2);
+              px(x,PAL['0'],10,0,2,3); px(x,PAL['u'],11,1,1,2);
+              px(x,PAL['q'],7,3,2,1);
+              px(x,PAL['0'],3,5,10,1); },
+  // 忍者：一條頭帶，兩端在右後方飄。剪影最低調的一頂 —— 那正是忍者
+  band:  x=>{ px(x,PAL['0'],3,3,10,3); px(x,PAL['2'],4,4,8,1); px(x,PAL['4'],4,4,8,1);
+              px(x,PAL['1'],4,5,8,1);
+              px(x,PAL['0'],12,3,3,2); px(x,PAL['4'],12,4,2,1);
+              px(x,PAL['0'],12,6,3,2); px(x,PAL['4'],12,6,2,1);
+              px(x,PAL['f'],7,4,2,1); },                              // 額心一點赤
   plume: x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['j'],5,3,6,2); px(x,PAL['k'],5,3,6,1);
               px(x,PAL['0'],3,4,10,2); px(x,PAL['j'],3,4,10,1);
               px(x,PAL['0'],10,0,3,1); px(x,PAL['m'],10,1,3,1); px(x,PAL['l'],11,2,2,1); },
-  horn:  x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['e'],5,3,6,2); px(x,PAL['f'],5,3,6,1);
-              px(x,PAL['0'],3,4,10,2); px(x,PAL['e'],3,4,10,1);
-              px(x,PAL['0'],1,0,3,4); px(x,PAL['d'],1,1,2,2);
-              px(x,PAL['0'],12,0,3,4); px(x,PAL['d'],13,1,2,2); },
+  // 鬼武者：鬼面兜。黑漆頭盔 + 兩支金色鬼角 + 面頰的赤色鬼面
+  oni:   x=>{ px(x,PAL['0'],4,2,8,3); px(x,PAL['1'],5,3,6,2); px(x,PAL['3'],5,3,6,1);
+              px(x,PAL['0'],2,4,12,2); px(x,PAL['1'],2,4,12,1); px(x,PAL['e'],4,5,8,1);
+              px(x,PAL['0'],1,0,3,4); px(x,PAL['u'],1,1,2,2); px(x,PAL['v'],1,1,1,1);
+              px(x,PAL['0'],12,0,3,4); px(x,PAL['u'],13,1,2,2); px(x,PAL['v'],13,1,1,1); },
 };
 /* body: 色盤索引；age: 'adult'|'old'|'child'；star: 主角的星芒記號 */
 function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
@@ -1711,8 +1777,10 @@ function makeHat(i){
   const x = c.getContext('2d');
   const tmp = document.createElement('canvas'); tmp.width = T; tmp.height = T;
   const tx = tmp.getContext('2d');
-  const ids = ['helm','cone','hood','cap','plume','horn'];
-  HAT_ART[ids[i % ids.length]](tx);
+  // 直接讀 HAT，不要另外抄一份 id 清單 ——
+  // 抄一份的下場是加了新職業之後，地上的圖示還是舊的那六頂。
+  const art = HAT_ART[(HAT[i % HAT.length] || HAT[0]).id];
+  (art || HAT_ART.helm)(tx);
   x.drawImage(tmp, 0, 4);              // 往下移，圖示才落在格子中間
   return c;
 }
@@ -1845,15 +1913,33 @@ const VILLAGE_KEY = 'claude-abyss-village';
 /* sp/sch = 魔法點數與五系等級。這兩個「不會因為任務失敗消失」，
    所以存在村莊而不是角色身上 —— 它們是跨越死亡的長期成長。
    pocket = 萬用口袋：等級 10 首次達成後開放，裡面的東西能撐過一次死亡。 */
+/* jobs = 每個職業的 {lv, prog}。職業進度也是跨越死亡的長期成長：
+   練滿一個職業要戴著同一頂帽子升 6 級，而一座迷宮只掉一頂帽子 ——
+   進度隨死亡歸零的話，3 級 Master 永遠不會有人看到。 */
 let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [],
                 sp: 0, sch: {heal:0,bolt:0,fire:0,aqua:0,wind:0},
-                pocket: {open:false, item:null} };
+                jobs: {}, pocket: {open:false, item:null} };
 const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v'];
 const BLOB_COL_NM = {'#':'陶土','l':'苔綠','q':'湖藍','u':'琥珀','b':'土棕',
                      '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金'};
 const EXIT_FLOOR = 20;
 const RUNS_PER_GEAR = 3;
 
+/* 舊存檔沒有 jobs，或有人手動改壞了 —— 只收得懂的欄位，
+   其餘一律歸零。存檔在 localStorage，本來就不能當成可信輸入。 */
+function sanitizeJobs(raw){
+  const out = {};
+  if(!raw || typeof raw !== 'object') return out;
+  for(const h of HAT){
+    const r = raw[h.job];
+    if(!r || typeof r !== 'object') continue;
+    out[h.job] = {
+      lv: Math.max(0, Math.min(JOB_MAX, r.lv | 0)),
+      prog: Math.max(0, Math.min(JOB_PER_LV - 1, r.prog | 0)),
+    };
+  }
+  return out;
+}
 function loadVillage(){
   try{
     const raw = localStorage.getItem(VILLAGE_KEY);
@@ -1867,6 +1953,7 @@ function loadVillage(){
           board: Array.isArray(v.board) ? v.board : [],
           sp: v.sp | 0,
           sch: Object.assign({heal:0,bolt:0,fire:0,aqua:0,wind:0}, v.sch || {}),
+          jobs: sanitizeJobs(v.jobs),
           pocket: (v.pocket && typeof v.pocket === 'object')
             ? {open: !!v.pocket.open, item: v.pocket.item || null}
             : {open:false, item:null},
@@ -1951,7 +2038,7 @@ function newGame(seed){
     look, known, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
-        hat:null, job:'none', jp:{}, learned:{}, slots:[null,null,null,null], mastered:{},
+        hat:null, job:'none', learned:{}, slots:[null,null,null,null], mastered:{},
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
@@ -1965,6 +2052,8 @@ function newGame(seed){
   G.p.sch = Object.assign({}, VILLAGE.sch);
   G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
   checkMastery();
+  // 職業技能一樣存在村莊 —— 練過的職業，這一趟開場就會用
+  syncJobSkills(true);
   // 萬用口袋裡的東西撐過了這次死亡，交還給玩家
   if(VILLAGE.pocket.item){
     const q = VILLAGE.pocket.item;
@@ -2035,9 +2124,17 @@ function rollItem(rng, depth){
    現在改成：一座迷宮＝20 層，第一座只放「一頂」，更深的迷宮兩頂，
    樓層由本趟的種子決定，所以每一趟找帽子的路線都不一樣。 */
 const HAT_SEG = 20;
+/* 種子要先攪過再用。直接 `常數*n ^ seed` 只動到低位元，
+   xorshift 第一個輸出的擴散不夠，結果幾百個種子挑出來的帽子幾乎都一樣。 */
+function mix32(a, b){
+  let h = ((a | 0) ^ Math.imul(b | 0, 0x9e3779b1)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
 function hatFloors(depth){
   const seg = Math.floor((depth-1) / HAT_SEG);
-  const r = RNG((0x9e3779b9 * (seg+1) ^ (G ? G.seed : 1)) >>> 0);
+  const r = RNG(mix32(seg + 1, G ? G.seed : 1));
   const base = seg * HAT_SEG;
   const a = base + r.i(3, 9);
   if(seg === 0) return [a];                     // 第一座迷宮只有一頂
@@ -2047,8 +2144,11 @@ function hatFloors(depth){
 }
 function hatHere(depth){
   if(!hatFloors(depth).includes(depth)) return null;
-  const r = RNG((0x85ebca6b * depth ^ (G ? G.seed : 1)) >>> 0);
-  return mk('hat', r.pick(HAT).id, {known:1});
+  const r = RNG(mix32(depth * 977 + 7, G ? G.seed : 1));
+  // 隱藏職業（忍者／鬼武者／術士）不在一般的帽子池裡。
+  // 第一座迷宮只會掉六種基本職業之一 —— 隱藏職業要留給更深的地方。
+  const pool = depth <= HAT_SEG ? OPEN_HAT : HAT;
+  return mk('hat', r.pick(pool).id, {known:1});
 }
 
 /* 商店進貨：偏消耗品。武器盾牌太貴，早期玩家一件都買不起，
@@ -2214,7 +2314,9 @@ function vision(){
     for(let y=rm.y-1;y<=rm.y+rm.h;y++) for(let x=rm.x-1;x<=rm.x+rm.w;x++) mark(x,y);
     for(const d of rm.doors){ const [dx,dy]=d.split(',').map(Number); mark(dx,dy); }
   } else {
-    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) mark(G.p.x+dx,G.p.y+dy);
+    // 獵人 Master：走廊裡也看得比別人遠
+    const rr = hasMaster('hnt') ? 3 : 1;
+    for(let dy=-rr;dy<=rr;dy++) for(let dx=-rr;dx<=rr;dx++) mark(G.p.x+dx,G.p.y+dy);
   }
 }
 
@@ -2222,12 +2324,16 @@ function vision(){
 const STR = p => 8 + Math.floor((p.lv-1)*4/3) + p.strb;
 function pAtk(){ const p=G.p; let a=STR(p);
   if(p.weap) a += p.weap.d.atk + p.weap.up*2;
-  // 血怒：體力越低攻擊越高，最多 1.8 倍。改成被動之後不再需要發動 ——
-  // 「不消耗魔力」的技能就該一直在，發動它只是多按一次而已。
-  if(p.st['怒'] || hasPassive('rage')) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
+  // 修羅：被動技能不需要發動 ——「不消耗魔力」的東西就該一直在
+  if(hasPassive('asura') && p.hp*2 < p.mhp) a = Math.round(a * 1.5);
+  if(p.st['怒']) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
+  if(p.st['歌']) a = Math.round(a * 1.3);                    // 戰意之歌
   if(p.st['熔']) a = Math.round(a * 1.5);                    // 熔心
   return Math.max(1,a); }
-function pDef(){ const p=G.p; return p.shld ? Math.max(0,p.shld.d.def + p.shld.up*2) : 0; }
+function pDef(){ const p=G.p;
+  let d = p.shld ? Math.max(0, p.shld.d.def + p.shld.up*2) : 0;
+  if(hasMaster('war')) d += 3;                               // 戰士 Master
+  return d; }
 const defFactor = d => Math.pow(15/16, Math.max(0,d));
 function rollDmg(atk, def, crit, mult){
   let raw = atk;
@@ -2303,7 +2409,9 @@ function stepOn(){
   const p=G.p, k=key(p.x,p.y);
   if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room) keeperReclaim();
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
-  if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
+  // 忍者 Master：踩上去也不會觸發
+  if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say('腳步輕得沒有觸動機關。','good'); }
+  else if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
     p.flash = 0.12; burst(p.x, p.y, 10, '#c94a3a', 40, 10);
     say(`踩到了陷阱！受到 ${d} 點傷害。`,'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
@@ -2360,7 +2468,12 @@ function kill(m){
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(`掉落了「${nameOf(it)}」。`); }
   }
   const p=G.p; p.exp += m.d.exp;
-  if(p.job !== 'none'){ p.jp[p.job] = (p.jp[p.job] || 0) + m.d.exp; checkLearn(); }
+  // 鬼武者 Master：擊殺回血
+  if(hasMaster('oni') && p.hp < p.mhp){
+    const heal = Math.max(1, Math.floor(p.mhp/12));
+    p.hp = Math.min(p.mhp, p.hp + heal);
+    float(p.x, p.y, '+'+heal, '#c94a3a');
+  }
   if(G.rng.chance(.65)){
     const g = Math.max(3, Math.round(m.d.exp*1.5) + G.rng.i(5,20));
     const spot = nearestFree(m.x,m.y) || {x:m.x,y:m.y};
@@ -2373,6 +2486,7 @@ function kill(m){
     SFX.play('level');
     burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
     say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
+    jobLevelUp();                       // 只有戴著的那頂帽子的職業會前進
     if(p.lv >= SP_FROM_LV){
       VILLAGE.sp++; p.sp = VILLAGE.sp; saveVillage();
       say(`★ 魔法點數 +1（目前 ${VILLAGE.sp} 點）—— 這個不會因為失敗消失。`,'gold');
@@ -2437,9 +2551,10 @@ function endTurn(){
     // 門檻原本是 15000 —— 等級 1（上限 19）要 789 回合才回 1 點血，
     // 等於完全沒有自然回復，任何受傷都是永久的。350 的話等級 1 約 18 回合
     // 回 1 點、上限 100 時約 4 回合回 1 點，體力上限成長才有意義。
-    p.regen += p.mhp;
+    p.regen += p.mhp * (hasMaster('wht') ? 2 : 1);          // 白魔導士 Master
     while(p.regen >= 350 && p.hp < p.mhp){ p.regen -= 350; p.hp++; }
   }
+  if(hasMaster('brd')) p.mregen += 60;                       // 吟遊詩人 Master
   // 魔力回得比體力慢 —— 魔法要是能無限放，物理攻擊就沒有存在意義了
   p.mmp = maxMp(p);
   if(p.sat > 0 && p.mp < p.mmp){
@@ -2614,7 +2729,9 @@ function act(m,it){
       if(m.hp<=0) kill(m);
       return;
     }
-    const hit = G.rng.i(1,100) <= 92;
+    // 影分身：命中率從 92% 掉到 45%，但它不是無敵 ——
+    // 逃跑技能可以很強，防禦技能不行，不然玩家就沒有理由移動了
+    const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
     if(!hit){ SFX.play('miss',60); say(`${m.d.nm} 的攻擊落空了。`); return; }
     let dmg = rollDmg(m.d.atk, pDef(), false, mult);
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
@@ -2704,9 +2821,12 @@ function identify(it){
 function wearHat(it){
   const p = G.p;
   p.hat = it.d.id; p.job = it.d.job;
-  say(`戴上了「${it.d.nm}」—— 現在是${it.d.jobnm}。`,'gold');
+  const rec = VILLAGE.jobs[p.job] || (VILLAGE.jobs[p.job] = {lv:0, prog:0});
+  say(`戴上了「${it.d.nm}」—— 現在是${it.d.jobnm}（${jobRank(rec.lv)}）。`,'gold');
+  if(rec.lv < JOB_MAX)
+    say(`戴著它每升 ${JOB_PER_LV} 級，職業等級 +1。目前進度 ${rec.prog}/${JOB_PER_LV}。`,'gold');
   SFX.play('ident');
-  checkLearn();
+  syncJobSkills();
 }
 /* 五系練到 10 級就開出該系的兩個奧義，加入同一個技能池。 */
 function checkMastery(){
@@ -2722,20 +2842,59 @@ function checkMastery(){
   }
 }
 
-/* JP 到門檻就學會。學會了就永遠在池子裡，換職業也不會忘。 */
-function checkLearn(){
+/* ── 職業等級 ────────────────────────────────────────────────
+   村莊裡存的是每個職業的 {lv, prog}。lv 是職業等級（0–3），
+   prog 是「戴著這頂帽子之後升了幾個角色等級」，滿 2 就進一級。
+
+   為什麼存在村莊：練滿一個職業要戴著同一頂帽子升 6 個角色等級，
+   而一座迷宮只掉一頂帽子。進度要是隨死亡歸零，這個系統
+   就永遠不會有人看到 3 級。 */
+const jobLv = j => (VILLAGE.jobs[j] && VILLAGE.jobs[j].lv) | 0;
+const isMaster = j => jobLv(j) >= JOB_MAX;
+/* Master 的被動不需要戴帽子 —— 練成了就是你的一部分 */
+const hasMaster = j => isMaster(j);
+
+/* 把村莊裡的職業進度同步成這一趟能用的技能。 */
+function syncJobSkills(quiet){
   const p = G.p;
   for(const a of ABIL){
-    if(a.job !== p.job || p.learned[a.id]) continue;
-    if((p.jp[p.job] || 0) < a.jp) continue;
+    if(jobLv(a.job) < a.lv || p.learned[a.id]) continue;
     p.learned[a.id] = 1;
-    say(`★ 學會了技能「${a.nm}」。`,'good');
-    SFX.play('level');
-    burst(p.x, p.y, 16, '#f5dc7a', 34, 18, .7);
-    const empty = p.slots.indexOf(null);
-    if(empty >= 0){ p.slots[empty] = a.id; say(`已裝載到第 ${empty+1} 格。`); }
-    else say(`技能欄已滿（${SLOTS} 格）—— 到魔法選單更換。`,'gold');
+    if(!quiet){
+      say(`★ 學會了技能「${a.nm}」。`,'good');
+      SFX.play('level');
+      burst(p.x, p.y, 16, '#f5dc7a', 34, 18, .7);
+      const empty = p.slots.indexOf(null);
+      if(empty >= 0){ p.slots[empty] = a.id; say(`已裝載到第 ${empty+1} 格。`); }
+      else say(`技能欄已滿（${SLOTS} 格）—— 到技能選單更換。`,'gold');
+    } else {
+      const empty = p.slots.indexOf(null);
+      if(empty >= 0) p.slots[empty] = a.id;
+    }
   }
+}
+/* 角色升一級時呼叫。只有「現在戴著的那頂帽子」的職業會前進。 */
+function jobLevelUp(){
+  const p = G.p;
+  if(p.job === 'none') return;
+  const rec = VILLAGE.jobs[p.job] || (VILLAGE.jobs[p.job] = {lv:0, prog:0});
+  if(rec.lv >= JOB_MAX) return;
+  rec.prog++;
+  if(rec.prog < JOB_PER_LV){
+    say(`${JOB_NM[p.job]}　再升 ${JOB_PER_LV - rec.prog} 級就能提升職業等級。`);
+    saveVillage(); return;
+  }
+  rec.prog = 0; rec.lv++;
+  saveVillage();
+  SFX.play('level');
+  burst(p.x, p.y, 24, '#f5dc7a', 46, 24, .9);
+  if(rec.lv >= JOB_MAX){
+    say(`★★ ${JOB_NM[p.job]}　達到 Master —— ${MASTER_PASSIVE[p.job]}（永久生效）`,'gold');
+    float(p.x, p.y, 'MASTER', '#f5dc7a');
+  } else {
+    say(`★ ${JOB_NM[p.job]}　職業等級 ${rec.lv}。`,'gold');
+  }
+  syncJobSkills();
 }
 
 function autoEquip(it){
@@ -3039,25 +3198,85 @@ function doAbil(a, dx, dy){
       G.shake = Math.max(G.shake, 8); say('渾身一擊！','good'); break;
     case 'guard':
       p.st['守'] = 5; say('擺出了防禦架式。','good'); break;
-    case 'blast': {
-      const {mons,x,y} = beamLine(dx,dy,9,true);
-      const at = mons[0] ? {x:mons[0].x,y:mons[0].y} : {x,y};
-      burst(at.x,at.y,24,'#f5a95e',60,10,.5); G.shake=Math.max(G.shake,7);
-      let n=0;
-      for(const m of G.mons.slice()){
-        if(Math.max(Math.abs(m.x-at.x),Math.abs(m.y-at.y))>1) continue;
-        hurtMon(m, rollDmg(28+p.lv*3, m.d.def, false, 1), '#e87a4a', '痛', 4); n++;
-      }
-      say(n?`爆裂命中 ${n} 個敵人。`:'爆裂炸在空處。', n?'good':null); break;
+    /* ── 吟遊詩人 ── */
+    case 'lull': {
+      const list = visibleMons(); if(!list.length){ say('視野裡沒有敵人。'); break; }
+      let n = 0;
+      for(const m of list){ if(!m.d.boss){ m.st['睡'] = G.rng.i(6,10); n++; } }
+      burst(p.x,p.y,20,'#7cb8ea',44,10,.7);
+      say(n?`安魂曲讓 ${n} 個敵人睡去。`:'牠們不為所動。', n?'good':null); break;
     }
-    case 'drain': {
+    case 'anthem': p.st['歌'] = 12; say('戰意之歌響起 —— 攻擊力提升。','good'); break;
+
+    /* ── 赤魔導士 ── */
+    case 'duplex': {
       if(!front){ say('面前沒有敵人。'); break; }
-      const d = rollDmg(14+p.lv*2, front.d.def, false, 1);
-      hurtMon(front, d, '#2f57a0');
-      const gain = Math.min(Math.ceil(d/2), p.mmp - p.mp);
-      p.mp += gain; float(p.x,p.y,'+'+gain+' MP','#5b86b8');
-      say(`吸取了 ${gain} 點魔力。`,'good'); break;
+      p.lunge = {dx,dy,t:0};
+      for(let i=0;i<2 && front.hp>0;i++)
+        hurtMon(front, rollDmg(pAtk()*0.95, front.d.def, false, 1), '#c94a3a');
+      say('二刀連擊！','good'); break;
     }
+    case 'veil': {
+      p.st['守'] = 6;
+      const g = Math.min(2, p.mmp - p.mp); p.mp += g;
+      say('赤之守護展開 —— 傷害減半。','good'); break;
+    }
+
+    /* ── 召喚士 ── */
+    case 'circle': {
+      const av = summonsFor(p);
+      if(!av.length){ say('還沒有可以召喚的幻獸 —— 需要任一系 ' + SUMMON_AT + ' 級。','bad'); break; }
+      callSummon(av[av.length-1], true);      // true = 不吃胃袋，代價已經是魔力
+      break;
+    }
+    case 'deluge': {
+      const list = visibleMons().filter(m => !m.d.undead);
+      if(!list.length){ say('大洪水沖過 —— 沒有可以淹沒的東西。'); break; }
+      G.shake = Math.max(G.shake, 12);
+      burst(p.x,p.y,30,'#4a86cf',70,14,.9);
+      for(const m of list.slice())
+        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#4a86cf');
+      say(`大洪水淹沒了 ${list.length} 個敵人！`,'good'); break;
+    }
+
+    /* ── 忍者 ── */
+    case 'clone': p.st['影'] = 8; say('身影散成了三道。','good'); break;
+    case 'foresee': {
+      // 逃跑技能就該真的逃得掉：跳到最遠的可走格，並讓所有敵人失去目標
+      let best = null, bd = -1;
+      for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+        if(!walkable(x,y) || monAt(x,y)) continue;
+        const d = Math.max(Math.abs(x-p.x), Math.abs(y-p.y));
+        if(d > bd){ bd = d; best = {x,y}; }
+      }
+      if(best){ p.x = best.x; p.y = best.y; }
+      for(const m of G.mons) m.aggro = 0;
+      burst(p.x,p.y,22,'#c8c8d4',50,10,.7);
+      say('見切之術 —— 你已經不在牠們的視線裡了。','good');
+      vision(); break;
+    }
+
+    /* ── 鬼武者 ── */
+    case 'onicut': {
+      if(!front){ say('面前沒有敵人。'); break; }
+      p.lunge = {dx,dy,t:0};
+      hurtMon(front, rollDmg(pAtk()*3, front.d.def, false, 1), '#a83c32');
+      const back = Math.max(1, Math.floor(p.mhp/8));
+      p.hp = Math.max(1, p.hp - back); p.flash = .14;
+      G.shake = Math.max(G.shake, 12);
+      say(`鬼斬！反噬了自己 ${back} 點體力。`,'good'); break;
+    }
+
+    /* ── 術士 ── */
+    case 'pyro': {
+      const {mons} = beamLine(dx,dy,10,false);
+      if(!mons.length){ say('火線掃過虛空。'); break; }
+      for(const m of mons)
+        hurtMon(m, rollDmg(26+p.lv*4, m.d.def, false, 1), '#e87a4a', '燒', 5);
+      say(`火之奧義燒穿了 ${mons.length} 個敵人。`,'good'); break;
+    }
+    case 'reflect': p.st['鏡'] = 10; say('咒返展開 —— 遠程與魔法會被彈回去。','good'); break;
+
     case 'mend': {
       const h = Math.min(24+p.lv*4, p.mhp-p.hp); p.hp += h;
       const k0 = Object.keys(p.st).filter(k=>k!=='守'&&k!=='怒'&&k!=='界');
@@ -3066,20 +3285,6 @@ function doAbil(a, dx, dy){
       say(h?`恢復了 ${h} 點體力。`:'體力已滿。', h?'good':null); break;
     }
     case 'ward': p.st['界'] = 8; say('身周浮現了結界。','good'); break;
-    case 'steal': {
-      if(!front){ say('面前沒有敵人。'); break; }
-      if(front.carry.length){
-        const it = front.carry.pop();
-        if(p.inv.length < 20){ p.inv.push(it); say(`偷到了「${nameOf(it)}」！`,'good'); }
-        else { G.items[key(p.x,p.y)] = it; say('背包滿了，東西掉在腳下。'); }
-      } else if(G.rng.chance(.4)){
-        const it = rollItem(G.rng, G.depth);
-        if(p.inv.length < 20){ p.inv.push(it); say(`偷到了「${nameOf(it)}」！`,'good'); }
-        else say('背包滿了，沒能拿走。');
-      } else say('什麼也沒偷到。');
-      front.aggro = 15; break;
-    }
-    case 'dash': p.st['速'] = 10; say('腳步輕了起來。','good'); break;
     case 'pierce': {
       const {mons} = beamLine(dx,dy,10,false);
       if(!mons.length){ say('箭射向遠方。'); break; }
@@ -3089,16 +3294,6 @@ function doAbil(a, dx, dy){
     case 'survey':
       for(let i=0;i<G.seen.length;i++) if(!G.seen[i]) G.seen[i] = 1;
       say('鷹眼掃過整層 —— 地圖全部揭露。','good'); break;
-    case 'ramp': {
-      let n = 0;
-      for(const d of DIRS){
-        const m = monAt(p.x+d[0], p.y+d[1]);
-        if(m){ hurtMon(m, rollDmg(pAtk()*0.85, m.d.def, false, 1), '#c94a3a'); n++; }
-      }
-      G.shake = Math.max(G.shake, 9);
-      say(n?`亂舞掃中 ${n} 個敵人！`:'四周空無一物。', n?'good':null); break;
-    }
-    case 'rage': p.st['怒'] = 12; say('血液沸騰了起來。','good'); break;
 
     /* ── 五系奧義 ── */
     case 'm_judge': {
@@ -3158,24 +3353,27 @@ function doAbil(a, dx, dy){
 }
 
 /* ─── 幻獸 ─────────────────────────────────────────────────── */
-function callSummon(sm){
+/* free = 召喚陣（召喚士技能）。代價已經付過魔力了，就不該再吃胃袋 ——
+   同一件事收兩次錢，玩家永遠不會用第二次。 */
+function callSummon(sm, free){
   const p = G.p;
-  const cost = Math.floor(p.msat * SUMMON_COST);
+  const cost = free ? 0 : Math.floor(p.msat * SUMMON_COST);
   if(p.sat < cost){ say('胃袋不夠 —— 召喚會把你餓垮。','bad'); return false; }
   const spot = nearestFree(p.x, p.y);
   if(!spot){ say('周圍沒有空間可以現身。','bad'); return false; }
   p.sat -= cost;
   const lv = p.sch[sm.sc] || 0;
+  const ttl = Math.round(sm.ttl * (hasMaster('sum') ? 1.5 : 1));   // 召喚士 Master
   G.allies.push({
     d: sm, x: spot.x, y: spot.y, id: UID++,
     hp: sm.hp + lv*8, mhp: sm.hp + lv*8,
-    atk: sm.atk + lv*4, ttl: sm.ttl, st:{},
+    atk: sm.atk + lv*4, ttl, st:{},
   });
   SFX.play('level');
   burst(spot.x, spot.y, 26, PAL[sm.col], 60, 20, .8);
   G.shake = Math.max(G.shake, 8);
-  say(`${sm.nm}響應召喚而來！（${sm.ttl} 回合，胃袋 −30%）`,'gold');
-  endTurn();
+  say(`${sm.nm}響應召喚而來！（${ttl} 回合${free ? '' : '，胃袋 −30%'}）`,'gold');
+  if(!free) endTurn();                 // 技能路徑由 useAbil 自己收尾，不能重複結束回合
   return true;
 }
 const allyAt = (x,y) => G.allies.find(a => a.hp > 0 && a.x === x && a.y === y);
@@ -4219,7 +4417,7 @@ function refresh(){
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
-  const GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1};
+  const GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1,'歌':1,'影':1};
   const keys = Object.keys(p.st);
   if(!keys.length){ const s=document.createElement('span'); s.className='none'; s.textContent='正常'; sb.appendChild(s); }
   for(const k of keys){
@@ -4332,12 +4530,27 @@ function renderPanel(){
 
     // ── 職業與技能欄 ──
     const jh = document.createElement('div'); jh.className='hint';
-    const jpNow = p.jp[p.job] || 0;
-    const nextA = ABIL.find(a => a.job===p.job && !p.learned[a.id]);
-    jh.textContent = p.job === 'none'
-      ? '職業　—　找一頂帽子戴上就能轉職'
-      : `職業　${JOB_NM[p.job]}　JP ${jpNow}` + (nextA ? `　（${nextA.nm} 需要 ${nextA.jp}）` : '　已全部學會');
+    if(p.job === 'none'){
+      jh.textContent = '職業　—　找一頂帽子戴上就能轉職（一座迷宮只有一頂）';
+    } else {
+      const rec = VILLAGE.jobs[p.job] || {lv:0, prog:0};
+      const nextA = ABIL.find(a => a.job===p.job && a.lv === rec.lv+1);
+      jh.textContent = `職業　${JOB_NM[p.job]}　${jobRank(rec.lv)}`
+        + (rec.lv >= JOB_MAX
+            ? `　—　${MASTER_PASSIVE[p.job]}`
+            : `　升級進度 ${rec.prog}/${JOB_PER_LV}`
+              + (nextA ? `　（下一個：${nextA.nm}）` : `　（下一級：Master）`));
+    }
     list.appendChild(jh);
+
+    // 練過的職業一覽 —— 這些不會因為死亡歸零，玩家該看得到自己的長期成果
+    const done = HAT.filter(h => jobLv(h.job) > 0);
+    if(done.length){
+      const jl = document.createElement('div'); jl.className='hint';
+      jl.textContent = '已練職業　' + done.map(h =>
+        `${h.jobnm} ${jobRank(jobLv(h.job))}`).join('　·　');
+      list.appendChild(jl);
+    }
 
     const slotRow = document.createElement('div'); slotRow.className = 'slots';
     for(let i=0;i<SLOTS;i++){
