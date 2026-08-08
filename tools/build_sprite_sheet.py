@@ -110,8 +110,12 @@ def main():
 
     # 這一頁不跑遊戲，所以美術層裡不能留下對 G / 地圖的依賴。
     # 真有依賴就代表切錯地方，寧可在這裡爆掉也不要產出一頁壞掉的驗收表。
-    for bad in ("G.", "MW", "genFloor"):
-        if re.search(r"\b%s" % re.escape(bad), art):
+    # `G.` 後面一定接識別字。不這樣限制的話，多語言詞條裡的
+    # "Picked up {n} G." 會被當成引用了遊戲狀態 —— 守衛誤報比不報更煩，
+    # 因為它會讓人開始忽略守衛。
+    checks = [(r"\bG\.[A-Za-z_$]", "G."), (r"\bMW\b", "MW"), (r"\bgenFloor\b", "genFloor")]
+    for pat, bad in checks:
+        if re.search(pat, art):
             sys.exit("美術層引用了遊戲狀態 %r —— 切點需要重新檢查" % bad)
 
     open(DST, "w", encoding="utf-8").write(SHELL + '"use strict";' + art + TAIL)

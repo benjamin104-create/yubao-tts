@@ -1425,6 +1425,47 @@ let LANG = 'zh';
 /* 一行一個詞條：key | English | 日本語 */
 const DICT_RAW = `
 ui.title|CLAUDE ABYSS|クロード深淵
+m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
+m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
+m.crit| A critical hit!| かいしんの いちげき！
+m.kill|You defeated {nm}.|{nm} を たおした。
+m.drop|It dropped "{nm}".|「{nm}」を おとした。
+m.levelup|Level up! Now level {n}.|レベルが {n} に あがった！
+m.mmiss|{nm}'s attack misses.|{nm} の こうげきは はずれた。
+m.mhit|{nm}'s {r}attack lands. You take {n} damage.|{nm} の {r}こうげき。{n} の ダメージ。
+m.ranged|ranged |えんきょり
+m.gold|Picked up {n} G.|{n} G を ひろった。
+m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
+m.wall|There is a wall ahead.|まえは かべだ。
+m.corner|You cannot cut that corner.|その かどは まがれない。
+m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
+m.pick|Picked up "{nm}".|「{nm}」を ひろった。
+m.eat|You eat "{nm}".|「{nm}」を たべた。
+m.drink|You drink "{nm}".|「{nm}」を のんだ。
+m.read|You read "{nm}".|「{nm}」を よんだ。
+m.wave|You wave "{nm}".|「{nm}」を ふった。
+m.healed|Recovered {n} HP.|たいりょくが {n} かいふくした。
+m.equip|Equipped "{nm}".|「{nm}」を そうびした。
+m.autoequip|Auto-equipped "{nm}".|「{nm}」を じどうで そうびした。
+m.bagfull|Your pack is full.|かばんが いっぱいだ。
+m.hungry1|You are getting hungry.|おなかが すいてきた。
+m.hungry2|Your stomach is growling!|おなかが なっている！
+m.hungry3|You are starving! Eat something, now.|うえで たおれそうだ！はやく なにか たべろ。
+m.floor|{nm} floor {n} (depth {d}).|{nm} {n}かい（ふかさ {d}）。
+m.chapter|Chapter {n} - {nm}|だい{n}しょう　{nm}
+m.enter|Into the dungeon. Arrows to move, bump a monster to attack.|ダンジョンへ。やじるしで いどう、モンスターに ぶつかれば こうげき。
+m.buy|You bought "{nm}".|「{nm}」を かった。
+m.sell|You sold "{nm}" for {n} G.|「{nm}」を {n} G で うった。
+m.locked|The stairs are sealed by a pressure - deal with what is here first.|かいだんが とざされている —— まずは このかいの ものを たおせ。
+m.unlocked|The pressure lifts - the stairs are open.|あつりょくが きえた —— かいだんが ひらいた。
+m.actclear|Chapter {n} "{nm}" cleared!|だい{n}しょう「{nm}」クリア！
+m.reward|Obtained: {nm}|にゅうしゅ：{nm}
+m.nomp|Not enough magic.|MPが たりない。
+m.learn|Learned the skill "{nm}".|スキル「{nm}」を おぼえた。
+m.jobup|{nm} - job level {n}.|{nm}　しょくぎょうレベル {n}。
+m.jobmaster|{nm} - MASTER reached.|{nm}　マスターに とうたつ。
+m.slot|Loaded into slot {n}.|スロット {n} に セットした。
+m.wearhat|You put on "{nm}" - now a {job} ({rank}).|「{nm}」を かぶった —— いまは {job}（{rank}）。
 ui.start|Descend|潜る
 ui.name|your name|なまえ
 ui.tagline1|Levels reset. Gear is lost —|レベルは戻り、装備は失われる ——
@@ -1616,6 +1657,21 @@ act.crystal|The Crystal Seam|すいしょうこうざん
 act.tower|The Spire|つうてんとう
 act.final|The Last Labyrinth|さいごのめいきゅう
 act.chaos|The Chaos Chamber|こんとんのま
+acti.mine|An abandoned mine outside the village. They say something that breathes is buried deep inside.|村はずれの はいこう。おくふかくに いきづく いしが うまっている という。
+acti.forest|From the outside in, the mist thickens. The smith's hut is on one of these floors.|そとから おくへ、きりは こくなる。かじやの こやが どこかの かいにある。
+acti.trial|The mountain path turns itself around now and then - the route you memorised stops working.|やまみちは ときどき まるごと まわる —— おぼえた みちは つうじない。
+acti.ordeal|One empty room. The four walls keep sending things in until you have felled five.|からの へや ひとつ。しかたの かべから 5たい たおすまで おくりこまれる。
+acti.briar|A ruined castle held by flame spirits. The sorcerer fires every third turn - pillars are the only answer.|ほのおの れいが すみつく はいじょう。じゅつしは 3ターンごとに うつ —— こたえは はしらだけ。
+acti.lake|The surface is far too still.|みなもが しずかすぎる。
+acti.beast|A nest of phantom beasts. They are not enemies - unless you walk all the way in.|げんじゅうの す。おくまで はいらなければ てきでは ない。
+acti.ninja|An ancient capital in another world. The people here dislike being seen.|いせかいの こきょう。ここの ものは みられるのを きらう。
+acti.heian|Three bridges, three lesser kings. Across them, the Oni Warrior waits.|みっつの はし、みっつの こおう。わたれば おにむしゃが まつ。
+acti.gaol|Sixteen levels down. What is kept here was never meant to be let out.|16かい したへ。ここに とじこめた ものは そとに だしては ならない。
+acti.mirror|Left and right are swapped. You think you go right - you go left.|さゆうが はんてん。みぎと おもえば ひだり。
+acti.crystal|Light travels in straight lines here - and it reflects.|ここでは ひかりは まっすぐ すすみ、そして はんしゃする。
+acti.tower|Twenty levels of a looping well. A rest floor every five.|20かいの いどがた ループ。5かいごとに きゅうけいかい。
+acti.final|No map. No shop. Only the path.|ちずも みせも ない。あるのは みちだけ。
+acti.chaos|No walls here, and no ceiling. Only the Mind.|かべも てんじょうも ない。あるのは「いしき」だけ。
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -1632,6 +1688,13 @@ const DICT = (()=>{
   return m;
 })();
 /* zh 直接回傳 fallback（也就是程式裡的中文原文）—— 中文不需要查表 */
+/* 訊息用具名佔位符 —— `{nm}`、`{n}`。用位置參數（{0}{1}）的話，
+   譯者看不出第二個數字是傷害還是層數，而看不出來就會翻錯。 */
+function M(key, zh, vars){
+  let t = TX(key, zh);
+  if(vars) for(const k in vars) t = t.split('{'+k+'}').join(vars[k]);
+  return t;
+}
 function TX(key, zh){
   if(LANG === 'zh') return zh;
   const v = DICT[LANG] && DICT[LANG][key];
@@ -2629,9 +2692,9 @@ function newGame(seed){
   }
   buildFloor();
   const a0 = actAt(G.act);
-  say(`第 ${G.act+1} 章　${a0.nm}`, 'gold');
-  say(a0.intro, 'gold');
-  say('方向鍵移動，撞到怪物即攻擊。', 'gold');
+  say(M('m.chapter','第 {n} 章　{nm}',{n:G.act+1, nm:locAct(a0)}), 'gold');
+  say(TX('acti.' + a0.id, a0.intro), 'gold');
+  say(TX('m.enter','方向鍵移動，撞到怪物即攻擊。'), 'gold');
   return G;
 }
 
@@ -2987,8 +3050,8 @@ function tryMove(dx,dy){
      && roomOf(nx,ny) !== G.shop.room && walkable(nx,ny)){
     SFX.play('open'); openPanel('bill'); return;
   }
-  if(!walkable(nx,ny)){ SFX.play('wall',120); say('前面是牆壁。'); return; }   // 撞牆不消耗回合
-  if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
+  if(!walkable(nx,ny)){ SFX.play('wall',120); say(TX('m.wall','前面是牆壁。')); return; }   // 撞牆不消耗回合
+  if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say(TX('m.corner','沒辦法從這個角度過去。')); return; }
   SFX.play('step');
   echoStep(dx, dy);                       // 複寫型態的分身完全跟著你走
   G.anim.push({o:p, fx:p.x, fy:p.y, t:0});
@@ -3018,13 +3081,13 @@ function steal(){
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
   if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room) keeperReclaim();
-  if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(`撿到了 ${G.gold[k]} G。`,'gold'); delete G.gold[k]; }
+  if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   // 忍者 Master：踩上去也不會觸發
   if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say('腳步輕得沒有觸動機關。','good'); }
   else if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
     const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
     p.flash = 0.12; burst(p.x, p.y, 10, '#c94a3a', 40, 10);
-    say(`踩到了陷阱！受到 ${d} 點傷害。`,'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
+    say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
   if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
     G.shopSeen = 1;
     say('這是一間店。','gold');
@@ -3038,7 +3101,7 @@ function stepOn(){
       if(p.gold < it.price) keeperSay(`${it.price} G。你身上只有 ${p.gold} G。`);
     } else say(`踩在了「${nameOf(it)}」上。（腳下）`);
   }
-  if(tileAt(p.x,p.y)===DOWN) say('這裡有向下的樓梯。（下樓）','gold');
+  if(tileAt(p.x,p.y)===DOWN) say(TX('m.stairs','這裡有向下的樓梯。（下樓）'),'gold');
   if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y)
     say('回村的出口就在腳下。按 A 帶著戰利品離開迷宮。','gold');
 }
@@ -3046,7 +3109,7 @@ function attack(m, mult){
   const p=G.p;
   const hit = G.rng.i(1,100) <= Math.max(50, Math.min(99, 92 - (m.d.ev||0)));
   p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
-  if(!hit){ SFX.play('miss'); say(`對 ${m.d.nm} 的攻擊落空了。`); float(m.x,m.y,'MISS','#a99a7e'); return; }
+  if(!hit){ SFX.play('miss'); say(M('m.miss','對 {nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); float(m.x,m.y,'MISS','#a99a7e'); return; }
   const crit = G.rng.chance(.05);
   const dmg = rollDmg(pAtk(), m.d.def, crit, mult);
   SFX.play(crit?'crit':'hit');
@@ -3055,7 +3118,7 @@ function attack(m, mult){
   m.hp -= dmg;
   float(m.x,m.y,String(dmg), crit?'#f5dc7a':'#e8dcc0');
   G.shake = crit?7:3;
-  say(`對 ${m.d.nm} 造成 ${dmg} 點傷害${crit?'（會心一擊！）':'。'}`, crit?'gold':null);
+  say(M('m.hit','對 {nm} 造成 {n} 點傷害。{c}',{nm:locName('mon',m.d),n:dmg,c:crit?TX('m.crit','（會心一擊！）'):''}), crit?'gold':null);
   if(m.hp<=0){ kill(m); return; }
   if(m.d.counter && G.rng.chance(m.d.counter)){
     const back = rollDmg(m.d.atk, pDef(), false, .5);
@@ -3088,7 +3151,7 @@ function bossDown(m){
   const act = actAt(G.act);
   if(G.floor >= act.floors)
     say(act.id === 'chaos' ? '一切都安靜下來了。（站上樓梯結束）'
-                           : '壓力散去 —— 樓梯開了。（站上樓梯完成本章）', 'gold');
+                           : TX('m.unlocked','壓力散去 —— 樓梯開了。（站上樓梯完成本章）'), 'gold');
 }
 function kill(m){
   SFX.play('kill');
@@ -3096,14 +3159,14 @@ function kill(m){
     G.corpses.push({img: atlas[m.d.id] || atlas.rat, x:m.x, y:m.y, t:0});
     burst(m.x, m.y, 14, '#c8c8d4', 52, 14, 0.5);
   }
-  say(`打倒了 ${m.d.nm}。`,'good');
+  say(M('m.kill','打倒了 {nm}。',{nm:locName('mon',m.d)}),'good');
   if(m.d.boss) bossDown(m);
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
   if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
   for(const it of loot){
     const spot = nearestFree(m.x,m.y);
-    if(spot){ G.items[key(spot.x,spot.y)] = it; say(`掉落了「${nameOf(it)}」。`); }
+    if(spot){ G.items[key(spot.x,spot.y)] = it; say(M('m.drop','掉落了「{nm}」。',{nm:nameOf(it)})); }
   }
   const p=G.p; p.exp += m.d.exp;
   // 鬼武者 Master：擊殺回血
@@ -3123,7 +3186,7 @@ function kill(m){
     p.mmp = maxMp(p); p.mp = p.mmp;
     SFX.play('level');
     burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
-    say(`等級提升到 ${p.lv}！`,'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
+    say(M('m.levelup','等級提升到 {n}！',{n:p.lv}),'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
     jobLevelUp();                       // 只有戴著的那頂帽子的職業會前進
     if(p.lv >= SP_FROM_LV){
       VILLAGE.sp++; p.sp = VILLAGE.sp; saveVillage();
@@ -3181,9 +3244,9 @@ function endTurn(){
   const rate = (p.st['速']?2:1) * (p.st['餓']?3:1);
   const before = p.sat;
   p.sat = Math.max(0, p.sat - Math.floor(100*rate));
-  if(before>30000 && p.sat<=30000) say('肚子有點餓了。','gold');
-  if(before>10000 && p.sat<=10000) say('肚子餓得咕咕叫！','bad');
-  if(before>0 && p.sat<=0) say('肚子餓扁了！再不吃東西就……','bad');
+  if(before>30000 && p.sat<=30000) say(TX('m.hungry1','肚子有點餓了。'),'gold');
+  if(before>10000 && p.sat<=10000) say(TX('m.hungry2','肚子餓得咕咕叫！'),'bad');
+  if(before>0 && p.sat<=0) say(TX('m.hungry3','肚子餓扁了！再不吃東西就……'),'bad');
   if(p.sat<=0){ p.hp -= 1; }
   else if(!p.st['痛']){
     // 門檻原本是 15000 —— 等級 1（上限 19）要 789 回合才回 1 點血，
@@ -3478,7 +3541,7 @@ function act(m,it){
     // 影分身：命中率從 92% 掉到 45%，但它不是無敵 ——
     // 逃跑技能可以很強，防禦技能不行，不然玩家就沒有理由移動了
     const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
-    if(!hit){ SFX.play('miss',60); say(`${m.d.nm} 的攻擊落空了。`); return; }
+    if(!hit){ SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); return; }
     let dmg = rollDmg(m.d.atk, pDef(), false, mult);
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     SFX.play(ranged?'zap':'hurt', 60);
@@ -3486,7 +3549,8 @@ function act(m,it){
     p.flash = 0.11;
     burst(p.x, p.y, 7, '#a83c32', 34, 6);
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
-    say(`${m.d.nm} 的${ranged?'遠程':''}攻擊命中，受到 ${dmg} 點傷害。`,'bad');
+    say(M('m.mhit','{nm} 的{r}攻擊命中，受到 {n} 點傷害。',
+      {nm:locName('mon',m.d), n:dmg, r:ranged?TX('m.ranged','遠程'):''}),'bad');
     const oh = m.d.onhit;
     if(p.st['雷']){                                          // 雷紋護體：受擊反彈
       const back = rollDmg(20 + p.lv*3, m.d.def, true, 1);
@@ -3568,7 +3632,8 @@ function wearHat(it){
   const p = G.p;
   p.hat = it.d.id; p.job = it.d.job;
   const rec = VILLAGE.jobs[p.job] || (VILLAGE.jobs[p.job] = {lv:0, prog:0});
-  say(`戴上了「${it.d.nm}」—— 現在是${it.d.jobnm}（${jobRank(rec.lv)}）。`,'gold');
+  say(M('m.wearhat','戴上了「{nm}」—— 現在是{job}（{rank}）。',
+    {nm:locName('hat',it.d), job:locJob(it.d.job), rank:jobRank(rec.lv)}),'gold');
   if(rec.lv < JOB_MAX)
     say(`戴著它每升 ${JOB_PER_LV} 級，職業等級 +1。目前進度 ${rec.prog}/${JOB_PER_LV}。`,'gold');
   SFX.play('ident');
@@ -3607,11 +3672,11 @@ function syncJobSkills(quiet){
     if(jobLv(a.job) < a.lv || p.learned[a.id]) continue;
     p.learned[a.id] = 1;
     if(!quiet){
-      say(`★ 學會了技能「${a.nm}」。`,'good');
+      say(M('m.learn','★ 學會了技能「{nm}」。',{nm:locAbil(a)}),'good');
       SFX.play('level');
       burst(p.x, p.y, 16, '#f5dc7a', 34, 18, .7);
       const empty = p.slots.indexOf(null);
-      if(empty >= 0){ p.slots[empty] = a.id; say(`已裝載到第 ${empty+1} 格。`); }
+      if(empty >= 0){ p.slots[empty] = a.id; say(M('m.slot','已裝載到第 {n} 格。',{n:empty+1})); }
       else say(`技能欄已滿（${SLOTS} 格）—— 到技能選單更換。`,'gold');
     } else {
       const empty = p.slots.indexOf(null);
@@ -3635,10 +3700,11 @@ function jobLevelUp(){
   SFX.play('level');
   burst(p.x, p.y, 24, '#f5dc7a', 46, 24, .9);
   if(rec.lv >= JOB_MAX){
-    say(`★★ ${JOB_NM[p.job]}　達到 Master —— ${MASTER_PASSIVE[p.job]}（永久生效）`,'gold');
+    say(M('m.jobmaster','★★ {nm}　達到 Master',{nm:locJob(p.job)}) +
+        (LANG === 'zh' ? ` —— ${MASTER_PASSIVE[p.job]}（永久生效）` : ''),'gold');
     float(p.x, p.y, 'MASTER', '#f5dc7a');
   } else {
-    say(`★ ${JOB_NM[p.job]}　職業等級 ${rec.lv}。`,'gold');
+    say(M('m.jobup','★ {nm}　職業等級 {n}。',{nm:locJob(p.job),n:rec.lv}),'gold');
   }
   syncJobSkills();
 }
@@ -3649,7 +3715,7 @@ function autoEquip(it){
   if(it.cat === 'weap' && !p.weap){ p.weap = it; it.known = 1; }
   else if(it.cat === 'shld' && !p.shld){ p.shld = it; it.known = 1; }
   else return false;
-  say(`自動裝備了「${nameOf(it)}」。`,'good');
+  say(M('m.autoequip','自動裝備了「{nm}」。',{nm:nameOf(it)}),'good');
   if(it.cursed) say('……手上傳來一陣寒意。這是被詛咒的裝備！','bad');
   return true;
 }
@@ -3666,10 +3732,10 @@ function useItem(it, fromGround){
     p.sat = Math.min(p.msat, p.sat + d.sat);
     if(over>0){ const ex = Math.floor(over/10000)*1000; p.msat=Math.min(200000,p.msat+ex);
       if(ex) say('胃袋似乎變大了一點。','good'); }
-    say(`吃掉了「${nameOf(it)}」。`);
+    say(M('m.eat','吃掉了「{nm}」。',{nm:nameOf(it)}));
   } else if(it.cat==='herb'){
     SFX.play('quaff');
-    say(`喝下了「${nameOf(it)}」。`);
+    say(M('m.drink','喝下了「{nm}」。',{nm:nameOf(it)}));
     if(d.hp){ const h=Math.min(d.hp,p.mhp-p.hp); p.hp+=h; if(h){ say(`恢復了 ${h} 點體力。`,'good'); float(p.x,p.y,'+'+h,'#6a8f4a'); } }
     if(d.full){ p.hp=p.mhp; say('體力完全恢復了。','good'); }
     if(d.mhp){ p.mhp+=d.mhp; p.hp+=d.mhp; say(`體力上限 +${d.mhp}。`,'good'); }
@@ -3680,7 +3746,7 @@ function useItem(it, fromGround){
     identify(it);
   } else if(it.cat==='scroll'){
     SFX.play('read');
-    say(`讀了「${nameOf(it)}」。`);
+    say(M('m.read','讀了「{nm}」。',{nm:nameOf(it)}));
     ok = readScroll(d.id);
     if(ok) identify(it);
   } else if(it.cat==='wand'){
@@ -3759,7 +3825,7 @@ function fireWand(dx,dy){
     const m = monAt(x,y); if(m){ target=m; break; }
     x+=dx; y+=dy;
   }
-  say(`揮動了「${nameOf(it)}」。`);
+  say(M('m.wave','揮動了「{nm}」。',{nm:nameOf(it)}));
   if(!target){ say('魔力射向遠方，什麼也沒發生。'); endTurn(); return; }
   const id = it.d.id;
   if(id==='sleep'){ if(!(target.d.imm||[]).includes('睡')) target.st['睡']=10; say(`${target.d.nm} 睡著了。`,'good'); }
@@ -3920,7 +3986,7 @@ let pendAbil = null;
 function useAbil(a){
   const p = G.p;
   if(a.t === 'pass'){ say(`${a.nm} 是被動技能 —— 放在技能格裡就一直生效。`); return false; }
-  if(p.mp < abilCost(a, p)){ say('魔力不足。','bad'); return false; }
+  if(p.mp < abilCost(a, p)){ say(TX('m.nomp','魔力不足。'),'bad'); return false; }
   if(a.k === 'self' || a.k === 'around' || a.k === 'melee' || a.k === 'room'){
     payAbil(a, p); doAbil(a, p.face[0], p.face[1]); endTurn(); return true;
   }
@@ -4234,14 +4300,14 @@ function allyTurn(){
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say('這裡沒有樓梯。'); return; }
   if(G.shop && unpaid().length){ SFX.play('open'); openPanel('bill'); return; }
-  if(G.f.bossLock){ say('樓梯被一股壓力封住了 —— 先解決這一層的東西。','bad'); return; }
+  if(G.f.bossLock){ say(TX('m.locked','樓梯被一股壓力封住了 —— 先解決這一層的東西。'),'bad'); return; }
   const act = actAt(G.act);
   if(G.floor >= act.floors){ clearAct(); return; }
   SFX.play('stairs');
   G.floor++;
   buildFloor();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
-  say(`來到了 ${act.nm} 第 ${G.floor} 層（深度 ${G.depth}）。`,'gold');
+  say(M('m.floor','來到了 {nm} 第 {n} 層（深度 {d}）。',{nm:locAct(act),n:G.floor,d:G.depth}),'gold');
   showCard();
   G.turn++;
   refresh();
@@ -4254,9 +4320,9 @@ function clearAct(){
   const act = actAt(G.act);
   SFX.play('level'); BGM.stop();
   burst(G.p.x, G.p.y, 46, '#f5dc7a', 80, 28, 1.1);
-  say(`★ 第 ${G.act+1} 章「${act.nm}」通關！`,'gold');
+  say(M('m.actclear','★ 第 {n} 章「{nm}」通關！',{n:G.act+1,nm:locAct(act)}),'gold');
   if(act.reward){
-    say(`獲得：${act.reward}`,'gold');
+    say(M('m.reward','獲得：{nm}',{nm:act.reward}),'gold');
     grantReward(act);
   }
   const last = G.act >= ACTS.length - 1;
@@ -5438,7 +5504,7 @@ function renderPanel(){
           refresh(); return;
         }
         if(a2.t === 'pass'){ say(`${a2.nm} 正在生效中。`); refresh(); return; }
-        if(p.mp < abilCost(a2, p)){ say('魔力不足。','bad'); refresh(); return; }
+        if(p.mp < abilCost(a2, p)){ say(TX('m.nomp','魔力不足。'),'bad'); refresh(); return; }
         const r = useAbil(a2);
         if(r === null){ closePanel(); openAim(a2.nm + '方向'); return; }
         if(r) closePanel(); else refresh();
@@ -5553,7 +5619,7 @@ function buildActions(it, ground){
         if(cur && cur.cursed){ cur.known=1; say('身上的裝備被詛咒了，換不下來！','bad'); refresh(); return; }
         if(it.cat==='weap') p.weap=it; else p.shld=it;
         it.known=1;
-        say(`裝備了「${nameOf(it)}」。`);
+        say(M('m.equip','裝備了「{nm}」。',{nm:nameOf(it)}));
         if(it.cursed) say('……手上傳來一陣寒意。這是被詛咒的裝備！','bad');
       }
       closePanel(); endTurn();
@@ -5562,11 +5628,11 @@ function buildActions(it, ground){
   if(ground && it.shop){
     btn(`購買（${it.price} G）`, ()=>{
       if(p.gold < it.price){ say('金錢不足。','bad'); refresh(); return; }
-      if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
+      if(p.inv.length>=20){ say(TX('m.bagfull','背包已經滿了。')); refresh(); return; }
       p.gold -= it.price; delete it.shop; delete it.price; delete it.spot;
       SFX.play('coin');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
-      say(`買下了「${nameOf(it)}」。`,'gold');
+      say(M('m.buy','買下了「{nm}」。',{nm:nameOf(it)}),'gold');
       keeperSay(G.rng.pick(KEEP_THANKS));
       autoEquip(it);
       closePanel(); endTurn();
@@ -5581,7 +5647,7 @@ function buildActions(it, ground){
         keeperSay('拿著看沒關係，出門前記得結帳。');
       }
       p.inv.push(it); delete G.items[key(p.x,p.y)];
-      say(`撿起了「${nameOf(it)}」。`);
+      say(M('m.pick','撿起了「{nm}」。',{nm:nameOf(it)}));
       if(!it.shop) autoEquip(it);
       closePanel(); endTurn();
     }, p.inv.length>=20);
@@ -5596,7 +5662,7 @@ function buildActions(it, ground){
         if(it===p.weap || it===p.shld){ say('裝備中的東西要先卸下。'); refresh(); return; }
         if(it.cursed){ it.known=1; say('被詛咒的東西，店員不敢收。','bad'); refresh(); return; }
         p.gold += sp; removeItem(it); SFX.play('coin');
-        say(`賣掉了「${nameOf(it)}」，得到 ${sp} G。`,'gold');
+        say(M('m.sell','賣掉了「{nm}」，得到 {n} G。',{nm:nameOf(it),n:sp}),'gold');
         keeperSay(G.rng.pick(['收下了。','這個我留著自己用。','再多帶一點下來。']));
         closePanel(); endTurn();
       }, it===p.weap || it===p.shld);
@@ -5972,7 +6038,14 @@ function setLang(code){
   if(document.documentElement) document.documentElement.lang = code === 'zh' ? 'zh-Hant' : code;
   applyLangText();
   buildLangPick();
-  if(G && !G.over) refresh();
+  /* 開場的那幾行（章名、章節簡介、操作提示）是在封面還蓋著的時候就寫進
+     紀錄簿的。已經寫出去的字不會回頭重譯 —— 所以在封面上換語言時，
+     用「同一個種子」重開一次，地城完全一樣，只有文字換掉。
+     不重開的話，玩家選了日文、按下開始，看到的第一段還是英文。 */
+  const cov = $('cover');
+  const onCover = cov && cov.classList && !cov.classList.contains('gone');
+  if(G && onCover){ newGame(G.seed); }
+  else if(G && !G.over) refresh();
 }
 setLang(VILLAGE.lang || autoLang());
 

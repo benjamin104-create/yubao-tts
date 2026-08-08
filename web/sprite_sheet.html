@@ -469,6 +469,47 @@ let LANG = 'zh';
 /* 一行一個詞條：key | English | 日本語 */
 const DICT_RAW = `
 ui.title|CLAUDE ABYSS|クロード深淵
+m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
+m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
+m.crit| A critical hit!| かいしんの いちげき！
+m.kill|You defeated {nm}.|{nm} を たおした。
+m.drop|It dropped "{nm}".|「{nm}」を おとした。
+m.levelup|Level up! Now level {n}.|レベルが {n} に あがった！
+m.mmiss|{nm}'s attack misses.|{nm} の こうげきは はずれた。
+m.mhit|{nm}'s {r}attack lands. You take {n} damage.|{nm} の {r}こうげき。{n} の ダメージ。
+m.ranged|ranged |えんきょり
+m.gold|Picked up {n} G.|{n} G を ひろった。
+m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
+m.wall|There is a wall ahead.|まえは かべだ。
+m.corner|You cannot cut that corner.|その かどは まがれない。
+m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
+m.pick|Picked up "{nm}".|「{nm}」を ひろった。
+m.eat|You eat "{nm}".|「{nm}」を たべた。
+m.drink|You drink "{nm}".|「{nm}」を のんだ。
+m.read|You read "{nm}".|「{nm}」を よんだ。
+m.wave|You wave "{nm}".|「{nm}」を ふった。
+m.healed|Recovered {n} HP.|たいりょくが {n} かいふくした。
+m.equip|Equipped "{nm}".|「{nm}」を そうびした。
+m.autoequip|Auto-equipped "{nm}".|「{nm}」を じどうで そうびした。
+m.bagfull|Your pack is full.|かばんが いっぱいだ。
+m.hungry1|You are getting hungry.|おなかが すいてきた。
+m.hungry2|Your stomach is growling!|おなかが なっている！
+m.hungry3|You are starving! Eat something, now.|うえで たおれそうだ！はやく なにか たべろ。
+m.floor|{nm} floor {n} (depth {d}).|{nm} {n}かい（ふかさ {d}）。
+m.chapter|Chapter {n} - {nm}|だい{n}しょう　{nm}
+m.enter|Into the dungeon. Arrows to move, bump a monster to attack.|ダンジョンへ。やじるしで いどう、モンスターに ぶつかれば こうげき。
+m.buy|You bought "{nm}".|「{nm}」を かった。
+m.sell|You sold "{nm}" for {n} G.|「{nm}」を {n} G で うった。
+m.locked|The stairs are sealed by a pressure - deal with what is here first.|かいだんが とざされている —— まずは このかいの ものを たおせ。
+m.unlocked|The pressure lifts - the stairs are open.|あつりょくが きえた —— かいだんが ひらいた。
+m.actclear|Chapter {n} "{nm}" cleared!|だい{n}しょう「{nm}」クリア！
+m.reward|Obtained: {nm}|にゅうしゅ：{nm}
+m.nomp|Not enough magic.|MPが たりない。
+m.learn|Learned the skill "{nm}".|スキル「{nm}」を おぼえた。
+m.jobup|{nm} - job level {n}.|{nm}　しょくぎょうレベル {n}。
+m.jobmaster|{nm} - MASTER reached.|{nm}　マスターに とうたつ。
+m.slot|Loaded into slot {n}.|スロット {n} に セットした。
+m.wearhat|You put on "{nm}" - now a {job} ({rank}).|「{nm}」を かぶった —— いまは {job}（{rank}）。
 ui.start|Descend|潜る
 ui.name|your name|なまえ
 ui.tagline1|Levels reset. Gear is lost —|レベルは戻り、装備は失われる ——
@@ -660,6 +701,21 @@ act.crystal|The Crystal Seam|すいしょうこうざん
 act.tower|The Spire|つうてんとう
 act.final|The Last Labyrinth|さいごのめいきゅう
 act.chaos|The Chaos Chamber|こんとんのま
+acti.mine|An abandoned mine outside the village. They say something that breathes is buried deep inside.|村はずれの はいこう。おくふかくに いきづく いしが うまっている という。
+acti.forest|From the outside in, the mist thickens. The smith's hut is on one of these floors.|そとから おくへ、きりは こくなる。かじやの こやが どこかの かいにある。
+acti.trial|The mountain path turns itself around now and then - the route you memorised stops working.|やまみちは ときどき まるごと まわる —— おぼえた みちは つうじない。
+acti.ordeal|One empty room. The four walls keep sending things in until you have felled five.|からの へや ひとつ。しかたの かべから 5たい たおすまで おくりこまれる。
+acti.briar|A ruined castle held by flame spirits. The sorcerer fires every third turn - pillars are the only answer.|ほのおの れいが すみつく はいじょう。じゅつしは 3ターンごとに うつ —— こたえは はしらだけ。
+acti.lake|The surface is far too still.|みなもが しずかすぎる。
+acti.beast|A nest of phantom beasts. They are not enemies - unless you walk all the way in.|げんじゅうの す。おくまで はいらなければ てきでは ない。
+acti.ninja|An ancient capital in another world. The people here dislike being seen.|いせかいの こきょう。ここの ものは みられるのを きらう。
+acti.heian|Three bridges, three lesser kings. Across them, the Oni Warrior waits.|みっつの はし、みっつの こおう。わたれば おにむしゃが まつ。
+acti.gaol|Sixteen levels down. What is kept here was never meant to be let out.|16かい したへ。ここに とじこめた ものは そとに だしては ならない。
+acti.mirror|Left and right are swapped. You think you go right - you go left.|さゆうが はんてん。みぎと おもえば ひだり。
+acti.crystal|Light travels in straight lines here - and it reflects.|ここでは ひかりは まっすぐ すすみ、そして はんしゃする。
+acti.tower|Twenty levels of a looping well. A rest floor every five.|20かいの いどがた ループ。5かいごとに きゅうけいかい。
+acti.final|No map. No shop. Only the path.|ちずも みせも ない。あるのは みちだけ。
+acti.chaos|No walls here, and no ceiling. Only the Mind.|かべも てんじょうも ない。あるのは「いしき」だけ。
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -676,6 +732,13 @@ const DICT = (()=>{
   return m;
 })();
 /* zh 直接回傳 fallback（也就是程式裡的中文原文）—— 中文不需要查表 */
+/* 訊息用具名佔位符 —— `{nm}`、`{n}`。用位置參數（{0}{1}）的話，
+   譯者看不出第二個數字是傷害還是層數，而看不出來就會翻錯。 */
+function M(key, zh, vars){
+  let t = TX(key, zh);
+  if(vars) for(const k in vars) t = t.split('{'+k+'}').join(vars[k]);
+  return t;
+}
 function TX(key, zh){
   if(LANG === 'zh') return zh;
   const v = DICT[LANG] && DICT[LANG][key];
