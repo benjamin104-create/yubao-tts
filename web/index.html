@@ -1672,6 +1672,45 @@ acti.crystal|Light travels in straight lines here - and it reflects.|ここで�
 acti.tower|Twenty levels of a looping well. A rest floor every five.|20かいの いどがた ループ。5かいごとに きゅうけいかい。
 acti.final|No map. No shop. Only the path.|ちずも みせも ない。あるのは みちだけ。
 acti.chaos|No walls here, and no ceiling. Only the Mind.|かべも てんじょうも ない。あるのは「いしき」だけ。
+d.smash|Heavy blow to the enemy in front.|めのまえの てきに つよい いちげき。
+d.guard|Halve damage taken for 5 turns.|5ターン ダメージ はんげん。
+d.lull|Enemies in sight fall asleep.|しかいの てきを ねむらせる。
+d.anthem|Attack up for 12 turns.|12ターン こうげきりょく アップ。
+d.duplex|Strike the enemy in front twice.|めのまえの てきを 2かい きる。
+d.veil|Halve damage for 6 turns; restores a little magic.|6ターン ダメージ はんげん、MPも すこし かいふく。
+d.circle|Summon a beast using magic instead of your stomach.|いぶくろの かわりに MPで げんじゅうを よぶ。
+d.deluge|Heavy damage to all in sight (no effect on undead).|しかい ぜんたいに だいダメージ（ふしけいには むこう）。
+d.mend|Restore health and clear one ailment.|たいりょくを かいふくし、じょうたい いじょうを ひとつ かいじょ。
+d.ward|Immune to ailments for 8 turns.|8ターン じょうたい いじょう むこう。
+d.pierce|Pierce every enemy in a straight line.|ちょくせんじょうの てきを つらぬく。
+d.survey|Reveal the whole floor.|フロアぜんたいを あかす。
+d.clone|Greatly raise evasion for 8 turns.|8ターン かいひりつが おおきく あがる。
+d.foresee|Break away; pursuers lose track of you. Costs dearly.|せんじょうを はなれ、ついげきを まく。だいしょうは おおきい。
+d.onicut|Triple damage; you take an eighth of your health.|3ばい ダメージ。じぶんも たいりょくの 8ぶんの1を うしなう。
+d.asura|Passive: attack +50% below half health.|パッシブ：たいりょく はんぶんいかで こうげき +50%。
+d.pyro|Pierce in a line and set them burning.|ちょくせんを つらぬき、えんしょうを あたえる。
+d.reflect|Reflect ranged and magic attacks for 10 turns.|10ターン えんきょり／まほうを はねかえす。
+d.m_judge|Judgement on all in sight - the more hurt you are, the harder it lands.|しかい ぜんたいに さばき。きずつくほど おもくなる。
+d.m_revive|Full health and all ailments cleared (drains all magic).|たいりょく ぜんかい、いじょうも ぜんかいじょ（MP ぜんしょうひ）。
+d.m_smite|Pierce in a line and paralyse. Very high power.|ちょくせんを つらぬき まひ。いりょくは ばつぐん。
+d.m_mail|Reflect lightning when struck, for 15 turns.|15ターン ひばくじに らいげきを はんしゃ。
+d.m_pyre|Heavy damage and lasting burn to all in sight.|しかい ぜんたいに だいダメージと えんしょう。
+d.m_core|Greatly raise attack for 15 turns.|15ターン こうげきりょくが おおはば アップ。
+d.m_zero|Freeze and damage all in sight.|しかい ぜんたいを こおらせ ダメージ。
+d.m_mirror|Immune to and reflecting ranged attacks for 15 turns.|15ターン えんきょりを むこうか＆はんしゃ。
+d.m_gale|Pierce in all eight directions at once.|8ほうこうを どうじに つらぬく。
+d.m_shift|Teleport to this floor's stairs (drains all magic).|このかいの かいだんへ しゅんかん いどう（MP ぜんしょうひ）。
+k.who|Shopkeeper|みせのひと
+k.hello1|Welcome. Not many walk in this deep.|いらっしゃい。こんな ふかくまで くるものは すくない。
+k.hello2|Have a look. Stand on something to hear the price.|みていってくれ。ふめば ねだんが わかる。
+k.hello3|I lit the lamps, and I set the prices.|あかりも わたし、ねだんも わたしが きめる。
+k.thanks1|Thanks. Come back alive.|どうも。いきて もどってこいよ。
+k.thanks2|Good eye. That will hold for a few floors yet.|いい めを している。しばらくは もつ。
+k.thanks3|Sold. I will take the coin.|とりひき せいりつ。おかねは もらった。
+k.hold|Hold it if you like. Just settle up before you leave.|もっていても いいが、でるまえに せいさんを。
+k.back|Just put it back. No hard feelings.|もどしてくれれば それでいい。
+k.shop|This is a shop.|ここは みせだ。
+k.money|You have {n} G. You can sell things here too.|しょじきん {n} G。かばんの ものも うれる。
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -3090,9 +3129,9 @@ function stepOn(){
     say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
   if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
     G.shopSeen = 1;
-    say('這是一間店。','gold');
-    keeperSay(G.rng.pick(KEEP_HELLO));
-    say(`身上有 ${p.gold} G。背包裡的東西也可以賣給他。`,'gold');
+    say(TX('k.shop','這是一間店。'),'gold');
+    keeperSay(keepLine(G.rng.pick(KEEP_HELLO)));
+    say(M('k.money','身上有 {n} G。背包裡的東西也可以賣給他。',{n:p.gold}),'gold');
   }
   if(G.items[k]){
     const it = G.items[k];
@@ -4196,17 +4235,24 @@ const inShop = () => !!(G.shop && roomOf(G.p.x, G.p.y) === G.shop.room);
 
 /* 店員會講話。在這之前他只是一個站在門口的方塊：玩家不知道自己
    踩進了什麼規則，走出去才被雷劈 —— 那是介面沒講清楚，不是難度。 */
-function keeperSay(line, kind){ say(`店員：「${line}」`, kind || 'gold'); }
+function keeperSay(line, kind){
+  // 標點也要跟著語言。英文句子配全形的「」看起來就是沒做完的翻譯。
+  const who = TX('k.who','店員');
+  say(LANG === 'en' ? `${who}: "${line}"` : `${who}：「${line}」`, kind || 'gold');
+}
 const KEEP_HELLO = [
-  '歡迎光臨。這麼深的地方，還肯走進來的人不多。',
-  '看看吧。踩在東西上面就能問價。',
-  '燈是我點的，價錢也是我開的。',
+  ['k.hello1','歡迎光臨。這麼深的地方，還肯走進來的人不多。'],
+  ['k.hello2','看看吧。踩在東西上面就能問價。'],
+  ['k.hello3','燈是我點的，價錢也是我開的。'],
 ];
 const KEEP_THANKS = [
-  '謝了，祝你活著回來。',
-  '好眼光。這件東西撐得住下面幾層。',
-  '成交。錢我收下了。',
+  ['k.thanks1','謝了，祝你活著回來。'],
+  ['k.thanks2','好眼光。這件東西撐得住下面幾層。'],
+  ['k.thanks3','成交。錢我收下了。'],
 ];
+/* 台詞存成 [key, 中文] 的配對，抽中哪一句再翻 —— 抽完才翻，
+   隨機性與語言就互不干涉了。 */
+const keepLine = pair => TX(pair[0], pair[1]);
 
 /* 賣價：底價的一半，強化值另外算。買一件再賣回去會虧 ——
    不然玩家就會站在店裡把錢磨出來，而不是下樓。 */
@@ -4238,7 +4284,7 @@ function returnGoods(){
     shelfBack(it);
   }
   SFX.play('pick');
-  keeperSay('放回去就好，我不追究。');
+  keeperSay(TX('k.back','放回去就好，我不追究。'));
 }
 /* 被傳送 / 被吹飛出店外，不算偷 —— 店員追上來把貨拿回去就好。
    走出去要不要付錢是玩家的選擇；被道具丟出去不是。 */
@@ -4255,7 +4301,7 @@ function payBill(){
   for(const it of unpaid()){ delete it.shop; delete it.price; delete it.spot; it.known = 1; }
   SFX.play('coin');
   say(`結帳 ${total} G。`,'gold');
-  keeperSay(G.rng.pick(KEEP_THANKS));
+  keeperSay(keepLine(G.rng.pick(KEEP_THANKS)));
   return true;
 }
 
@@ -5493,7 +5539,7 @@ function renderPanel(){
       row.className = 'spell' + (ok ? '' : ' off');
       row.innerHTML =
         `<span class="nm">${locAbil(a2)}</span>` +
-        `<span class="ds">［${TX('ui.t.'+a2.t, ABIL_T[a2.t] || '技')}］${a2.desc}</span>` +
+        `<span class="ds">［${TX('ui.t.'+a2.t, ABIL_T[a2.t] || '技')}］${TX('d.'+a2.id, a2.desc)}</span>` +
         `<span class="mp">${on ? costLabel(a2, p) : '未裝載'}</span>`;
       row.onclick = ()=>{
         if(!on){                                   // 沒裝載 → 裝進第一個空格
@@ -5633,7 +5679,7 @@ function buildActions(it, ground){
       SFX.play('coin');
       p.inv.push(it); delete G.items[key(p.x,p.y)];
       say(M('m.buy','買下了「{nm}」。',{nm:nameOf(it)}),'gold');
-      keeperSay(G.rng.pick(KEEP_THANKS));
+      keeperSay(keepLine(G.rng.pick(KEEP_THANKS)));
       autoEquip(it);
       closePanel(); endTurn();
     }, p.gold < it.price);
@@ -5644,7 +5690,7 @@ function buildActions(it, ground){
       SFX.play('pick');
       if(it.shop){
         it.spot = key(p.x,p.y);                 // 記住原位，之後要放得回去
-        keeperSay('拿著看沒關係，出門前記得結帳。');
+        keeperSay(TX('k.hold','拿著看沒關係，出門前記得結帳。'));
       }
       p.inv.push(it); delete G.items[key(p.x,p.y)];
       say(M('m.pick','撿起了「{nm}」。',{nm:nameOf(it)}));
