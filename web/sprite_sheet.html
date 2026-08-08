@@ -1,4 +1,4 @@
-<meta charset="utf-8"><title>sprite sheet — 深淵行商人</title>
+<meta charset="utf-8"><title>sprite sheet — 深度學習：通天之塔</title>
 <style>
 body{background:#14110f;color:#e8dcc0;font-family:system-ui,sans-serif;margin:0;padding:20px}
 h1{font-size:15px;letter-spacing:.18em;color:#e8dcc0;font-weight:600;margin:0 0 4px}
@@ -171,7 +171,7 @@ const MONS = [
  {id:'moth',   nm:'幻光蝶',   ai:'W', hp:18,atk:10,def:3, exp:30, spd:2,   sight:5, ev:22,fl:[3,13], w:55, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:4,ch:.22}},
  {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}},
  {id:'shinobi',nm:'影忍',     ai:'C', hp:38,atk:28,def:10,exp:160,spd:2,   sight:9, ev:26,fl:[12,26],w:50, zn:['wood'], bd:'human', col:'4', glow:'g', clone:1},
- {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:30,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:1},
+ {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:16,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:.85},
  {id:'seraph', nm:'熾天使',   ai:'C', hp:56,atk:32,def:16,exp:320,spd:1,   sight:9, ev:8, fl:[19,30],w:45, zn:['spire'], bd:'bird', col:'v', glow:'+'},
  {id:'chimera',nm:'奇美拉',   ai:'C', hp:88,atk:38,def:18,exp:460,spd:1,   sight:9, ev:6, fl:[21,30],w:34, zn:['spire'], bd:'chimera', col:'g', glow:'u', onhit:{st:'燒',dur:5,ch:.35}},
  {id:'warden', nm:'守序構裝', ai:'C', hp:70,atk:30,def:20,exp:340,spd:1,   sight:7, ev:0, fl:[20,30],w:40, zn:['spire'], bd:'construct', col:'d', imm:['睡','亂','麻'], glow:'q'},
@@ -542,7 +542,8 @@ const LANGS = [['zh','中文'],['en','English'],['ja','日本語']];
 let LANG = 'zh';
 /* 一行一個詞條：key | English | 日本語 */
 const DICT_RAW = `
-ui.title|DEEP LEARNING: ASCENT OF BABEL|ディープラーニング 通天の塔
+ui.title|DEEP LEARNING|ディープラーニング
+ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
 m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
 m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
@@ -791,21 +792,75 @@ act.crystal|The Crystal Seam|すいしょうこうざん
 act.tower|The Spire|つうてんとう
 act.final|The Last Labyrinth|さいごのめいきゅう
 act.chaos|The Chaos Chamber|こんとんのま
-acti.mine|An abandoned mine outside the village. They say something that breathes is buried deep inside.|村はずれの はいこう。おくふかくに いきづく いしが うまっている という。
-acti.forest|From the outside in, the mist thickens. The smith's hut is on one of these floors.|そとから おくへ、きりは こくなる。かじやの こやが どこかの かいにある。
-acti.trial|The mountain path turns itself around now and then - the route you memorised stops working.|やまみちは ときどき まるごと まわる —— おぼえた みちは つうじない。
-acti.ordeal|One empty room. The four walls keep sending things in until you have felled five.|からの へや ひとつ。しかたの かべから 5たい たおすまで おくりこまれる。
-acti.briar|A ruined castle held by flame spirits. The sorcerer fires every third turn - pillars are the only answer.|ほのおの れいが すみつく はいじょう。じゅつしは 3ターンごとに うつ —— こたえは はしらだけ。
-acti.lake|The surface is far too still.|みなもが しずかすぎる。
-acti.beast|A nest of phantom beasts. They are not enemies - unless you walk all the way in.|げんじゅうの す。おくまで はいらなければ てきでは ない。
-acti.ninja|An ancient capital in another world. The people here dislike being seen.|いせかいの こきょう。ここの ものは みられるのを きらう。
-acti.heian|Three bridges, three lesser kings. Across them, the Oni Warrior waits.|みっつの はし、みっつの こおう。わたれば おにむしゃが まつ。
-acti.gaol|Sixteen levels down. What is kept here was never meant to be let out.|16かい したへ。ここに とじこめた ものは そとに だしては ならない。
-acti.mirror|Left and right are swapped. You think you go right - you go left.|さゆうが はんてん。みぎと おもえば ひだり。
-acti.crystal|Light travels in straight lines here - and it reflects.|ここでは ひかりは まっすぐ すすみ、そして はんしゃする。
-acti.tower|Twenty levels of a looping well. A rest floor every five.|20かいの いどがた ループ。5かいごとに きゅうけいかい。
-acti.final|No map. No shop. Only the path.|ちずも みせも ない。あるのは みちだけ。
-acti.chaos|No walls here, and no ceiling. Only the Mind.|かべも てんじょうも ない。あるのは「いしき」だけ。
+acti.mine|You wake at the very bottom, remembering nothing. All you know is that you can learn.|いちばん したで めが さめた。なにも おぼえていない。まなべる ことだけを しっている。
+acti.forest|In the mist, every step is your own call. Nobody tells you which way is right.|きりの なか、いっぽ いっぽ じぶんで きめる。どちらが ただしいか だれも おしえない。
+acti.trial|The path changes. The route you memorised stops working — all you can carry out is how to find a route again.|やまみちは かわる。おぼえた みちは つうじない。もちだせるのは 「みちの さがしかた」だけ。
+acti.ordeal|One empty room, four walls feeding things in. This is not a test of skill — it asks whether you last.|からの へや ひとつ、しほうから おくりこまれる。ぎじゅつでは なく、たえられるかを とう。
+acti.briar|The flame sorcerer fires every third turn. Read the rhythm and you have already won.|ほのおの じゅつしは 3ターンごとに うつ。リズムが よめれば かちだ。
+acti.lake|The water shows what you are now. Not what woke up at the bottom.|みなもは いまの あなたを うつす。めざめた ころとは もう ちがう。
+acti.beast|The beasts do not attack. They are waiting for you to prove you deserve their power.|げんじゅうは おそって こない。ちからに ふさわしいと しめすのを まっている。
+acti.ninja|The people here dislike being seen. What you must learn is when not to strike.|ここの ものは みられるのを きらう。まなぶのは 「うたない とき」だ。
+acti.heian|Three bridges, three lesser kings. Cross them and you are given someone's name.|みっつの はし、みっつの こおう。わたれば ひとりの なまえを もらう。
+acti.gaol|Sixteen floors down. Everyone held here once climbed the way you are climbing.|16かい したへ。ここの ものは みな かつて あなたと おなじく のぼった。
+acti.mirror|Left and right are swapped. You think you go right — you go left. You cannot even trust yourself.|さゆうが はんてん。みぎと おもえば ひだり。じぶんさえ しんじられない。
+acti.crystal|Here light travels straight, and it reflects. For the first time you see the rule itself.|ここでは ひかりは まっすぐ すすみ、はんしゃする。はじめて 「きそく」そのものを みる。
+acti.tower|Twenty floors up. At the top there is a door, and behind it is not a place but a time.|20かい うえへ。とうちょうに とびら。その さきは ばしょでは なく じかん。
+acti.final|No map. No shop. You do not need them any more.|ちずも みせも ない。もう ひつようが ない。
+acti.chaos|No walls here, and no ceiling. Only the Mind — and you, about to become it.|かべも てんじょうも ない。あるのは「いしき」、そして それに なろうと している あなた。
+actr.mine|Milithru, the Stone of Riddles|ミリスル（なぞの いし）
+actr.forest|Mystery Hat (a random job hat)|なぞの ぼうし（ランダムな しょくぎょうぼう）
+actr.trial|Blessing of the Pure Spring (max HP +20)|せいせんの かご（たいりょく じょうげん +20）
+actr.ordeal|Helm of the Brave (defence +4)|ゆうしゃの かぶと（ぼうぎょ +4）
+actr.briar|The Sorcerer's Peaked Hat|じゅつしの とんがりぼう
+actr.lake|The Bard's Wrapped Cap|ぎんゆうしじんの かぶりもの
+actr.beast|Phoenix Feather (revives you once on death)|ふしちょうの はね（しんだとき 1かいだけ ふっかつ）
+actr.ninja|The Shinobi's Headband + Perception|しのびの はちがね ＋ みきりの じゅつ
+actr.heian|The Oni Mask Helm|おにめんかぶと
+actr.gaol|The Gaoler's Key|ろうごくちょうの かぎ
+actr.mirror|The Heart of Darkness|やみの こころ
+actr.crystal|The Key of Space and Time|じくうの かぎ
+actr.tower|Sword of the Gods (attack +18)|しんきの つるぎ（こうげき +18）
+actr.final|The door to the Chaos Chamber|こんとんの まへの とびら
+lk.herb.0|Crimson Herb|あかい くさ
+lk.herb.1|Indigo Herb|あいいろの くさ
+lk.herb.2|Pale Yellow Herb|きいろい くさ
+lk.herb.3|Ashen Herb|はいいろの くさ
+lk.herb.4|Deep Green Herb|ふかみどりの くさ
+lk.herb.5|Speckled Herb|まだらの くさ
+lk.herb.6|Curled Herb|まきついた くさ
+lk.herb.7|Charred Herb|こげた くさ
+lk.herb.8|Translucent Herb|すきとおった くさ
+lk.herb.9|Thorned Herb|とげの ある くさ
+lk.herb.10|Downy Herb|けばだった くさ
+lk.herb.11|Violet Herb|むらさきがかった くさ
+lk.herb.12|Sticky Herb|ねばつく くさ
+lk.herb.13|Rust-coloured Herb|さびいろの くさ
+lk.scroll.0|Scroll marked "Zlatha"|「ズラサ」と かかれた まきもの
+lk.scroll.1|Scroll marked "Meruendo"|「メレンド」と かかれた まきもの
+lk.scroll.2|Scroll marked "Cabra"|「カブラ」と かかれた まきもの
+lk.scroll.3|Scroll marked "Sione"|「シオニ」と かかれた まきもの
+lk.scroll.4|Scroll marked "Dolga"|「ドルガ」と かかれた まきもの
+lk.scroll.5|Scroll marked "Uruz"|「ウルズ」と かかれた まきもの
+lk.scroll.6|Scroll marked "Nemesi"|「ネメシ」と かかれた まきもの
+lk.scroll.7|Scroll marked "Sair"|「サイル」と かかれた まきもの
+lk.scroll.8|Scroll marked "Rogeth"|「ロゲス」と かかれた まきもの
+lk.scroll.9|Scroll marked "Turambi"|「トランビ」と かかれた まきもの
+lk.scroll.10|Scroll marked "Azmi"|「アズミ」と かかれた まきもの
+lk.wand.0|Wooden Wand|きの つえ
+lk.wand.1|Birch Wand|しらかばの つえ
+lk.wand.2|Knotted Wand|こぶの ある つえ
+lk.wand.3|Spiral Wand|らせんの つえ
+lk.wand.4|Jet-black Wand|まっくろな つえ
+lk.wand.5|Bone Wand|ほねの つえ
+lk.wand.6|Woven Wand|つるあみの つえ
+lk.wand.7|Cracked Wand|ひびわれた つえ
+lk.wand.8|Silver-inlaid Wand|ぎんぞうがんの つえ
+lk.pot.0|Round-bellied Pot|まるはらの つぼ
+lk.pot.1|Narrow-necked Pot|ほそくびの つぼ
+lk.pot.2|Cracked Pot|ひびの ある つぼ
+lk.pot.3|Unglazed Pot|すやきの つぼ
+lk.pot.4|Blue-patterned Pot|あおもようの つぼ
+lk.pot.5|Chipped Pot|かけた つぼ
 d.smash|Heavy blow to the enemy in front.|めのまえの てきに つよい いちげき。
 d.guard|Halve damage taken for 5 turns.|5ターン ダメージ はんげん。
 d.lull|Enemies in sight fall asleep.|しかいの てきを ねむらせる。
