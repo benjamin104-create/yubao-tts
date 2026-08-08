@@ -540,12 +540,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
 /* 技能點與魔法 */
 #sp{
-  display:flex; align-items:center; gap:8px; padding:9px 14px;
+  display:flex; align-items:center; gap:8px; padding:9px 14px; flex-wrap:wrap;
   border-bottom:1px solid var(--hair); font-size:12px;
 }
 #sp b{font-family:var(--mono); color:var(--brass); font-size:15px}
 .sch{display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:12.5px}
-.sch .nm{width:34px; color:var(--parch)}
+/* 寬度給到 5.2em：日文的系名（かいふく／かみなり）比中文的兩個字長，
+   34px 寫死的話它們會各自折成兩行，整份魔法表變成階梯狀。
+   欄寬要跟著最長的語言設。 */
+.sch .nm{width:5.2em; flex:none; color:var(--parch); font-size:12px; line-height:1.25}
 .sch .pips{display:flex; gap:3px; flex:1}
 .sch .pips{gap:2px}
 .sch .pips i{width:8px; height:11px; border:1px solid var(--edge); display:block}
@@ -1747,6 +1750,154 @@ bl.b_gate|The last door.|さいごの とびら。
 bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
 bl.b_mind2|Three of you. Only one does not follow your steps.|3にんの きみ。ついてこないのは ひとりだけ。
 bl.b_mind|It stands at last. Every swing leaves it open for a turn.|ついに たちあがる。ひとふりごとに 1ターン すきが できる。
+p.magic|Magic|まほう
+p.bag|Bag|もちもの
+p.ground|Underfoot|あしもと
+p.bill|Checkout|おかいけい
+p.sp|Magic points|まほうポイント
+p.spleft|{n} magic point(s) left to spend (never lost on death).|まほうポイントが {n} のこっている（しんでも きえない）。
+p.spfrom|From level {n}, every level gives +1 magic point.|レベル {n} から、レベルアップごとに まほうポイント +1。
+p.schmax|Max {n} per school　mastery at full|1けいとう じょうげん {n}　カンストで おうぎ かいほう
+p.schup|{nm} raised to level {n}.|{nm}けいとうが レベル {n} に あがった。
+p.learned|Spells learned|おぼえた まほう
+p.nospell|No spells yet - spend a point first.|まだ まほうが ない —— さきに ポイントを ふろう。
+p.castdir|Cast direction|しょうしゃ ほうこう
+p.dir|direction|ほうこう
+p.wanddir|Wand direction|つえの ほうこう
+p.throwdir|Throw direction|なげる ほうこう
+p.jobnone|Job - find a hat to change class (one per dungeon)|しょくぎょう —— ぼうしを みつければ てんしょく（ダンジョンに ひとつ）
+p.jobprog|　progress {a}/{p}|　しんちょく {a}/{p}
+p.jobnext|　(next: {nm})|　（つぎ：{nm}）
+p.jobmax|　(next: Master)|　（つぎ：マスター）
+p.jobdone|Jobs trained|そだてた しょくぎょう
+p.noabil|No job skills yet - wear a hat and fight to raise the job.|まだ しょくぎょうスキルが ない —— ぼうしを かぶって たたかおう。
+p.unloaded|not loaded|みそうび
+p.slotfull|Only {n} skill slots - unload one above first.|スキルは {n}スロットまで —— さきに ひとつ はずそう。
+p.passon|{nm} is active - passive skills need no casting.|{nm} は はつどうちゅう —— パッシブは つかう ひつようが ない。
+p.passnow|{nm} is already active.|{nm} は すでに はつどうちゅう。
+p.summon|Beasts　cost: {n}% of your stomach|げんじゅう　だいか：いぶくろ {n}%
+p.summonneed|Beasts　need level {n} in any school|げんじゅう　どれか 1けいとう レベル {n} ひつよう
+p.summonst|ATK {a}　{t} turns|こうげき {a}　{t}ターン
+p.stomach|stomach −30%|いぶくろ −30%
+p.held|You have {n} G|しょじきん {n} G
+p.unpaid|{n} unpaid item(s), {g} G total.|みかいけい {n}てん、ごうけい {g} G。
+p.nounpaid|Nothing left unpaid.|みかいけいは もう ない。
+p.pay|Pay ({n} G)|しはらう（{n} G）
+p.putback|Put them back|たなに もどす
+p.staying|Cancel (stay in the shop)|とりけし（みせに のこる）
+p.forceout|Walk out anyway (divine punishment)|むりやり でる（てんばつ）
+p.tapitem|Tap an item to see what you can do.|アイテムを タップすると そうさが でる。
+p.equipped|equipped|そうびちゅう
+p.nothinghere|Nothing underfoot.|あしもとには なにも ない。
+b.eat|Eat|たべる
+b.drink|Drink|のむ
+b.read|Read|よむ
+b.wave|Wave|ふる
+b.noPickUp|{v} (without picking up)|{v}（ひろわずに）
+b.worn|Worn|そうびちゅう
+b.wear|Wear|かぶる
+b.unequip|Unequip|はずす
+b.equip|Equip|そうびする
+b.buy|Buy ({n} G)|かう（{n} G）
+b.take|Take (unpaid)|もつ（みかいけい）
+b.pickup|Pick up|ひろう
+b.swap|Swap|いれかえ
+b.stepover|Step over|とおりすぎる
+b.sell|Sell ({n} G)|うる（{n} G）
+b.swapground|Swap with underfoot|あしもとと いれかえ
+b.pocketin|Put in the universal pocket|まんのうポケットに いれる
+b.pocketswap|Swap into pocket (holds {nm})|ポケットと いれかえ（いま {nm}）
+b.throw|Throw|なげる
+b.drop|Drop|おく
+b.close|Close|とじる
+e.pickfirst|Pick it up before equipping.|ひろってから そうびしよう。
+e.cursedoff|It is cursed - you cannot take it off!|のろわれている —— はずせない！
+e.tookoff|You take it off.|そうびを はずした。
+e.cursedworn|What you are wearing is cursed - you cannot swap it!|そうびが のろわれていて とりかえられない！
+e.chill|...a chill runs up your arm. This is cursed!|……つめたい かんしょくが はしる。のろわれた そうびだ！
+e.nomoney|Not enough money.|おかねが たりない。
+e.swaphint|Choose a bag item to swap with the one underfoot.|かばんの アイテムを えらんで あしもとと いれかえる。
+e.sellequip|Take it off before selling.|うるまえに そうびを はずそう。
+e.sellcursed|Cursed - the shopkeeper will not take it.|のろわれている —— みせのひとは うけとらない。
+e.groundfull|There is already something underfoot.|あしもとには すでに なにか ある。
+e.putground|You drop "{a}" and take "{b}".|「{a}」を おいて「{b}」を とった。
+e.pocketback|You take "{nm}" back out of the pocket.|ポケットから「{nm}」を とりだした。
+e.pocketin|"{nm}" goes into the universal pocket - it survives one death.|「{nm}」を まんのうポケットへ —— 1かいの しを こえられる。
+e.throwdir|Choose a direction to throw.|なげる ほうこうを えらぼう。
+k.sell1|Taken.|うけとった。
+k.sell2|I will keep this one for myself.|これは じぶんで つかおう。
+k.sell3|Bring me more next time.|つぎも もってきてくれ。
+m.spellhit|{nm} hits {n} enemies.|{nm}が {n}たいに めいちゅう。
+m.spellmiss|{nm} bursts on empty ground.|{nm}は なにもない ところで はじけた。
+m.spellall|{nm} sweeps {n} enemies!|{nm}が {n}たいを なぎはらった！
+m.summoned|{nm} answers the call! ({t} turns)|{nm}が よびごえに こたえた！（{t}ターン）
+m.stmany|{n} enemies in sight are afflicted with {nm}.|しかいの てき {n}たいが {nm}の じょうたいに なった。
+m.nothing|Nothing happens...|なにも おこらなかった……
+m.stoff|The {nm} effect wears off.|{nm}の こうかが きれた。
+m.ston|You are afflicted with {nm}!|{nm}の じょうたいに なった！
+m.ston2|Afflicted with {nm}!|{nm}の じょうたいに なった！
+sp.cure|Cure|ケアル
+sp.purge|Purge|じょうか
+sp.spark|Spark|でんげき
+sp.thund|Thunder|らくらい
+sp.flame|Fireball|ひのたま
+sp.inferno|Inferno|れんごく
+sp.shard|Ice Shard|ひょうすい
+sp.freeze|Deep Freeze|ひょうふう
+sp.gust|Gust|しっぷう
+sp.cyclone|Cyclone|たつまき
+sd.cure|Restore health.|たいりょくを かいふく。
+sd.purge|Clear ailments and heal a little.|じょうたい いじょうを かいじょ、すこし かいふく。
+sd.spark|Pierce every enemy in a straight line.|ちょくせんじょうの てきを つらぬく。
+sd.thund|Lightning strikes all in sight.|しかい ぜんたいに らいげき。
+sd.flame|Bursts in a ring on impact.|めいちゅうご まわりに ばくはつ。
+sd.inferno|Burn everything in sight.|しかい ぜんたいを えんしょう。
+sd.shard|Hit and freeze the target.|めいちゅうさせて こおらせる。
+sd.freeze|Paralyse everything in sight.|しかい ぜんたいを まひさせる。
+sd.gust|Knock back in a line and damage.|ちょくせんじょうを ふきとばして ダメージ。
+sd.cyclone|Scatter everything in sight.|しかい ぜんたいを ふきちらす。
+sm.ifr|Ifrit|イフリート
+sm.niv|Shiva|シヴァ
+sm.ram|Ramuh|ラムウ
+sm.syl|Sylph|シルフ
+k.ground|Underfoot|あしもと
+k.bag|Bag|もちもの
+k.down|Descend|おりる
+k.wait|Wait|まつ
+k.magic|Magic|まほう
+k.padon|Hide pad|パッドをしまう
+k.padoff|Show pad|パッドをだす
+k.tags|Labels|なまえ
+k.mute|Sound|おと
+k.help|Controls|そうさ
+lg.pct|{n}% explored|{n}% たんさくずみ
+lg.seen|in sight|しかいない
+lg.walked|explored|たんさくずみ
+lg.you|you|きみ
+lg.stairs|stairs|かいだん
+lg.mon|monster|モンスター
+lg.item|item|アイテム
+p.pocketat|Unlocked at level {n}|レベル {n} で かいほう
+st.速|Haste|かそく
+st.力|Power|ちから
+st.守|Guard|ガード
+st.界|Ward|けっかい
+st.怒|Rage|げきど
+st.熔|Molten|ようしん
+st.雷|Thunder|らいもん
+st.鏡|Mirror|みずかがみ
+st.歌|Anthem|せんいのうた
+st.影|Clones|かげぶんしん
+st.睡|Asleep|すいみん
+st.麻|Paralysed|まひ
+st.亂|Confused|こんらん
+st.盲|Blind|しつめい
+st.毒|Poison|どく
+st.痛|Burning|ひりひり
+st.燒|Burning|えんしょう
+st.封|Sealed|ふういん
+st.餓|Starving|くうふく
+st.none|normal|ふつう
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -1787,6 +1938,9 @@ function locName(cat, d){
 }
 const locJob  = j => TX('job.' + j, JOB_NM[j] || '見習者');
 const locAbil = a => TX('ab.' + a.id, a.nm);
+const locSpell = sp => TX('sp.' + sp.id, sp.nm);
+const locSpellD = sp => TX('sd.' + sp.id, sp.desc);
+const locSummon = sm => TX('sm.' + sm.id, sm.nm);
 const locAct  = a => TX('act.' + a.id, a.nm);
 
 const LOOK = {
@@ -3376,7 +3530,8 @@ function endTurn(){
   if(G.over) return;
   const p=G.p;
   // 狀態遞減
-  for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k]; say(`${k}的狀態解除了。`); } }
+  for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k];
+    say(M('m.stoff','{nm}的狀態解除了。',{nm:TX('st.'+k, k)})); } }
   for(const m of G.mons){ for(const k in m.st) if(--m.st[k]<=0) delete m.st[k]; }
 
   allyTurn();                       // 幻獸先動 —— 它是玩家花代價換來的先手
@@ -3724,7 +3879,7 @@ function act(m,it){
     }
     if(oh && p.st['界'] && oh.st){ say('結界擋下了異常狀態。','good'); }
     else if(oh && G.rng.chance(oh.ch)){
-      if(oh.st){ p.st[oh.st]=oh.dur; say(`你陷入了${oh.st}的狀態！`,'bad'); }
+      if(oh.st){ p.st[oh.st]=oh.dur; say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.'+oh.st, oh.st)}),'bad'); }
       if(oh.drain){ p.sat=Math.max(0,p.sat-oh.drain); say(`${m.d.nm} 吸走了你的體力！`,'bad'); }
       if(oh.curse){ const t=[p.weap,p.shld].filter(i=>i&&!i.cursed);
         if(t.length){ const v=G.rng.pick(t); v.cursed=true; v.known=1;
@@ -3909,7 +4064,7 @@ function useItem(it, fromGround){
     if(d.str){ p.strb+=d.str; say(`力量 ${d.str>0?'+':''}${d.str}。`, d.str>0?'good':'bad'); }
     if(d.dmg){ p.hp-=d.dmg; say(`受到 ${d.dmg} 點傷害。`,'bad'); float(p.x,p.y,'-'+d.dmg,'#a83c32'); }
     if(d.cure){ const had=Object.keys(p.st).length; p.st={}; say(had?'異常狀態解除了。':'什麼都沒有發生……', had?'good':null); if(!had) ok=false; }
-    if(d.self){ p.st[d.self.st]=d.self.dur; say(`陷入了${d.self.st}的狀態！`, d.self.st==='速'?'good':'bad'); }
+    if(d.self){ p.st[d.self.st]=d.self.dur; say(M('m.ston2','陷入了{nm}的狀態！',{nm:TX('st.'+d.self.st, d.self.st)}), d.self.st==='速'?'good':'bad'); }
     identify(it);
   } else if(it.cat==='scroll'){
     SFX.play('read');
@@ -3961,7 +4116,8 @@ function readScroll(id){
       const st = id==='sleep'?'睡':'亂';
       const vis = G.mons.filter(m=>G.seen[key(m.x,m.y)]===2 && !(m.d.imm||[]).includes(st));
       vis.forEach(m=>m.st[st]=id==='sleep'?15:12);
-      say(vis.length?`視野內的 ${vis.length} 隻敵人陷入了${st}的狀態。`:'什麼都沒有發生……', vis.length?'good':null);
+      say(vis.length ? M('m.stmany','視野內的 {n} 隻敵人陷入了{nm}的狀態。',{n:vis.length, nm:TX('st.'+st, st)})
+                     : TX('m.nothing','什麼都沒有發生……'), vis.length?'good':null);
       return vis.length>0;
     }
     case 'summon': {
@@ -4033,7 +4189,7 @@ function castSpell(sp){
   // room 打的是「視野內全體」，方向無關 —— 還要玩家選方向只是白按一次
   if(sp.k === 'self' || sp.k === 'room'){ p.mp -= sp.mp; doSpell(sp, 0, 0); endTurn(); return true; }
   pendSpell = sp;
-  say(`${sp.nm} —— 選擇方向。`,'gold');
+  say(`${locSpell(sp)} —— ${TX('p.dir','方向')}`,'gold');
   refresh();
   return null;                       // null = 進入瞄準，由方向鍵/方向盤接手
 }
@@ -4123,7 +4279,8 @@ function doSpell(sp, dx, dy){
                 ice ? '#7cb8ea' : '#e87a4a', ice ? '麻' : '痛', ice ? 4 : 5);
         n++;
       }
-      say(n ? `${sp.nm}命中了 ${n} 個敵人。` : `${sp.nm}炸在空無一物的地方。`, n?'good':null);
+      say(n ? M('m.spellhit','{nm}命中了 {n} 個敵人。',{nm:locSpell(sp),n:n})
+            : M('m.spellmiss','{nm}炸在空無一物的地方。',{nm:locSpell(sp)}), n?'good':null);
       break;
     }
     case 'thund': case 'inferno': case 'freeze': case 'cyclone': {
@@ -4142,7 +4299,7 @@ function doSpell(sp, dx, dy){
           if(m.hp > 0) knock(m, Math.sign(m.x-p.x)||1, Math.sign(m.y-p.y)||1, 4);
         }
       }
-      say(`${sp.nm}橫掃了 ${list.length} 個敵人！`,'good');
+      say(M('m.spellall','{nm}橫掃了 {n} 個敵人！',{nm:locSpell(sp),n:list.length}),'good');
       break;
     }
   }
@@ -4351,7 +4508,7 @@ function callSummon(sm, free){
   SFX.play('level');
   burst(spot.x, spot.y, 26, PAL[sm.col], 60, 20, .8);
   G.shake = Math.max(G.shake, 8);
-  say(`${sm.nm}響應召喚而來！（${ttl} 回合${free ? '' : '，胃袋 −30%'}）`,'gold');
+  say(M('m.summoned','{nm}響應召喚而來！（{t} 回合）',{nm:locSummon(sm),t:ttl}),'gold');
   if(!free) endTurn();                 // 技能路徑由 useAbil 自己收尾，不能重複結束回合
   return true;
 }
@@ -5374,9 +5531,10 @@ function paintMap(mcx, mini, MMS){
   mcx.fillStyle='#e8dcc0'; mcx.fillRect(G.p.x*MMS+1, G.p.y*MMS+1, MMS-2, MMS-2);
 
   const el = document.getElementById('mapstat');
-  if(el) el.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
+  const pct = total ? M('lg.pct','{n}% 已探索',{n:Math.round(100*known/total)}) : '';
+  if(el) el.textContent = pct;
   const el2 = document.getElementById('bigstat');
-  if(el2) el2.textContent = total ? Math.round(100*known/total)+'% 已探索' : '';
+  if(el2) el2.textContent = pct;
 }
 
 /* 直式手機給直式視窗。手機畫面本來就是直的，塞一個 14x10 的橫視窗
@@ -5520,11 +5678,14 @@ function refresh(){
   const sb = $('stbar'); sb.innerHTML='';
   const GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1,'歌':1,'影':1};
   const keys = Object.keys(p.st);
-  if(!keys.length){ const s=document.createElement('span'); s.className='none'; s.textContent='正常'; sb.appendChild(s); }
+  if(!keys.length){ const s=document.createElement('span'); s.className='none';
+    s.textContent=TX('st.none','正常'); sb.appendChild(s); }
   for(const k of keys){
     const b=document.createElement('b');
     if(GOOD[k]) b.className='ok';
-    b.textContent = `${k} ${p.st[k]}`;
+    /* 狀態的鍵是中文單字（p.st['速']），改不得 —— 它們散在整份程式裡。
+       所以只翻「顯示出來的名字」，鍵留著。 */
+    b.textContent = `${TX('st.' + k, k)} ${p.st[k]}`;
     sb.appendChild(b);
   }
 
@@ -5546,8 +5707,8 @@ function refresh(){
   $('eqs').className = p.shld && p.shld.cursed && p.shld.known ? 'bad' : '';
   $('eqi').textContent = `${p.inv.length} / 20`;
   $('eqe').textContent = `${p.exp} / ${needExp(p.lv)}`;
-  $('eqp').textContent = !VILLAGE.pocket.open ? `等級 ${SP_FROM_LV} 取得`
-    : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : '（空）');
+  $('eqp').textContent = !VILLAGE.pocket.open ? M('p.pocketat','等級 {n} 取得',{n:SP_FROM_LV})
+    : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : TX('ui.empty','（空）'));
 
   const last = G.log[G.log.length-1];
   const tk = $('ticker');
@@ -5580,15 +5741,16 @@ function renderPanel(){
   const list = $('list'), acts = $('acts'), p = G.p;
   list.innerHTML=''; acts.innerHTML='';
   if(panelMode==='magic'){
-    $('ptitle').textContent = '魔法';
+    $('ptitle').textContent = TX('p.magic','魔法');
     $('pcount').textContent = `MP ${p.mp} / ${p.mmp}`;
     $('phint').textContent = p.sp
-      ? `還有 ${p.sp} 點魔法點數可以分配（不會因死亡消失）。`
-      : `等級 ${SP_FROM_LV} 之後每升一級 +1 魔法點數。`;
+      ? M('p.spleft','還有 {n} 點魔法點數可以分配（不會因死亡消失）。',{n:p.sp})
+      : M('p.spfrom','等級 {n} 之後每升一級 +1 魔法點數。',{n:SP_FROM_LV});
 
     const spRow = document.createElement('div'); spRow.id = 'sp';
-    spRow.innerHTML = `<span>魔法點數</span><b>${p.sp}</b>` +
-      `<span style="margin-left:auto;font-size:10.5px;color:var(--parch-dim)">每系上限 ${SCH_MAX}　滿級開奧義</span>`;
+    spRow.innerHTML = `<span>${TX('p.sp','魔法點數')}</span><b>${p.sp}</b>` +
+      `<span style="margin-left:auto;font-size:10.5px;color:var(--parch-dim)">` +
+      `${M('p.schmax','每系上限 {n}　滿級開奧義',{n:SCH_MAX})}</span>`;
     list.appendChild(spRow);
 
     // 五系與加點。每一點都要立刻看得到威力差別，不然沒人願意投資。
@@ -5613,7 +5775,7 @@ function renderPanel(){
         VILLAGE.sp = p.sp; VILLAGE.sch = Object.assign({}, p.sch); saveVillage();
         p.mmp = maxMp(p); p.mp = Math.min(p.mmp, p.mp + 5);
         SFX.play('ident');
-        say(`${sc.nm}系提升到 ${lv+1} 級。`,'good');
+        say(M('p.schup','{nm}系提升到 {n} 級。',{nm:TX('sch.'+sc.id,sc.nm),n:lv+1}),'good');
         checkMastery();
         refresh();
       };
@@ -5623,18 +5785,19 @@ function renderPanel(){
 
     const known = spellsFor(p);
     const head = document.createElement('div'); head.className='hint';
-    head.textContent = known.length ? '學會的魔法' : '目前還沒有學會任何魔法 —— 先加點。';
+    head.textContent = known.length ? TX('p.learned','學會的魔法')
+                                    : TX('p.nospell','目前還沒有學會任何魔法 —— 先加點。');
     list.appendChild(head);
     for(const sp of known){
       const row = document.createElement('div');
       const ok = p.mp >= sp.mp;
       row.className = 'spell' + (ok ? '' : ' off');
       row.innerHTML =
-        `<span class="nm" style="color:${SCHOOLS.find(x=>x.id===sp.sc).col}">${sp.nm}</span>` +
-        `<span class="ds">${sp.desc}</span><span class="mp">${sp.mp} MP</span>`;
+        `<span class="nm" style="color:${SCHOOLS.find(x=>x.id===sp.sc).col}">${locSpell(sp)}</span>` +
+        `<span class="ds">${locSpellD(sp)}</span><span class="mp">${sp.mp} MP</span>`;
       if(ok) row.onclick = ()=>{
         const r = castSpell(sp);
-        if(r === null){ closePanel(); openAim('施法方向'); return; }
+        if(r === null){ closePanel(); openAim(TX('p.castdir','施法方向')); return; }
         if(r) closePanel(); else refresh();
       };
       list.appendChild(row);
@@ -5643,15 +5806,16 @@ function renderPanel(){
     // ── 職業與技能欄 ──
     const jh = document.createElement('div'); jh.className='hint';
     if(p.job === 'none'){
-      jh.textContent = '職業　—　找一頂帽子戴上就能轉職（一座迷宮只有一頂）';
+      jh.textContent = TX('p.jobnone','職業　—　找一頂帽子戴上就能轉職（一座迷宮只有一頂）');
     } else {
       const rec = VILLAGE.jobs[p.job] || {lv:0, prog:0};
       const nextA = ABIL.find(a => a.job===p.job && a.lv === rec.lv+1);
-      jh.textContent = `職業　${JOB_NM[p.job]}　${jobRank(rec.lv)}`
+      jh.textContent = `${TX('ui.job','職業')}　${locJob(p.job)}　${jobRank(rec.lv)}`
         + (rec.lv >= JOB_MAX
-            ? `　—　${MASTER_PASSIVE[p.job]}`
-            : `　升級進度 ${rec.prog}/${JOB_PER_LV}`
-              + (nextA ? `　（下一個：${nextA.nm}）` : `　（下一級：Master）`));
+            ? (LANG === 'zh' ? `　—　${MASTER_PASSIVE[p.job]}` : '')
+            : M('p.jobprog','　升級進度 {a}/{p}',{a:rec.prog,p:JOB_PER_LV})
+              + (nextA ? M('p.jobnext','　（下一個：{nm}）',{nm:locAbil(nextA)})
+                       : TX('p.jobmax','　（下一級：Master）')));
     }
     list.appendChild(jh);
 
@@ -5659,8 +5823,8 @@ function renderPanel(){
     const done = HAT.filter(h => jobLv(h.job) > 0);
     if(done.length){
       const jl = document.createElement('div'); jl.className='hint';
-      jl.textContent = '已練職業　' + done.map(h =>
-        `${h.jobnm} ${jobRank(jobLv(h.job))}`).join('　·　');
+      jl.textContent = TX('p.jobdone','已練職業') + '　' + done.map(h =>
+        `${locJob(h.job)} ${jobRank(jobLv(h.job))}`).join('　·　');
       list.appendChild(jl);
     }
 
@@ -5680,7 +5844,7 @@ function renderPanel(){
     const known2 = ALL_ABIL().filter(a => p.learned[a.id]);
     if(!known2.length){
       const e = document.createElement('div'); e.className='hint';
-      e.textContent = '還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。';
+      e.textContent = TX('p.noabil','還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。');
       list.appendChild(e);
     }
     for(const a2 of known2){
@@ -5692,19 +5856,19 @@ function renderPanel(){
       row.innerHTML =
         `<span class="nm">${locAbil(a2)}</span>` +
         `<span class="ds">［${TX('ui.t.'+a2.t, ABIL_T[a2.t] || '技')}］${TX('d.'+a2.id, a2.desc)}</span>` +
-        `<span class="mp">${on ? costLabel(a2, p) : '未裝載'}</span>`;
+        `<span class="mp">${on ? costLabel(a2, p) : TX('p.unloaded','未裝載')}</span>`;
       row.onclick = ()=>{
         if(!on){                                   // 沒裝載 → 裝進第一個空格
           const e2 = p.slots.indexOf(null);
-          if(e2 < 0){ say(`技能欄只有 ${SLOTS} 格 —— 先點上面的技能卸下一個。`,'bad'); refresh(); return; }
+          if(e2 < 0){ say(M('p.slotfull','技能欄只有 {n} 格 —— 先點上面的技能卸下一個。',{n:SLOTS}),'bad'); refresh(); return; }
           p.slots[e2] = a2.id; SFX.play('ident');
-          if(a2.t === 'pass') say(`${a2.nm} 已生效 —— 被動技能不需要發動。`,'good');
+          if(a2.t === 'pass') say(M('p.passon','{nm} 已生效 —— 被動技能不需要發動。',{nm:locAbil(a2)}),'good');
           refresh(); return;
         }
-        if(a2.t === 'pass'){ say(`${a2.nm} 正在生效中。`); refresh(); return; }
+        if(a2.t === 'pass'){ say(M('p.passnow','{nm} 正在生效中。',{nm:locAbil(a2)})); refresh(); return; }
         if(p.mp < abilCost(a2, p)){ say(TX('m.nomp','魔力不足。'),'bad'); refresh(); return; }
         const r = useAbil(a2);
-        if(r === null){ closePanel(); openAim(a2.nm + '方向'); return; }
+        if(r === null){ closePanel(); openAim(locAbil(a2) + ' ' + TX('p.dir','方向')); return; }
         if(r) closePanel(); else refresh();
       };
       list.appendChild(row);
@@ -5712,8 +5876,9 @@ function renderPanel(){
 
     const av = summonsFor(p);
     const sh = document.createElement('div'); sh.className='hint';
-    sh.textContent = av.length ? `幻獸　召喚代價：胃袋 ${Math.round(SUMMON_COST*100)}%`
-                               : `幻獸　需要任一系 ${SUMMON_AT} 級`;
+    sh.textContent = av.length
+      ? M('p.summon','幻獸　召喚代價：胃袋 {n}%',{n:Math.round(SUMMON_COST*100)})
+      : M('p.summonneed','幻獸　需要任一系 {n} 級',{n:SUMMON_AT});
     list.appendChild(sh);
     for(const sm of av){
       const row = document.createElement('div');
@@ -5721,9 +5886,9 @@ function renderPanel(){
       const ok = p.sat >= cost;
       row.className = 'spell' + (ok ? '' : ' off');
       row.innerHTML =
-        `<span class="nm" style="color:${PAL[sm.col]}">${sm.nm}</span>` +
-        `<span class="ds">攻 ${sm.atk}　${sm.ttl} 回合</span>` +
-        `<span class="mp">胃袋 −30%</span>`;
+        `<span class="nm" style="color:${PAL[sm.col]}">${locSummon(sm)}</span>` +
+        `<span class="ds">${M('p.summonst','攻 {a}　{t} 回合',{a:sm.atk,t:sm.ttl})}</span>` +
+        `<span class="mp">${TX('p.stomach','胃袋 −30%')}</span>`;
       if(ok) row.onclick = ()=>{ if(callSummon(sm)) closePanel(); else refresh(); };
       list.appendChild(row);
     }
@@ -5733,11 +5898,11 @@ function renderPanel(){
      「確定 / 取消」要在落雷之前出現，而不是之後才解釋。 */
   if(panelMode==='bill'){
     const bill = unpaid(), total = billTotal();
-    $('ptitle').textContent = '結帳';
-    $('pcount').textContent = `所持 ${p.gold} G`;
+    $('ptitle').textContent = TX('p.bill','結帳');
+    $('pcount').textContent = M('p.held','所持 {n} G',{n:p.gold});
     $('phint').textContent = bill.length
-      ? `未結帳 ${bill.length} 件，共 ${total} G。`
-      : '已經沒有未結帳的東西了。';
+      ? M('p.unpaid','未結帳 {n} 件，共 {g} G。',{n:bill.length,g:total})
+      : TX('p.nounpaid','已經沒有未結帳的東西了。');
     for(const it of bill){
       const row = document.createElement('div'); row.className='row';
       const c = document.createElement('canvas'); c.width=T; c.height=T;
@@ -5747,19 +5912,19 @@ function renderPanel(){
       row.appendChild(c); row.appendChild(nm); row.appendChild(pr);
       list.appendChild(row);
     }
-    if(!bill.length){ btn('關閉', ()=>{ closePanel(); refresh(); }); return; }
-    btn(`確定購買（${total} G）`, ()=>{
+    if(!bill.length){ btn(TX('b.close','關閉'), ()=>{ closePanel(); refresh(); }); return; }
+    btn(M('p.pay','確定購買（{n} G）',{n:total}), ()=>{
       if(payBill()){ closePanel(); refresh(); } else refresh();
     }, p.gold < total);
-    btn('放回架上', ()=>{ returnGoods(); closePanel(); refresh(); });
-    btn('取消（留在店裡）', ()=>{ closePanel(); refresh(); });
-    btn('硬闖出去（天罰）', ()=>{ closePanel(); steal(); });
+    btn(TX('p.putback','放回架上'), ()=>{ returnGoods(); closePanel(); refresh(); });
+    btn(TX('p.staying','取消（留在店裡）'), ()=>{ closePanel(); refresh(); });
+    btn(TX('p.forceout','硬闖出去（天罰）'), ()=>{ closePanel(); steal(); });
     return;
   }
   if(panelMode==='inv'){
-    $('ptitle').textContent = '背包';
+    $('ptitle').textContent = TX('p.bag','背包');
     $('pcount').textContent = `${p.inv.length} / 20　${p.gold} G`;
-    $('phint').textContent = sel ? nameOf(sel) : '點選道具查看可用的操作。';
+    $('phint').textContent = sel ? nameOf(sel) : TX('p.tapitem','點選道具查看可用的操作。');
     for(const it of p.inv){
       const row = document.createElement('div');
       row.className='row';
@@ -5767,7 +5932,7 @@ function renderPanel(){
       c.getContext('2d').drawImage(iconOf(it),0,0);
       const nm = document.createElement('div'); nm.className='nm'; nm.textContent=nameOf(it);
       row.appendChild(c); row.appendChild(nm);
-      if(it===p.weap||it===p.shld){ const e=document.createElement('span'); e.className='eq'; e.textContent='裝備中'; row.appendChild(e); }
+      if(it===p.weap||it===p.shld){ const e=document.createElement('span'); e.className='eq'; e.textContent=TX('p.equipped','裝備中'); row.appendChild(e); }
       if(it===sel) row.style.background='rgba(201,151,63,.13)';
       row.onclick = ()=>{ sel = (sel===it?null:it); renderPanel(); };
       list.appendChild(row);
@@ -5775,9 +5940,9 @@ function renderPanel(){
     if(sel) buildActions(sel, false);
   } else if(panelMode==='ground'){
     const it = G.items[key(p.x,p.y)];
-    $('ptitle').textContent = '腳下';
-    $('pcount').textContent = (it && it.shop) ? `所持 ${p.gold} G` : '';
-    if(!it){ $('phint').textContent='腳下沒有東西。'; return; }
+    $('ptitle').textContent = TX('p.ground','腳下');
+    $('pcount').textContent = (it && it.shop) ? M('p.held','所持 {n} G',{n:p.gold}) : '';
+    if(!it){ $('phint').textContent=TX('p.nothinghere','腳下沒有東西。'); return; }
     $('phint').textContent = nameOf(it);
     const row=document.createElement('div'); row.className='row';
     const c=document.createElement('canvas'); c.width=T;c.height=T;
@@ -5794,38 +5959,39 @@ function btn(label, fn, dis){
 }
 function buildActions(it, ground){
   const p=G.p;
-  const verb = {food:'吃', herb:'喝', scroll:'讀', wand:'揮動'}[it.cat];
-  if(verb) btn(ground?verb+'（不撿起）':verb, ()=>{
+  const vkey = {food:'b.eat', herb:'b.drink', scroll:'b.read', wand:'b.wave'}[it.cat];
+  const verb = vkey && TX(vkey, {food:'吃', herb:'喝', scroll:'讀', wand:'揮動'}[it.cat]);
+  if(verb) btn(ground ? M('b.noPickUp','{v}（不撿起）',{v:verb}) : verb, ()=>{
     const r = useItem(it, ground);
-    if(r===null){ closePanel(); openAim('揮杖方向'); return; }   // 杖進入瞄準
+    if(r===null){ closePanel(); openAim(TX('p.wanddir','揮杖方向')); return; }   // 杖進入瞄準
     if(r){ if(!ground) {} closePanel(); endTurn(); } else refresh();
   });
   if(it.cat === 'hat'){
     const on = p.hat === it.d.id;
-    btn(on ? '已戴上' : '戴上', ()=>{ wearHat(it); closePanel(); endTurn(); }, on);
+    btn(TX(on ? 'b.worn' : 'b.wear', on ? '已戴上' : '戴上'), ()=>{ wearHat(it); closePanel(); endTurn(); }, on);
   }
   if(it.cat==='weap'||it.cat==='shld'){
     const eq = (it===p.weap||it===p.shld);
-    btn(eq?'卸下':'裝備', ()=>{
-      if(ground){ say('要先撿起來才能裝備。'); refresh(); return; }
+    btn(TX(eq ? 'b.unequip' : 'b.equip', eq ? '卸下' : '裝備'), ()=>{
+      if(ground){ say(TX('e.pickfirst','要先撿起來才能裝備。')); refresh(); return; }
       if(eq){
-        if(it.cursed){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
+        if(it.cursed){ it.known=1; say(TX('e.cursedoff','被詛咒了，拿不下來！'),'bad'); refresh(); return; }
         if(it===p.weap) p.weap=null; else p.shld=null;
-        say('卸下了裝備。');
+        say(TX('e.tookoff','卸下了裝備。'));
       } else {
         const cur = it.cat==='weap'?p.weap:p.shld;
-        if(cur && cur.cursed){ cur.known=1; say('身上的裝備被詛咒了，換不下來！','bad'); refresh(); return; }
+        if(cur && cur.cursed){ cur.known=1; say(TX('e.cursedworn','身上的裝備被詛咒了，換不下來！'),'bad'); refresh(); return; }
         if(it.cat==='weap') p.weap=it; else p.shld=it;
         it.known=1;
         say(M('m.equip','裝備了「{nm}」。',{nm:nameOf(it)}));
-        if(it.cursed) say('……手上傳來一陣寒意。這是被詛咒的裝備！','bad');
+        if(it.cursed) say(TX('e.chill','……手上傳來一陣寒意。這是被詛咒的裝備！'),'bad');
       }
       closePanel(); endTurn();
     });
   }
   if(ground && it.shop){
-    btn(`購買（${it.price} G）`, ()=>{
-      if(p.gold < it.price){ say('金錢不足。','bad'); refresh(); return; }
+    btn(M('b.buy','購買（{n} G）',{n:it.price}), ()=>{
+      if(p.gold < it.price){ say(TX('e.nomoney','金錢不足。'),'bad'); refresh(); return; }
       if(p.inv.length>=20){ say(TX('m.bagfull','背包已經滿了。')); refresh(); return; }
       p.gold -= it.price; delete it.shop; delete it.price; delete it.spot;
       SFX.play('coin');
@@ -5837,7 +6003,7 @@ function buildActions(it, ground){
     }, p.gold < it.price);
   }
   if(ground){
-    btn(it.shop ? '拿起（未結帳）' : '撿起', ()=>{
+    btn(it.shop ? TX('b.take','拿起（未結帳）') : TX('b.pickup','撿起'), ()=>{
       if(p.inv.length>=20){ say('背包已經滿了。'); refresh(); return; }
       SFX.play('pick');
       if(it.shop){
@@ -5849,42 +6015,42 @@ function buildActions(it, ground){
       if(!it.shop) autoEquip(it);
       closePanel(); endTurn();
     }, p.inv.length>=20);
-    btn('替換', ()=>{ swapMode = it; panelMode='inv'; sel=null; renderPanel();
-      $('phint').textContent='選一件背包道具與腳下的交換。'; });
-    btn('踏過', closePanel);
+    btn(TX('b.swap','替換'), ()=>{ swapMode = it; panelMode='inv'; sel=null; renderPanel();
+      $('phint').textContent=TX('e.swaphint','選一件背包道具與腳下的交換。'); });
+    btn(TX('b.stepover','踏過'), closePanel);
   } else {
     // 站在店裡才能賣。只能買不能賣的店，玩家撿了一整層的東西也只能丟掉。
     if(inShop() && !it.shop){
       const sp = sellPrice(it);
-      btn(`賣掉（${sp} G）`, ()=>{
-        if(it===p.weap || it===p.shld){ say('裝備中的東西要先卸下。'); refresh(); return; }
-        if(it.cursed){ it.known=1; say('被詛咒的東西，店員不敢收。','bad'); refresh(); return; }
+      btn(M('b.sell','賣掉（{n} G）',{n:sp}), ()=>{
+        if(it===p.weap || it===p.shld){ say(TX('e.sellequip','裝備中的東西要先卸下。')); refresh(); return; }
+        if(it.cursed){ it.known=1; say(TX('e.sellcursed','被詛咒的東西，店員不敢收。'),'bad'); refresh(); return; }
         p.gold += sp; removeItem(it); SFX.play('coin');
         say(M('m.sell','賣掉了「{nm}」，得到 {n} G。',{nm:nameOf(it),n:sp}),'gold');
-        keeperSay(G.rng.pick(['收下了。','這個我留著自己用。','再多帶一點下來。']));
+        keeperSay(keepLine(G.rng.pick([['k.sell1','收下了。'],['k.sell2','這個我留著自己用。'],['k.sell3','再多帶一點下來。']])));
         closePanel(); endTurn();
       }, it===p.weap || it===p.shld);
     }
     if(swapMode){
-      btn('與腳下交換', ()=>{
+      btn(TX('b.swapground','與腳下交換'), ()=>{
         const g = swapMode; swapMode=null;
-        if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，脫不下來！','bad'); refresh(); return; }
+        if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say(TX('e.cursedoff','被詛咒了，脫不下來！'),'bad'); refresh(); return; }
         if(it===p.weap) p.weap=null; if(it===p.shld) p.shld=null;
         const i = p.inv.indexOf(it);
         if(g.shop) g.spot = key(p.x,p.y);
         p.inv[i] = g; G.items[key(p.x,p.y)] = it;
-        say(`將「${nameOf(it)}」放在地上，換取了「${nameOf(g)}」。`);
+        say(M('e.putground','將「{a}」放在地上，換取了「{b}」。',{a:nameOf(it),b:nameOf(g)}));
         closePanel(); endTurn();
       });
     }
     if(VILLAGE.pocket.open){
       const held = VILLAGE.pocket.item;
-      btn(held ? `換入口袋（現有 ${defNm(held)}）` : '放入萬用口袋', ()=>{
+      btn(held ? M('b.pocketswap','換入口袋（現有 {nm}）',{nm:defNm(held)}) : TX('b.pocketin','放入萬用口袋'), ()=>{
         if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
         if(held){                       // 換出來的東西回到背包
           const back = mk(held.cat, held.id, {known:1, up:held.up|0, uses:held.uses|0});
           p.inv.push(back);
-          say(`從口袋取回了「${nameOf(back)}」。`);
+          say(M('e.pocketback','從口袋取回了「{nm}」。',{nm:nameOf(back)}));
         }
         VILLAGE.pocket.item = {cat:it.cat, id:it.id, up:it.up|0, uses:it.uses|0};
         saveVillage(); removeItem(it);
@@ -5893,9 +6059,9 @@ function buildActions(it, ground){
         closePanel(); refresh();
       });
     }
-    btn('投擲', ()=>{ pendThrow = it; closePanel(); openAim('投擲方向'); say('選擇投擲方向。','gold'); refresh(); });
-    btn('放下', ()=>{
-      if(G.items[key(p.x,p.y)]){ say('腳下已經有東西了。'); refresh(); return; }
+    btn(TX('b.throw','投擲'), ()=>{ pendThrow = it; closePanel(); openAim(TX('p.throwdir','投擲方向')); say(TX('e.throwdir','選擇投擲方向。'),'gold'); refresh(); });
+    btn(TX('b.drop','放下'), ()=>{
+      if(G.items[key(p.x,p.y)]){ say(TX('e.groundfull','腳下已經有東西了。')); refresh(); return; }
       if(it.cursed && (it===p.weap||it===p.shld)){ it.known=1; say('被詛咒了，拿不下來！','bad'); refresh(); return; }
       SFX.play('drop');
       removeItem(it); G.items[key(p.x,p.y)] = it;
@@ -6219,8 +6385,34 @@ function applyLangText(){
     '十字鍵走　·　中央<b>長按休息</b>　·　<b>A</b> 確定　<b>B</b> 取消　<b>S</b> 技能');
   const lbl = [['btnA','ui.lbl.a','確定'],['btnB','ui.lbl.b','背包·地圖'],['btnS','ui.lbl.s','技能']];
   for(const [id,key,zh] of lbl){ const el = $(id); if(el && el.dataset) el.dataset.lbl = TX(key, zh); }
+  /* 控制列的按鈕。文字裡包著一個 <span class="k"> 的鍵位提示，
+     直接改 textContent 會把它一起洗掉 —— 只換後面那個文字節點。 */
+  const keys2 = [['pick','k.ground','腳下'],['inv','k.bag','背包'],['down','k.down','下樓'],
+                 ['wait','k.wait','待機'],['mag','k.magic','魔法'],
+                 ['tags','k.tags','名稱'],['mute','k.mute','音效'],['help','k.help','操作']];
+  for(const [act,key,zh] of keys2){
+    const el = document.querySelector(`[data-act="${act}"]`);
+    if(!el) continue;
+    const last = el.lastChild;
+    if(last && last.nodeType === 3) last.nodeValue = TX(key, zh);
+  }
+  const dp = $('dpadbtn');
+  if(dp) dp.textContent = $('pad') && $('pad').classList.contains('show')
+    ? TX('k.padon','收起手把') : TX('k.padoff','虛擬手把');
   const kb = $('langbtn');
   if(kb) kb.textContent = TX('ui.lang','語言') + '：' + (LANGS.find(l=>l[0]===LANG)||['','中文'])[1];
+  // 小地圖圖例（側欄與全螢幕地圖各一份）
+  const lg = [['lg.seen','視野內'],['lg.walked','走過'],['lg.you','你'],
+              ['lg.stairs','樓梯'],['lg.mon','怪物'],['lg.item','道具']];
+  for(const box of document.querySelectorAll('#legend, .bmlegend')){
+    const sp = box.querySelectorAll('span');
+    sp.forEach((el, i)=>{
+      if(!lg[i]) return;
+      const ic = el.querySelector('i');
+      el.textContent = TX(lg[i][0], lg[i][1]);
+      if(ic) el.insertBefore(ic, el.firstChild);
+    });
+  }
   const dts = document.querySelectorAll('#eq dt');
   const dkeys = [['ui.weapon','武器'],['ui.shield','盾牌'],['ui.pack','背包'],
                  ['ui.exp','經驗'],['ui.pocket','口袋']];
@@ -6268,7 +6460,7 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='mag'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); }
     if(a==='dpad'){
       const on = $('pad').classList.toggle('show');
-      $('dpadbtn').textContent = on ? '收起手把' : '虛擬手把';
+      $('dpadbtn').textContent = on ? TX('k.padon','收起手把') : TX('k.padoff','虛擬手把');
       // 收起手把之後那 162px 就不該再留著 —— 讓畫面把它吃回去
       $('screenwrap').style.paddingBottom = (innerWidth <= 620 && !on) ? '0px' : '';
       fitCanvas();
@@ -6460,9 +6652,9 @@ function closeBoard(){ $('board').classList.remove('show'); }
 /* ─── 全螢幕樓層圖 ──────────────────────────────────────────── */
 function openBigMap(){
   const el = $('bigmap'); if(!el || !G) return;
-  const z = zoneOf(G.depth);
-  $('bigf').textContent = 'B' + G.depth + 'F';
-  $('bigz').textContent = z.nm;
+  const z = actAt(G.act);
+  $('bigf').textContent = G.floor + '/' + actAt(G.act).floors;
+  $('bigz').textContent = locAct(z);
   const c = $('bigc'), s2 = 15;              // 30x30 -> 450x450
   c.width = MW*s2; c.height = MH*s2;
   paintMap(c.getContext('2d'), c, s2);

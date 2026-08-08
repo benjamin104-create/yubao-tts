@@ -781,6 +781,154 @@ bl.b_gate|The last door.|さいごの とびら。
 bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
 bl.b_mind2|Three of you. Only one does not follow your steps.|3にんの きみ。ついてこないのは ひとりだけ。
 bl.b_mind|It stands at last. Every swing leaves it open for a turn.|ついに たちあがる。ひとふりごとに 1ターン すきが できる。
+p.magic|Magic|まほう
+p.bag|Bag|もちもの
+p.ground|Underfoot|あしもと
+p.bill|Checkout|おかいけい
+p.sp|Magic points|まほうポイント
+p.spleft|{n} magic point(s) left to spend (never lost on death).|まほうポイントが {n} のこっている（しんでも きえない）。
+p.spfrom|From level {n}, every level gives +1 magic point.|レベル {n} から、レベルアップごとに まほうポイント +1。
+p.schmax|Max {n} per school　mastery at full|1けいとう じょうげん {n}　カンストで おうぎ かいほう
+p.schup|{nm} raised to level {n}.|{nm}けいとうが レベル {n} に あがった。
+p.learned|Spells learned|おぼえた まほう
+p.nospell|No spells yet - spend a point first.|まだ まほうが ない —— さきに ポイントを ふろう。
+p.castdir|Cast direction|しょうしゃ ほうこう
+p.dir|direction|ほうこう
+p.wanddir|Wand direction|つえの ほうこう
+p.throwdir|Throw direction|なげる ほうこう
+p.jobnone|Job - find a hat to change class (one per dungeon)|しょくぎょう —— ぼうしを みつければ てんしょく（ダンジョンに ひとつ）
+p.jobprog|　progress {a}/{p}|　しんちょく {a}/{p}
+p.jobnext|　(next: {nm})|　（つぎ：{nm}）
+p.jobmax|　(next: Master)|　（つぎ：マスター）
+p.jobdone|Jobs trained|そだてた しょくぎょう
+p.noabil|No job skills yet - wear a hat and fight to raise the job.|まだ しょくぎょうスキルが ない —— ぼうしを かぶって たたかおう。
+p.unloaded|not loaded|みそうび
+p.slotfull|Only {n} skill slots - unload one above first.|スキルは {n}スロットまで —— さきに ひとつ はずそう。
+p.passon|{nm} is active - passive skills need no casting.|{nm} は はつどうちゅう —— パッシブは つかう ひつようが ない。
+p.passnow|{nm} is already active.|{nm} は すでに はつどうちゅう。
+p.summon|Beasts　cost: {n}% of your stomach|げんじゅう　だいか：いぶくろ {n}%
+p.summonneed|Beasts　need level {n} in any school|げんじゅう　どれか 1けいとう レベル {n} ひつよう
+p.summonst|ATK {a}　{t} turns|こうげき {a}　{t}ターン
+p.stomach|stomach −30%|いぶくろ −30%
+p.held|You have {n} G|しょじきん {n} G
+p.unpaid|{n} unpaid item(s), {g} G total.|みかいけい {n}てん、ごうけい {g} G。
+p.nounpaid|Nothing left unpaid.|みかいけいは もう ない。
+p.pay|Pay ({n} G)|しはらう（{n} G）
+p.putback|Put them back|たなに もどす
+p.staying|Cancel (stay in the shop)|とりけし（みせに のこる）
+p.forceout|Walk out anyway (divine punishment)|むりやり でる（てんばつ）
+p.tapitem|Tap an item to see what you can do.|アイテムを タップすると そうさが でる。
+p.equipped|equipped|そうびちゅう
+p.nothinghere|Nothing underfoot.|あしもとには なにも ない。
+b.eat|Eat|たべる
+b.drink|Drink|のむ
+b.read|Read|よむ
+b.wave|Wave|ふる
+b.noPickUp|{v} (without picking up)|{v}（ひろわずに）
+b.worn|Worn|そうびちゅう
+b.wear|Wear|かぶる
+b.unequip|Unequip|はずす
+b.equip|Equip|そうびする
+b.buy|Buy ({n} G)|かう（{n} G）
+b.take|Take (unpaid)|もつ（みかいけい）
+b.pickup|Pick up|ひろう
+b.swap|Swap|いれかえ
+b.stepover|Step over|とおりすぎる
+b.sell|Sell ({n} G)|うる（{n} G）
+b.swapground|Swap with underfoot|あしもとと いれかえ
+b.pocketin|Put in the universal pocket|まんのうポケットに いれる
+b.pocketswap|Swap into pocket (holds {nm})|ポケットと いれかえ（いま {nm}）
+b.throw|Throw|なげる
+b.drop|Drop|おく
+b.close|Close|とじる
+e.pickfirst|Pick it up before equipping.|ひろってから そうびしよう。
+e.cursedoff|It is cursed - you cannot take it off!|のろわれている —— はずせない！
+e.tookoff|You take it off.|そうびを はずした。
+e.cursedworn|What you are wearing is cursed - you cannot swap it!|そうびが のろわれていて とりかえられない！
+e.chill|...a chill runs up your arm. This is cursed!|……つめたい かんしょくが はしる。のろわれた そうびだ！
+e.nomoney|Not enough money.|おかねが たりない。
+e.swaphint|Choose a bag item to swap with the one underfoot.|かばんの アイテムを えらんで あしもとと いれかえる。
+e.sellequip|Take it off before selling.|うるまえに そうびを はずそう。
+e.sellcursed|Cursed - the shopkeeper will not take it.|のろわれている —— みせのひとは うけとらない。
+e.groundfull|There is already something underfoot.|あしもとには すでに なにか ある。
+e.putground|You drop "{a}" and take "{b}".|「{a}」を おいて「{b}」を とった。
+e.pocketback|You take "{nm}" back out of the pocket.|ポケットから「{nm}」を とりだした。
+e.pocketin|"{nm}" goes into the universal pocket - it survives one death.|「{nm}」を まんのうポケットへ —— 1かいの しを こえられる。
+e.throwdir|Choose a direction to throw.|なげる ほうこうを えらぼう。
+k.sell1|Taken.|うけとった。
+k.sell2|I will keep this one for myself.|これは じぶんで つかおう。
+k.sell3|Bring me more next time.|つぎも もってきてくれ。
+m.spellhit|{nm} hits {n} enemies.|{nm}が {n}たいに めいちゅう。
+m.spellmiss|{nm} bursts on empty ground.|{nm}は なにもない ところで はじけた。
+m.spellall|{nm} sweeps {n} enemies!|{nm}が {n}たいを なぎはらった！
+m.summoned|{nm} answers the call! ({t} turns)|{nm}が よびごえに こたえた！（{t}ターン）
+m.stmany|{n} enemies in sight are afflicted with {nm}.|しかいの てき {n}たいが {nm}の じょうたいに なった。
+m.nothing|Nothing happens...|なにも おこらなかった……
+m.stoff|The {nm} effect wears off.|{nm}の こうかが きれた。
+m.ston|You are afflicted with {nm}!|{nm}の じょうたいに なった！
+m.ston2|Afflicted with {nm}!|{nm}の じょうたいに なった！
+sp.cure|Cure|ケアル
+sp.purge|Purge|じょうか
+sp.spark|Spark|でんげき
+sp.thund|Thunder|らくらい
+sp.flame|Fireball|ひのたま
+sp.inferno|Inferno|れんごく
+sp.shard|Ice Shard|ひょうすい
+sp.freeze|Deep Freeze|ひょうふう
+sp.gust|Gust|しっぷう
+sp.cyclone|Cyclone|たつまき
+sd.cure|Restore health.|たいりょくを かいふく。
+sd.purge|Clear ailments and heal a little.|じょうたい いじょうを かいじょ、すこし かいふく。
+sd.spark|Pierce every enemy in a straight line.|ちょくせんじょうの てきを つらぬく。
+sd.thund|Lightning strikes all in sight.|しかい ぜんたいに らいげき。
+sd.flame|Bursts in a ring on impact.|めいちゅうご まわりに ばくはつ。
+sd.inferno|Burn everything in sight.|しかい ぜんたいを えんしょう。
+sd.shard|Hit and freeze the target.|めいちゅうさせて こおらせる。
+sd.freeze|Paralyse everything in sight.|しかい ぜんたいを まひさせる。
+sd.gust|Knock back in a line and damage.|ちょくせんじょうを ふきとばして ダメージ。
+sd.cyclone|Scatter everything in sight.|しかい ぜんたいを ふきちらす。
+sm.ifr|Ifrit|イフリート
+sm.niv|Shiva|シヴァ
+sm.ram|Ramuh|ラムウ
+sm.syl|Sylph|シルフ
+k.ground|Underfoot|あしもと
+k.bag|Bag|もちもの
+k.down|Descend|おりる
+k.wait|Wait|まつ
+k.magic|Magic|まほう
+k.padon|Hide pad|パッドをしまう
+k.padoff|Show pad|パッドをだす
+k.tags|Labels|なまえ
+k.mute|Sound|おと
+k.help|Controls|そうさ
+lg.pct|{n}% explored|{n}% たんさくずみ
+lg.seen|in sight|しかいない
+lg.walked|explored|たんさくずみ
+lg.you|you|きみ
+lg.stairs|stairs|かいだん
+lg.mon|monster|モンスター
+lg.item|item|アイテム
+p.pocketat|Unlocked at level {n}|レベル {n} で かいほう
+st.速|Haste|かそく
+st.力|Power|ちから
+st.守|Guard|ガード
+st.界|Ward|けっかい
+st.怒|Rage|げきど
+st.熔|Molten|ようしん
+st.雷|Thunder|らいもん
+st.鏡|Mirror|みずかがみ
+st.歌|Anthem|せんいのうた
+st.影|Clones|かげぶんしん
+st.睡|Asleep|すいみん
+st.麻|Paralysed|まひ
+st.亂|Confused|こんらん
+st.盲|Blind|しつめい
+st.毒|Poison|どく
+st.痛|Burning|ひりひり
+st.燒|Burning|えんしょう
+st.封|Sealed|ふういん
+st.餓|Starving|くうふく
+st.none|normal|ふつう
 sch.heal|Restore|かいふく
 sch.bolt|Bolt|かみなり
 sch.fire|Fire|ほのお
@@ -821,6 +969,9 @@ function locName(cat, d){
 }
 const locJob  = j => TX('job.' + j, JOB_NM[j] || '見習者');
 const locAbil = a => TX('ab.' + a.id, a.nm);
+const locSpell = sp => TX('sp.' + sp.id, sp.nm);
+const locSpellD = sp => TX('sd.' + sp.id, sp.desc);
+const locSummon = sm => TX('sm.' + sm.id, sm.nm);
 const locAct  = a => TX('act.' + a.id, a.nm);
 
 const LOOK = {
