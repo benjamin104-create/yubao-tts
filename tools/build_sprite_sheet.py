@@ -23,7 +23,7 @@ DST = os.path.join(ROOT, "web", "sprite_sheet.html")
 
 ART_END = "/* ─── 地圖生成"
 
-SHELL = """<meta charset="utf-8"><title>sprite sheet — 深淵行商人</title>
+SHELL = """<meta charset="utf-8"><title>sprite sheet — 深度學習：通天之塔</title>
 <style>
 body{background:#14110f;color:#e8dcc0;font-family:system-ui,sans-serif;margin:0;padding:20px}
 h1{font-size:15px;letter-spacing:.18em;color:#e8dcc0;font-weight:600;margin:0 0 4px}
@@ -75,8 +75,10 @@ add(g, heroSprite(-1,-1,null), '徒手');
 ['皮之盾','木之盾','鋼之盾','鏡之盾'].forEach((n,i)=>add(g, heroSprite(-1,i,null), n));
 add(g, heroSprite(4,3,'helm'), '秘銀+鏡盾+盔');
 
-g = sec('怪物 12');
+g = sec('怪物 12（手繪）');
 for(const k in SPR) add(g, atlas[k], NAMES[k]||k);
+g = sec('地域怪物（剪影生成）');
+for(const m of MONS) if(m.bd) add(g, makeBeast(m.bd, m.col, '0', m.glow), m.nm);
 g = sec('地形');
 TILE_ART.floor.forEach((c,i)=>add(g,c,'房間地板'+i));
 TILE_ART.corr.forEach((c,i)=>add(g,c,'通道'+i));
@@ -107,7 +109,8 @@ g = sec('壺 6 種外觀');
 for(let i=0;i<6;i++) add(g, makePot(i), 'pot_'+String(i).padStart(2,'0'));
 g = sec('食物 / 武器 / 盾牌');
 for(let i=0;i<3;i++) add(g, makeFood(i), '食物'+i);
-for(let i=0;i<5;i++) add(g, makeWeapon(i), '武器'+i);
+['木棒','銅之劍','長槍','鋼之劍','秘銀之劍','屠龍刀','天空之劍']
+  .forEach((n,i)=>add(g, makeWeapon(i), n));
 for(let i=0;i<4;i++) add(g, makeShield(i), '盾牌'+i);
 </script>
 """

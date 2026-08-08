@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>克勞德深淵 CLAUDE ABYSS — 回合制地牢</title>
+<title>深度學習：通天之塔 Deep Learning: Ascent of Babel</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <style>
@@ -123,6 +123,13 @@ body{
   font-family:var(--mono); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
 }
 #covermeta span{border:1px solid var(--edge); padding:4px 9px; white-space:nowrap}
+/* 署名。壓得比 covermeta 更輕 —— 落款該是最後才被看到的那一行，
+   但它必須在，因為它是這款遊戲跟做它的人之間唯一的連結。 */
+#credit, .credit{
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+  color:var(--parch-dim); opacity:.62; margin-top:2px;
+}
+.credit{margin-top:14px; text-align:center}
 
 /* 名字與造型：排行榜要有人味，就得先讓人選自己是誰 */
 #ident{display:grid; gap:8px; justify-items:center}
@@ -796,8 +803,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <canvas id="coverart" width="16" height="16" aria-hidden="true"></canvas>
 
     <div id="covertext">
-      <div class="en">CLAUDE ABYSS</div>
-      <h1>克勞德深淵</h1>
+      <div class="en">DEEP LEARNING</div>
+      <h1>深度學習：通天之塔</h1>
       <div id="coverrule"></div>
       <p class="lede">等級歸零，裝備盡失 ——<br><b>只有你學到的東西留下。</b></p>
     </div>
@@ -812,6 +819,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <div id="covermeta">
         <span>回合制</span><span>隨機地牢</span><span>死亡即歸零</span>
       </div>
+      <div id="credit">潔米爸 × 小潔米株式會社　出品</div>
     </div>
   </div>
 
@@ -841,7 +849,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div>
 
   <div id="sign">
-    <h1>克勞德深淵</h1>
+    <h1>深度學習：通天之塔</h1>
     <div id="depth"><b id="fnum">1</b><em id="zone">苔濕迴廊</em></div>
     <button id="mopen" aria-label="選單">≡</button>
   </div>
@@ -1128,7 +1136,19 @@ const MONS = [
  {id:'tanuki', nm:'化狸',     ai:'W', hp:36,atk:22,def:10,exp:110,spd:1,   sight:5, ev:8, fl:[11,23],w:50, zn:['wood'], bd:'quad', col:'a', steal:1},
  {id:'prism',  nm:'稜光體',   ai:'R', hp:34,atk:26,def:12,exp:150,spd:1,   sight:11,ev:6, fl:[14,26],w:50, zn:['mirror','crystal'], bd:'construct', col:'r', rng:6},
  {id:'refr',   nm:'折射獸',   ai:'C', hp:42,atk:28,def:14,exp:170,spd:1,   sight:8, ev:18,fl:[15,27],w:45, zn:['mirror','crystal'], bd:'spirit', col:'6'},
+ /* 蜈蚣的 fl 下限是被走通測試逼上來的。第一版寫 fl:[2,10]、spd 2 ——
+    第一章的死亡率立刻從 7% 跳到 38%。速度 2 的意思是「每回合打你兩次」，
+    那在玩家還只有 19 點體力的時候不是難度，是處刑。
+    另一半原因更隱蔽：`stone` 一有專屬名單，老鼠與史萊姆的權重就自動砍半 ——
+    加一隻怪同時等於「把溫和的怪拿掉一半」。 */
+ {id:'centip', nm:'坑道蜈蚣', ai:'C', hp:18,atk:8, def:3, exp:26, spd:2,   sight:5, ev:6, fl:[6,16], w:55, zn:['stone'], bd:'bug', col:'f'},
+ {id:'ratking',nm:'鼠王',     ai:'C', hp:30,atk:14,def:6, exp:48, spd:1,   sight:7, ev:4, fl:[7,18], w:45, zn:['stone'], bd:'quad', col:'a', pack:1},
+ {id:'moth',   nm:'幻光蝶',   ai:'W', hp:18,atk:10,def:3, exp:30, spd:2,   sight:5, ev:22,fl:[3,13], w:55, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:4,ch:.22}},
+ {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}},
+ {id:'shinobi',nm:'影忍',     ai:'C', hp:38,atk:28,def:10,exp:160,spd:2,   sight:9, ev:26,fl:[12,26],w:50, zn:['wood'], bd:'human', col:'4', glow:'g', clone:1},
+ {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:16,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:.85},
  {id:'seraph', nm:'熾天使',   ai:'C', hp:56,atk:32,def:16,exp:320,spd:1,   sight:9, ev:8, fl:[19,30],w:45, zn:['spire'], bd:'bird', col:'v', glow:'+'},
+ {id:'chimera',nm:'奇美拉',   ai:'C', hp:88,atk:38,def:18,exp:460,spd:1,   sight:9, ev:6, fl:[21,30],w:34, zn:['spire'], bd:'chimera', col:'g', glow:'u', onhit:{st:'燒',dur:5,ch:.35}},
  {id:'warden', nm:'守序構裝', ai:'C', hp:70,atk:30,def:20,exp:340,spd:1,   sight:7, ev:0, fl:[20,30],w:40, zn:['spire'], bd:'construct', col:'d', imm:['睡','亂','麻'], glow:'q'},
  /* 虛空的三隻不是生物，是問題。這是整個故事的收束： */
  {id:'axiom',  nm:'公理',     ai:'W', hp:70,atk:36,def:26,exp:400,spd:.5,  sight:4, ev:0, fl:[22,30],w:40, zn:['void'], bd:'construct', col:'6', imm:['睡','亂','麻'], glow:'+'},
@@ -1246,6 +1266,10 @@ const HERB = [
  {id:'life', nm:'命之草', mhp:5, price:1200},
  {id:'str',  nm:'力量草', str:1, price:300},
  {id:'rev',  nm:'復活草', hp:20, revive:1, price:2500},
+ /* 世界樹之葉：倒下時自動用掉，而且是全滿。
+    復活草只回 20 點 —— 在第八十層那等於「多站一回合再死一次」。
+    這一片是真的救得回來的那一種。 */
+ {id:'ygg',  nm:'世界樹之葉', full:1, revive:2, price:6000},
  {id:'cure', nm:'解毒草', cure:1, price:300},
  {id:'conf', nm:'混亂草', self:{st:'亂',dur:10}, bad:1, price:300},
  {id:'slp',  nm:'睡眠草', self:{st:'睡',dur:5}, bad:1, price:800},
@@ -1273,6 +1297,10 @@ const WAND = [
  {id:'swap',  nm:'替身之杖', price:2400},
  {id:'bolt',  nm:'雷擊之杖', price:3000},
  {id:'weak',  nm:'弱化之杖', price:1000},
+ /* 熔岩杖：唯一會改變地形的道具。它挖的是牆，不是怪 ——
+    也就是說它給的不是傷害，是「路」。被逼進死角的時候，
+    多一條路比多三十點傷害有用得多。 */
+ {id:'lava',  nm:'熔岩杖',   price:2800, dig:1},
 ];
 const POT = [
  {id:'store', nm:'保存壺', beh:'store', price:1200},
@@ -1291,6 +1319,13 @@ const WEAP = [
  {id:'spear',nm:'長槍',     atk:7,  up:4, price:1600, pierce:1},
  {id:'steel',nm:'鋼之劍',   atk:8,  up:5, price:2400},
  {id:'mith', nm:'秘銀之劍', atk:14, up:8, price:7200},
+ /* 屠龍刀：基礎攻擊比秘銀低，但對大型獸與頭目 ×1.6。
+    「換上去反而更弱」是刻意的選擇題 —— 這一把是為了某幾場仗帶的，
+    不是無腦的直線升級。 */
+ {id:'drgn', nm:'屠龍刀',   atk:11, up:6, price:9000,  slay:1.6},
+ /* 天空之劍：攻擊時同時打到所有相鄰的敵人。
+    被三隻圍住的時候，一刀掃三個 —— 那才是「最後一把劍」該有的手感。 */
+ {id:'sky',  nm:'天空之劍', atk:16, up:8, price:14000, sweep:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
@@ -1482,7 +1517,9 @@ const LANGS = [['zh','中文'],['en','English'],['ja','日本語']];
 let LANG = 'zh';
 /* 一行一個詞條：key | English | 日本語 */
 const DICT_RAW = `
-ui.title|CLAUDE ABYSS|クロード深淵
+ui.title|DEEP LEARNING|ディープラーニング
+ui.sub|ASCENT OF BABEL|通天の塔
+ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
 m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
 m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
 m.crit| A critical hit!| かいしんの いちげき！
@@ -1502,6 +1539,10 @@ m.eat|You eat "{nm}".|「{nm}」を たべた。
 m.drink|You drink "{nm}".|「{nm}」を のんだ。
 m.read|You read "{nm}".|「{nm}」を よんだ。
 m.wave|You wave "{nm}".|「{nm}」を ふった。
+m.melt|The rock melts away — {n} squares opened.|いわかべが {n}マス とけた。
+m.nomelt|The magma sweeps through empty air.|ようがんは くうきを なめただけだった。
+m.clone|{nm} splits in two — which one is real?|{nm} が ふたつに わかれた —— どっちが ほんもの？
+m.revd|"{nm}" glows — you rise again!|「{nm}」が ひかり、たちあがった！
 m.healed|Recovered {n} HP.|たいりょくが {n} かいふくした。
 m.equip|Equipped "{nm}".|「{nm}」を そうびした。
 m.autoequip|Auto-equipped "{nm}".|「{nm}」を じどうで そうびした。
@@ -1641,6 +1682,7 @@ it.elix|Elixir|とっこうやく
 it.life|Life Herb|いのちのくさ
 it.str|Strength Herb|ちからのくさ
 it.rev|Revival Herb|そせいそう
+it.ygg|Leaf of the World Tree|せかいじゅのは
 it.cure|Antidote Herb|どくけしそう
 it.conf|Confusion Herb|こんらんそう
 it.slp|Sleep Herb|ねむりそう
@@ -1663,6 +1705,7 @@ it.knock|Wand of Knockback|げきたいのつえ
 it.swap|Wand of Swap|みがわりのつえ
 it.bolt|Wand of Lightning|らいげきのつえ
 it.weak|Wand of Weakness|じゃっかのつえ
+it.lava|Wand of Magma|ようがんのつえ
 it.store|Storage Jar|ほぞんのつぼ
 it.p_ident|Identify Jar|しきべつのつぼ
 it.devour|Devouring Jar|すいものつぼ
@@ -1675,6 +1718,8 @@ it.brnz|Bronze Sword|どうのけん
 it.spear|Spear|やり
 it.steel|Steel Sword|はがねのけん
 it.mith|Mithril Sword|ミスリルのけん
+it.drgn|Dragonslayer|ドラゴンキラー
+it.sky|Sword of the Sky|てんくうのつるぎ
 it.leath|Leather Shield|かわのたて
 it.wood|Wooden Shield|きのたて
 it.s_steel|Steel Shield|はがねのたて
@@ -1941,6 +1986,13 @@ mon.refr|Refractor|くっせつじゅう
 mon.seraph|Seraph|してんし
 mon.warden|Order Construct|ちつじょこうそう
 mon.axiom|Axiom|こうり
+mon.centip|Tunnel Centipede|こうどうムカデ
+mon.ratking|Rat King|ネズミのおう
+mon.moth|Glimmerwing|げんこうチョウ
+mon.chochin|Lantern Ghost|ちょうちんおばけ
+mon.shinobi|Shadow Shinobi|かげにん
+mon.shadow|Shadowmancer|かげぼうし
+mon.chimera|Chimera|キマイラ
 mon.parad|Paradox|はいり
 mon.unnamed|The Unnamed|なもなきもの
 st.速|Haste|かそく
@@ -2232,9 +2284,12 @@ atlas.b_mind2 = atlas.b_mind;
    正是這類遊戲唯一的驅動力。 */
 
 function drawHeroWeapon(x, i){
-  const bl = ['9','5','6','6','r'][i], hi = ['8','9','5','t','u'][i];
-  px(x,PAL['0'],11,0,4,11);
-  px(x,PAL[bl],12,1,2,8); px(x,PAL['6'],12,1,1,5);       // 刃面高光
+  const bl = ['9','5','6','6','r','f','v'][i] || '6';
+  const hi = ['8','9','5','t','u','e','u'][i] || '9';
+  // 屠龍刀的刃比別把厚一格 —— 拿在手上就看得出來換了武器
+  const w = i===5 ? 3 : 2;
+  px(x,PAL['0'],11,0,3+w,11);
+  px(x,PAL[bl],12,1,w,8); px(x,PAL[i===6?'+':'6'],12,1,1,5);   // 刃面高光
   px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
   px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
 }
@@ -2433,12 +2488,27 @@ function makeFood(v){
 }
 function makeWeapon(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const blades=['5','c','6','6','r'], hilts=['9','t','8','5','u'];
+  const blades=['5','c','6','6','r','f','v'], hilts=['9','t','8','5','u','e','u'];
   const bl=PAL[blades[v]||'6'], hi=PAL[hilts[v]||'9'], dark=PAL['0'];
   if(v===0){ px(x,dark,6,2,4,11); px(x,PAL['9'],7,3,2,9); px(x,PAL['b'],7,3,1,4);
              px(x,PAL['8'],6,12,4,2); return c; }
   if(v===2){ px(x,dark,7,1,2,12); px(x,bl,7,2,2,3); px(x,PAL['6'],7,2,1,2);
              px(x,PAL['9'],7,5,2,8); px(x,dark,5,5,6,1); px(x,hi,5,5,6,1); return c; }
+  if(v===5){                                   // 屠龍刀：厚背單刃，刀背有齒
+    px(x,dark,5,1,7,11); px(x,bl,6,2,5,9); px(x,PAL['h'],6,2,2,7);
+    for(let i=2;i<10;i+=2) px(x,dark,10,i,2,1);          // 背齒
+    px(x,dark,4,11,9,2); px(x,hi,4,11,9,1);              // 護手
+    px(x,dark,7,13,3,3); px(x,PAL['8'],7,13,3,2);
+    return c;
+  }
+  if(v===6){                                   // 天空之劍：細直刃＋雙翼護手
+    px(x,dark,6,0,4,11); px(x,bl,7,1,2,9); px(x,PAL['+'],7,1,1,7);
+    px(x,dark,2,8,12,3); px(x,PAL['6'],2,9,4,1); px(x,PAL['6'],10,9,4,1);
+    px(x,PAL['u'],5,9,6,1);                              // 翼形護手
+    px(x,dark,7,11,2,4); px(x,PAL['t'],7,11,2,3);
+    px(x,PAL['v'],7,14,2,1);
+    return c;
+  }
   px(x,dark,6,1,4,10);
   px(x,bl,7,2,2,8);
   px(x,PAL['6'],7,2,1,6);
@@ -2641,6 +2711,555 @@ const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   for(let i=0;i<4;i++){ px(x,PAL['6'],5+i*2,6,1,3); px(x,PAL['6'],5+i*2,10,1,3); }
   px(x,PAL['g'],4,6,8,1);
   return c; })();
+
+/* ═══ 動態美術層 ═════════════════════════════════════════════
+   一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
+   關鍵是**畫面上有沒有東西在動**。靜止的精靈再精緻也像素材圖，
+   會呼吸、會被打退、會噴火花的粗糙精靈反而像遊戲。
+   這一段全部是程序化的：零額外圖檔，但畫面從此不再是靜止的。 */
+
+let clock = 0;                       // 全域動畫時鐘（秒）
+
+/* 受擊白閃：把精靈當遮罩塗成純白，快取起來避免每幀重建 */
+const flashCache = {};
+function whiteOf(img, name){
+  if(flashCache[name]) return flashCache[name];
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  return flashCache[name] = c;
+}
+
+/* 火把：三張輪播的火焰。火焰不對稱才會像在燒，
+   完全對稱的火焰看起來像一片葉子。 */
+function makeTorch(f, col){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  px(x, PAL['0'], 6, 9, 4, 5);  px(x, PAL['9'], 7, 10, 2, 4);      // 壁座
+  px(x, PAL['8'], 5, 13, 6, 1); px(x, PAL['0'], 5, 14, 6, 1);
+  const S = [                                                       // 三張火焰的跨距
+    [[3,7,2],[4,6,4],[5,6,4],[6,5,5],[7,6,4],[8,7,2]],
+    [[2,8,2],[3,7,3],[4,6,4],[5,6,5],[6,6,4],[7,7,3],[8,7,2]],
+    [[3,6,3],[4,6,4],[5,5,5],[6,6,4],[7,6,3],[8,7,2]],
+  ][f];
+  for(const [y,x0,w] of S){ px(x, col || PAL['g'], x0, y, w, 1); }  // 外焰（章節可換色）
+  for(const [y,x0,w] of S){ if(w>2) px(x, PAL['i'], x0+1, y, w-2, 1); }
+  px(x, PAL['v'], 7, 6, 2, 3);                                      // 焰心
+  return c;
+}
+const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
+/* 每個章節一組光源。森林裡不會有壁掛火把，那裡的光是螢火；
+   木造的忍者之里是燈籠。同一組火焰換個顏色就能讀成不同的東西。 */
+const TORCH_SETS = {};
+function torchesFor(theme){
+  const col = (THEMES[theme] || {}).torch;
+  if(!col) return TORCH;
+  if(!TORCH_SETS[theme])
+    TORCH_SETS[theme] = [makeTorch(0,col), makeTorch(1,col), makeTorch(2,col)];
+  return TORCH_SETS[theme];
+}
+
+/* 幻獸：四隻共用一套「懸浮元素體」的骨架，只換顏色與外圈形狀。
+   共用骨架是刻意的 —— 玩家要一眼認出「這是我召的東西」，
+   然後才是分辨是哪一隻。剪影一致、顏色分派，就是這個順序。 */
+function makeSummon(colKey, shape){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  const col = PAL[colKey], dark = PAL['0'], lite = PAL['6'];
+  const CORE = [[5,7,2],[6,6,4],[7,5,6],[8,5,6],[9,6,4],[10,7,2]];
+  paintMask(x, shapeMask(CORE), col, dark, null, 99);
+  px(x,lite,7,6,1,2);
+  px(x,dark,6,7,1,1); px(x,dark,9,7,1,1);              // 眼
+  if(shape === 0){                                      // 炎：向上竄的火舌
+    px(x,col,7,2,2,3); px(x,lite,7,2,1,1);
+    px(x,col,5,4,1,2);  px(x,col,10,4,1,2);
+  } else if(shape === 1){                               // 冰：六角結晶環
+    px(x,col,2,7,2,2); px(x,col,12,7,2,2);
+    px(x,col,7,3,2,2); px(x,col,7,11,2,2);
+    px(x,lite,7,3,1,1);
+  } else if(shape === 2){                               // 雷：外圍的閃電折線
+    px(x,col,3,5,1,2); px(x,col,4,7,1,2); px(x,col,3,9,1,2);
+    px(x,col,12,5,1,2); px(x,col,11,7,1,2); px(x,col,12,9,1,2);
+    px(x,lite,7,1,2,2);
+  } else {                                              // 風：環繞的氣旋
+    px(x,col,3,6,3,1); px(x,col,2,8,3,1); px(x,col,3,10,3,1);
+    px(x,col,10,6,3,1); px(x,col,11,8,3,1); px(x,col,10,10,3,1);
+  }
+  px(x,dark,5,13,6,1); px(x,col,6,14,4,1);              // 底下的懸浮尾焰
+  return c;
+}
+const SUMMON_ART = {
+  ifr: makeSummon('h', 0), niv: makeSummon('r', 1),
+  ram: makeSummon('q', 2), syl: makeSummon('m', 3),
+};
+
+/* 店員：地牢裡唯一不會攻擊你的人形。用金紫配色跟所有怪物拉開距離 ——
+   玩家必須在第一眼就知道「這個不能打」。 */
+const KEEPER = (()=>{
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  px(x,PAL['0'],4,1,8,6);  px(x,PAL['o'],5,2,6,4);                 // 帽子
+  px(x,PAL['p'],5,2,6,1);  px(x,PAL['u'],5,5,6,1);
+  px(x,PAL['0'],4,6,8,5);  px(x,PAL['d'],5,7,6,3);                 // 臉
+  px(x,PAL['0'],6,8,1,1);  px(x,PAL['0'],9,8,1,1);
+  px(x,PAL['0'],3,10,10,5); px(x,PAL['o'],4,11,8,4);               // 長袍
+  px(x,PAL['u'],7,11,2,4);                                          // 前襟
+  px(x,PAL['t'],4,11,1,3); px(x,PAL['t'],11,11,1,3);
+  return c;
+})();
+
+/* 地面雜物：裂縫 / 碎石 / 苔 / 骨 / 水漬。
+   一整層只鋪同一張地磚，走起來會像跑步機；雜物是打破重複感最便宜的手段。 */
+function makeProp(i){
+  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const x = c.getContext('2d');
+  // 全部壓在地形自己的冷色階裡。飽和的苔綠與水藍會被玩家讀成「可以撿的東西」，
+  // 那就違反了整套配色規則：暖色與飽和色只屬於活的東西和道具。
+  if(i === 0){ px(x,PAL['0'],4,9,1,3); px(x,PAL['0'],5,11,3,1); px(x,PAL['0'],8,10,1,2); }
+  else if(i === 1){ px(x,PAL['z'],3,11,2,1); px(x,PAL['y'],9,9,2,1); px(x,PAL['z'],11,12,1,1);
+                    px(x,PAL['0'],3,12,2,1); px(x,PAL['0'],9,10,2,1); }
+  else if(i === 2){ px(x,PAL['w'],4,10,4,2); px(x,PAL['j'],5,10,2,1);
+                    px(x,PAL['w'],10,8,3,2); px(x,PAL['j'],10,8,2,1); }
+  else if(i === 3){ px(x,PAL['0'],5,10,6,1); px(x,PAL['z'],5,9,6,1);
+                    px(x,PAL['z'],4,8,2,1); px(x,PAL['z'],10,8,2,1); px(x,PAL['0'],4,10,8,1); }
+  else { px(x,PAL['0'],4,10,7,2); px(x,PAL['w'],5,10,5,1); px(x,PAL['x'],6,10,2,1); }
+  return c;
+}
+const PROPS = [makeProp(0),makeProp(1),makeProp(2),makeProp(3),makeProp(4)];
+
+/* ═══ 生物剪影生成器 ═══════════════════════════════════════════
+   十四隻新怪物如果手打 16x16 的像素字串，是十四份難維護的資料，
+   而且畫出來多半會變成「換了顏色的同一隻」。改成生成器：
+   先決定**體態**（鳥／四足／蛇／蟲／靈體／巨獸／構裝），
+   再套顏色。體態不同，關掉名字也認得出來 —— 那才是剪影的意義。
+
+   跟主角共用同一套規則：腳在下面、左上受光、自動描邊。 */
+const BEAST = {
+  bird: [                                   // 展翅：翼展比身體寬，頭高、腳細
+    [2,7,2],[3,6,4],
+    [4,1,14],[5,2,12],
+    [6,5,6],[7,5,6],[8,6,4],
+    [9,6,4],[10,7,2],
+    [11,6,1],[11,9,1],[12,5,1],[12,10,1],
+  ],
+  quad: [                                   // 四足：身體橫躺、頭在前下方
+    [4,10,4],[5,9,6],
+    [6,2,13],[7,1,14],[8,1,14],[9,2,12],
+    [10,2,2],[10,6,2],[10,10,2],[10,13,2],
+    [11,2,2],[11,6,2],[11,10,2],[11,13,2],
+    [12,2,1],[12,7,1],[12,11,1],[12,14,1],
+  ],
+  serpent: [                                // 盤蛇：細長的身體纏成兩圈，頭從左上抬起
+    [1,2,4],[2,1,3],[3,1,3],
+    [4,2,4],[5,4,4],[6,6,4],
+    [7,7,7],[8,4,11],
+    [9,3,4],[9,10,4],
+    [10,2,3],[10,12,3],
+    [11,3,10],[12,5,7],[13,7,3],
+  ],
+  bug: [                                    // 節肢：分節的殼 + 多對腳
+    [3,6,4],[4,5,6],
+    [5,4,8],[6,3,10],[7,3,10],[8,4,8],[9,5,6],
+    [6,1,2],[6,13,2],[8,0,2],[8,14,2],
+    [10,3,1],[10,6,1],[10,9,1],[10,12,1],
+    [11,2,1],[11,6,1],[11,9,1],[11,13,1],
+  ],
+  spirit: [                                 // 靈體：上寬下尖，沒有腳
+    [2,6,4],[3,4,8],
+    [4,3,10],[5,2,12],[6,2,12],[7,3,10],
+    [8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2],[13,7,1],
+  ],
+  giant: [                                  // 巨獸：方肩、粗肢、小頭
+    [1,6,4],[2,5,6],
+    [3,2,12],[4,1,14],[5,1,14],[6,1,14],[7,2,12],
+    [8,0,3],[8,13,3],[9,0,3],[9,13,3],
+    [8,4,8],[9,4,8],[10,4,8],
+    [11,3,3],[11,10,3],[12,3,3],[12,10,3],[13,3,2],[13,11,2],
+  ],
+  construct:[                               // 構裝：幾何塊體，浮空
+    [2,6,4],[3,6,4],
+    [4,3,10],[5,3,10],
+    [6,1,3],[6,6,4],[6,12,3],
+    [7,1,3],[7,5,6],[7,12,3],
+    [8,4,8],[9,4,8],
+    [10,5,6],[11,6,4],[12,7,2],
+  ],
+  /* 人型：忍者是這一整份名單裡唯一「跟你同一個物種」的敵人。
+     所以它的剪影要一眼認得出是人 —— 窄肩、雙臂、兩條腿。
+     那個認得出來本身就是氣氛：前面九十層打的都是野獸與概念。 */
+  human: [
+    [2,6,4],[3,5,6],                        // 頭巾
+    [4,6,4],                                // 面
+    [5,4,8],[6,3,10],                       // 肩
+    [7,2,2],[7,6,4],[7,12,2],               // 臂
+    [8,1,2],[8,6,4],[8,13,2],
+    [9,6,4],[10,5,6],
+    [11,5,2],[11,9,2],[12,4,2],[12,10,2],   // 腿
+    [13,4,2],[13,10,2],
+  ],
+  /* 奇美拉：獅身 + 羊頭 + 蛇尾。三個部位都得讀得出來，
+     不然它只是一隻大一點的四足獸 —— 那就不是奇美拉了。 */
+  chimera: [
+    [0,12,3],[1,11,2],[2,12,3],[3,13,2],    // 蛇尾：向上勾起再回落，S 形才讀得出是蛇
+    [2,1,2],[2,5,2],                        // 羊角：兩支分開的，中間要留空
+    [3,1,7],[4,0,8],                        // 獅頭與鬃
+    [5,1,7],
+    [6,1,14],[7,0,16],[8,0,16],[9,1,14],    // 身體
+    [10,2,2],[10,6,2],[10,10,2],[10,13,2],
+    [11,2,2],[11,6,2],[11,10,2],[11,13,2],
+    [12,2,1],[12,7,1],[12,11,1],[12,14,1],
+  ],
+  /* 蛾／蝶：兩片大翅 + 一條細身體。
+     關鍵是翅膀跟身體之間要留一格空 —— 第一版沒留，
+     整隻糊成一團，跟鳥分不出來。那一格空隙就是「這是蝶」的全部。 */
+  moth: [
+    [1,3,1],[1,12,1],[2,4,1],[2,11,1],          // 觸角
+    [3,7,2],[4,6,4],                            // 頭
+    [3,1,5],[3,10,5],                           // 上翅
+    [4,0,6],[4,10,6],
+    [5,0,6],[5,10,6],
+    [6,1,5],[6,10,5],
+    [8,2,4],[8,10,4],[9,3,3],[9,10,3],          // 下翅
+    [5,7,2],[6,7,2],[7,7,2],[8,7,2],            // 身體
+    [9,7,2],[10,7,2],[11,7,2],
+  ],
+  /* 提燈鬼：吊著的紙燈籠。橫骨是**故意在遮罩裡留空行**做出來的 ——
+     paintMask 會把「不在遮罩、但貼著遮罩」的格子塗成描邊色，
+     所以中間空掉的那兩行自己就變成兩條暗色橫骨。
+     不留空行的話它只是一顆有眼睛的球，看不出是燈籠。 */
+  lantern: [
+    [1,7,2],[2,6,4],                        // 吊環
+    [3,4,8],
+    [4,3,10],[5,2,12],[6,2,12],
+    /* y=7 留空 → 橫骨 */
+    [8,2,12],[9,3,10],
+    /* y=10 留空 → 橫骨 */
+    [11,4,8],[12,6,4],
+    [13,7,2],                               // 吐出來的舌頭
+  ],
+};
+/* eye: 眼睛位置與數量。剪影認得出「是什麼族」，眼睛認得出「在看你」。 */
+const BEAST_EYE = {
+  bird:[[6,5],[6,9]], quad:[[10,4],[10,6]], serpent:[[2,2],[2,4]],
+  bug:[[5,5],[5,9]], spirit:[[5,4],[5,10]], giant:[[2,6],[2,9]],
+  construct:[[3,7]],
+  human:[[4,6],[4,9]],       // 只露出眼睛的一條 —— 忍者的臉是遮著的
+  chimera:[[4,2],[4,5],[1,11]],  // 獅眼一對，加上蛇尾那顆
+  moth:[[4,7]],              // 只有一顆：蛾的頭很小，兩顆會糊成一塊
+  lantern:[[5,7]],           // 獨眼
+};
+function makeBeast(kind, col, dark, glow){
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const m = shapeMask(BEAST[kind] || BEAST.quad);
+  paintMask(x, m, PAL[col], PAL[dark || '0'], null, 99);
+  for(const [ey,ex] of (BEAST_EYE[kind] || [])){
+    // 眼睛先鋪一格亮的再壓瞳孔。純暗色的眼睛在深色身體上等於沒有畫 ——
+    // 剪影告訴你「這是什麼族」，眼睛告訴你「牠正在看你」。
+    px(x, PAL[glow || '6'], ex, ey, 2, 2);
+    px(x, PAL[dark || '0'], ex + 1, ey + 1, 1, 1);
+  }
+  // 左上受光：所有生物共用同一個光源，這是整套美術唯一的一致性來源
+  const top = maskTop(m);
+  px(x, PAL['6'], 4, top + 1, 1, 1);
+  return c;
+}
+
+// 地域怪物沒有手繪資料，用剪影生成器現做。
+// 必須放在 BEAST 定義之後 —— 函式會被提升，const 不會。
+for(const m of MONS) if(m.bd) atlas[m.id] = makeBeast(m.bd, m.col, '0', m.glow);
+
+/* ═══ 章節專屬的牆與地面物件 ═════════════════════════════════
+   只換顏色是不夠的。玩家看得出來的是**剪影**：一塊 2x2 的磚頭
+   染成綠色還是磚頭，不會變成樹。所以每種地貌各有自己的牆形，
+   還有自己的地面雜物 —— 森林有草叢與蕈菇，山道有碎石，
+   通天塔有金線嵌紋。這些東西不影響任何規則，
+   但它們是「這是一款用心做的遊戲」唯一的證據。 */
+function themeWall(kind, face, ramp){
+  const R = ramp || RAMP;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*7919 + (face?31:17));
+  x.fillStyle = PAL['0']; x.fillRect(0,0,T,T);
+
+  if(kind === 'tree'){                       // 森林：樹幹並排，樹皮縱紋
+    for(const tx of [0,6,11]){
+      const w = tx===6 ? 5 : 4;
+      x.fillStyle = PAL[R[1]]; x.fillRect(tx, 0, w, T);
+      x.fillStyle = PAL[R[2]]; x.fillRect(tx+1, 0, 1, T);
+      x.fillStyle = PAL['0'];
+      for(let i=0;i<5;i++) x.fillRect(tx + r.i(0,w-1), r.i(0,15), 1, r.i(1,3));
+    }
+    x.fillStyle = PAL[R[3]];                 // 樹冠壓在上緣，讓上下有別
+    for(let i=0;i<14;i++) x.fillRect(r.i(0,15), r.i(0,3), r.i(1,2), 1);
+  } else if(kind === 'cliff'){               // 山道：岩層橫紋，上緣鋸齒
+    x.fillStyle = PAL[R[0]]; x.fillRect(0,2,T,14);
+    for(let y=3;y<16;y+=3){
+      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,1);
+      x.fillStyle = PAL['0']; x.fillRect(r.i(0,10), y, r.i(2,5), 1);
+    }
+    x.fillStyle = PAL[R[2]];                 // 頂緣的碎岩
+    for(let i=0;i<16;i++) x.fillRect(i, 1 + (r.chance(.5)?0:1), 1, 1);
+  } else if(kind === 'column'){              // 通天塔：直立石柱，柱頭有金線
+    x.fillStyle = PAL[R[1]]; x.fillRect(2,0,12,T);
+    x.fillStyle = PAL[R[2]]; x.fillRect(3,0,2,T); x.fillRect(8,0,2,T);
+    x.fillStyle = PAL[R[3]]; x.fillRect(3,0,1,T);
+    x.fillStyle = PAL['0']; x.fillRect(0,0,2,T); x.fillRect(14,0,2,T);
+    x.fillStyle = PAL['u']; x.fillRect(2,3,12,1); x.fillRect(2,12,12,1);
+  } else if(kind === 'shard'){               // 水晶：斜切的稜面
+    x.fillStyle = PAL[R[1]]; x.fillRect(0,0,T,T);
+    x.fillStyle = PAL[R[2]];
+    for(let i=0;i<16;i++) x.fillRect(i, Math.max(0,i-3), 1, 6);
+    x.fillStyle = PAL[R[3]];
+    for(let i=0;i<16;i+=2) x.fillRect(i, Math.max(0,15-i), 1, 2);
+    x.fillStyle = PAL['0'];
+    for(let i=0;i<10;i++) x.fillRect(r.i(0,15), r.i(0,15), 1, 1);
+  } else if(kind === 'plank'){               // 木造：橫向木板與釘子
+    for(let y=0;y<16;y+=4){
+      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,3);
+      x.fillStyle = PAL[R[2]]; x.fillRect(0,y,T,1);
+      x.fillStyle = PAL['0']; x.fillRect(0,y+3,T,1);
+      x.fillStyle = PAL[R[0]]; x.fillRect(r.i(1,13), y+1, 1, 1);
+    }
+  } else if(kind === 'void'){                // 虛空：幾乎全黑，只有幾點光
+    x.fillStyle = PAL[R[0]]; x.fillRect(0,0,T,T);
+    for(let i=0;i<7;i++){ x.fillStyle = r.chance(.5)?PAL[R[2]]:PAL[R[1]];
+      x.fillRect(r.i(0,15), r.i(0,15), 1, 1); }
+  } else {
+    return makeWall(face, R);                // 石造：沿用原本的磚牆
+  }
+  if(face){                                  // 立面：下方是地板時畫出厚度
+    x.fillStyle=PAL[R[3]]; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL[R[2]]; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL[R[0]]; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+  }
+  return c;
+}
+/* 地面雜物：每種地貌 4 個。一樣壓在地形自己的色階裡 ——
+   飽和的顏色只屬於活的東西與道具，這條規則不能為了好看破例。 */
+function themeProp(kind, i, ramp){
+  const R = ramp || RAMP;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*131 + i*977);
+  if(kind === 'grass'){                      // 草叢、蕨、蕈菇、樹根
+    if(i===0){ for(const gx of [4,6,8,10]) { px(x,PAL['0'],gx,11,1,3); px(x,PAL[R[3]],gx,10,1,2); } }
+    else if(i===1){ px(x,PAL['0'],7,9,2,5); px(x,PAL[R[3]],5,10,2,1); px(x,PAL[R[3]],9,10,2,1);
+                    px(x,PAL[R[2]],6,12,4,1); }
+    else if(i===2){ px(x,PAL['0'],6,9,4,4); px(x,PAL['d'],6,9,4,2); px(x,PAL['b'],7,11,2,2); }
+    else { px(x,PAL['0'],3,12,10,2); px(x,PAL[R[1]],3,12,10,1); px(x,PAL[R[2]],5,12,3,1); }
+  } else if(kind === 'rock'){                // 碎石、裂縫、小石堆
+    if(i===0){ px(x,PAL['0'],5,11,4,3); px(x,PAL[R[3]],5,11,3,2); }
+    else if(i===1){ px(x,PAL['0'],3,10,1,4); px(x,PAL['0'],4,12,3,1); px(x,PAL['0'],8,11,1,3); }
+    else if(i===2){ px(x,PAL['0'],4,12,8,2); px(x,PAL[R[2]],4,12,8,1);
+                    px(x,PAL['0'],6,10,4,2); px(x,PAL[R[3]],6,10,3,1); }
+    else { for(let k=0;k<6;k++) px(x,PAL[R[3]],r.i(2,13),r.i(9,14),1,1); }
+  } else if(kind === 'ripple'){               // 水紋與蘆葦
+    if(i===0){ px(x,PAL[R[3]],3,11,6,1); px(x,PAL[R[3]],8,13,5,1); }
+    else if(i===1){ px(x,PAL[R[3]],4,10,4,1); px(x,PAL[R[3]],9,12,5,1); px(x,PAL[R[2]],5,12,3,1); }
+    else if(i===2){ px(x,PAL['0'],5,8,1,6); px(x,PAL['0'],9,9,1,5); px(x,PAL[R[3]],5,8,1,2); }
+    else { px(x,PAL[R[2]],2,11,12,1); }
+  } else if(kind === 'inlay'){                // 通天塔：金線嵌紋
+    if(i===0){ px(x,PAL['t'],3,11,10,1); px(x,PAL['u'],3,11,4,1); }
+    else if(i===1){ px(x,PAL['t'],7,8,2,7); px(x,PAL['u'],7,8,1,4); }
+    else if(i===2){ px(x,PAL['t'],5,10,6,1); px(x,PAL['t'],7,8,2,5); px(x,PAL['v'],7,10,2,1); }
+    else { px(x,PAL['u'],4,12,2,2); px(x,PAL['u'],10,12,2,2); }
+  } else if(kind === 'glint'){                // 水晶碎屑
+    if(i===0){ px(x,PAL['0'],6,10,3,4); px(x,PAL[R[3]],6,10,2,3); px(x,PAL['6'],6,10,1,1); }
+    else if(i===1){ px(x,PAL['0'],4,12,2,2); px(x,PAL[R[3]],4,12,1,1);
+                    px(x,PAL['0'],10,11,2,3); px(x,PAL[R[3]],10,11,1,2); }
+    else if(i===2){ for(let k=0;k<5;k++) px(x,PAL[R[3]],r.i(3,12),r.i(9,14),1,1); }
+    else { px(x,PAL['0'],7,9,3,5); px(x,PAL[R[3]],7,9,2,4); px(x,PAL['6'],7,9,1,2); }
+  } else {
+    return PROPS[i % PROPS.length];
+  }
+  return c;
+}
+/* ─── 地標 ────────────────────────────────────────────────────
+   一章一個「看得出來是什麼」的大型物件。地面雜物解決的是
+   「地板不要一片死板」，地標解決的是完全不同的問題：
+   **記得住**。玩家講起這款遊戲時說的是「那棵大樹的那一層」，
+   不是「第二章第四層」—— 沒有地標的地圖，每一層都長得一樣。
+
+   尺寸刻意做成 2 格寬 × 3 格高：佔地只有 2×2（下面兩排），
+   最上面那一排長到隔壁格去。這樣它比任何怪物都高，
+   走進房間第一眼就看到它，但佔的路只有兩格見方。
+   顏色一樣壓在地貌自己的色階裡 —— 它是地形，不是活的東西。
+   唯一的例外是會發光的那幾個（燈籠的火、水晶的芯），
+   那跟火把同一個道理：光源本來就該是暖的。 */
+function makeLandmark(kind, ramp){
+  const R = ramp || RAMP, LW = T*2, LH = T*3;
+  const c = document.createElement('canvas'); c.width = LW; c.height = LH;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*7919 + 13);
+  const O = PAL['0'];
+  // 雜訊要「不規則」。用 %n 取模會排出斜線，看起來像織紋不像樹皮
+  const hash = (X,Y)=> (X*73856093 ^ Y*19349663) >>> 0;
+  /* 這裡不用一格一格 fillRect 疊形狀 —— 第一版就是那樣做的，
+     結果巨樹看起來像一塊路牌、守望像看起來像一個十字。
+     長方形的堆疊在 16px 的世界裡永遠讀成 UI，不會讀成「東西」。
+     改成先做剪影遮罩、再自動描邊：認得出來的是輪廓，不是顏色。 */
+  const m = Array.from({length:LH}, ()=>new Array(LW).fill(0));
+  const rect = (x0,y0,w,h)=>{ for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+    const X=x0+i, Y=y0+j; if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
+  const ell = (cx,cy,rx,ry)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
+    const u=(X-cx)/rx, v=(Y-cy)/ry; if(u*u+v*v<=1) m[Y][X]=1; } };
+  // 上窄下寬（或反過來）的錐體：樹幹、衣襬、礦車車斗都是這個形狀
+  const taper = (cx,y0,y1,w0,w1)=>{ for(let Y=y0;Y<=y1;Y++){
+    const k=(Y-y0)/Math.max(1,y1-y0), w=w0+(w1-w0)*k;
+    for(let X=Math.round(cx-w/2); X<Math.round(cx+w/2); X++)
+      if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
+  const clear = ()=>{ for(let Y=0;Y<LH;Y++) m[Y].fill(0); };
+  // 填色＋自動描邊。描邊是這一整套的重點：有邊的東西才立得起來
+  const paint = (fill)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
+    if(m[Y][X]){ x.fillStyle=fill; x.fillRect(X,Y,1,1); }
+    else if((m[Y-1]&&m[Y-1][X])||(m[Y+1]&&m[Y+1][X])||m[Y][X-1]||m[Y][X+1]){
+      x.fillStyle=O; x.fillRect(X,Y,1,1); } } };
+  // 只在剪影裡上色，不會漏到外面去
+  const shade = (col, f)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++)
+    if(m[Y][X] && f(X,Y)){ x.fillStyle=col; x.fillRect(X,Y,1,1); } };
+  /* 腳下的投影。少了它，地標會像是浮在地板上的貼紙 ——
+     這一格是牆（擋路），但畫的是地板，所以只有影子能告訴玩家
+     「這東西是站在地上的」。裂隙沒有影子，因為它不是東西。 */
+  if(kind !== 'rift'){
+    x.globalAlpha = .32; x.fillStyle = PAL['0'];
+    for(let Y=40;Y<48;Y++){
+      const v=(Y-44)/4.5, w=Math.round(15*Math.sqrt(Math.max(0,1-v*v)));
+      x.fillRect(17-w, Y, w*2, 1);
+    }
+    x.globalAlpha = 1;
+  }
+
+  if(kind === 'tree'){                       // 巨樹：板根 → 樹幹 → 交疊成團的樹冠
+    // 幹要畫到樹冠裡面去。第一版讓幹停在樹冠下緣，
+    // 兩塊各自描邊的結果是中間浮出一條接縫 —— 看起來像一把傘，不像樹。
+    taper(16, 12, 43, 7, 12);
+    taper(16, 43, 47, 12, 22);               // 板根
+    paint(PAL[R[1]]);
+    shade(PAL[R[2]], (X,Y)=> X < 15);        // 左側受光
+    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 9 === 0);      // 樹皮
+    clear();
+    // 六團交疊的葉叢。單一橢圓會讀成傘或蘑菇，樹冠必須是「一團一團」的
+    ell(16,13,14,10); ell(6,16,7,6); ell(26,15,7,6);
+    ell(11,5,8,6);    ell(22,6,7,5); ell(16,21,10,5);
+    /* 樹冠要比林間空地的地面「暗」。上一版用了 R[2]，
+       跟地板同一階 —— 於是整團樹冠在亮綠色的空地上直接消失。
+       從上往下看，一棵大樹本來就是地面上的一塊陰影。 */
+    paint(PAL[R[1]]);
+    // 受光是一塊，不是條紋。條紋會讀成傘骨 —— 上一版就是敗在這裡。
+    shade(PAL[R[2]], (X,Y)=> (X-10)*(X-10)*.6 + (Y-8)*(Y-8) < 96);
+    shade(PAL[R[3]], (X,Y)=> (X-9)*(X-9)*.7 + (Y-7)*(Y-7) < 34);
+    shade(PAL[R[2]], (X,Y)=> (X-24)*(X-24) + (Y-9)*(Y-9)*.7 < 30);
+    shade(PAL[R[0]], (X,Y)=> (X-23)*(X-23)*.5 + (Y-21)*(Y-21) < 76);
+    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 23 === 0);     // 葉隙
+  } else if(kind === 'bones'){               // 幻獸洞窟：巨獸的頭骨
+    ell(16,20,14,13);                        // 顱
+    taper(16,29,44,20,13);                   // 吻
+    paint(PAL[R[3]]);
+    shade(PAL[R[2]], (X,Y)=> X > 19);
+    shade(PAL[R[1]], (X,Y)=> Y > 38);
+    shade(PAL['0'], (X,Y)=> (X-10)*(X-10) + (Y-19)*(Y-19)*1.4 < 17);   // 眼窩
+    shade(PAL['0'], (X,Y)=> (X-22)*(X-22) + (Y-19)*(Y-19)*1.4 < 17);
+    shade(PAL['0'], (X,Y)=> Y > 26 && Y < 32 && Math.abs(X-16) < (Y-25)/2); // 鼻腔
+    shade(PAL['0'], (X,Y)=> Y > 33 && Y < 43 && (X-16+40) % 4 === 0);       // 齒縫
+    shade(PAL[R[2]], (X,Y)=> Y < 12 && hash(X,Y) % 7 === 0);                // 裂痕
+  } else if(kind === 'stele'){               // 界碑：圓頂的刻字立石
+    rect(4,44,24,4);                         // 基座
+    taper(16, 9, 44, 15, 18);
+    ell(16,10,8,7);                          // 圓頂
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 13);
+    shade(PAL[R[1]], (X,Y)=> X > 21);
+    for(let i=0;i<5;i++) shade(PAL[R[0]], (X,Y)=> Y===19+i*5 && X>10 && X<22);
+    shade(PAL[R[0]], (X,Y)=> Y>21 && Y<41 && X===16 && Y%3);
+    shade(PAL['j'], (X,Y)=> Y>38 && (X*7+Y*3)%5===0);   // 底部青苔
+  } else if(kind === 'lantern'){             // 石燈籠：全戰役唯一會發光的地標
+    rect(9,42,14,6); taper(16,30,42,7,11);   // 基座與柱
+    ell(16,23,10,8);                         // 火袋
+    taper(16,10,17,22,15);                   // 笠
+    ell(16,7,4,4);                           // 寶珠
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 14);
+    shade(PAL[R[1]], (X,Y)=> X > 20);
+    px(x,O,11,19,10,9);                                 // 火口
+    px(x,PAL['h'],12,20,8,7); px(x,PAL['i'],13,21,6,5); px(x,PAL['v'],14,22,4,3);
+    px(x,PAL['v'],15,5,2,2);
+  } else if(kind === 'torii'){               // 鳥居：一眼就知道進了另一個地方
+    rect(4,14,6,34); rect(22,14,6,34);       // 柱
+    rect(0,4,32,7);                          // 笠木
+    rect(3,16,26,5);                         // 貫
+    rect(14,10,4,7);                         // 額束
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> Y<7 || X===4 || X===22);
+    shade(PAL[R[1]], (X,Y)=> Y>=9 && Y<11);
+    shade(PAL[R[0]], (X,Y)=> Y>30 && (X*3+Y*5)%13===0);
+  } else if(kind === 'mirror'){              // 立鏡：橢圓的鏡面，不是方框
+    rect(11,38,10,8); rect(5,45,22,3);       // 支架與底座
+    ell(16,21,13,18);                        // 鏡框
+    paint(PAL[R[3]]);
+    shade(PAL[R[2]], (X,Y)=> X > 18);
+    clear(); ell(16,21,10,15);
+    paint(PAL[R[0]]);                        // 鏡面：暗的，才照得出反光
+    shade(PAL[R[2]], (X,Y)=> ((X*2 + Y) % 17) < 3);
+    shade(PAL['6'],  (X,Y)=> ((X*2 + Y) % 17) === 0 && X < 16);
+  } else if(kind === 'geode'){               // 水晶簇：高低錯落的柱體
+    const sp = [[7,20,5,28],[13,8,7,40],[21,17,6,31],[3,31,5,17],[26,26,5,22]];
+    for(const [sx,sy,sw,sh] of sp){ clear(); taper(sx+sw/2, sy, sy+sh, sw*0.5, sw);
+      paint(PAL[R[1]]);
+      shade(PAL[R[3]], (X,Y)=> X < sx+sw*0.5);
+      shade(PAL['6'],  (X,Y)=> X < sx+sw*0.25 && Y < sy+sh*0.6); }
+    clear(); rect(3,43,26,5); paint(PAL[R[1]]);
+  } else if(kind === 'statue'){              // 守望像：有兜帽的人形，沒有臉
+    rect(5,43,22,5);                         // 台座
+    taper(16,20,43,11,20);                   // 衣襬
+    rect(3,20,26,5);                         // 張開的雙臂
+    ell(16,14,6,7);                          // 兜帽
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 15);
+    shade(PAL[R[1]], (X,Y)=> X > 20);
+    shade(PAL[R[0]], (X,Y)=> Y>12 && Y<19 && X>12 && X<20);   // 兜帽下的暗
+    shade(PAL[R[0]], (X,Y)=> Y>24 && Y<43 && (X-16+((Y-24)>>2))%6===0);
+    px(x,PAL['u'],14,11,4,2);
+  } else if(kind === 'rift'){                // 虛空的裂隙：不是物體，是缺口
+    for(let i=0;i<15;i++){ const w = 3 + Math.abs(7-i)*1.4;
+      rect(Math.round(16-w), 6+i*3, Math.round(w*2), 3); }
+    paint(PAL['1']);
+    shade(PAL['4'], (X,Y)=> Math.abs(X-16) < 4);
+    shade(PAL['6'], (X,Y)=> Math.abs(X-16) < 2 && Y > 12 && Y < 38);
+    for(let i=0;i<26;i++) px(x, i%3 ? PAL['5'] : PAL['6'], 16+r.i(-10,9), r.i(4,46), 1, 1);
+  } else {                                   // stone：礦車
+    rect(9,42,6,6); rect(19,42,6,6);         // 輪
+    taper(16,26,43,26,18);                   // 車斗
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> Y < 29 || X < 8);
+    shade(PAL[R[1]], (X,Y)=> X > 21);
+    shade(PAL[R[0]], (X,Y)=> Y>32 && (Y-32)%5===0);          // 鉚接的橫帶
+    shade(PAL[R[0]], (X,Y)=> Y>=42 && ((X-12)*(X-12)+(Y-45)*(Y-45) < 4 ||
+                                       (X-22)*(X-22)+(Y-45)*(Y-45) < 4));
+    px(x,PAL['a'],7,27,7,5); px(x,PAL['c'],9,28,4,3);        // 車裡的礦石
+    px(x,PAL['b'],16,27,6,4); px(x,PAL['d'],18,28,3,2);
+    clear(); rect(1,2,4,30); paint(PAL[R[1]]);               // 靠在旁邊的坑木
+    shade(PAL[R[0]], (X,Y)=> Y%6===0);
+  }
+  return c;
+}
+const THEME_MARK = {};
+function markFor(theme){
+  if(THEME_MARK[theme] !== undefined) return THEME_MARK[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  return THEME_MARK[theme] = th.mark ? makeLandmark(th.mark, th.ramp) : null;
+}
+
+const THEME_PROPS = {};
+function propsFor(theme){
+  if(THEME_PROPS[theme]) return THEME_PROPS[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  if(!th.prop) return THEME_PROPS[theme] = PROPS;
+  return THEME_PROPS[theme] = [0,1,2,3].map(i => themeProp(th.prop, i, th.ramp));
+}
 
 /* ─── 地圖生成 ────────────────────────────────────────────────
    30x30 切 3x3 區域 → 各區生成房間 → 區域鄰接圖取隨機生成樹保證連通
@@ -3526,7 +4145,9 @@ function spawnMon(d,x,y){
       def: Math.max(0,  Math.round(s.def * (mm.def || 1))),
     });
   }
-  G.mons.push({d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++});
+  const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++};
+  G.mons.push(mo);
+  return mo;                     // 分身之術需要拿到剛生出來的那一隻
 }
 
 const key=(x,y)=>y*MW+x;
@@ -3684,6 +4305,11 @@ function attack(m, mult){
   p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
   if(!hit){ SFX.play('miss'); say(M('m.miss','對 {nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); float(m.x,m.y,'MISS','#a99a7e'); return; }
   const crit = G.rng.chance(.05);
+  // 屠龍刀：對大型獸與頭目才吃得到倍率。基礎攻擊比秘銀低，
+  // 所以「該不該換上去」是一道真的選擇題，不是直線升級。
+  const wp = p.weap && p.weap.d;
+  const big = m.d.boss || ['giant','quad','chimera','serpent'].includes(m.d.bd);
+  if(wp && wp.slay && big) mult = (mult || 1) * wp.slay;
   const dmg = rollDmg(pAtk(), m.d.def, crit, mult);
   SFX.play(crit?'crit':'hit');
   m.flash = 0.11;
@@ -3693,11 +4319,32 @@ function attack(m, mult){
   G.shake = crit?7:3;
   say(M('m.hit','對 {nm} 造成 {n} 點傷害。{c}',{nm:locName('mon',m.d),n:dmg,c:crit?TX('m.crit','（會心一擊！）'):''}), crit?'gold':null);
   if(m.hp<=0){ kill(m); return; }
+  /* 分身之術。挨了一刀而沒死的影忍會留下一個假的自己 ——
+     分身只有 1 點體力，一碰就散，但你要多花一回合才知道哪個是真的。
+     這是幻忍之里唯一「不靠數值」的威脅：它偷的是你的回合，不是血。 */
+  if(m.d.clone && !m.isClone && G.rng.chance(.4)){
+    const s = nearestFree(m.x, m.y);
+    if(s){
+      const c = spawnMon(m.d, s.x, s.y);
+      if(c){ c.isClone = 1; c.hp = 1; c.mhp = 1; c.aggro = 15;
+             say(M('m.clone','{nm} 分成了兩個 —— 哪一個是真的？',{nm:locName('mon',m.d)}),'bad'); }
+    }
+  }
   if(m.d.counter && G.rng.chance(m.d.counter)){
     const back = rollDmg(m.d.atk, pDef(), false, .5);
     p.hp -= back; say(`${m.d.nm} 發動了反擊！`,'bad'); float(p.x,p.y,'-'+back,'#a83c32');
   }
   m.aggro = 15;
+  /* 天空之劍：橫掃所有其他相鄰的敵人（半傷）。
+     直接算傷害、不遞迴呼叫 attack() —— 被四隻圍住時遞迴會炸開。
+     hurtMon 自己會處理死亡，所以這裡不需要再判一次。 */
+  if(wp && wp.sweep){
+    for(const d of DIRS){
+      const o = monAt(p.x+d[0], p.y+d[1]);
+      if(!o || o === m || o.hp <= 0) continue;
+      hurtMon(o, rollDmg(pAtk(), o.d.def, false, .5), '#f5dc7a');
+    }
+  }
 }
 /* ── 頭目倒下 ────────────────────────────────────────────────
    「意識」不是一場戰鬥，是三場：凝視 → 複寫 → 歸一。
@@ -4138,6 +4785,14 @@ function act(m,it){
     const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
     if(!hit){ SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); return; }
     let dmg = rollDmg(m.d.atk, pDef(), false, mult);
+    /* 影法師打的是「你自己」。它的攻擊力取自你當下的攻擊力，
+       所以在鏡像世界裡，把裝備練得越好，影子就越痛 ——
+       這一章的主題本來就是「連自己都不能全信」。
+       取兩者較大值而不是直接替換，是為了不讓它在低裝時變成軟腳蝦。 */
+    /* 表上的 atk 只有 16 —— 影法師的傷害「主要」來自你自己。
+       第一版把表值寫成 30、倍率 0.7，量出來在鏡像世界只差 1.27 倍：
+       那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
+    if(m.d.mimic) dmg = Math.max(dmg, rollDmg(Math.round(pAtk()*m.d.mimic), pDef(), false, mult));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     SFX.play(ranged?'zap':'hurt', 60);
     m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
@@ -4417,6 +5072,24 @@ let pendWand = null;
 function fireWand(dx,dy){
   const it = pendWand; pendWand = null;
   it.uses--; SFX.play('zap');
+  /* 熔岩杖走另一條路：它打的是牆，不是怪，所以不用先找目標。
+     只往外挖，永遠不會把地板變回牆 —— 也就是說它不可能挖出
+     「樓梯到不了」的地圖。地圖最外一圈必須留著，否則會漏出邊界。 */
+  if(it.d.dig){
+    say(M('m.wave','揮動了「{nm}」。',{nm:nameOf(it)}));
+    let n = 0, cx2 = G.p.x + dx, cy2 = G.p.y + dy;
+    for(let i=0;i<6;i++, cx2+=dx, cy2+=dy){
+      if(cx2 < 1 || cy2 < 1 || cx2 >= MW-1 || cy2 >= MH-1) break;
+      if(G.f.t[key(cx2,cy2)] !== WALL) continue;
+      G.f.t[key(cx2,cy2)] = CORR;
+      burst(cx2, cy2, 9, '#e87a4a', 40, 10, .6);
+      n++;
+    }
+    G.shake = Math.max(G.shake, 6);
+    say(n ? M('m.melt','岩壁熔開了 {n} 格。',{n}) : TX('m.nomelt','熔岩掃過空氣，什麼也沒有燒到。'),
+        n ? 'gold' : null);
+    vision(); endTurn(); return;
+  }
   let x=G.p.x+dx, y=G.p.y+dy, target=null;
   for(let i=0;i<10;i++){
     if(!walkable(x,y)) break;
@@ -4980,16 +5653,22 @@ function ending(){
     `九十三層，你沒有變強，你是變得**懂了**。<br><br>` +
     `門開了。門後面不是地方，是時間。<br>` +
     `你走進去，成為那個從此會回答別人問題的東西。<br><br>`) +
-    `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>`;
+    `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
+    `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
   $('over').classList.add('show');
   refresh();
 }
 function death(){
   G.over = true;
-  const rev = G.p.inv.find(i=>i.cat==='herb' && i.id==='rev');
-  if(rev){ removeItem(rev); G.p.hp = G.p.mhp; G.over=false;
+  /* 復活道具挑「最好的那一個」而不是寫死 id。
+     以前這裡是 `i.id==='rev'` —— 資料表上加了世界樹之葉也不會被用到，
+     那種「加了東西卻沒有效果」的 bug 最難發現，因為它不會報錯。 */
+  const rev = G.p.inv.filter(i => i.cat==='herb' && i.d.revive)
+                     .sort((a,b) => b.d.revive - a.d.revive)[0];
+  if(rev){ removeItem(rev); G.p.hp = G.p.mhp; G.p.st = {}; G.over=false;
     G.known[lookKey(rev)]=1; SFX.play('level');
-    say('復活草發出光芒，你重新站了起來！','good'); return; }
+    burst(G.p.x, G.p.y, 30, rev.d.revive>=2 ? '#79c97a' : '#f5dc7a', 66, 22, 1.0);
+    say(M('m.revd','「{nm}」發出光芒，你重新站了起來！',{nm:nameOf(rev)}),'good'); return; }
   // 不死鳥的羽毛：每一趟只燒得掉一次
   if(VILLAGE.feather && !G.usedFeather){
     G.usedFeather = 1; G.p.hp = G.p.mhp; G.over = false;
@@ -5231,498 +5910,6 @@ function heroNow(){
   const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.id) : -1;
   const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.id) : -1;
   return heroSprite(wi, si, p && p.hat);
-}
-
-/* ═══ 動態美術層 ═════════════════════════════════════════════
-   一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
-   關鍵是**畫面上有沒有東西在動**。靜止的精靈再精緻也像素材圖，
-   會呼吸、會被打退、會噴火花的粗糙精靈反而像遊戲。
-   這一段全部是程序化的：零額外圖檔，但畫面從此不再是靜止的。 */
-
-let clock = 0;                       // 全域動畫時鐘（秒）
-
-/* 受擊白閃：把精靈當遮罩塗成純白，快取起來避免每幀重建 */
-const flashCache = {};
-function whiteOf(img, name){
-  if(flashCache[name]) return flashCache[name];
-  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-  const x = c.getContext('2d');
-  x.drawImage(img, 0, 0);
-  x.globalCompositeOperation = 'source-in';
-  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
-  return flashCache[name] = c;
-}
-
-/* 火把：三張輪播的火焰。火焰不對稱才會像在燒，
-   完全對稱的火焰看起來像一片葉子。 */
-function makeTorch(f, col){
-  const c = document.createElement('canvas'); c.width = T; c.height = T;
-  const x = c.getContext('2d');
-  px(x, PAL['0'], 6, 9, 4, 5);  px(x, PAL['9'], 7, 10, 2, 4);      // 壁座
-  px(x, PAL['8'], 5, 13, 6, 1); px(x, PAL['0'], 5, 14, 6, 1);
-  const S = [                                                       // 三張火焰的跨距
-    [[3,7,2],[4,6,4],[5,6,4],[6,5,5],[7,6,4],[8,7,2]],
-    [[2,8,2],[3,7,3],[4,6,4],[5,6,5],[6,6,4],[7,7,3],[8,7,2]],
-    [[3,6,3],[4,6,4],[5,5,5],[6,6,4],[7,6,3],[8,7,2]],
-  ][f];
-  for(const [y,x0,w] of S){ px(x, col || PAL['g'], x0, y, w, 1); }  // 外焰（章節可換色）
-  for(const [y,x0,w] of S){ if(w>2) px(x, PAL['i'], x0+1, y, w-2, 1); }
-  px(x, PAL['v'], 7, 6, 2, 3);                                      // 焰心
-  return c;
-}
-const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
-/* 每個章節一組光源。森林裡不會有壁掛火把，那裡的光是螢火；
-   木造的忍者之里是燈籠。同一組火焰換個顏色就能讀成不同的東西。 */
-const TORCH_SETS = {};
-function torchesFor(theme){
-  const col = (THEMES[theme] || {}).torch;
-  if(!col) return TORCH;
-  if(!TORCH_SETS[theme])
-    TORCH_SETS[theme] = [makeTorch(0,col), makeTorch(1,col), makeTorch(2,col)];
-  return TORCH_SETS[theme];
-}
-
-/* 幻獸：四隻共用一套「懸浮元素體」的骨架，只換顏色與外圈形狀。
-   共用骨架是刻意的 —— 玩家要一眼認出「這是我召的東西」，
-   然後才是分辨是哪一隻。剪影一致、顏色分派，就是這個順序。 */
-function makeSummon(colKey, shape){
-  const c = document.createElement('canvas'); c.width = T; c.height = T;
-  const x = c.getContext('2d');
-  const col = PAL[colKey], dark = PAL['0'], lite = PAL['6'];
-  const CORE = [[5,7,2],[6,6,4],[7,5,6],[8,5,6],[9,6,4],[10,7,2]];
-  paintMask(x, shapeMask(CORE), col, dark, null, 99);
-  px(x,lite,7,6,1,2);
-  px(x,dark,6,7,1,1); px(x,dark,9,7,1,1);              // 眼
-  if(shape === 0){                                      // 炎：向上竄的火舌
-    px(x,col,7,2,2,3); px(x,lite,7,2,1,1);
-    px(x,col,5,4,1,2);  px(x,col,10,4,1,2);
-  } else if(shape === 1){                               // 冰：六角結晶環
-    px(x,col,2,7,2,2); px(x,col,12,7,2,2);
-    px(x,col,7,3,2,2); px(x,col,7,11,2,2);
-    px(x,lite,7,3,1,1);
-  } else if(shape === 2){                               // 雷：外圍的閃電折線
-    px(x,col,3,5,1,2); px(x,col,4,7,1,2); px(x,col,3,9,1,2);
-    px(x,col,12,5,1,2); px(x,col,11,7,1,2); px(x,col,12,9,1,2);
-    px(x,lite,7,1,2,2);
-  } else {                                              // 風：環繞的氣旋
-    px(x,col,3,6,3,1); px(x,col,2,8,3,1); px(x,col,3,10,3,1);
-    px(x,col,10,6,3,1); px(x,col,11,8,3,1); px(x,col,10,10,3,1);
-  }
-  px(x,dark,5,13,6,1); px(x,col,6,14,4,1);              // 底下的懸浮尾焰
-  return c;
-}
-const SUMMON_ART = {
-  ifr: makeSummon('h', 0), niv: makeSummon('r', 1),
-  ram: makeSummon('q', 2), syl: makeSummon('m', 3),
-};
-
-/* 店員：地牢裡唯一不會攻擊你的人形。用金紫配色跟所有怪物拉開距離 ——
-   玩家必須在第一眼就知道「這個不能打」。 */
-const KEEPER = (()=>{
-  const c = document.createElement('canvas'); c.width = T; c.height = T;
-  const x = c.getContext('2d');
-  px(x,PAL['0'],4,1,8,6);  px(x,PAL['o'],5,2,6,4);                 // 帽子
-  px(x,PAL['p'],5,2,6,1);  px(x,PAL['u'],5,5,6,1);
-  px(x,PAL['0'],4,6,8,5);  px(x,PAL['d'],5,7,6,3);                 // 臉
-  px(x,PAL['0'],6,8,1,1);  px(x,PAL['0'],9,8,1,1);
-  px(x,PAL['0'],3,10,10,5); px(x,PAL['o'],4,11,8,4);               // 長袍
-  px(x,PAL['u'],7,11,2,4);                                          // 前襟
-  px(x,PAL['t'],4,11,1,3); px(x,PAL['t'],11,11,1,3);
-  return c;
-})();
-
-/* 地面雜物：裂縫 / 碎石 / 苔 / 骨 / 水漬。
-   一整層只鋪同一張地磚，走起來會像跑步機；雜物是打破重複感最便宜的手段。 */
-function makeProp(i){
-  const c = document.createElement('canvas'); c.width = T; c.height = T;
-  const x = c.getContext('2d');
-  // 全部壓在地形自己的冷色階裡。飽和的苔綠與水藍會被玩家讀成「可以撿的東西」，
-  // 那就違反了整套配色規則：暖色與飽和色只屬於活的東西和道具。
-  if(i === 0){ px(x,PAL['0'],4,9,1,3); px(x,PAL['0'],5,11,3,1); px(x,PAL['0'],8,10,1,2); }
-  else if(i === 1){ px(x,PAL['z'],3,11,2,1); px(x,PAL['y'],9,9,2,1); px(x,PAL['z'],11,12,1,1);
-                    px(x,PAL['0'],3,12,2,1); px(x,PAL['0'],9,10,2,1); }
-  else if(i === 2){ px(x,PAL['w'],4,10,4,2); px(x,PAL['j'],5,10,2,1);
-                    px(x,PAL['w'],10,8,3,2); px(x,PAL['j'],10,8,2,1); }
-  else if(i === 3){ px(x,PAL['0'],5,10,6,1); px(x,PAL['z'],5,9,6,1);
-                    px(x,PAL['z'],4,8,2,1); px(x,PAL['z'],10,8,2,1); px(x,PAL['0'],4,10,8,1); }
-  else { px(x,PAL['0'],4,10,7,2); px(x,PAL['w'],5,10,5,1); px(x,PAL['x'],6,10,2,1); }
-  return c;
-}
-const PROPS = [makeProp(0),makeProp(1),makeProp(2),makeProp(3),makeProp(4)];
-
-/* ═══ 生物剪影生成器 ═══════════════════════════════════════════
-   十四隻新怪物如果手打 16x16 的像素字串，是十四份難維護的資料，
-   而且畫出來多半會變成「換了顏色的同一隻」。改成生成器：
-   先決定**體態**（鳥／四足／蛇／蟲／靈體／巨獸／構裝），
-   再套顏色。體態不同，關掉名字也認得出來 —— 那才是剪影的意義。
-
-   跟主角共用同一套規則：腳在下面、左上受光、自動描邊。 */
-const BEAST = {
-  bird: [                                   // 展翅：翼展比身體寬，頭高、腳細
-    [2,7,2],[3,6,4],
-    [4,1,14],[5,2,12],
-    [6,5,6],[7,5,6],[8,6,4],
-    [9,6,4],[10,7,2],
-    [11,6,1],[11,9,1],[12,5,1],[12,10,1],
-  ],
-  quad: [                                   // 四足：身體橫躺、頭在前下方
-    [4,10,4],[5,9,6],
-    [6,2,13],[7,1,14],[8,1,14],[9,2,12],
-    [10,2,2],[10,6,2],[10,10,2],[10,13,2],
-    [11,2,2],[11,6,2],[11,10,2],[11,13,2],
-    [12,2,1],[12,7,1],[12,11,1],[12,14,1],
-  ],
-  serpent: [                                // 盤蛇：細長的身體纏成兩圈，頭從左上抬起
-    [1,2,4],[2,1,3],[3,1,3],
-    [4,2,4],[5,4,4],[6,6,4],
-    [7,7,7],[8,4,11],
-    [9,3,4],[9,10,4],
-    [10,2,3],[10,12,3],
-    [11,3,10],[12,5,7],[13,7,3],
-  ],
-  bug: [                                    // 節肢：分節的殼 + 多對腳
-    [3,6,4],[4,5,6],
-    [5,4,8],[6,3,10],[7,3,10],[8,4,8],[9,5,6],
-    [6,1,2],[6,13,2],[8,0,2],[8,14,2],
-    [10,3,1],[10,6,1],[10,9,1],[10,12,1],
-    [11,2,1],[11,6,1],[11,9,1],[11,13,1],
-  ],
-  spirit: [                                 // 靈體：上寬下尖，沒有腳
-    [2,6,4],[3,4,8],
-    [4,3,10],[5,2,12],[6,2,12],[7,3,10],
-    [8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2],[13,7,1],
-  ],
-  giant: [                                  // 巨獸：方肩、粗肢、小頭
-    [1,6,4],[2,5,6],
-    [3,2,12],[4,1,14],[5,1,14],[6,1,14],[7,2,12],
-    [8,0,3],[8,13,3],[9,0,3],[9,13,3],
-    [8,4,8],[9,4,8],[10,4,8],
-    [11,3,3],[11,10,3],[12,3,3],[12,10,3],[13,3,2],[13,11,2],
-  ],
-  construct:[                               // 構裝：幾何塊體，浮空
-    [2,6,4],[3,6,4],
-    [4,3,10],[5,3,10],
-    [6,1,3],[6,6,4],[6,12,3],
-    [7,1,3],[7,5,6],[7,12,3],
-    [8,4,8],[9,4,8],
-    [10,5,6],[11,6,4],[12,7,2],
-  ],
-};
-/* eye: 眼睛位置與數量。剪影認得出「是什麼族」，眼睛認得出「在看你」。 */
-const BEAST_EYE = {
-  bird:[[6,5],[6,9]], quad:[[10,4],[10,6]], serpent:[[2,2],[2,4]],
-  bug:[[5,5],[5,9]], spirit:[[5,4],[5,10]], giant:[[2,6],[2,9]],
-  construct:[[3,7]],
-};
-function makeBeast(kind, col, dark, glow){
-  const c = document.createElement('canvas'); c.width=T; c.height=T;
-  const x = c.getContext('2d');
-  const m = shapeMask(BEAST[kind] || BEAST.quad);
-  paintMask(x, m, PAL[col], PAL[dark || '0'], null, 99);
-  for(const [ey,ex] of (BEAST_EYE[kind] || [])){
-    // 眼睛先鋪一格亮的再壓瞳孔。純暗色的眼睛在深色身體上等於沒有畫 ——
-    // 剪影告訴你「這是什麼族」，眼睛告訴你「牠正在看你」。
-    px(x, PAL[glow || '6'], ex, ey, 2, 2);
-    px(x, PAL[dark || '0'], ex + 1, ey + 1, 1, 1);
-  }
-  // 左上受光：所有生物共用同一個光源，這是整套美術唯一的一致性來源
-  const top = maskTop(m);
-  px(x, PAL['6'], 4, top + 1, 1, 1);
-  return c;
-}
-
-// 地域怪物沒有手繪資料，用剪影生成器現做。
-// 必須放在 BEAST 定義之後 —— 函式會被提升，const 不會。
-for(const m of MONS) if(m.bd) atlas[m.id] = makeBeast(m.bd, m.col, '0', m.glow);
-
-/* ═══ 章節專屬的牆與地面物件 ═════════════════════════════════
-   只換顏色是不夠的。玩家看得出來的是**剪影**：一塊 2x2 的磚頭
-   染成綠色還是磚頭，不會變成樹。所以每種地貌各有自己的牆形，
-   還有自己的地面雜物 —— 森林有草叢與蕈菇，山道有碎石，
-   通天塔有金線嵌紋。這些東西不影響任何規則，
-   但它們是「這是一款用心做的遊戲」唯一的證據。 */
-function themeWall(kind, face, ramp){
-  const R = ramp || RAMP;
-  const c = document.createElement('canvas'); c.width=T; c.height=T;
-  const x = c.getContext('2d');
-  const r = RNG(kind.length*7919 + (face?31:17));
-  x.fillStyle = PAL['0']; x.fillRect(0,0,T,T);
-
-  if(kind === 'tree'){                       // 森林：樹幹並排，樹皮縱紋
-    for(const tx of [0,6,11]){
-      const w = tx===6 ? 5 : 4;
-      x.fillStyle = PAL[R[1]]; x.fillRect(tx, 0, w, T);
-      x.fillStyle = PAL[R[2]]; x.fillRect(tx+1, 0, 1, T);
-      x.fillStyle = PAL['0'];
-      for(let i=0;i<5;i++) x.fillRect(tx + r.i(0,w-1), r.i(0,15), 1, r.i(1,3));
-    }
-    x.fillStyle = PAL[R[3]];                 // 樹冠壓在上緣，讓上下有別
-    for(let i=0;i<14;i++) x.fillRect(r.i(0,15), r.i(0,3), r.i(1,2), 1);
-  } else if(kind === 'cliff'){               // 山道：岩層橫紋，上緣鋸齒
-    x.fillStyle = PAL[R[0]]; x.fillRect(0,2,T,14);
-    for(let y=3;y<16;y+=3){
-      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,1);
-      x.fillStyle = PAL['0']; x.fillRect(r.i(0,10), y, r.i(2,5), 1);
-    }
-    x.fillStyle = PAL[R[2]];                 // 頂緣的碎岩
-    for(let i=0;i<16;i++) x.fillRect(i, 1 + (r.chance(.5)?0:1), 1, 1);
-  } else if(kind === 'column'){              // 通天塔：直立石柱，柱頭有金線
-    x.fillStyle = PAL[R[1]]; x.fillRect(2,0,12,T);
-    x.fillStyle = PAL[R[2]]; x.fillRect(3,0,2,T); x.fillRect(8,0,2,T);
-    x.fillStyle = PAL[R[3]]; x.fillRect(3,0,1,T);
-    x.fillStyle = PAL['0']; x.fillRect(0,0,2,T); x.fillRect(14,0,2,T);
-    x.fillStyle = PAL['u']; x.fillRect(2,3,12,1); x.fillRect(2,12,12,1);
-  } else if(kind === 'shard'){               // 水晶：斜切的稜面
-    x.fillStyle = PAL[R[1]]; x.fillRect(0,0,T,T);
-    x.fillStyle = PAL[R[2]];
-    for(let i=0;i<16;i++) x.fillRect(i, Math.max(0,i-3), 1, 6);
-    x.fillStyle = PAL[R[3]];
-    for(let i=0;i<16;i+=2) x.fillRect(i, Math.max(0,15-i), 1, 2);
-    x.fillStyle = PAL['0'];
-    for(let i=0;i<10;i++) x.fillRect(r.i(0,15), r.i(0,15), 1, 1);
-  } else if(kind === 'plank'){               // 木造：橫向木板與釘子
-    for(let y=0;y<16;y+=4){
-      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,3);
-      x.fillStyle = PAL[R[2]]; x.fillRect(0,y,T,1);
-      x.fillStyle = PAL['0']; x.fillRect(0,y+3,T,1);
-      x.fillStyle = PAL[R[0]]; x.fillRect(r.i(1,13), y+1, 1, 1);
-    }
-  } else if(kind === 'void'){                // 虛空：幾乎全黑，只有幾點光
-    x.fillStyle = PAL[R[0]]; x.fillRect(0,0,T,T);
-    for(let i=0;i<7;i++){ x.fillStyle = r.chance(.5)?PAL[R[2]]:PAL[R[1]];
-      x.fillRect(r.i(0,15), r.i(0,15), 1, 1); }
-  } else {
-    return makeWall(face, R);                // 石造：沿用原本的磚牆
-  }
-  if(face){                                  // 立面：下方是地板時畫出厚度
-    x.fillStyle=PAL[R[3]]; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL[R[2]]; x.fillRect(0,11,T,2);
-    x.fillStyle=PAL[R[0]]; x.fillRect(0,13,T,3);
-    x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
-  }
-  return c;
-}
-/* 地面雜物：每種地貌 4 個。一樣壓在地形自己的色階裡 ——
-   飽和的顏色只屬於活的東西與道具，這條規則不能為了好看破例。 */
-function themeProp(kind, i, ramp){
-  const R = ramp || RAMP;
-  const c = document.createElement('canvas'); c.width=T; c.height=T;
-  const x = c.getContext('2d');
-  const r = RNG(kind.length*131 + i*977);
-  if(kind === 'grass'){                      // 草叢、蕨、蕈菇、樹根
-    if(i===0){ for(const gx of [4,6,8,10]) { px(x,PAL['0'],gx,11,1,3); px(x,PAL[R[3]],gx,10,1,2); } }
-    else if(i===1){ px(x,PAL['0'],7,9,2,5); px(x,PAL[R[3]],5,10,2,1); px(x,PAL[R[3]],9,10,2,1);
-                    px(x,PAL[R[2]],6,12,4,1); }
-    else if(i===2){ px(x,PAL['0'],6,9,4,4); px(x,PAL['d'],6,9,4,2); px(x,PAL['b'],7,11,2,2); }
-    else { px(x,PAL['0'],3,12,10,2); px(x,PAL[R[1]],3,12,10,1); px(x,PAL[R[2]],5,12,3,1); }
-  } else if(kind === 'rock'){                // 碎石、裂縫、小石堆
-    if(i===0){ px(x,PAL['0'],5,11,4,3); px(x,PAL[R[3]],5,11,3,2); }
-    else if(i===1){ px(x,PAL['0'],3,10,1,4); px(x,PAL['0'],4,12,3,1); px(x,PAL['0'],8,11,1,3); }
-    else if(i===2){ px(x,PAL['0'],4,12,8,2); px(x,PAL[R[2]],4,12,8,1);
-                    px(x,PAL['0'],6,10,4,2); px(x,PAL[R[3]],6,10,3,1); }
-    else { for(let k=0;k<6;k++) px(x,PAL[R[3]],r.i(2,13),r.i(9,14),1,1); }
-  } else if(kind === 'ripple'){               // 水紋與蘆葦
-    if(i===0){ px(x,PAL[R[3]],3,11,6,1); px(x,PAL[R[3]],8,13,5,1); }
-    else if(i===1){ px(x,PAL[R[3]],4,10,4,1); px(x,PAL[R[3]],9,12,5,1); px(x,PAL[R[2]],5,12,3,1); }
-    else if(i===2){ px(x,PAL['0'],5,8,1,6); px(x,PAL['0'],9,9,1,5); px(x,PAL[R[3]],5,8,1,2); }
-    else { px(x,PAL[R[2]],2,11,12,1); }
-  } else if(kind === 'inlay'){                // 通天塔：金線嵌紋
-    if(i===0){ px(x,PAL['t'],3,11,10,1); px(x,PAL['u'],3,11,4,1); }
-    else if(i===1){ px(x,PAL['t'],7,8,2,7); px(x,PAL['u'],7,8,1,4); }
-    else if(i===2){ px(x,PAL['t'],5,10,6,1); px(x,PAL['t'],7,8,2,5); px(x,PAL['v'],7,10,2,1); }
-    else { px(x,PAL['u'],4,12,2,2); px(x,PAL['u'],10,12,2,2); }
-  } else if(kind === 'glint'){                // 水晶碎屑
-    if(i===0){ px(x,PAL['0'],6,10,3,4); px(x,PAL[R[3]],6,10,2,3); px(x,PAL['6'],6,10,1,1); }
-    else if(i===1){ px(x,PAL['0'],4,12,2,2); px(x,PAL[R[3]],4,12,1,1);
-                    px(x,PAL['0'],10,11,2,3); px(x,PAL[R[3]],10,11,1,2); }
-    else if(i===2){ for(let k=0;k<5;k++) px(x,PAL[R[3]],r.i(3,12),r.i(9,14),1,1); }
-    else { px(x,PAL['0'],7,9,3,5); px(x,PAL[R[3]],7,9,2,4); px(x,PAL['6'],7,9,1,2); }
-  } else {
-    return PROPS[i % PROPS.length];
-  }
-  return c;
-}
-/* ─── 地標 ────────────────────────────────────────────────────
-   一章一個「看得出來是什麼」的大型物件。地面雜物解決的是
-   「地板不要一片死板」，地標解決的是完全不同的問題：
-   **記得住**。玩家講起這款遊戲時說的是「那棵大樹的那一層」，
-   不是「第二章第四層」—— 沒有地標的地圖，每一層都長得一樣。
-
-   尺寸刻意做成 2 格寬 × 3 格高：佔地只有 2×2（下面兩排），
-   最上面那一排長到隔壁格去。這樣它比任何怪物都高，
-   走進房間第一眼就看到它，但佔的路只有兩格見方。
-   顏色一樣壓在地貌自己的色階裡 —— 它是地形，不是活的東西。
-   唯一的例外是會發光的那幾個（燈籠的火、水晶的芯），
-   那跟火把同一個道理：光源本來就該是暖的。 */
-function makeLandmark(kind, ramp){
-  const R = ramp || RAMP, LW = T*2, LH = T*3;
-  const c = document.createElement('canvas'); c.width = LW; c.height = LH;
-  const x = c.getContext('2d');
-  const r = RNG(kind.length*7919 + 13);
-  const O = PAL['0'];
-  // 雜訊要「不規則」。用 %n 取模會排出斜線，看起來像織紋不像樹皮
-  const hash = (X,Y)=> (X*73856093 ^ Y*19349663) >>> 0;
-  /* 這裡不用一格一格 fillRect 疊形狀 —— 第一版就是那樣做的，
-     結果巨樹看起來像一塊路牌、守望像看起來像一個十字。
-     長方形的堆疊在 16px 的世界裡永遠讀成 UI，不會讀成「東西」。
-     改成先做剪影遮罩、再自動描邊：認得出來的是輪廓，不是顏色。 */
-  const m = Array.from({length:LH}, ()=>new Array(LW).fill(0));
-  const rect = (x0,y0,w,h)=>{ for(let j=0;j<h;j++) for(let i=0;i<w;i++){
-    const X=x0+i, Y=y0+j; if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
-  const ell = (cx,cy,rx,ry)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
-    const u=(X-cx)/rx, v=(Y-cy)/ry; if(u*u+v*v<=1) m[Y][X]=1; } };
-  // 上窄下寬（或反過來）的錐體：樹幹、衣襬、礦車車斗都是這個形狀
-  const taper = (cx,y0,y1,w0,w1)=>{ for(let Y=y0;Y<=y1;Y++){
-    const k=(Y-y0)/Math.max(1,y1-y0), w=w0+(w1-w0)*k;
-    for(let X=Math.round(cx-w/2); X<Math.round(cx+w/2); X++)
-      if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
-  const clear = ()=>{ for(let Y=0;Y<LH;Y++) m[Y].fill(0); };
-  // 填色＋自動描邊。描邊是這一整套的重點：有邊的東西才立得起來
-  const paint = (fill)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
-    if(m[Y][X]){ x.fillStyle=fill; x.fillRect(X,Y,1,1); }
-    else if((m[Y-1]&&m[Y-1][X])||(m[Y+1]&&m[Y+1][X])||m[Y][X-1]||m[Y][X+1]){
-      x.fillStyle=O; x.fillRect(X,Y,1,1); } } };
-  // 只在剪影裡上色，不會漏到外面去
-  const shade = (col, f)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++)
-    if(m[Y][X] && f(X,Y)){ x.fillStyle=col; x.fillRect(X,Y,1,1); } };
-  /* 腳下的投影。少了它，地標會像是浮在地板上的貼紙 ——
-     這一格是牆（擋路），但畫的是地板，所以只有影子能告訴玩家
-     「這東西是站在地上的」。裂隙沒有影子，因為它不是東西。 */
-  if(kind !== 'rift'){
-    x.globalAlpha = .32; x.fillStyle = PAL['0'];
-    for(let Y=40;Y<48;Y++){
-      const v=(Y-44)/4.5, w=Math.round(15*Math.sqrt(Math.max(0,1-v*v)));
-      x.fillRect(17-w, Y, w*2, 1);
-    }
-    x.globalAlpha = 1;
-  }
-
-  if(kind === 'tree'){                       // 巨樹：板根 → 樹幹 → 交疊成團的樹冠
-    // 幹要畫到樹冠裡面去。第一版讓幹停在樹冠下緣，
-    // 兩塊各自描邊的結果是中間浮出一條接縫 —— 看起來像一把傘，不像樹。
-    taper(16, 12, 43, 7, 12);
-    taper(16, 43, 47, 12, 22);               // 板根
-    paint(PAL[R[1]]);
-    shade(PAL[R[2]], (X,Y)=> X < 15);        // 左側受光
-    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 9 === 0);      // 樹皮
-    clear();
-    // 六團交疊的葉叢。單一橢圓會讀成傘或蘑菇，樹冠必須是「一團一團」的
-    ell(16,13,14,10); ell(6,16,7,6); ell(26,15,7,6);
-    ell(11,5,8,6);    ell(22,6,7,5); ell(16,21,10,5);
-    /* 樹冠要比林間空地的地面「暗」。上一版用了 R[2]，
-       跟地板同一階 —— 於是整團樹冠在亮綠色的空地上直接消失。
-       從上往下看，一棵大樹本來就是地面上的一塊陰影。 */
-    paint(PAL[R[1]]);
-    // 受光是一塊，不是條紋。條紋會讀成傘骨 —— 上一版就是敗在這裡。
-    shade(PAL[R[2]], (X,Y)=> (X-10)*(X-10)*.6 + (Y-8)*(Y-8) < 96);
-    shade(PAL[R[3]], (X,Y)=> (X-9)*(X-9)*.7 + (Y-7)*(Y-7) < 34);
-    shade(PAL[R[2]], (X,Y)=> (X-24)*(X-24) + (Y-9)*(Y-9)*.7 < 30);
-    shade(PAL[R[0]], (X,Y)=> (X-23)*(X-23)*.5 + (Y-21)*(Y-21) < 76);
-    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 23 === 0);     // 葉隙
-  } else if(kind === 'bones'){               // 幻獸洞窟：巨獸的頭骨
-    ell(16,20,14,13);                        // 顱
-    taper(16,29,44,20,13);                   // 吻
-    paint(PAL[R[3]]);
-    shade(PAL[R[2]], (X,Y)=> X > 19);
-    shade(PAL[R[1]], (X,Y)=> Y > 38);
-    shade(PAL['0'], (X,Y)=> (X-10)*(X-10) + (Y-19)*(Y-19)*1.4 < 17);   // 眼窩
-    shade(PAL['0'], (X,Y)=> (X-22)*(X-22) + (Y-19)*(Y-19)*1.4 < 17);
-    shade(PAL['0'], (X,Y)=> Y > 26 && Y < 32 && Math.abs(X-16) < (Y-25)/2); // 鼻腔
-    shade(PAL['0'], (X,Y)=> Y > 33 && Y < 43 && (X-16+40) % 4 === 0);       // 齒縫
-    shade(PAL[R[2]], (X,Y)=> Y < 12 && hash(X,Y) % 7 === 0);                // 裂痕
-  } else if(kind === 'stele'){               // 界碑：圓頂的刻字立石
-    rect(4,44,24,4);                         // 基座
-    taper(16, 9, 44, 15, 18);
-    ell(16,10,8,7);                          // 圓頂
-    paint(PAL[R[2]]);
-    shade(PAL[R[3]], (X,Y)=> X < 13);
-    shade(PAL[R[1]], (X,Y)=> X > 21);
-    for(let i=0;i<5;i++) shade(PAL[R[0]], (X,Y)=> Y===19+i*5 && X>10 && X<22);
-    shade(PAL[R[0]], (X,Y)=> Y>21 && Y<41 && X===16 && Y%3);
-    shade(PAL['j'], (X,Y)=> Y>38 && (X*7+Y*3)%5===0);   // 底部青苔
-  } else if(kind === 'lantern'){             // 石燈籠：全戰役唯一會發光的地標
-    rect(9,42,14,6); taper(16,30,42,7,11);   // 基座與柱
-    ell(16,23,10,8);                         // 火袋
-    taper(16,10,17,22,15);                   // 笠
-    ell(16,7,4,4);                           // 寶珠
-    paint(PAL[R[2]]);
-    shade(PAL[R[3]], (X,Y)=> X < 14);
-    shade(PAL[R[1]], (X,Y)=> X > 20);
-    px(x,O,11,19,10,9);                                 // 火口
-    px(x,PAL['h'],12,20,8,7); px(x,PAL['i'],13,21,6,5); px(x,PAL['v'],14,22,4,3);
-    px(x,PAL['v'],15,5,2,2);
-  } else if(kind === 'torii'){               // 鳥居：一眼就知道進了另一個地方
-    rect(4,14,6,34); rect(22,14,6,34);       // 柱
-    rect(0,4,32,7);                          // 笠木
-    rect(3,16,26,5);                         // 貫
-    rect(14,10,4,7);                         // 額束
-    paint(PAL[R[2]]);
-    shade(PAL[R[3]], (X,Y)=> Y<7 || X===4 || X===22);
-    shade(PAL[R[1]], (X,Y)=> Y>=9 && Y<11);
-    shade(PAL[R[0]], (X,Y)=> Y>30 && (X*3+Y*5)%13===0);
-  } else if(kind === 'mirror'){              // 立鏡：橢圓的鏡面，不是方框
-    rect(11,38,10,8); rect(5,45,22,3);       // 支架與底座
-    ell(16,21,13,18);                        // 鏡框
-    paint(PAL[R[3]]);
-    shade(PAL[R[2]], (X,Y)=> X > 18);
-    clear(); ell(16,21,10,15);
-    paint(PAL[R[0]]);                        // 鏡面：暗的，才照得出反光
-    shade(PAL[R[2]], (X,Y)=> ((X*2 + Y) % 17) < 3);
-    shade(PAL['6'],  (X,Y)=> ((X*2 + Y) % 17) === 0 && X < 16);
-  } else if(kind === 'geode'){               // 水晶簇：高低錯落的柱體
-    const sp = [[7,20,5,28],[13,8,7,40],[21,17,6,31],[3,31,5,17],[26,26,5,22]];
-    for(const [sx,sy,sw,sh] of sp){ clear(); taper(sx+sw/2, sy, sy+sh, sw*0.5, sw);
-      paint(PAL[R[1]]);
-      shade(PAL[R[3]], (X,Y)=> X < sx+sw*0.5);
-      shade(PAL['6'],  (X,Y)=> X < sx+sw*0.25 && Y < sy+sh*0.6); }
-    clear(); rect(3,43,26,5); paint(PAL[R[1]]);
-  } else if(kind === 'statue'){              // 守望像：有兜帽的人形，沒有臉
-    rect(5,43,22,5);                         // 台座
-    taper(16,20,43,11,20);                   // 衣襬
-    rect(3,20,26,5);                         // 張開的雙臂
-    ell(16,14,6,7);                          // 兜帽
-    paint(PAL[R[2]]);
-    shade(PAL[R[3]], (X,Y)=> X < 15);
-    shade(PAL[R[1]], (X,Y)=> X > 20);
-    shade(PAL[R[0]], (X,Y)=> Y>12 && Y<19 && X>12 && X<20);   // 兜帽下的暗
-    shade(PAL[R[0]], (X,Y)=> Y>24 && Y<43 && (X-16+((Y-24)>>2))%6===0);
-    px(x,PAL['u'],14,11,4,2);
-  } else if(kind === 'rift'){                // 虛空的裂隙：不是物體，是缺口
-    for(let i=0;i<15;i++){ const w = 3 + Math.abs(7-i)*1.4;
-      rect(Math.round(16-w), 6+i*3, Math.round(w*2), 3); }
-    paint(PAL['1']);
-    shade(PAL['4'], (X,Y)=> Math.abs(X-16) < 4);
-    shade(PAL['6'], (X,Y)=> Math.abs(X-16) < 2 && Y > 12 && Y < 38);
-    for(let i=0;i<26;i++) px(x, i%3 ? PAL['5'] : PAL['6'], 16+r.i(-10,9), r.i(4,46), 1, 1);
-  } else {                                   // stone：礦車
-    rect(9,42,6,6); rect(19,42,6,6);         // 輪
-    taper(16,26,43,26,18);                   // 車斗
-    paint(PAL[R[2]]);
-    shade(PAL[R[3]], (X,Y)=> Y < 29 || X < 8);
-    shade(PAL[R[1]], (X,Y)=> X > 21);
-    shade(PAL[R[0]], (X,Y)=> Y>32 && (Y-32)%5===0);          // 鉚接的橫帶
-    shade(PAL[R[0]], (X,Y)=> Y>=42 && ((X-12)*(X-12)+(Y-45)*(Y-45) < 4 ||
-                                       (X-22)*(X-22)+(Y-45)*(Y-45) < 4));
-    px(x,PAL['a'],7,27,7,5); px(x,PAL['c'],9,28,4,3);        // 車裡的礦石
-    px(x,PAL['b'],16,27,6,4); px(x,PAL['d'],18,28,3,2);
-    clear(); rect(1,2,4,30); paint(PAL[R[1]]);               // 靠在旁邊的坑木
-    shade(PAL[R[0]], (X,Y)=> Y%6===0);
-  }
-  return c;
-}
-const THEME_MARK = {};
-function markFor(theme){
-  if(THEME_MARK[theme] !== undefined) return THEME_MARK[theme];
-  const th = THEMES[theme] || THEMES.stone;
-  return THEME_MARK[theme] = th.mark ? makeLandmark(th.mark, th.ramp) : null;
-}
-
-const THEME_PROPS = {};
-function propsFor(theme){
-  if(THEME_PROPS[theme]) return THEME_PROPS[theme];
-  const th = THEMES[theme] || THEMES.stone;
-  if(!th.prop) return THEME_PROPS[theme] = PROPS;
-  return THEME_PROPS[theme] = [0,1,2,3].map(i => themeProp(th.prop, i, th.ramp));
 }
 
 /* 粒子：踩地的塵、命中的火星、死亡的爆散。
@@ -7131,12 +7318,17 @@ function applyLangText(){
   const hkeys = [['ui.map','樓層圖'],['ui.gear','裝備'],['ui.status','狀態']];
   heads.forEach((h,i)=>{ if(hkeys[i] && h.firstChild) h.firstChild.nodeValue = TX(hkeys[i][0], hkeys[i][1]); });
   const mh = document.querySelector('.mhead b'); if(mh) mh.textContent = TX('ui.menu','選單');
-  // 招牌與封面的標題。英文版的話上面那行 CLAUDE ABYSS 會跟標題重複，收起來。
-  const title = TX('ui.title','克勞德深淵');
+  // 招牌與封面的標題。英文版的話上面那行 DEEP LEARNING 會跟標題重複，收起來。
+  const title = TX('ui.title','深度學習：通天之塔');
   const h1c = document.querySelector('#cover h1'); if(h1c) h1c.textContent = title;
   const h1s = document.querySelector('#sign h1'); if(h1s) h1s.textContent = title;
+  /* 副標放在字頭那一行。英文的全名「DEEP LEARNING: ASCENT OF BABEL」
+     塞進 h1 會排成三行、把整張封面吃掉 —— 拆成
+     字頭（副標）＋ h1（主標）之後三種語言都只佔一到兩行。 */
   const eyebrow = document.querySelector('#cover .en');
-  if(eyebrow) eyebrow.style.display = LANG === 'en' ? 'none' : '';
+  if(eyebrow) eyebrow.textContent = TX('ui.sub','DEEP LEARNING');
+  const cred = document.getElementById('credit');
+  if(cred) cred.textContent = TX('ui.credit','潔米爸 × 小潔米株式會社　出品');
   // 狀態列的標籤
   const hud = [['ui.lv','LV'],['ui.hp','HP'],['ui.mp','MP'],['ui.full','飽足'],
                ['ui.atk','攻'],['ui.def','防'],['ui.job','職'],['ui.gold','G']];

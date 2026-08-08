@@ -32,6 +32,8 @@ jobs:
       - name: 邏輯測試（壞掉的版本不該上線）
         run: |
           node web/sim.js
+          node web/connect.js
+          node web/items.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
