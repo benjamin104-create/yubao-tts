@@ -1,95 +1,19 @@
-// 把瀏覽器 DOM 打樁，在 node 裡跑遊戲邏輯。
-// 目的跟 Godot 那邊的 test_simulation.gd 一樣：邏輯錯誤要在 headless 抓到，
-// 而不是等玩家玩到第 10 層才炸。
-const fs = require('fs');
-
-function fakeCtx(){
-  const noop = () => {};
-  return new Proxy({}, {
-    get(t, k){
-      if(k === 'createRadialGradient') return () => ({ addColorStop: noop });
-      if(k === 'canvas') return { width: 320, height: 240 };
-      return t[k] !== undefined ? t[k] : noop;
-    },
-    set(t, k, v){ t[k] = v; return true; }
-  });
-}
-function fakeEl(){
-  const el = {
-    style:{ setProperty(){}, removeProperty(){}, getPropertyValue(){ return ''; } }, dataset:{}, classList:{ add:()=>{}, remove:()=>{}, toggle:()=>false, contains:()=>false },
-    children:[], firstElementChild:{ style:{} },
-    width:0, height:0, textContent:'', innerHTML:'', className:'', disabled:false,
-    getContext: fakeCtx,
-    appendChild(c){ this.children.push(c); return c; },
-    addEventListener(){}, onclick:null, focus(){},
-    querySelectorAll(){ return []; }, querySelector(){ return null; },
-    closest(){ return null; }, setPointerCapture(){},
-  };
-  return el;
-}
-global.document = {
-  getElementById: () => fakeEl(),
-  createElement: () => fakeEl(),
-  querySelectorAll: () => [],
-  addEventListener: () => {},
-};
-global.addEventListener = () => {};
-// 視窗尺寸：遊戲會依螢幕方向切換視野格數，打樁成一般桌機尺寸
-global.innerWidth = 1280;
-global.innerHeight = 900;
-global.requestAnimationFrame = () => {};
-global.prompt = () => null;
-
-// 直接從單檔 HTML 裡把 <script> 挖出來跑。
-// 不另外維護一份 game.js —— 兩份會不同步，而不同步的測試比沒有測試更糟。
-const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
-const m = html.match(/<script>\n"use strict";([\s\S]*)<\/script>/);
-if(!m){ console.error('index.html 裡找不到遊戲腳本'); process.exit(2); }
-const js = m[1];
-// 讓內部函式可以從外面呼叫
-eval(js + '\n;globalThis.__api = {' +
-  'G:()=>G, newGame, tryMove, endTurn, descend, useItem, DIRS, key, walkable,' +
-  'monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN, tileAt, rollItem, mk,' +
-  'WEAP, SHLD' +
-  '};');
-const api = globalThis.__api;
-
-// ── BFS 尋路（與實際移動規則一致：8 向 + 牆角規則） ──
-function nextStep(G, from, goal){
-  if(from.x===goal.x && from.y===goal.y) return null;
-  const came = new Map([[api.key(from.x,from.y), null]]);
-  const q = [from]; let h = 0;
-  while(h < q.length){
-    const cur = q[h++];
-    for(const d of api.DIRS){
-      const nx = cur.x+d[0], ny = cur.y+d[1], k = api.key(nx,ny);
-      if(came.has(k) || !api.walkable(nx,ny)) continue;
-      if(!api.cornerOK(cur.x,cur.y,nx,ny)) continue;
-      came.set(k, cur);
-      if(nx===goal.x && ny===goal.y){
-        let node = {x:nx,y:ny};
-        while(true){
-          const par = came.get(api.key(node.x,node.y));
-          if(!par) break;
-          if(par.x===from.x && par.y===from.y) return [node.x-from.x, node.y-from.y];
-          node = par;
-        }
-        return null;
-      }
-      q.push({x:nx,y:ny});
-    }
-  }
-  return null;
-}
+// 自動遊玩模擬：邏輯錯誤要在 headless 抓到，而不是等玩家玩到第 10 層才炸。
+// 執行環境與 API 由 simcore.js 提供（campaign.js 也用同一份）。
+const { api } = require('./simcore.js');
+const nextStep = api.nextStep;
 
 const RUNS = 60, MAX_TURNS = 1500;
-let stats = { deaths:0, starve:0, turns:0, floors:0, maxFloor:0, lv:0, items:0, used:0, errs:0, ident:0 };
+let stats = { deaths:0, cleared:0, starve:0, turns:0, floors:0, maxFloor:0, lv:0, items:0, used:0, errs:0, ident:0 };
 // 死在哪一層的分佈。平均樓層會把「開場就死」藏起來 ——
 // 玩家第一次的體驗是由前兩層決定的，那才是要盯的數字。
 const deathAt = {};
 
 for(let r=0; r<RUNS; r++){
   try{
+    // 每一場都從第一章開始。VILLAGE 在同一個 process 裡是共用的，
+    // 不重設的話第 2 場會從第 2 章開頭起跑，量到的就不是同一件事了。
+    api.VILLAGE().act = 0;
     api.newGame(r*7919 + 13);
     const G = api.G();
     let t = 0;
@@ -137,11 +61,19 @@ for(let r=0; r<RUNS; r++){
         if(here.cat==='shld' && !p.shld){ p.shld=here; here.known=1; }
         api.endTurn(); stats.items++; t++; continue;
       }
-      // 樓梯就下樓
-      if(api.tileAt(p.x,p.y)===api.DOWN){ api.descend(); t++; continue; }
-      // 否則走向最近的道具或樓梯
+      // 樓梯就下樓（頭目還活著的話樓梯是鎖的，這時候要去打頭目）
+      if(api.tileAt(p.x,p.y)===api.DOWN && !G.f.bossLock){ api.descend(); t++; continue; }
       let goal = G.f.stairs;
-      if(p.inv.length < 20){
+      if(G.f.bossLock){
+        let best=null, bd=1e9;
+        for(const m of G.mons){
+          const dd = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
+          if(dd < bd){ bd=dd; best={x:m.x, y:m.y}; }
+        }
+        if(best) goal = best;
+      }
+      // 否則走向最近的道具或樓梯
+      else if(p.inv.length < 20){
         let best=null, bd=1e9;
         for(const ik in G.items){
           if(G.items[ik].shop) continue;          // 不去撿店裡的商品
@@ -161,7 +93,9 @@ for(let r=0; r<RUNS; r++){
     stats.maxFloor = Math.max(stats.maxFloor, G.depth);
     stats.lv += G.p.lv;
     stats.ident += Object.keys(G.known).length;
-    if(G.over){ stats.deaths++; if(G.p.sat<=0) stats.starve++;
+    // 通關一章也會把 over 設成 true —— 那不是死亡，要分開算
+    if(G.over && G.p.hp > 0) stats.cleared++;
+    else if(G.over){ stats.deaths++; if(G.p.sat<=0) stats.starve++;
       deathAt[G.depth] = (deathAt[G.depth]||0)+1; }
   }catch(e){
     stats.errs++;
@@ -173,6 +107,7 @@ for(let r=0; r<RUNS; r++){
 const n = RUNS;
 console.log('=== 瀏覽器版模擬（%d 場）===\n', n);
 console.log('執行期錯誤    : %d', stats.errs);
+console.log('通關一章      : %d（%s%%）', stats.cleared, (100*stats.cleared/n).toFixed(1));
 console.log('死亡          : %d（%s%%）', stats.deaths, (100*stats.deaths/n).toFixed(1));
 console.log('  └ 餓死      : %d（%s%%）', stats.starve, (100*stats.starve/n).toFixed(1));
 console.log('平均存活回合  : %s', (stats.turns/n).toFixed(0));

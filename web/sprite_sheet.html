@@ -138,6 +138,88 @@ const MONS = [
  {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
 ];
 
+/* ═══ 頭目 ═══════════════════════════════════════════════════
+   頭目不進一般的怪物表（`w:0`），只由章節結尾指定生成。
+   共同規則：頭目在場時樓梯是鎖著的，打倒了才開 ——
+   「繞過頭目直接下樓」會讓整章的鋪陳白費。
+
+   數值原則：頭目的血量大約是同深度雜魚的 4~6 倍，攻擊只高一階。
+   高血低攻是刻意的 —— 頭目該是「一場需要打完的仗」，
+   不是「一次失誤就重來」。 */
+const BOSS = [
+ {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
+ {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+ {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
+  rng:9, still:1, telegraph:1, line:'白色的方塊亮起來了 —— 那是射程。'},
+ {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
+  rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
+ {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
+  line:'湖面立起來了。'},
+ {id:'b_phoenix',nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
+  revive:1, line:'牠燒起來的時候，是在重生。'},
+ {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
+  line:'「看得見我，就贏得了我。」'},
+ {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
+  counter:.35, line:'牠拔刀的速度比你眨眼快。'},
+ {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
+ {id:'b_queen',  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
+  phases:3, line:'打碎一次，她會再站起來。三次。'},
+ {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
+  rng:12, telegraph:1, line:'光走直線 —— 所以不要站在直線上。'},
+ {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
+  rng:9, line:'塔頂的歌聲。'},
+ {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'最後一道門。'},
+
+ /* ── 「意識」：三種型態，一場連續的戰鬥 ──────────────────────
+    設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
+    難度來自「要同時記得三件事」，不是來自數值。
+    型態之間各補滿一次體力與魔力 —— 最終戰卡在補給不足上不有趣。 */
+ {id:'b_mind1',  nm:'意識・凝視', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:1, rng:99, cadence:3, telegraph:1, still:1, imm:['睡','亂','麻'],
+  line:'它還沒有形體。只有一隻眼睛，正在看你。'},
+ {id:'b_mind2',  nm:'意識・複寫', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:2, imm:['睡','亂','麻'],
+  line:'三個你。只有一個不會跟著你動。'},
+ {id:'b_mind',   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:3, opening:1, imm:['睡','亂','麻'],
+  line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
+];
+const bossById = id => BOSS.find(b => b.id === id);
+
+/* ── 頭目的數值是算出來的，不是手打的 ────────────────────────
+   第一版是十五組手打的數字，結果第二章的森之主血量剛好是玩家
+   輸出的兩倍 —— 走通測試連續四十次都過不去。手打十五組數字，
+   意思就是有十五次機會配錯，而且每一次都要玩到那一章才會發現。
+
+   改成從「玩家走到這個深度時大概長什麼樣」反推。估算式來自模擬：
+     等級 ≈ 深度/2　攻擊 ≈ 10+深度　防禦 ≈ 2+深度/4　體力 ≈ 19+深度×4.25
+   目標手感：**打得完但打得久** —— 玩家約 8 回合打死它，
+   它約 11 回合打死你。所以你有餘裕，但不能站著發呆。 */
+const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 14;
+/* 估算式是從模擬「量出來」的，不是猜的 —— 而且刻意估得保守
+   （低估玩家 → 頭目偏弱）。機器人不會用技能也不會逃跑，
+   真人比它強，所以對機器人剛好的難度對真人才是舒服的。 */
+const pAtkAt = d => 10 + d*0.62;
+const pHpAt  = d => 20 + d*3.6;
+const pDefAt = d => 2  + d*0.16;
+function bossStats(depth){
+  const d = Math.max(1, depth);
+  /* 防禦一定要有上限。減傷是 (15/16)^防禦 的指數式，
+     深度 100 照線性長下去就是 39 點防禦、減傷只剩 8% ——
+     頭目會變成一面打不動的牆，那不是難，那是壞掉。 */
+  const def = Math.min(16, Math.round(3 + d*0.35));
+  const myDmg = pAtkAt(d) * Math.pow(15/16, def);
+  return {
+    hp:  Math.max(40, Math.round(myDmg * BOSS_KILL_TURNS)),
+    atk: Math.max(4,  Math.round((pHpAt(d) / BOSS_SURVIVE_TURNS) / Math.pow(15/16, pDefAt(d)))),
+    def,
+  };
+}
+
 const HERB = [
  {id:'heal', nm:'回復草', hp:30, price:100},
  {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
@@ -411,6 +493,45 @@ function bake(rows, w=T, h=T){
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
 
+/* ── 頭目的外觀 ──────────────────────────────────────────────
+   十五隻頭目各畫一張 16x16 不划算，而且會畫得很平。
+   改成「同族雜魚的剪影 + 一圈金邊 + 壓暗的底色」：
+   玩家一眼就看得出「這一隻不一樣」，剪影又還是認得出是什麼族。 */
+const BOSS_BASE = {
+  b_warden:'golem', b_treant:'shroom', b_ballista:'turret', b_pyro:'mage',
+  b_lord:'slime', b_phoenix:'imp', b_hanzo:'wolf', b_oni:'knight',
+  b_gaoler:'skeleton', b_queen:'mage', b_prism:'turret', b_mermaid:'mage',
+  b_gate:'knight',
+};
+function crownSprite(base){
+  const src = atlas[base] || atlas.rat;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  x.drawImage(src, 0, 0);
+  // getImageData 不是永遠拿得到（畫布被污染、或在無頭環境跑邏輯測試）。
+  // 拿不到就退回原圖 —— 美術效果可以少，遊戲不能因為描邊掛掉。
+  const d = x.getImageData(0,0,T,T);
+  if(!d || !d.data || !x.createImageData) return c;
+  const a = d.data;
+  const solid = (px_,y)=> px_>=0 && y>=0 && px_<T && y<T && a[(y*T+px_)*4+3] > 0;
+  const out = x.createImageData(T,T);
+  for(let y=0;y<T;y++) for(let px_=0;px_<T;px_++){
+    const i=(y*T+px_)*4;
+    if(solid(px_,y)){                        // 本體壓暗，金邊才跳得出來
+      out.data[i]   = a[i]*0.72;
+      out.data[i+1] = a[i+1]*0.72;
+      out.data[i+2] = a[i+2]*0.78;
+      out.data[i+3] = a[i+3];
+    } else if(solid(px_-1,y)||solid(px_+1,y)||solid(px_,y-1)||solid(px_,y+1)){
+      out.data[i]=245; out.data[i+1]=220; out.data[i+2]=122; out.data[i+3]=255;
+    }
+  }
+  x.putImageData(out,0,0);
+  return c;
+}
+for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
+
+
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════
    主角與所有村民共用同一個剪影：寬扁的身體、兩側短鰭、四隻小腳、
    兩顆方眼睛。只換顏色、年齡變體與帽子。
@@ -522,6 +643,23 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
   if(hat && HAT_ART[hat]) HAT_ART[hat](x);
   return c;
 }
+
+/* 「意識」自己畫。第一型態是一隻懸浮的眼睛 —— 它還沒有形體，
+   所以不能長得像任何一種生物。 */
+atlas.b_mind1 = (()=>{
+  const c=document.createElement('canvas'); c.width=T; c.height=T;
+  const x=c.getContext('2d');
+  const m = shapeMask([[5,4,8],[6,2,12],[7,1,14],[8,1,14],[9,2,12],[10,4,8]]);
+  paintMask(x, m, PAL['6'], PAL['0'], null, 99);
+  px(x,PAL['n'],6,6,4,4); px(x,PAL['p'],7,7,2,2);       // 虹膜
+  px(x,PAL['0'],7,7,1,1);                              // 瞳孔
+  px(x,PAL['+'],6,6,1,1);                              // 高光
+  return c;
+})();
+/* 第三型態：跟主角同一個剪影，但整個是暗的 —— 它已經取得了形體，
+   而那個形體是你。 */
+atlas.b_mind = makeBlob('4', {star:true, dark:'0'});
+atlas.b_mind2 = atlas.b_mind;
 
 /* ─── 主角：共用骨架 + 星芒核心 + 看得見的裝備 ────────────────
    為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。

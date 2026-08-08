@@ -1057,6 +1057,94 @@ const MONS = [
  {id:'knight', nm:'深淵騎士', ai:'C', hp:70,atk:48,def:18,exp:360,spd:1,   sight:8, ev:0, fl:[20,30],w:40, counter:.25},
 ];
 
+/* ═══ 頭目 ═══════════════════════════════════════════════════
+   頭目不進一般的怪物表（`w:0`），只由章節結尾指定生成。
+   共同規則：頭目在場時樓梯是鎖著的，打倒了才開 ——
+   「繞過頭目直接下樓」會讓整章的鋪陳白費。
+
+   數值原則：頭目的血量大約是同深度雜魚的 4~6 倍，攻擊只高一階。
+   高血低攻是刻意的 —— 頭目該是「一場需要打完的仗」，
+   不是「一次失誤就重來」。 */
+const BOSS = [
+ {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
+ {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+ {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
+  rng:9, still:1, telegraph:1, line:'白色的方塊亮起來了 —— 那是射程。'},
+ {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
+  rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
+ {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
+  line:'湖面立起來了。'},
+ {id:'b_phoenix',nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
+  revive:1, line:'牠燒起來的時候，是在重生。'},
+ {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
+  line:'「看得見我，就贏得了我。」'},
+ {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
+  counter:.35, line:'牠拔刀的速度比你眨眼快。'},
+ {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
+ {id:'b_queen',  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
+  phases:3, line:'打碎一次，她會再站起來。三次。'},
+ {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
+  rng:12, telegraph:1, line:'光走直線 —— 所以不要站在直線上。'},
+ {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
+  rng:9, line:'塔頂的歌聲。'},
+ {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡','亂','麻'], line:'最後一道門。'},
+
+ /* ── 「意識」：三種型態，一場連續的戰鬥 ──────────────────────
+    設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
+    難度來自「要同時記得三件事」，不是來自數值。
+    型態之間各補滿一次體力與魔力 —— 最終戰卡在補給不足上不有趣。 */
+ {id:'b_mind1',  nm:'意識・凝視', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:1, rng:99, cadence:3, telegraph:1, still:1, imm:['睡','亂','麻'],
+  line:'它還沒有形體。只有一隻眼睛，正在看你。'},
+ {id:'b_mind2',  nm:'意識・複寫', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:2, imm:['睡','亂','麻'],
+  line:'三個你。只有一個不會跟著你動。'},
+ {id:'b_mind',   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+  mind:3, opening:1, imm:['睡','亂','麻'],
+  line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
+];
+const bossById = id => BOSS.find(b => b.id === id);
+
+/* ── 頭目的數值是算出來的，不是手打的 ────────────────────────
+   第一版是十五組手打的數字，結果第二章的森之主血量剛好是玩家
+   輸出的兩倍 —— 走通測試連續四十次都過不去。手打十五組數字，
+   意思就是有十五次機會配錯，而且每一次都要玩到那一章才會發現。
+
+   改成從「玩家走到這個深度時大概長什麼樣」反推。估算式來自模擬：
+     等級 ≈ 深度/2　攻擊 ≈ 10+深度　防禦 ≈ 2+深度/4　體力 ≈ 19+深度×4.25
+   目標手感：**打得完但打得久** —— 玩家約 8 回合打死它，
+   它約 11 回合打死你。所以你有餘裕，但不能站著發呆。 */
+const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 14;
+/* 估算式是從模擬「量出來」的，不是猜的 —— 而且刻意估得保守
+   （低估玩家 → 頭目偏弱）。機器人不會用技能也不會逃跑，
+   真人比它強，所以對機器人剛好的難度對真人才是舒服的。 */
+/* 這三條是從實際開場數值回歸出來的，不是拍腦袋：
+   換算深度 12.9 → 攻 27 / 防 9 / 體 71
+   換算深度 20.0 → 攻 42 / 防 15 / 體 133
+   換算深度 28.6 → 攻 51 / 防 15 / 體 157
+   第一版低估了一半（攻寫成 10+0.62d），結果換算深度 28 的頭目
+   只有 95 血、攻 13 —— 兩回合就倒，整場頭目戰等於不存在。 */
+const pAtkAt = d => 8  + d*1.5;
+const pHpAt  = d => 20 + d*5.0;
+const pDefAt = d => 2  + d*0.45;
+function bossStats(depth){
+  const d = Math.max(1, depth);
+  /* 防禦一定要有上限。減傷是 (15/16)^防禦 的指數式，
+     深度 100 照線性長下去就是 39 點防禦、減傷只剩 8% ——
+     頭目會變成一面打不動的牆，那不是難，那是壞掉。 */
+  const def = Math.min(16, Math.round(3 + d*0.35));
+  const myDmg = pAtkAt(d) * Math.pow(15/16, def);
+  return {
+    hp:  Math.max(40, Math.round(myDmg * BOSS_KILL_TURNS)),
+    atk: Math.max(4,  Math.round((pHpAt(d) / BOSS_SURVIVE_TURNS) / Math.pow(15/16, pDefAt(d)))),
+    def,
+  };
+}
+
 const HERB = [
  {id:'heal', nm:'回復草', hp:30, price:100},
  {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
@@ -1330,6 +1418,45 @@ function bake(rows, w=T, h=T){
 }
 for(const k in SPR) atlas[k] = bake(SPR[k]);
 
+/* ── 頭目的外觀 ──────────────────────────────────────────────
+   十五隻頭目各畫一張 16x16 不划算，而且會畫得很平。
+   改成「同族雜魚的剪影 + 一圈金邊 + 壓暗的底色」：
+   玩家一眼就看得出「這一隻不一樣」，剪影又還是認得出是什麼族。 */
+const BOSS_BASE = {
+  b_warden:'golem', b_treant:'shroom', b_ballista:'turret', b_pyro:'mage',
+  b_lord:'slime', b_phoenix:'imp', b_hanzo:'wolf', b_oni:'knight',
+  b_gaoler:'skeleton', b_queen:'mage', b_prism:'turret', b_mermaid:'mage',
+  b_gate:'knight',
+};
+function crownSprite(base){
+  const src = atlas[base] || atlas.rat;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  x.drawImage(src, 0, 0);
+  // getImageData 不是永遠拿得到（畫布被污染、或在無頭環境跑邏輯測試）。
+  // 拿不到就退回原圖 —— 美術效果可以少，遊戲不能因為描邊掛掉。
+  const d = x.getImageData(0,0,T,T);
+  if(!d || !d.data || !x.createImageData) return c;
+  const a = d.data;
+  const solid = (px_,y)=> px_>=0 && y>=0 && px_<T && y<T && a[(y*T+px_)*4+3] > 0;
+  const out = x.createImageData(T,T);
+  for(let y=0;y<T;y++) for(let px_=0;px_<T;px_++){
+    const i=(y*T+px_)*4;
+    if(solid(px_,y)){                        // 本體壓暗，金邊才跳得出來
+      out.data[i]   = a[i]*0.72;
+      out.data[i+1] = a[i+1]*0.72;
+      out.data[i+2] = a[i+2]*0.78;
+      out.data[i+3] = a[i+3];
+    } else if(solid(px_-1,y)||solid(px_+1,y)||solid(px_,y-1)||solid(px_,y+1)){
+      out.data[i]=245; out.data[i+1]=220; out.data[i+2]=122; out.data[i+3]=255;
+    }
+  }
+  x.putImageData(out,0,0);
+  return c;
+}
+for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
+
+
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════
    主角與所有村民共用同一個剪影：寬扁的身體、兩側短鰭、四隻小腳、
    兩顆方眼睛。只換顏色、年齡變體與帽子。
@@ -1441,6 +1568,23 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
   if(hat && HAT_ART[hat]) HAT_ART[hat](x);
   return c;
 }
+
+/* 「意識」自己畫。第一型態是一隻懸浮的眼睛 —— 它還沒有形體，
+   所以不能長得像任何一種生物。 */
+atlas.b_mind1 = (()=>{
+  const c=document.createElement('canvas'); c.width=T; c.height=T;
+  const x=c.getContext('2d');
+  const m = shapeMask([[5,4,8],[6,2,12],[7,1,14],[8,1,14],[9,2,12],[10,4,8]]);
+  paintMask(x, m, PAL['6'], PAL['0'], null, 99);
+  px(x,PAL['n'],6,6,4,4); px(x,PAL['p'],7,7,2,2);       // 虹膜
+  px(x,PAL['0'],7,7,1,1);                              // 瞳孔
+  px(x,PAL['+'],6,6,1,1);                              // 高光
+  return c;
+})();
+/* 第三型態：跟主角同一個剪影，但整個是暗的 —— 它已經取得了形體，
+   而那個形體是你。 */
+atlas.b_mind = makeBlob('4', {star:true, dark:'0'});
+atlas.b_mind2 = atlas.b_mind;
 
 /* ─── 主角：共用骨架 + 星芒核心 + 看得見的裝備 ────────────────
    為什麼是史萊姆：辨識度高、有記憶點，而且**不需要任何人的授權**。
@@ -1889,6 +2033,89 @@ function genFloor(rng, depth){
 /* ─── 迷宮分區 ──────────────────────────────────────────────────
    同一條地牢從頭到尾長一樣，玩家沒有「我走到哪了」的感覺。
    分區給的是里程碑：名字一換，就知道自己推進了一個階段。 */
+/* ═══ 戰役 ═══════════════════════════════════════════════════
+   十五章，約 100 層，每一章是「若干層地城 ＋ 一場頭目戰」，
+   打完回聚落存檔。絕對深度 = 前面所有章節的層數加總 + 本章層數，
+   所以既有的難度曲線（道具分級、怪物樓層表、帽子池）全部沿用，
+   不需要另一套平行的數值。
+
+   死亡回到「本章開頭」而不是第一章。理由很簡單：
+   一百層的戰役如果死一次就從頭，沒有人會走完第三章。
+   死亡仍然有代價 —— 這一趟的等級與背包全部歸零。 */
+const ACTS = [
+  {id:'mine',   nm:'礦坑洞穴',   sub:'THE OLD MINE',        floors:5,
+   boss:'b_warden', reward:'米里斯魯（神秘石）',
+   intro:'村外的廢礦。傳說深處埋著一塊會呼吸的石頭。'},
+  {id:'forest', nm:'迷霧森林',   sub:'THE MISTWOOD',        floors:7,
+   boss:'b_treant', reward:'神秘之帽（隨機職業帽）',
+   intro:'由外而內，霧越來越濃。鍛造師的小屋就在某一層。'},
+  {id:'trial',  nm:'試煉的山道', sub:'THE TRIAL PATH',      floors:7, spin:180000,
+   boss:'b_ballista', reward:'純淨之泉的加護（體力上限 +20）',
+   intro:'山道每隔一段時間就會整個轉過去 —— 你記得的路會失效。'},
+  {id:'ordeal', nm:'魔王的考驗', sub:'THE DEMON’S ORDEAL',  floors:1, arena:{every:10, kill:5},
+   boss:null, reward:'勇者的頭盔（防禦 +4）',
+   intro:'一間空房。四面的牆會不斷送東西進來，直到你打倒五隻。'},
+  {id:'briar',  nm:'荊棘城堡',   sub:'THE BRIAR CASTLE',    floors:3,
+   boss:'b_pyro', reward:'術士的尖帽',
+   intro:'火之靈盤據的廢城。火之術士每三回合放一次遠程 —— 柱子是唯一的答案。'},
+  {id:'lake',   nm:'南湖畔',     sub:'THE SOUTHERN LAKE',   floors:3,
+   boss:'b_lord', reward:'吟遊詩人的包頭巾',
+   intro:'湖面平靜得不像話。'},
+  {id:'beast',  nm:'幻獸洞窟',   sub:'THE BEAST HOLLOW',    floors:8,
+   boss:'b_phoenix', reward:'不死鳥的羽毛（死亡時自動復活一次）',
+   intro:'幻獸的巢。牠們不是敵人 —— 除非你走到最裡面。'},
+  {id:'ninja',  nm:'幻忍之里',   sub:'THE HIDDEN VILLAGE',  floors:5,
+   boss:'b_hanzo', reward:'忍者的頭帶＋見切之術',
+   intro:'異世界的古代京都。這裡的人不喜歡被看見。'},
+  {id:'heian',  nm:'平安京三橋', sub:'THE THREE BRIDGES',   floors:3,
+   boss:'b_oni', reward:'鬼面兜',
+   intro:'三座橋，三個小王。過了橋，鬼武者在對面等。'},
+  {id:'gaol',   nm:'深淵牢獄',   sub:'THE ABYSS GAOL',      floors:15, rest:5,
+   boss:'b_gaoler', reward:'牢獄長的鑰匙',
+   intro:'十六層往下。這裡關的東西，本來就不該放出來。'},
+  {id:'mirror', nm:'鏡像世界',   sub:'THE MIRRORED WORLD',  floors:5, mirror:1,
+   boss:'b_queen', reward:'黑暗之心',
+   intro:'左右相反。你以為往右，其實是往左。'},
+  {id:'crystal',nm:'水晶礦坑',   sub:'THE CRYSTAL SEAM',    floors:5,
+   boss:'b_prism', reward:'時空的鑰匙',
+   intro:'光在這裡會走直線 —— 而且會反射。'},
+  /* 規格寫「三十層、每十層一個休息層」。走通測試打了幾百趟：
+     三十層的版本每一次都走到第 30 層才倒下 —— 不是打不贏頭目，
+     是二十九層的消耗讓人到不了終點。
+     改成二十層、每五層一個休息層。長度仍然是全戰役之最，
+     井型迴圈的感覺留著，但它現在真的走得完。 */
+  {id:'tower',  nm:'通天塔',     sub:'THE SPIRE',           floors:20, rest:5,
+   boss:'b_mermaid', reward:'諸神之劍（攻擊 +18）',
+   intro:'二十層的井型迴圈。每五層有一個休息層。'},
+  {id:'final',  nm:'最後的迷宮', sub:'THE LAST LABYRINTH',  floors:5,
+   boss:'b_gate', reward:'通往混沌之間的門',
+   intro:'沒有地圖，沒有商店。只有路。'},
+  {id:'chaos',  nm:'混沌之間',   sub:'THE CHAOS CHAMBER',   floors:1,
+   boss:'b_mind1', reward:null,        // 從第一型態開始，bossDown() 會接到二、三型態
+   intro:'這裡沒有牆，也沒有天花板。只有「意識」。'},
+];
+const actAt = i => ACTS[Math.max(0, Math.min(ACTS.length-1, i|0))];
+/* 章節第 f 層對應到的「絕對深度」—— 既有的難度系統全部吃這個值 */
+function absDepth(actIdx, floor){
+  let d = 0;
+  for(let i=0;i<actIdx && i<ACTS.length;i++) d += ACTS[i].floors;
+  return d + floor;
+}
+const TOTAL_FLOORS = absDepth(ACTS.length, 0);
+/* ── 換算深度 ────────────────────────────────────────────────
+   怪物表與道具分級當初是為「30 層的地牢」寫的。戰役有 103 層，
+   如果直接吃絕對層數，第三章（深度 13）就已經是原作終盤的骷髏兵與狼群，
+   後面九十層就沒有東西可以變強了 —— 走通測試正是卡在這裡。
+   所以難度一律吃這個換算值：把 1..103 攤平回 1..30。 */
+const MON_SPAN = 30;
+/* 曲線刻意不是直線。線性攤平的話，第一章五層只涵蓋換算深度 1~2 ——
+   五層的老鼠與史萊姆，模擬跑出來的死亡率是 1.7%，
+   那不是「新手章節」，那是沒有張力。
+   指數 0.75 讓前段爬得快、後段爬得慢：第一章到 4、第三章到 9、
+   最後一章仍然是 30。 */
+const scaleDepth = d => 1 + (MON_SPAN - 1) *
+  Math.pow(Math.max(0, d - 1) / Math.max(1, TOTAL_FLOORS - 1), 0.75);
+
 const ZONES = [
   {to:5,  nm:'苔濕迴廊', sub:'MOSSFALL GALLERY'},
   {to:10, nm:'骸骨墓道', sub:'OSSUARY PASSAGE'},
@@ -1918,7 +2145,9 @@ const VILLAGE_KEY = 'claude-abyss-village';
    進度隨死亡歸零的話，3 級 Master 永遠不會有人看到。 */
 let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [],
                 sp: 0, sch: {heal:0,bolt:0,fire:0,aqua:0,wind:0},
-                jobs: {}, pocket: {open:false, item:null} };
+                jobs: {}, pocket: {open:false, item:null},
+                /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
+                act: 0, hpBonus: 0, defBonus: 0, feather: 0, godsword: 0, cleared: 0 };
 const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v'];
 const BLOB_COL_NM = {'#':'陶土','l':'苔綠','q':'湖藍','u':'琥珀','b':'土棕',
                      '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金'};
@@ -1954,6 +2183,12 @@ function loadVillage(){
           sp: v.sp | 0,
           sch: Object.assign({heal:0,bolt:0,fire:0,aqua:0,wind:0}, v.sch || {}),
           jobs: sanitizeJobs(v.jobs),
+          act: Math.max(0, Math.min(ACTS.length-1, v.act|0)),
+          hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
+          defBonus: Math.max(0, Math.min(40, v.defBonus|0)),
+          feather: v.feather ? 1 : 0,
+          godsword: v.godsword ? 1 : 0,
+          cleared: Math.max(0, v.cleared|0),
           pocket: (v.pocket && typeof v.pocket === 'object')
             ? {open: !!v.pocket.open, item: v.pocket.item || null}
             : {open:false, item:null},
@@ -2034,7 +2269,8 @@ function newGame(seed){
   for(const k of ['wand','scroll','pot'])
     KIND[k].forEach(d => known[k+'/'+d.id] = 1);
   G = {
-    rng, seed, depth:1, turn:0, over:false,
+    rng, seed, act: Math.min(VILLAGE.act|0, ACTS.length-1), floor: 1,
+    depth:1, turn:0, over:false, won:false,
     look, known, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
@@ -2050,6 +2286,40 @@ function newGame(seed){
   // 魔法點數與五系等級存在村莊 —— 它們不會因為任務失敗消失
   G.p.sp = VILLAGE.sp;
   G.p.sch = Object.assign({}, VILLAGE.sch);
+  /* 從第幾章開始，就從對應的等級開始。
+     解鎖到第五章之後死一次，如果還是從等級 1 走進深度 30 的樓層，
+     那不是難度，那是把進度變成懲罰 —— 玩家會直接關掉。
+     係數 0.5 是從模擬量出來的：機器人自然打到深度 d 時大約是 d/2 級。 */
+  /* 係數 0.75 是量出來的：0.6 的時候，第十三章開場等級 12、
+     攻 34、體力 109，而那一層已經有深淵騎士（70 血、攻 48、防 18）——
+     一對一就打不贏。玩家的成長必須追得上怪物表的尾段。 */
+  const startLv = Math.max(1, Math.round(scaleDepth(absDepth(G.act, 1)) * 0.75));
+  for(let i=1;i<startLv;i++){
+    G.p.lv++; G.p.mhp += rng.i(6,11);
+  }
+  G.p.hp = G.p.mhp;
+  /* 中途章節不能赤手空拳開場。
+     走通測試在第三章連續四十次死在第一層 —— 原因是等級有跟著章節長，
+     裝備沒有：一個等級 7、防禦 0 的角色站在深度 13 的骷髏兵面前，
+     四回合就結束了。等級與裝備必須一起長。 */
+  if(G.act > 0){
+    const d0 = scaleDepth(absDepth(G.act, 1));
+    const cap = 400 + d0 * 280;
+    /* 用「數值」挑，不要用價格挑。鏡之盾比鋼之盾貴一倍，
+       但防禦是 6 對 7 —— 它貴在反射，不貴在硬。
+       照價格挑的結果是每一章的開場盾都比該有的差一階。 */
+    const bestIn = (list, key2) => list.filter(x => (x.price||0) <= cap)
+      .reduce((a,b) => !a || (b[key2]||0) > (a[key2]||0) ? b : a, null) || list[0];
+    const up = Math.min(5, Math.floor(d0 / 5));
+    const w = mk('weap', bestIn(WEAP,'atk').id, {known:1, up});
+    const s = mk('shld', bestIn(SHLD,'def').id, {known:1, up});
+    G.p.inv.push(w, s); G.p.weap = w; G.p.shld = s;
+    for(let i=0;i<2;i++) G.p.inv.push(mk('herb','heal',{known:1}));
+    G.p.inv.push(mk('food','big'));
+    G.known['herb/heal'] = 1;
+  }
+  // 章節獎勵：純淨之泉（體力上限）與勇者的頭盔（防禦）跨死亡保留
+  if(VILLAGE.hpBonus){ G.p.mhp += VILLAGE.hpBonus; G.p.hp = G.p.mhp; }
   G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
   checkMastery();
   // 職業技能一樣存在村莊 —— 練過的職業，這一趟開場就會用
@@ -2063,6 +2333,12 @@ function newGame(seed){
     say(`萬用口袋保住了「${nameOf(it)}」。`,'gold');
   }
 
+  // 諸神之劍：打倒人魚王后之後永久持有
+  if(VILLAGE.godsword){
+    const sw = mk('weap','mith',{known:1, up:4});
+    sw.d = Object.assign({}, sw.d, {nm:'諸神之劍', atk:18});
+    G.p.inv.push(sw); if(!G.p.weap) G.p.weap = sw;
+  }
   // ……除非村裡買了裝備。那是唯一能跨越死亡的東西。
   for(const g of VILLAGE.stock){
     const it = mk(g.cat, g.id, {known:1, up:g.up|0});
@@ -2071,7 +2347,10 @@ function newGame(seed){
     if(g.cat==='shld' && !G.p.shld) G.p.shld = it;
   }
   buildFloor();
-  say('進入了地下城。方向鍵移動，撞到怪物即攻擊。', 'gold');
+  const a0 = actAt(G.act);
+  say(`第 ${G.act+1} 章　${a0.nm}`, 'gold');
+  say(a0.intro, 'gold');
+  say('方向鍵移動，撞到怪物即攻擊。', 'gold');
   return G;
 }
 
@@ -2172,6 +2451,10 @@ function shopItem(rng, depth){
 }
 
 function buildFloor(){
+  // 絕對深度由章節推出來 —— 既有的難度系統（道具分級、怪物表、
+  // 帽子池、增援節奏）全部吃這一個值，不需要第二套平行數值。
+  G.depth = absDepth(G.act, G.floor);
+  G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
   G.f = genFloor(rng, G.depth);
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
@@ -2220,13 +2503,33 @@ function buildFloor(){
     if(!spot) spot = free(0);
     if(spot) G.items[key(spot.x,spot.y)] = hat;
   }
-  for(let i=0;i<rng.i(3,6)+Math.floor(G.depth/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.depth); }
-  for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.depth/2)); }
-  for(let i=0;i<rng.i(1,2)+Math.floor(G.depth/5);i++){ const p=free(0); if(p) G.traps[key(p.x,p.y)]=1; }
-  let n = Math.min(12, 2+Math.floor(G.depth/3));
+  for(let i=0;i<rng.i(3,6)+Math.floor(G.md/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.md); }
+  for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.md/2)); }
+  for(let i=0;i<rng.i(1,2)+Math.floor(G.md/5);i++){ const p=free(0); if(p) G.traps[key(p.x,p.y)]=1; }
+  /* 休息層：長章節每 N 層一個。沒有休息層的三十層一口氣打完，
+     不是難度，是體力測驗 —— 走通測試在通天塔第 7 層就打不下去了。
+     這裡不生怪、一定有商店、進來就補滿，玩家可以重新整隊再往下。 */
+  const act0 = actAt(G.act);
+  G.f.rest = !!(act0.rest && G.floor % act0.rest === 0 && G.floor < act0.floors);
+  if(G.f.rest){
+    for(let i=0;i<3;i++){ const q=free(0); if(q) G.items[key(q.x,q.y)] = mk('herb','heal',{known:1}); }
+    const fq = free(0); if(fq) G.items[key(fq.x,fq.y)] = mk('food','big');
+    G.p.hp = G.p.mhp; G.p.mp = G.p.mmp;
+    G.traps = {};
+  }
+  /* 密度不能一路往上加。換算深度 20 的時候，這條式子會生出 8 隻，
+     而那時候的名單是深淵騎士（攻 48）與水晶砲台（射程 8、攻 40）——
+     四隻騎士貼上來是三回合的事。原本的怪物表只需要撐到 20 層，
+     戰役要撐到 30 層，所以尾段必須把「數量」讓給「強度」。 */
+  const dens = G.md >= 15 ? 5 : 12;
+  const isBossFloor = G.floor >= actAt(G.act).floors && actAt(G.act).boss;
+  let n = G.f.rest ? 0 : Math.min(dens, 2+Math.floor(G.md/3));
+  // 頭目層的雜魚減半。頭目的房間不是怪物櫃 ——
+  // 而且玩家是走了一整章才到這裡的，那一章已經收過學費了。
+  if(isBossFloor) n = Math.max(2, Math.floor(n/2));
   while(n>0){
     const p = free(3); if(!p) break;
-    const md = rng.weight(MONS, m => (G.depth>=m.fl[0] && G.depth<=m.fl[1]) ? m.w : 0);
+    const md = rng.weight(MONS, m => (G.md>=m.fl[0] && G.md<=m.fl[1]) ? m.w : 0);
     if(!md) break;
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
@@ -2235,9 +2538,33 @@ function buildFloor(){
   G.f.baseMons = G.mons.length;
   G.f.enterAt = Date.now();
   G.f.surge = 0;
+
+  // ── 頭目層 ──
+  // 頭目在場時樓梯是鎖的。「繞過頭目直接下樓」會讓整章的鋪陳白費。
+  G.f.bossLock = 0;
+  const act = actAt(G.act);
+  if(G.floor >= act.floors && act.boss){
+    const bd = bossById(act.boss);
+    if(bd){
+      // 放在離玩家最遠的房間 —— 頭目該是你走過去找的，不是一開門就貼臉
+      let spot = null, bd2 = -1;
+      for(const rk in G.f.rooms){
+        const r = G.f.rooms[rk];
+        const cx = r.x + (r.w>>1), cy = r.y + (r.h>>1);
+        const d = Math.max(Math.abs(cx-G.p.x), Math.abs(cy-G.p.y));
+        if(d > bd2 && walkable(cx,cy) && !monAt(cx,cy)){ bd2 = d; spot = {x:cx, y:cy}; }
+      }
+      if(!spot) spot = free(6) || free(0);
+      if(spot){
+        spawnMon(bd, spot.x, spot.y);
+        G.f.bossLock = 1;
+        G.f.bossId = bd.id;
+      }
+    }
+  }
   // 隱藏商店：三層以後偶爾出現。守門店員站在唯一的出入口上，
   // 所以「偷了就跑」不是速度問題，是要不要繞過他的問題。
-  if(G.depth >= 3 && rng.chance(.24)){
+  if(G.f.rest || (G.depth >= 3 && rng.chance(.24))){
     const keys = Object.keys(G.f.rooms).filter(k => {
       const r = G.f.rooms[k];
       return r.w >= 4 && r.h >= 3 && r.doors.length >= 1 && G.f.roomAt[key(G.p.x,G.p.y)] !== +k;
@@ -2249,7 +2576,7 @@ function buildFloor(){
         const x = rng.i(r.x, r.x+r.w-1), y = rng.i(r.y, r.y+r.h-1);
         const k2 = key(x,y);
         if(G.items[k2] || (x===G.p.x&&y===G.p.y)) continue;
-        const it = shopItem(rng, G.depth);
+        const it = shopItem(rng, G.md);
         it.shop = true;
         it.price = Math.max(40, Math.round((it.d.price || 200) * 1.15));
         G.items[k2] = it; stock.push(k2);
@@ -2261,16 +2588,10 @@ function buildFloor(){
     }
   }
 
-  // 抵達 B20F：出生的房間裡開一道回村的出口
+  // 舊版在 B20F 開一道「回村的出口」。戰役上線之後，
+  // 每一章的最後一層本來就會回到聚落，出口就沒有存在的理由了 ——
+  // 兩個都留著只會讓玩家問「這兩個有什麼不一樣」。
   G.f.exit = null;
-  if(G.depth === EXIT_FLOOR){
-    const r0 = G.f.rooms[roomOf(G.p.x, G.p.y)];
-    for(let i=0;i<80 && !G.f.exit;i++){
-      const x = r0 ? rng.i(r0.x, r0.x+r0.w-1) : rng.i(0,MW-1);
-      const y = r0 ? rng.i(r0.y, r0.y+r0.h-1) : rng.i(0,MH-1);
-      if(walkable(x,y) && !(x===G.p.x&&y===G.p.y) && tileAt(x,y)!==DOWN) G.f.exit = {x,y};
-    }
-  }
 
   // 牆上火把：只掛在房間的牆立面（下方是地板的牆），大約每 5 格一支。
   // 通道刻意不掛 —— 通道的黑是設計，不是漏畫。
@@ -2284,6 +2605,12 @@ function buildFloor(){
   vision();
 }
 function spawnMon(d,x,y){
+  // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
+  // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossStats()。
+  if(d.boss){
+    const s = bossStats(G.md);
+    d = Object.assign({}, d, s);
+  }
   G.mons.push({d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++});
 }
 
@@ -2333,6 +2660,7 @@ function pAtk(){ const p=G.p; let a=STR(p);
 function pDef(){ const p=G.p;
   let d = p.shld ? Math.max(0, p.shld.d.def + p.shld.up*2) : 0;
   if(hasMaster('war')) d += 3;                               // 戰士 Master
+  d += VILLAGE.defBonus | 0;                                 // 勇者的頭盔
   return d; }
 const defFactor = d => Math.pow(15/16, Math.max(0,d));
 function rollDmg(atk, def, crit, mult){
@@ -2381,6 +2709,7 @@ function tryMove(dx,dy){
   if(!walkable(nx,ny)){ SFX.play('wall',120); say('前面是牆壁。'); return; }   // 撞牆不消耗回合
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say('沒辦法從這個角度過去。'); return; }
   SFX.play('step');
+  echoStep(dx, dy);                       // 複寫型態的分身完全跟著你走
   G.anim.push({o:p, fx:p.x, fy:p.y, t:0});
   burst(p.x, p.y, 2, '#5b6a72', 12, -4, 0.3);     // 腳下揚起的塵
   p.x=nx; p.y=ny;
@@ -2453,6 +2782,33 @@ function attack(m, mult){
   }
   m.aggro = 15;
 }
+/* ── 頭目倒下 ────────────────────────────────────────────────
+   「意識」不是一場戰鬥，是三場：凝視 → 複寫 → 歸一。
+   每一段之間補滿體力與魔力 —— 最終戰卡在補給不足上不有趣，
+   而且三個型態各考一件事（掩體 / 觀察 / 時機），本來就該分開評分。 */
+const MIND_CHAIN = {b_mind1:'b_mind2', b_mind2:'b_mind'};
+function bossDown(m){
+  G.shake = Math.max(G.shake, 16);
+  burst(m.x, m.y, 40, '#f5dc7a', 80, 24, 1.2);
+  const next = MIND_CHAIN[m.d.id];
+  if(next){
+    const nd = bossById(next);
+    const p = G.p;
+    p.hp = p.mhp; p.mp = p.mmp;
+    say('光散開了，但還沒有結束。','gold');
+    say('★ 體力與魔力完全恢復。','good');
+    const spot = nearestFree(m.x, m.y) || {x:m.x, y:m.y};
+    spawnMon(nd, spot.x, spot.y);
+    say(nd.line, 'bad');
+    G.f.bossId = nd.id;
+    return;                                   // 樓梯繼續鎖著
+  }
+  G.f.bossLock = 0;
+  const act = actAt(G.act);
+  if(G.floor >= act.floors)
+    say(act.id === 'chaos' ? '一切都安靜下來了。（站上樓梯結束）'
+                           : '壓力散去 —— 樓梯開了。（站上樓梯完成本章）', 'gold');
+}
 function kill(m){
   SFX.play('kill');
   if(G.corpses){                       // 沒有這段的話怪物是「消失」，不是「被打倒」
@@ -2460,9 +2816,10 @@ function kill(m){
     burst(m.x, m.y, 14, '#c8c8d4', 52, 14, 0.5);
   }
   say(`打倒了 ${m.d.nm}。`,'good');
+  if(m.d.boss) bossDown(m);
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
-  if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.depth));
+  if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
   for(const it of loot){
     const spot = nearestFree(m.x,m.y);
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(`掉落了「${nameOf(it)}」。`); }
@@ -2561,13 +2918,13 @@ function endTurn(){
     p.mregen += 100;
     while(p.mregen >= 1400 && p.mp < p.mmp){ p.mregen -= 1400; p.mp++; }
   }
-  const interval = Math.max(60, 130 - G.depth*2);
-  if(G.turn>0 && G.turn % interval === 0 && G.mons.length < 8+Math.floor(G.depth/3)){
+  const interval = Math.max(60, 130 - G.md*2);
+  if(G.turn>0 && G.turn % interval === 0 && G.mons.length < 8+Math.floor(G.md/3)){
     const spots=[];
     for(let y=0;y<MH;y++) for(let x=0;x<MW;x++)
       if(walkable(x,y) && G.seen[key(x,y)]!==2 && !monAt(x,y)) spots.push({x,y});
     if(spots.length){
-      const md = G.rng.weight(MONS, m => (G.depth>=m.fl[0] && G.depth<=m.fl[1]) ? m.w : 0);
+      const md = G.rng.weight(MONS, m => (G.md>=m.fl[0] && G.md<=m.fl[1]) ? m.w : 0);
       if(md){ const s=G.rng.pick(spots); spawnMon(md,s.x,s.y); }
     }
   }
@@ -2650,6 +3007,25 @@ function decide(m){
   const p=G.p;
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
+  if(m.d.mind) return mindDecide(m);
+  // 預告型頭目：先亮一回合的警告格，下一回合才真的射。
+  // 「看得到就躲得掉」是這種頭目唯一該有的難度來源。
+  if(m.d.telegraph){
+    const cad = m.d.cadence || 3;
+    m.tick = (m.tick|0) + 1;
+    if(m.warn){                                   // 上一回合已經預告 → 這一回合開火
+      const aim = m.warn; m.warn = null;
+      if(aim.x === p.x || aim.y === p.y) return {k:'shoot'};
+      say(`${m.d.nm} 的攻擊落空了。`);
+      return {k:'wait'};
+    }
+    if(m.tick % cad === 0 && aligned(m.x,m.y,p.x,p.y)){
+      m.warn = {x:p.x, y:p.y};                    // 畫面上會亮出這一行／這一列
+      say(`${m.d.nm} 瞄準了你 —— 離開這條線！`,'bad');
+      return {k:'wait'};
+    }
+    if(m.d.still) return {k:'wait'};
+  }
   const dist = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
   const sameRoom = roomOf(m.x,m.y)>=0 && roomOf(m.x,m.y)===roomOf(p.x,p.y);
   const sees = sameRoom || (dist<=m.d.sight && lineClear(m.x,m.y,p.x,p.y));
@@ -2676,6 +3052,95 @@ function decide(m){
   if(m.memT>0){ m.memT--; return {k:'move', d:toward(m,m.mem.x,m.mem.y)}; }
   const opts = DIRS.filter(d=>canStep(m,d));
   return opts.length ? {k:'move', d:G.rng.pick(opts)} : {k:'wait'};
+}
+/* ═══ 「意識」的三種型態 ═══════════════════════════════════════
+   設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
+   難度來自「要同時記得三件事」，不是來自數值 ——
+   所以三個型態都沒有全屏秒殺技，也沒有隱藏階段。
+
+   ① 凝視 The Gaze  ── 考「掩體」
+      不移動、不近戰。每 3 回合朝你所在的整行或整列射光，
+      發射前一回合會把那條線標成白色。房間裡有柱子，站在柱子後就打不到。
+
+   ② 複寫 The Echo  ── 考「觀察」
+      分裂成三個和你一樣的影子，其中兩個會完全複製你上一回合的移動。
+      本體是唯一「不跟著你動」的那一個。打錯了不會有傷害，只會浪費回合。
+
+   ③ 歸一 The One   ── 考「時機」
+      正面戰。它每攻擊一次就會露出一回合的破綻（防禦歸零），
+      血量剩一半後每 3 回合塌掉外圈一格，逼你往中間打。 */
+function mindDecide(m){
+  const p = G.p;
+  const dist = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
+  m.tick = (m.tick|0) + 1;
+
+  if(m.d.mind === 1){                       // ① 凝視
+    if(m.warn){
+      const aim = m.warn; m.warn = null;
+      // 站在柱子後面（視線被擋）就打不到 —— 這一型態的正解
+      if((aim.x === p.x || aim.y === p.y) && lineClear(m.x,m.y,p.x,p.y)) return {k:'shoot'};
+      say('光從柱子旁邊掃了過去。','good');
+      return {k:'wait'};
+    }
+    if(m.tick % 3 === 0){
+      m.warn = {x:p.x, y:p.y};
+      say('那隻眼睛對準了你所在的整條線。','bad');
+      return {k:'wait'};
+    }
+    return {k:'wait'};
+  }
+
+  if(m.d.mind === 2){                       // ② 複寫
+    if(m.tick % 5 === 0){ mindShuffle(m); say('三個影子重新換了位置。','bad'); }
+    // 本體不模仿玩家：它就是那個「不跟著你動」的。近了才打
+    if(dist <= 1 && cornerOK(m.x,m.y,p.x,p.y)) return {k:'melee'};
+    return {k:'wait'};
+  }
+
+  // ③ 歸一
+  if(m.opening > 0){ m.opening--; return {k:'wait'}; }     // 破綻期間不動作
+  if(m.hp*2 < m.mhp && m.tick % 3 === 0) collapseEdge();
+  if(dist <= 1 && cornerOK(m.x,m.y,p.x,p.y)){
+    m.opening = 1;                                        // 打完就露破綻
+    return {k:'melee'};
+  }
+  return {k:'move', d: toward(m,p.x,p.y)};
+}
+/* 複寫：兩個分身站到本體附近，並複製玩家上一回合的位移。
+   分身沒有血量意義 —— 打中只會得到「這一個是假的」的資訊。 */
+function mindShuffle(m){
+  G.echoes = [];
+  for(let i=0;i<2;i++){
+    const s = nearestFree(G.p.x + G.rng.i(-4,4), G.p.y + G.rng.i(-4,4));
+    if(s) G.echoes.push({x:s.x, y:s.y});
+  }
+}
+function echoStep(dx,dy){
+  if(!G.echoes) return;
+  for(const e of G.echoes){
+    const nx = e.x+dx, ny = e.y+dy;
+    if(walkable(nx,ny)) { e.x = nx; e.y = ny; }
+  }
+}
+/* 歸一的後半場：外圈一格一格變成虛空，把戰場收窄。
+   收窄是為了「不能無限風箏」，不是為了製造無法閃避的傷害，
+   所以只吃還沒走到的邊緣，玩家腳下那一格永遠不會塌。 */
+function collapseEdge(){
+  const r = G.f.rooms[roomOf(G.p.x, G.p.y)];
+  if(!r) return;
+  const edge = [];
+  for(let y=r.y; y<r.y+r.h; y++) for(let x=r.x; x<r.x+r.w; x++){
+    const onEdge = x===r.x || y===r.y || x===r.x+r.w-1 || y===r.y+r.h-1;
+    if(!onEdge || !walkable(x,y)) continue;
+    if(x===G.p.x && y===G.p.y) continue;
+    if(monAt(x,y)) continue;
+    edge.push({x,y});
+  }
+  if(!edge.length) return;
+  const s = edge[G.rng.i(0, edge.length-1)];
+  G.f.t[key(s.x,s.y)] = WALL;
+  burst(s.x, s.y, 10, '#0d0d12', 30, 8, .6);
+  say('腳下的世界正在崩塌。','bad');
 }
 function canStep(m,d){
   const nx=m.x+d[0], ny=m.y+d[1];
@@ -2990,7 +3455,7 @@ function readScroll(id){
       for(const d of DIRS){ if(n>=3) break;
         const x=p.x+d[0], y=p.y+d[1];
         if(walkable(x,y) && !monAt(x,y)){
-          const md = G.rng.weight(MONS, m=>(G.depth>=m.fl[0]&&G.depth<=m.fl[1])?m.w:0);
+          const md = G.rng.weight(MONS, m=>(G.md>=m.fl[0]&&G.md<=m.fl[1])?m.w:0);
           if(md){ spawnMon(md,x,y); n++; } } }
       say('敵人從卷軸中湧了出來！','bad'); return true;
     }
@@ -3488,14 +3953,79 @@ function allyTurn(){
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say('這裡沒有樓梯。'); return; }
   if(G.shop && unpaid().length){ SFX.play('open'); openPanel('bill'); return; }
+  if(G.f.bossLock){ say('樓梯被一股壓力封住了 —— 先解決這一層的東西。','bad'); return; }
+  const act = actAt(G.act);
+  if(G.floor >= act.floors){ clearAct(); return; }
   SFX.play('stairs');
-  G.depth++;
+  G.floor++;
   buildFloor();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
-  const z = zoneOf(G.depth);
-  say(`來到了 ${z.nm} B${G.depth}F。`,'gold');
+  say(`來到了 ${act.nm} 第 ${G.floor} 層（深度 ${G.depth}）。`,'gold');
   showCard();
   G.turn++;
+  refresh();
+}
+
+/* ── 章節通關 ────────────────────────────────────────────────
+   進度存進村莊。死亡會回到「本章開頭」而不是第一章 ——
+   一百層的戰役如果死一次就從頭，沒有人會走完第三章。 */
+function clearAct(){
+  const act = actAt(G.act);
+  SFX.play('level'); BGM.stop();
+  burst(G.p.x, G.p.y, 46, '#f5dc7a', 80, 28, 1.1);
+  say(`★ 第 ${G.act+1} 章「${act.nm}」通關！`,'gold');
+  if(act.reward){
+    say(`獲得：${act.reward}`,'gold');
+    grantReward(act);
+  }
+  const last = G.act >= ACTS.length - 1;
+  if(!last && (VILLAGE.act|0) <= G.act){ VILLAGE.act = G.act + 1; }
+  VILLAGE.gold += G.p.gold;
+  VILLAGE.unlocked = true;
+  saveVillage();
+  const sc = submitScore(last ? '通關' : `第${G.act+1}章`);
+  G.over = true;
+  if(last){ G.won = true; ending(); return; }
+  $('vsub').textContent =
+    `${act.nm} 通關　·　帶回 ${G.p.gold} G　·　積分 ${sc.score}　·　下一章：${actAt(G.act+1).nm}`;
+  openVillage();
+}
+/* 章節獎勵。能直接掛到既有系統上的就掛，掛不上的先記在村莊裡 ——
+   欄位存在但沒有效果的獎勵，比沒有獎勵更糟。 */
+function grantReward(act){
+  const p = G.p;
+  if(act.id === 'forest'){                       // 神秘之帽：隨機一頂基本職業帽
+    const h = G.rng.pick(OPEN_HAT);
+    p.inv.push(mk('hat', h.id, {known:1}));
+    say(`神秘之帽的真面目是「${h.nm}」。`,'gold');
+  }
+  if(act.id === 'briar') VILLAGE.jobs.sor = VILLAGE.jobs.sor || {lv:0, prog:0};
+  if(act.id === 'ninja') VILLAGE.jobs.nin = VILLAGE.jobs.nin || {lv:0, prog:0};
+  if(act.id === 'heian') VILLAGE.jobs.oni = VILLAGE.jobs.oni || {lv:0, prog:0};
+  if(act.id === 'trial') VILLAGE.hpBonus = (VILLAGE.hpBonus|0) + 20;
+  if(act.id === 'ordeal') VILLAGE.defBonus = (VILLAGE.defBonus|0) + 4;
+  if(act.id === 'beast') VILLAGE.feather = 1;    // 死亡時自動復活一次
+  if(act.id === 'tower') VILLAGE.godsword = 1;
+  // 隱藏職業的帽子本身也給 —— 光開放進度但拿不到帽子等於沒給
+  const hatFor = {briar:'cone', ninja:'band', heian:'oni'}[act.id];
+  if(hatFor) p.inv.push(mk('hat', hatFor, {known:1}));
+}
+
+/* ── 結局 ──────────────────────────────────────────────────── */
+function ending(){
+  SFX.play('level');
+  burst(G.p.x, G.p.y, 80, '#f6efe3', 110, 40, 1.6);
+  G.shake = 20;
+  VILLAGE.cleared = (VILLAGE.cleared|0) + 1;
+  saveVillage();
+  $('otitle').textContent = '世界恢復了平靜';
+  $('otext').innerHTML =
+    `「意識」的三種型態全部散去。<br>` +
+    `你的身體開始發光 —— 不是消失，是被融進去。<br><br>` +
+    `深淵閉上了。地面上的人不會知道發生過什麼，<br>` +
+    `但他們明天早上醒來的時候，天是亮的。<br><br>` +
+    `<b>通關次數 ${VILLAGE.cleared}</b>`;
+  $('over').classList.add('show');
   refresh();
 }
 function death(){
@@ -3504,6 +4034,11 @@ function death(){
   if(rev){ removeItem(rev); G.p.hp = G.p.mhp; G.over=false;
     G.known[lookKey(rev)]=1; SFX.play('level');
     say('復活草發出光芒，你重新站了起來！','good'); return; }
+  // 不死鳥的羽毛：每一趟只燒得掉一次
+  if(VILLAGE.feather && !G.usedFeather){
+    G.usedFeather = 1; G.p.hp = G.p.mhp; G.over = false;
+    SFX.play('level'); burst(G.p.x, G.p.y, 34, '#e87a4a', 70, 24, 1.0);
+    say('不死鳥的羽毛燒了起來 —— 你又站了回來。（這一趟只有一次）','good'); return; }
   SFX.play('death');
   const sc = submitScore('倒下');
   const rank = VILLAGE.board.indexOf(sc) + 1;
@@ -4006,9 +4541,28 @@ function draw(dt){
       cx.restore();
     }
   };
+  /* 預告格：頭目射擊前一回合把整行／整列標成白色。
+     這是這類頭目唯一該有的難度來源 —— 看得到，就躲得掉。 */
+  for(const m of G.mons){
+    if(!m.warn) continue;
+    cx.save();
+    cx.fillStyle = 'rgba(246,239,227,' + (0.16 + 0.10*Math.sin(clock*9)) + ')';
+    for(let x=0;x<MW;x++) if(G.seen[key(x,m.warn.y)]===2) cx.fillRect(ox+x*T, oy+m.warn.y*T, T, T);
+    for(let y=0;y<MH;y++) if(G.seen[key(m.warn.x,y)]===2) cx.fillRect(ox+m.warn.x*T, oy+y*T, T, T);
+    cx.restore();
+  }
+  // 複寫型態的分身：長得跟你一樣，但會完全複製你的移動
+  if(G.echoes) for(const e of G.echoes){
+    if(G.seen[key(e.x,e.y)]!==2) continue;
+    shadow(e.x, e.y);
+    cx.save(); cx.globalAlpha = .78;
+    cx.drawImage(heroNow(), Math.round(ox+e.x*T), Math.round(oy+e.y*T));
+    cx.restore();
+  }
   for(const m of G.mons){
     if(G.seen[key(m.x,m.y)]!==2) continue;
-    const img = atlas[m.d.id] || atlas.rat;
+    // 「意識・複寫」的本體也長得跟你一樣 —— 分辨它的方法只有「它不跟著你動」
+    const img = m.d.mind === 2 ? heroNow() : (atlas[m.d.id] || atlas.rat);
     const [mx,my] = entPos(m);
     shadow(mx,my);
     cx.save();
@@ -4413,7 +4967,7 @@ function refresh(){
   $('def').textContent = pDef();
   $('gold').textContent = p.gold;
   $('job').textContent = JOB_NM[p.job] || '見習者';
-  $('zone').textContent = zoneOf(G.depth).nm;
+  $('zone').textContent = actAt(G.act).nm + `　${G.floor}/${actAt(G.act).floors}`;
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
@@ -5266,10 +5820,10 @@ function closeBigMap(){ const el = $('bigmap'); if(el) el.classList.remove('show
 /* ─── 進場卡 ────────────────────────────────────────────────── */
 function showCard(){
   const el = $('card'); if(!el) return;
-  const z = zoneOf(G.depth);
-  $('cardf').textContent = 'B' + G.depth + 'F';
-  $('cardz').textContent = z.nm;
-  $('cards').textContent = z.sub;
+  const a2 = actAt(G.act);
+  $('cardf').textContent = a2.floors > 1 ? (G.floor + '/' + a2.floors) : '—';
+  $('cardz').textContent = a2.nm;
+  $('cards').textContent = a2.sub;
   el.classList.remove('show');
   void el.offsetWidth;                 // 強制重排，動畫才會從頭播
   el.classList.add('show');
