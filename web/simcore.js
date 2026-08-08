@@ -40,7 +40,9 @@ global.document = {
   getElementById: () => fakeEl(),
   createElement: () => fakeEl(),
   querySelectorAll: () => [],
+  querySelector: () => null,
   addEventListener: () => {},
+  documentElement: { lang: '', style:{}, scrollWidth:1280, scrollHeight:900 },
 };
 global.addEventListener = () => {};
 // 視窗尺寸：遊戲會依螢幕方向切換視野格數，打樁成一般桌機尺寸

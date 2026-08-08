@@ -203,9 +203,15 @@ const BOSS_KILL_TURNS = 8, BOSS_SURVIVE_TURNS = 14;
 /* 估算式是從模擬「量出來」的，不是猜的 —— 而且刻意估得保守
    （低估玩家 → 頭目偏弱）。機器人不會用技能也不會逃跑，
    真人比它強，所以對機器人剛好的難度對真人才是舒服的。 */
-const pAtkAt = d => 10 + d*0.62;
-const pHpAt  = d => 20 + d*3.6;
-const pDefAt = d => 2  + d*0.16;
+/* 這三條是從實際開場數值回歸出來的，不是拍腦袋：
+   換算深度 12.9 → 攻 27 / 防 9 / 體 71
+   換算深度 20.0 → 攻 42 / 防 15 / 體 133
+   換算深度 28.6 → 攻 51 / 防 15 / 體 157
+   第一版低估了一半（攻寫成 10+0.62d），結果換算深度 28 的頭目
+   只有 95 血、攻 13 —— 兩回合就倒，整場頭目戰等於不存在。 */
+const pAtkAt = d => 8  + d*1.5;
+const pHpAt  = d => 20 + d*5.0;
+const pDefAt = d => 2  + d*0.45;
 function bossStats(depth){
   const d = Math.max(1, depth);
   /* 防禦一定要有上限。減傷是 (15/16)^防禦 的指數式，
@@ -309,7 +315,7 @@ const JOB_NM = {none:'見習者'};
 for(const h of HAT) JOB_NM[h.job] = h.jobnm;
 const JOB_MAX = 3;                  // 3 級＝Master
 const JOB_PER_LV = 2;               // 戴著帽子每升 2 個角色等級 → 職業 +1
-const jobRank = lv => lv >= JOB_MAX ? 'Master' : ('Lv' + lv);
+const jobRank = lv => lv >= JOB_MAX ? TX('ui.master','Master') : ('Lv' + lv);
 
 /* Master（職業 3 級）的永久被動。練滿之後不戴帽子也生效 ——
    那是「這個職業我已經是它了」的意思。 */
@@ -396,8 +402,8 @@ function payAbil(a, p){
 }
 const ABIL_T = {atk:'攻擊', def:'輔助', pass:'被動', esc:'逃跑', rev:'復活'};
 function costLabel(a, p){
-  if(a.t === 'pass') return '被動';
-  if(a.mpAll) return `全部 MP（需 ${abilCost(a,p)}）`;
+  if(a.t === 'pass') return TX('ui.passive','被動');
+  if(a.mpAll) return `${TX('ui.allmp','全部 MP')}（${abilCost(a,p)}）`;
   return abilCost(a, p) + ' MP';
 }
 
@@ -447,6 +453,248 @@ const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
 
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
+/* ═══ 多語言 ═══════════════════════════════════════════════════
+   中文 / English / 日本語。
+
+   作法刻意選了「一張表、三欄」而不是三份 JSON：
+   翻譯漏了哪一條，肉眼掃一行就看得到，不用比對三個檔案。
+   查不到就退回中文原文 —— 缺一條翻譯應該是「有一行沒翻」，
+   而不是「畫面上出現 undefined」。
+
+   涵蓋範圍要說清楚：介面、道具／怪物／職業／技能／章節的**名稱**
+   都翻了；戰鬥紀錄那幾百行敘述句還是中文。名稱是玩家每一秒都在讀的
+   東西，敘述句是讀過就過去的 —— 先做前者是刻意的取捨，不是忘了。 */
+const LANGS = [['zh','中文'],['en','English'],['ja','日本語']];
+let LANG = 'zh';
+/* 一行一個詞條：key | English | 日本語 */
+const DICT_RAW = `
+ui.title|CLAUDE ABYSS|クロード深淵
+ui.start|Descend|潜る
+ui.name|your name|なまえ
+ui.tagline1|Levels reset. Gear is lost —|レベルは戻り、装備は失われる ——
+ui.tagline2|only what you learned remains.|残るのは、学んだことだけ。
+ui.meta1|turn-based|ターン制
+ui.meta2|random dungeon|ランダムダンジョン
+ui.meta3|death resets all|死ねば全て０に
+ui.menu|Menu|メニュー
+ui.close|Close|とじる
+ui.bag|Bag|もちもの
+ui.ground|Underfoot|足もと
+ui.skills|Skills|スキル
+ui.magic|Magic|まほう
+ui.bill|Checkout|お会計
+ui.map|Floor Map|フロアマップ
+ui.gear|Gear|そうび
+ui.status|Status|じょうたい
+ui.log|Log|ログ
+ui.weapon|Weapon|ぶき
+ui.satiety|Satiety|まんぷく度
+ui.shield|Shield|たて
+ui.pack|Pack|かばん
+ui.exp|EXP|けいけん
+ui.pocket|Pocket|ポケット
+ui.job|JOB|職
+ui.gold|G|G
+ui.lv|LV|LV
+ui.hp|HP|HP
+ui.mp|MP|MP
+ui.full|SAT|満腹
+ui.atk|ATK|攻
+ui.def|DEF|防
+ui.none|none|なし
+ui.unarmed|unarmed|すで
+ui.empty|(empty)|（から）
+ui.normal|normal|ふつう
+ui.village|Hearthfire Village|かまどの村
+ui.board|Hall of the Fallen|いしぶみ
+ui.dive|Descend again|もういちど潜る
+ui.retry|Into the dungeon again|もういちどダンジョンへ
+ui.confirm|Confirm|けってい
+ui.cancel|Cancel|とりけし
+ui.wait|Wait|まつ
+ui.down|Descend|おりる
+ui.tags|Labels|なまえ
+ui.sound|Sound|おと
+ui.help|Controls|そうさ
+ui.pad|D-pad|パッド
+ui.padoff|Hide pad|パッドをしまう
+ui.lang|Language|言語
+ui.master|Master|マスター
+ui.passive|passive|パッシブ
+ui.allmp|all MP|MP全部
+ui.t.atk|attack|こうげき
+ui.t.def|support|ほじょ
+ui.t.pass|passive|パッシブ
+ui.t.esc|escape|とうそう
+ui.t.rev|revive|そせい
+job.none|Novice|みならい
+job.war|Warrior|せんし
+job.brd|Bard|ぎんゆうしじん
+job.red|Red Mage|あかまどうし
+job.sum|Summoner|しょうかんし
+job.wht|White Mage|しろまどうし
+job.hnt|Hunter|かりゅうど
+job.nin|Ninja|にんじゃ
+job.oni|Oni Warrior|おにむしゃ
+job.sor|Sorcerer|じゅつし
+hat.helm|Iron Helm|てつのかぶと
+hat.beret|Minstrel Beret|ぎんゆうのぼうし
+hat.rhat|Crimson Plume Hat|あかばねのぼうし
+hat.crown|Aether Coronet|いそうのかんむり
+hat.hood|White Hood|しろのずきん
+hat.plume|Plumed Hunting Cap|はねかざりのかりぼう
+hat.band|Phantom Headband|げんにんのはちまき
+hat.oni|Demon Faceguard|おにめんかぶと
+hat.cone|Sorcerer's Point|じゅつしのとんがりぼう
+mon.rat|Cave Rat|どうくつネズミ
+mon.slime|Blue Slime|あおスライム
+mon.goblin|Green Goblin|みどりゴブリン
+mon.shroom|Reelcap|よいあしタケ
+mon.imp|Stonefling Imp|いしなげようせい
+mon.grub|Carrion Grub|しびれムシ
+mon.skeleton|Skeleton Soldier|がいこつへい
+mon.wolf|Galewolf|しっぷうオオカミ
+mon.mage|Curse Mage|のろいのまどうし
+mon.golem|Wandering Statue|さまようせきぞう
+mon.turret|Crystal Turret|すいしょうほうだい
+mon.knight|Abyss Knight|しんえんのきし
+mon.b_warden|Mine Warden|こうざんのばんにん
+mon.b_treant|Lord of the Wood|もりのぬし
+mon.b_ballista|Ballista Fiend|とうせきのまおう
+mon.b_pyro|Flame Sorcerer|ほのおのじゅつし
+mon.b_lord|Lord of the Lake|みずうみのぬし
+mon.b_phoenix|Phoenix|ふしちょう
+mon.b_hanzo|Hanzo|はんぞう
+mon.b_oni|Oni Warrior|おにむしゃ
+mon.b_gaoler|Warden of the Gaol|ろうごくちょう
+mon.b_queen|Mirror Queen|かがみのじょおう
+mon.b_prism|Prism Walker|こうせんじん
+mon.b_mermaid|Mermaid Queen|にんぎょのおうひ
+mon.b_gate|Gatewatcher|もんのしゅぼう
+mon.b_mind1|The Mind - Gaze|いしき・ぎょうし
+mon.b_mind2|The Mind - Echo|いしき・ふくしゃ
+mon.b_mind|The Mind - The One|いしき・きいつ
+it.heal|Healing Herb|やくそう
+it.elix|Elixir|とっこうやく
+it.life|Life Herb|いのちのくさ
+it.str|Strength Herb|ちからのくさ
+it.rev|Revival Herb|そせいそう
+it.cure|Antidote Herb|どくけしそう
+it.conf|Confusion Herb|こんらんそう
+it.slp|Sleep Herb|ねむりそう
+it.blind|Blinding Herb|しつめいそう
+it.psn|Poison Herb|どくそう
+it.hst|Haste Herb|かそくそう
+it.para|Paralysis Herb|まひそう
+it.ident|Scroll of Identify|かんていのまきもの
+it.map|Scroll of Mapping|ちずのまきもの
+it.ench|Scroll of Enchant|きょうかのまきもの
+it.purif|Scroll of Purify|じょうかのまきもの
+it.flame|Scroll of Flame|かえんのまきもの
+it.sleep|Scroll of Sleep|ねむりのまきもの
+it.summon|Scroll of Summoning|しょうかんのまきもの
+it.curse|Scroll of Curse|のろいのまきもの
+it.w_sleep|Wand of Sleep|ねむりのつえ
+it.blink|Wand of Blink|いどうのつえ
+it.slow|Wand of Slow|げんそくのつえ
+it.knock|Wand of Knockback|げきたいのつえ
+it.swap|Wand of Swap|みがわりのつえ
+it.bolt|Wand of Lightning|らいげきのつえ
+it.weak|Wand of Weakness|じゃっかのつえ
+it.store|Storage Jar|ほぞんのつぼ
+it.p_ident|Identify Jar|しきべつのつぼ
+it.devour|Devouring Jar|すいものつぼ
+it.dispel|Dispel Jar|はまのつぼ
+it.big|Large Bread|おおきなパン
+it.bread|Bread|パン
+it.fruit|Wild Fruit|きのみ
+it.club|Wooden Club|きのぼう
+it.brnz|Bronze Sword|どうのけん
+it.spear|Spear|やり
+it.steel|Steel Sword|はがねのけん
+it.mith|Mithril Sword|ミスリルのけん
+it.leath|Leather Shield|かわのたて
+it.wood|Wooden Shield|きのたて
+it.s_steel|Steel Shield|はがねのたて
+it.mirr|Mirror Shield|かがみのたて
+ab.smash|All-Out Strike|こんしんのいちげき
+ab.guard|Hold Fast|けんしゅ
+ab.lull|Requiem|あんこんきょく
+ab.anthem|War Anthem|せんいのうた
+ab.duplex|Twin Strike|にとうれんげき
+ab.veil|Crimson Veil|あかのしゅご
+ab.circle|Summoning Circle|しょうかんじん
+ab.deluge|Deluge|だいこうずい
+ab.mend|Mend|ちゆ
+ab.ward|Ward|けっかい
+ab.pierce|Piercing Shot|かんつうしゃ
+ab.survey|Hawk Eye|たかのめ
+ab.clone|Shadow Clone|かげぶんしん
+ab.foresee|Art of Foresight|みきりのじゅつ
+ab.onicut|Demon Cleave|おにぎり
+ab.asura|Asura|しゅら
+ab.pyro|Pyromancy|ひのおうぎ
+ab.reflect|Curse Return|じゅがえし
+ab.m_judge|Holy Judgement|せいこうしんぱん
+ab.m_revive|Breath of Revival|ふっかつのいき
+ab.m_smite|Heaven's Bolt|てんらいげき
+ab.m_mail|Thunder Mail|らいもんごたい
+ab.m_pyre|Pyre of Heaven|ふんてん
+ab.m_core|Molten Core|ようしん
+ab.m_zero|Absolute Zero|ぜったいれいど
+ab.m_mirror|Water Mirror|みずかがみ
+ab.m_gale|Divine Gale|かみかぜざん
+ab.m_shift|Shrink Step|しゅくち
+act.mine|The Old Mine|こうざんどうくつ
+act.forest|The Mistwood|きりのもり
+act.trial|The Trial Path|しれんのやまみち
+act.ordeal|The Demon's Ordeal|まおうのこうれん
+act.briar|The Briar Castle|いばらのしろ
+act.lake|The Southern Lake|みなみのみずうみ
+act.beast|The Beast Hollow|げんじゅうどうくつ
+act.ninja|The Hidden Village|げんにんのさと
+act.heian|The Three Bridges|へいあんきょうさんばし
+act.gaol|The Abyss Gaol|しんえんろうごく
+act.mirror|The Mirrored World|かがみのせかい
+act.crystal|The Crystal Seam|すいしょうこうざん
+act.tower|The Spire|つうてんとう
+act.final|The Last Labyrinth|さいごのめいきゅう
+act.chaos|The Chaos Chamber|こんとんのま
+sch.heal|Restore|かいふく
+sch.bolt|Bolt|かみなり
+sch.fire|Fire|ほのお
+sch.aqua|Water|みず
+sch.wind|Wind|かぜ
+`;
+const DICT = (()=>{
+  const m = {en:{}, ja:{}};
+  for(const line of DICT_RAW.split('\n')){
+    const p = line.split('|');
+    if(p.length !== 3) continue;
+    m.en[p[0]] = p[1]; m.ja[p[0]] = p[2];
+  }
+  return m;
+})();
+/* zh 直接回傳 fallback（也就是程式裡的中文原文）—— 中文不需要查表 */
+function TX(key, zh){
+  if(LANG === 'zh') return zh;
+  const v = DICT[LANG] && DICT[LANG][key];
+  return v === undefined ? zh : v;
+}
+/* 資料表上的名字：id 有衝突的（睡眠之杖 vs 睡眠卷軸、鋼之盾 vs 鋼之劍）
+   在詞條裡加前綴，這裡把類別對上去。 */
+const NAME_FIX = {'wand/sleep':'w_sleep', 'pot/ident':'p_ident', 'shld/steel':'s_steel'};
+function locName(cat, d){
+  if(LANG === 'zh') return d.nm;
+  if(cat === 'hat')  return TX('hat.' + d.id, d.nm);
+  if(cat === 'mon')  return TX('mon.' + d.id, d.nm);
+  const id = NAME_FIX[cat + '/' + d.id] || d.id;
+  return TX('it.' + id, d.nm);
+}
+const locJob  = j => TX('job.' + j, JOB_NM[j] || '見習者');
+const locAbil = a => TX('ab.' + a.id, a.nm);
+const locAct  = a => TX('act.' + a.id, a.nm);
+
 const LOOK = {
  herb:['赤紅的草','靛藍的草','嫩黃的草','灰白的草','墨綠的草','斑點的草','捲曲的草',
        '焦黑的草','半透明的草','帶刺的草','毛絨的草','泛紫的草','濕黏的草','鏽色的草'],

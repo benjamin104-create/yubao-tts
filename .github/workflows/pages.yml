@@ -1,0 +1,40 @@
+# 把 web/ 直接發到 GitHub Pages。
+#
+# 這款遊戲是零依賴的單檔 HTML —— 沒有建置步驟、沒有 node_modules、
+# 沒有要編譯的東西。所以這支流程只做一件事：把資料夾原封不動送上去。
+# 任何「先 build 再部署」的寫法在這裡都只是多一個會壞掉的地方。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個部署；排隊中的舊版本直接讓位給新的
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 邏輯測試（壞掉的版本不該上線）
+        run: |
+          node web/sim.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4
