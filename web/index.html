@@ -2004,6 +2004,7 @@ sm.syl|Sylph|シルフ
 k.ground|Underfoot|あしもと
 k.bag|Bag|もちもの
 k.down|Descend|おりる
+k.leave|Back to Village|むらへ もどる
 k.wait|Wait|まつ
 k.magic|Magic|まほう
 k.padon|Hide pad|パッドをしまう
@@ -6599,7 +6600,9 @@ function updateTags(){
         if(G.seen[key(m.x,m.y)]!==2) continue;
         const stx = Object.keys(m.st)[0];
         const mn = locName('mon', m.d);
-        push(m.x, m.y, stx ? `${mn}·${stx}` : mn, 'mon', 'm'+m.id);
+        // 狀態後綴也要翻。少了這一句，英文版的畫面上會出現
+        // 「Cave Rat·睡」—— 名字翻了、狀態沒翻，比整句沒翻更刺眼。
+        push(m.x, m.y, stx ? `${mn}·${TX('st.' + stx, stx)}` : mn, 'mon', 'm'+m.id);
       }
       // 道具名牌只標「走幾步就到得了」的範圍。整個房間的道具全標出來，
       // 畫面會變成一張型錄，反而看不到怪物。
@@ -6620,13 +6623,13 @@ function updateTags(){
         if(G.seen[k]!==2) continue;
         push(k%MW, (k/MW)|0, TX('lg.trap','陷阱'), 'mon');
       }
-      for(const a of G.allies) push(a.x, a.y, `${a.d.nm}·${a.ttl}`, 'stair', 'a'+a.id);
+      for(const a of G.allies) push(a.x, a.y, `${locSummon(a.d)}·${a.ttl}`, 'stair', 'a'+a.id);
       if(G.shop && G.seen[key(G.shop.keeper.x,G.shop.keeper.y)]===2)
-        push(G.shop.keeper.x, G.shop.keeper.y, '店員', 'shop', 'keeper');
+        push(G.shop.keeper.x, G.shop.keeper.y, TX('k.who','店員'), 'shop', 'keeper');
       const stt = G.f.stairs;
-      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, '下樓', 'stair');
+      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, TX('k.down','下樓'), 'stair');
       if(G.f.exit && G.seen[key(G.f.exit.x,G.f.exit.y)])
-        push(G.f.exit.x, G.f.exit.y, '回到村莊', 'shop', 'exit');
+        push(G.f.exit.x, G.f.exit.y, TX('k.leave','回到村莊'), 'shop', 'exit');
 
       // 重疊解算：由上往下掃，跟已放好的框相撞就往上頂一層
       const H = 18;

@@ -36,6 +36,17 @@ jobs:
           node web/items.js
           node web/i18n.js
           node web/music.js
+      # 版面與名牌的位置 node 測不到 —— 那是「畫布縮放後的 CSS 座標」，
+      # 沒有真的瀏覽器就沒有 getBoundingClientRect。名牌錯位不會報錯、
+      # 字也是對的，只有量出來才看得到，所以這一步值得多花一分鐘裝瀏覽器。
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 名牌位置測試（需要真的瀏覽器）
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+          python tools/check_tags.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
