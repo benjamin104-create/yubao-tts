@@ -322,9 +322,14 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
    疊在畫面上、半透明。放在畫面「裡面」而不是下面，是因為手指
    不必離開遊戲區 —— 而且滑動操作永遠有一個問題：手指蓋住的
    正好是你要看的那一格。按鍵沒有這個問題。 */
+/* 手把的每一個尺寸都從 --k 推出來。寫死 px 的時候，
+   一旦畫面框變窄（矮螢幕上畫布會讓出高度、寬度跟著縮），
+   十字鍵右下角就會被 B 鍵壓到 —— 使用者回報的「按鍵有重疊」正是這個。
+   --k 由 fitCanvas() 依實際框寬算出來。 */
 #pad{
   position:absolute; inset:0; z-index:20; display:none;
   pointer-events:none;                       /* 只有按鍵吃事件，空白處仍可點地圖 */
+  --k:44px;
 }
 #pad.show{display:block}
 #cross, #ab{position:absolute; pointer-events:auto; user-select:none; -webkit-user-select:none}
@@ -332,7 +337,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   left:max(14px, env(safe-area-inset-left));
   bottom:max(14px, env(safe-area-inset-bottom));
   display:grid; grid-template-columns:repeat(3,var(--k)); grid-template-rows:repeat(3,var(--k));
-  gap:4px; --k:44px;
+  gap:4px;
 }
 #ab{
   right:max(16px, env(safe-area-inset-right));
@@ -349,17 +354,18 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #pad button:active, #pad button.on{
   background:rgba(201,151,63,.55); color:#14110f; transform:scale(.94);
 }
-#cross .dc{font-size:15px}
+#cross .dc{font-size:calc(var(--k)*.34)}
 /* 斜向放在十字的四個凹角，比主方向暗一階 ——
    視覺上還是一個十字，但八方向都按得到。原作的走位有一半靠斜走。 */
-#cross .dg{font-size:14px; opacity:.62; background:rgba(20,17,14,.4); border-color:rgba(201,151,63,.3)}
+#cross .dg{font-size:calc(var(--k)*.31); opacity:.62; background:rgba(20,17,14,.4); border-color:rgba(201,151,63,.3)}
 #cross .dg:active{opacity:1}
 #padwait{
-  font-size:20px; color:rgba(201,151,63,.75);
+  font-size:calc(var(--k)*.45); color:rgba(201,151,63,.75);
   background:rgba(28,24,20,.28); border-color:rgba(201,151,63,.22);
 }
 #ab button{
-  width:58px; height:58px; border-radius:50%; font-size:17px; font-weight:600;
+  width:calc(var(--k)*1.3); height:calc(var(--k)*1.3);
+  border-radius:50%; font-size:calc(var(--k)*.38); font-weight:600;
   letter-spacing:.02em; position:relative;
 }
 /* 小標籤：A/B 對第一次玩的人不代表任何意思，要寫出來 */
@@ -368,7 +374,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   transform:translateX(-50%); font-size:9px; letter-spacing:.14em;
   color:rgba(232,220,192,.55); font-weight:400; white-space:nowrap;
 }
-#btnA{width:68px; height:68px; font-size:22px; border-color:rgba(201,151,63,.75); background:rgba(201,151,63,.24)}
+#btnA{
+  width:calc(var(--k)*1.55); height:calc(var(--k)*1.55); font-size:calc(var(--k)*.48);
+  border-color:rgba(201,151,63,.75); background:rgba(201,151,63,.24);
+}
 #btnB{border-color:rgba(168,60,50,.6); background:rgba(168,60,50,.2); color:#f0c4bd; margin-bottom:14px}
 #padhint{
   position:absolute; left:50%; transform:translateX(-50%);
@@ -608,6 +617,44 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 /* 窄螢幕：手把不再疊在畫面上，改成畫布下方一條專屬區域。
    小螢幕上疊著就是把房間蓋掉一半 —— 那比要滑動更糟。
    做法是給 #screenwrap 加下內距，手把本來就靠 bottom 定位，自然落進去。 */
+@media (max-width:900px){
+  body{padding:0; align-items:flex-start}
+  #cabinet{max-width:none; border:0; box-shadow:none}
+  #body{grid-template-columns:1fr}
+  #rail{border-left:0; border-top:1px solid var(--hair)}
+  #railtabs{display:flex}
+  #rail [data-pane]{display:none}
+  #rail [data-pane].on{display:block}
+  #rail .card[data-pane="eq"]{border-bottom:1px solid var(--hair)}
+  #log{min-height:150px; max-height:34vh; overflow-y:auto}
+  #hud{gap:2px 10px; font-size:10.5px; padding:5px 12px}
+  .bar{width:44px; height:6px}
+  .stat b{font-size:9px}
+  #sign{padding:7px 12px 6px}
+  #sign h1{font-size:15px; letter-spacing:.1em}
+  #depth b{font-size:20px}
+  #depth em{font-size:10px; letter-spacing:.08em}
+  /* 觸控目標一律 44px 起跳 —— 拇指沒有滑鼠那種精準度 */
+  #keys{
+    gap:6px; padding:8px 10px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    /* 右緣淡出，讓人看得出來後面還有按鈕 */
+    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+  }
+  #keys::-webkit-scrollbar{display:none}
+  #keys{padding:6px 10px}
+  #keys button{flex:0 0 auto; min-height:40px; padding:7px 12px; font-size:12.5px; white-space:nowrap}
+  #pad{--k:50px}
+  #cross{gap:4px}
+  #acts button{min-height:40px; padding:8px 12px; font-size:12.5px}
+  .row{padding:10px 14px; min-height:48px}
+  #panel{width:min(340px,84%)}
+}
+
+/* 順序有意義：寬的斷點寫在前面、窄的寫在後面。
+   兩塊的選擇器特異性一樣，所以「後面的贏」——
+   以前 620 寫在 900 前面，620 裡調的 #hud 字級與間距
+   全部被 900 那一份蓋掉，改了看不出效果。 */
 @media (max-width:620px){
   /* 機台不再撐滿螢幕高（那會在 iframe 裡跟外框互相追高），
      所以頁面底色要跟機台一樣，才不會露出一條米色的空白 */
@@ -619,13 +666,19 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #depth b::before, #depth b::after{font-size:10px}
   #depth em{font-size:9.5px}
   #mopen{display:block; height:28px; width:32px; font-size:16px}
-  #hud{gap:1px 9px; padding:3px 10px 4px; font-size:10px}
-  /* 攻／防／錢是「現在能不能打、買不買得起」的答案，手機上更需要看到。
-     以前這裡把第 5 個之後全部藏起來，等於把玩家最常問的三件事藏起來。
-     只收掉「職」—— 那個在選單裡本來就有一整塊。 */
+  /* 狀態列必須排成「一排」。攻／防被擠到第二行的時候，
+     玩家要掃兩行才知道打不打得動 —— 那正是最該一眼看到的兩格。
+     一排放不下就得有人讓位：讓位的是 MP 與飽足的長條（數字留著），
+     以及「職」（選單裡本來就有一整塊職業資訊）。 */
+  #hud{
+    gap:0 9px; padding:4px 10px; font-size:10px;
+    flex-wrap:nowrap; overflow:hidden; white-space:nowrap;
+  }
+  #hud .stat{gap:3px; flex:none}
   #hud .stat.job{display:none}
-  #hud .stat b{font-size:9px}
-  #hud .bar{width:34px; height:5px}
+  #hud #mpbar, #hud #fullbar{display:none}
+  #hud .stat b{font-size:9px; letter-spacing:.04em}
+  #hud .bar{width:30px; height:5px}
 
   /* 側欄與控制列改由選單叫出來 */
   #menu{
@@ -659,8 +712,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
   #screenwrap{padding-bottom:162px; background:#0a0908}
   #vig{bottom:162px}
-  #cross{bottom:8px; left:12px; --k:46px}
-  #ab{bottom:20px; right:16px}
+  #cross{bottom:8px; left:12px}
+  #ab{bottom:20px; right:14px}
   #card, #hint{bottom:162px}
   /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
   #panel, #over, #aim, #bigmap{bottom:162px}
@@ -671,41 +724,6 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #cover{justify-content:flex-start; padding-top:20px; gap:14px}
   #coverart{width:88px; height:88px}
   #coverglow{top:20%}
-}
-
-@media (max-width:900px){
-  body{padding:0; align-items:flex-start}
-  #cabinet{max-width:none; border:0; box-shadow:none}
-  #body{grid-template-columns:1fr}
-  #rail{border-left:0; border-top:1px solid var(--hair)}
-  #railtabs{display:flex}
-  #rail [data-pane]{display:none}
-  #rail [data-pane].on{display:block}
-  #rail .card[data-pane="eq"]{border-bottom:1px solid var(--hair)}
-  #log{min-height:150px; max-height:34vh; overflow-y:auto}
-  #hud{gap:2px 10px; font-size:10.5px; padding:5px 12px}
-  .bar{width:44px; height:6px}
-  .stat b{font-size:9px}
-  #sign{padding:7px 12px 6px}
-  #sign h1{font-size:15px; letter-spacing:.1em}
-  #depth b{font-size:20px}
-  #depth em{font-size:10px; letter-spacing:.08em}
-  /* 觸控目標一律 44px 起跳 —— 拇指沒有滑鼠那種精準度 */
-  #keys{
-    gap:6px; padding:8px 10px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;
-    /* 右緣淡出，讓人看得出來後面還有按鈕 */
-    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
-  }
-  #keys::-webkit-scrollbar{display:none}
-  #keys{padding:6px 10px}
-  #keys button{flex:0 0 auto; min-height:40px; padding:7px 12px; font-size:12.5px; white-space:nowrap}
-  #cross{--k:50px; gap:4px}
-  #ab button{width:62px; height:62px}
-  #btnA{width:72px; height:72px}
-  #acts button{min-height:40px; padding:8px 12px; font-size:12.5px}
-  .row{padding:10px 14px; min-height:48px}
-  #panel{width:min(340px,84%)}
 }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
 </style>
@@ -1103,38 +1121,64 @@ for(const h of HAT) JOB_NM[h.job] = h.jobnm;
 
 const JP_TIER = 40;                 // 第二個技能需要的 JP
 /* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
+/* ── 技能的魔力代價：規則本身就是設計說明 ──────────────────────
+   t='atk' 攻擊型 / t='def' 防禦輔助型 —— 依強弱扣固定量，強的貴
+   t='pass'      被動型 —— 不扣魔力。裝進格子就一直生效，不能「發動」
+   t='esc' 逃跑 / t='rev' 復活 —— 最後一張牌。一次抽走大半甚至全部魔力，
+                  所以它救得了你一次，救不了你第二次
+   mpPct：扣掉「最大魔力的百分比」　mpAll：清空，且魔力低於一半時發不動 */
 const ABIL = [
-  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       mp:5, k:'melee',  desc:'對面前的敵人重擊'},
-  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, mp:4, k:'self',   desc:'5 回合內傷害減半'},
-  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       mp:6, k:'blast',  desc:'命中後炸開一圈'},
-  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, mp:0, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
-  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       mp:5, k:'self',   desc:'回復體力並解除異常'},
-  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
-  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
-  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, mp:4, k:'self',   desc:'10 回合內速度加倍'},
-  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       mp:4, k:'beam',   desc:'直線貫穿所有敵人'},
-  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, mp:5, k:'self',   desc:'揭露整層地圖'},
-  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
-  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
+  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
+  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       t:'atk',  mp:8, k:'blast',  desc:'命中後炸開一圈'},
+  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, t:'atk',  mp:3, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
+  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       t:'atk',  mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
+  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, t:'esc',  mpPct:.6, k:'self', desc:'10 回合內速度加倍（逃跑用，代價極高）'},
+  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
+  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       t:'atk',  mp:7, k:'around', desc:'攻擊周圍所有敵人'},
+  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, t:'pass', mp:0, k:'self',   desc:'被動：體力越低攻擊越高（最多 1.8 倍）'},
 ];
 /* 五系奧義：該系練到 10 級才會出現，一攻一輔。
    解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
    格子不會變多，所以「練哪一系」跟「帶哪四個」是兩個獨立的取捨。 */
 const MASTER = [
-  {sc:'heal', id:'m_judge', nm:'聖光審判', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
-  {sc:'heal', id:'m_revive',nm:'復甦之息', mp:12, k:'self',  desc:'體力全滿並解除所有異常'},
-  {sc:'bolt', id:'m_smite', nm:'天雷殛',   mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
-  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
-  {sc:'fire', id:'m_pyre',  nm:'焚天',     mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
-  {sc:'fire', id:'m_core',  nm:'熔心',     mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
-  {sc:'aqua', id:'m_zero',  nm:'絕對零度', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
-  {sc:'aqua', id:'m_mirror',nm:'水鏡',     mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
-  {sc:'wind', id:'m_gale',  nm:'神風斬',   mp:13, k:'around',desc:'八方向同時貫穿'},
-  {sc:'wind', id:'m_shift', nm:'縮地',     mp:11, k:'self',  desc:'瞬間移動到本層樓梯'},
+  {sc:'heal', id:'m_judge', nm:'聖光審判', t:'atk', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
+  {sc:'heal', id:'m_revive',nm:'復甦之息', t:'rev', mpAll:1, k:'self', desc:'體力全滿並解除所有異常（耗盡全部魔力）'},
+  {sc:'bolt', id:'m_smite', nm:'天雷殛',   t:'atk', mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
+  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', t:'def', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
+  {sc:'fire', id:'m_pyre',  nm:'焚天',     t:'atk', mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
+  {sc:'fire', id:'m_core',  nm:'熔心',     t:'def', mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
+  {sc:'aqua', id:'m_zero',  nm:'絕對零度', t:'atk', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
+  {sc:'aqua', id:'m_mirror',nm:'水鏡',     t:'def', mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
+  {sc:'wind', id:'m_gale',  nm:'神風斬',   t:'atk', mp:13, k:'around',desc:'八方向同時貫穿'},
+  {sc:'wind', id:'m_shift', nm:'縮地',     t:'esc', mpAll:1, k:'self', desc:'瞬間移動到本層樓梯（耗盡全部魔力）'},
 ];
 const ALL_ABIL = () => ABIL.concat(MASTER);
 const abilById = id => ALL_ABIL().find(a => a.id === id);
 const SLOTS = 4;
+
+/* 發動需要的魔力。被動不需要；抽乾型要求至少半條，
+   否則「剩 1 MP 也能瞬移逃走」會讓逃跑技能完全沒有代價。 */
+function abilCost(a, p){
+  if(a.t === 'pass') return 0;
+  if(a.mpAll) return Math.ceil(p.mmp * .5);
+  if(a.mpPct) return Math.ceil(p.mmp * a.mpPct);
+  return a.mp || 0;
+}
+function payAbil(a, p){
+  if(a.t === 'pass') return;
+  if(a.mpAll){ p.mp = 0; return; }
+  p.mp = Math.max(0, p.mp - abilCost(a, p));
+}
+const ABIL_T = {atk:'攻擊', def:'輔助', pass:'被動', esc:'逃跑', rev:'復活'};
+function costLabel(a, p){
+  if(a.t === 'pass') return '被動';
+  if(a.mpAll) return `全部 MP（需 ${abilCost(a,p)}）`;
+  return abilCost(a, p) + ' MP';
+}
 
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
    原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
@@ -2132,8 +2176,9 @@ function vision(){
 const STR = p => 8 + Math.floor((p.lv-1)*4/3) + p.strb;
 function pAtk(){ const p=G.p; let a=STR(p);
   if(p.weap) a += p.weap.d.atk + p.weap.up*2;
-  // 血怒：體力越低攻擊越高，最多 1.8 倍
-  if(p.st['怒']) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
+  // 血怒：體力越低攻擊越高，最多 1.8 倍。改成被動之後不再需要發動 ——
+  // 「不消耗魔力」的技能就該一直在，發動它只是多按一次而已。
+  if(p.st['怒'] || hasPassive('rage')) a = Math.round(a * (1 + 0.8*(1 - p.hp/p.mhp)));
   if(p.st['熔']) a = Math.round(a * 1.5);                    // 熔心
   return Math.max(1,a); }
 function pDef(){ const p=G.p; return p.shld ? Math.max(0,p.shld.d.def + p.shld.up*2) : 0; }
@@ -2856,16 +2901,19 @@ function doSpell(sp, dx, dy){
 let pendAbil = null;
 function useAbil(a){
   const p = G.p;
-  if(p.mp < a.mp){ say('魔力不足。','bad'); return false; }
+  if(a.t === 'pass'){ say(`${a.nm} 是被動技能 —— 放在技能格裡就一直生效。`); return false; }
+  if(p.mp < abilCost(a, p)){ say('魔力不足。','bad'); return false; }
   if(a.k === 'self' || a.k === 'around' || a.k === 'melee' || a.k === 'room'){
-    p.mp -= a.mp; doAbil(a, p.face[0], p.face[1]); endTurn(); return true;
+    payAbil(a, p); doAbil(a, p.face[0], p.face[1]); endTurn(); return true;
   }
   pendAbil = a; say(`${a.nm} —— 選擇方向。`,'gold'); refresh(); return null;
 }
 function fireAbil(dx,dy){
   const a = pendAbil; pendAbil = null; if(!a) return;
-  G.p.mp -= a.mp; doAbil(a, dx, dy); endTurn();
+  payAbil(a, G.p); doAbil(a, dx, dy); endTurn();
 }
+/* 被動技能只要待在技能格裡就生效 —— 不用發動，也不吃魔力 */
+const hasPassive = id => !!(G.p && G.p.slots.includes(id) && G.p.learned[id]);
 function doAbil(a, dx, dy){
   const p = G.p;
   SFX.play(a.k === 'self' ? 'quaff' : 'zap');
@@ -3951,7 +3999,10 @@ function paintMap(mcx, mini, MMS){
 function fitCanvas(){
   const wrap = $('screenwrap');
   if(!wrap || !wrap.getBoundingClientRect) return;
-  if(innerWidth > 620){ wrap.style.maxWidth = ''; wrap.style.margin = ''; return; }
+  if(innerWidth > 620){
+    wrap.style.maxWidth = ''; wrap.style.margin = '';
+    fitPad(wrap.clientWidth || innerWidth); return;
+  }
   const padH = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
   const top  = wrap.getBoundingClientRect().top +
                (document.scrollingElement ? document.scrollingElement.scrollTop : 0);
@@ -3959,6 +4010,15 @@ function fitCanvas(){
   const maxW = Math.floor((innerHeight - top - padH - tick) * VW / VH);
   wrap.style.margin = '0 auto';
   wrap.style.maxWidth = (maxW > 240 && maxW < innerWidth) ? maxW + 'px' : '';
+  fitPad(wrap.clientWidth || innerWidth);
+}
+/* 手把佔的橫向寬度：左緣 12 ＋ 十字（3k+8）＋ 中間留白 10 ＋ AB（2.85k+12）＋ 右緣 14。
+   解出 k 就是「這個寬度塞得下的最大按鍵」。以前是寫死 46px，
+   框一變窄就換成十字鍵與 B 鍵互相重疊 —— 按鍵重疊比按鍵小更難用。 */
+function fitPad(w){
+  const pad = $('pad'); if(!pad || !pad.style.setProperty) return;
+  const k = Math.max(30, Math.min(52, Math.floor((w - 56) / 5.85)));
+  pad.style.setProperty('--k', k + 'px');
 }
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
@@ -4183,18 +4243,23 @@ function renderPanel(){
     for(const a2 of known2){
       const on = p.slots.includes(a2.id);
       const row = document.createElement('div');
-      const ok = on && p.mp >= a2.mp;
+      // 被動只要裝上就算「生效中」，不必也不能看魔力
+      const ok = on && (a2.t === 'pass' || p.mp >= abilCost(a2, p));
       row.className = 'spell' + (ok ? '' : ' off');
       row.innerHTML =
-        `<span class="nm">${a2.nm}</span><span class="ds">${a2.desc}</span>` +
-        `<span class="mp">${on ? a2.mp + ' MP' : '未裝載'}</span>`;
+        `<span class="nm">${a2.nm}</span>` +
+        `<span class="ds">［${ABIL_T[a2.t] || '技'}］${a2.desc}</span>` +
+        `<span class="mp">${on ? costLabel(a2, p) : '未裝載'}</span>`;
       row.onclick = ()=>{
         if(!on){                                   // 沒裝載 → 裝進第一個空格
           const e2 = p.slots.indexOf(null);
           if(e2 < 0){ say(`技能欄只有 ${SLOTS} 格 —— 先點上面的技能卸下一個。`,'bad'); refresh(); return; }
-          p.slots[e2] = a2.id; SFX.play('ident'); refresh(); return;
+          p.slots[e2] = a2.id; SFX.play('ident');
+          if(a2.t === 'pass') say(`${a2.nm} 已生效 —— 被動技能不需要發動。`,'good');
+          refresh(); return;
         }
-        if(p.mp < a2.mp){ say('魔力不足。','bad'); refresh(); return; }
+        if(a2.t === 'pass'){ say(`${a2.nm} 正在生效中。`); refresh(); return; }
+        if(p.mp < abilCost(a2, p)){ say('魔力不足。','bad'); refresh(); return; }
         const r = useAbil(a2);
         if(r === null){ closePanel(); openAim(a2.nm + '方向'); return; }
         if(r) closePanel(); else refresh();
