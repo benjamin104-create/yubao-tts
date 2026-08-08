@@ -1,0 +1,113 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);padding:100px 92px;display:flex;flex-direction:column}
+.slide::before{content:"名";position:absolute;right:-70px;bottom:-140px;
+  font-family:var(--serif);font-weight:900;font-size:580px;line-height:1;
+  color:rgba(241,233,217,.035);pointer-events:none}
+.slide > *{position:relative;z-index:1}
+
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+.lead{font-family:var(--serif);font-size:72px;font-weight:700;line-height:1.5;letter-spacing:.02em}
+.lead .hl{color:var(--brick)}
+.lead .dim{color:var(--dim)}
+.para{font-size:37px;line-height:2.02;color:var(--cream);opacity:.88;margin-top:50px;font-weight:300;letter-spacing:.04em}
+.para em{font-style:normal;color:var(--brick);font-weight:400}
+
+/* 中英對照 */
+.cmp{display:flex;margin-top:46px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.cmp > div{flex:1;padding:34px 0}
+.cmp > div + div{border-left:1px solid var(--rule);padding-left:38px}
+.cmp .t{font-size:24px;letter-spacing:.24em;color:var(--brick);margin-bottom:22px}
+.cmp .w{font-family:var(--serif);font-size:38px;line-height:1.72;color:var(--cream)}
+.cmp .w.g{color:var(--dim)}
+
+/* 封面 */
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:60px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:94px;line-height:1.42;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.92;color:var(--dim);margin-top:48px;font-weight:300}
+.cover .ask{margin-top:auto;border-top:1px solid var(--rule);padding-top:38px;
+  font-family:var(--serif);font-size:44px;line-height:1.66;color:var(--cream)}
+.swipe{margin-top:32px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+/* 結尾 */
+.end .q{font-family:var(--serif);font-weight:700;font-size:74px;line-height:1.58;letter-spacing:.02em}
+.end .q .hl{color:var(--brick)}
+.end .q .dim{color:var(--dim)}
+.end .sign{margin-top:52px;font-size:33px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:28px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:29px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:23px;letter-spacing:.14em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">語言 · 小事考古</div>
+  <h1>小孩第一個<br>學會叫的人，<br><span class="hl">常常不是你。</span></h1>
+  <div class="sub">被叫「阿嬤」之後才叫「爸爸」的人，<br>這篇是寫給你的。</div>
+  <div class="ask">那不是偏心。<br>那是統計。</div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">其 一</div><div class="n">01 / 03</div></div>
+  <div class="body">
+    <div class="lead">中文的稱呼，<br>是全世界<span class="hl">最細的</span>一套。</div>
+    <div class="cmp">
+      <div><div class="t">中 文</div><div class="w">伯父・叔父<br>姑姑・舅舅・阿姨<br>堂哥・表哥</div></div>
+      <div><div class="t">英 文</div><div class="w g">uncle<br>aunt<br>cousin</div></div>
+    </div>
+    <div class="para">人類學把中文歸在<em>「描述式」</em>——<br>每一個親戚都有專屬的名字，<br>是所有語言裡分得最細的一類。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">其 二</div><div class="n">02 / 03</div></div>
+  <div class="body">
+    <div class="lead"><span class="dim">為什麼要</span><br>分這麼細？</div>
+    <div class="para">因為在宗族社會裡，<br>稱謂是<em>繼承順位的索引</em>。<br><br>叫得出名字，才排得出誰先誰後。<br>語言本身就是一份<br><em>沒有寫下來的財產清單</em>——<br>你每叫一次「大伯」，<br>就重述了一次那個順序。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="head"><div class="k">其 三</div><div class="n">03 / 03</div></div>
+  <div class="body">
+    <div class="lead">那小孩為什麼<br>先學會<span class="hl">「阿嬤」</span>？</div>
+    <div class="para">因為稱謂不是教出來的，<br><em>是聽出來的</em>。<br><br>他先學會誰的名字，<br>就是那個名字<br><em>在他耳邊出現最多次</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 5 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">所 以</div><div class="n">—</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">你想讓他<br>先學會誰，</span><br><br>就<span class="hl">多在他面前<br>叫誰的名字</span>。</div>
+    <div class="sign">包括你自己的另一半。<br>小孩學會的第一份名單，<br>是我們每天在他面前唸出來的。</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>你家小孩第一個叫誰？</span></div>
+</div>
+
+</body></html>
