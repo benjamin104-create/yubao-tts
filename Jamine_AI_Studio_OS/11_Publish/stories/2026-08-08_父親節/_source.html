@@ -1,0 +1,71 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+/* IG 限動 1080x1920；上下各留 300px 安全區給介面元件 */
+.st{width:1080px;height:1920px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);
+  padding:300px 96px;display:flex;flex-direction:column;justify-content:center}
+.st::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,transparent 0 79px,rgba(241,233,217,.05) 79px 80px);
+  pointer-events:none}
+.st > *{position:relative;z-index:1}
+
+.kick{font-size:28px;letter-spacing:.44em;color:var(--brick);font-weight:500;margin-bottom:56px}
+h1{font-family:var(--serif);font-weight:900;font-size:96px;line-height:1.42;letter-spacing:.02em}
+h1 .hl{color:var(--brick)}
+h1 .dim{color:var(--dim)}
+.sub{font-size:36px;line-height:1.9;color:var(--dim);margin-top:44px;font-weight:300}
+
+/* 放貼紙的留白框 */
+.slot{margin-top:64px;border:2px dashed rgba(241,233,217,.22);border-radius:18px;
+  height:250px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;letter-spacing:.2em;color:rgba(241,233,217,.3)}
+.opt{margin-top:56px}
+.opt div{border-top:1px solid var(--rule);padding:30px 0;
+  font-family:var(--serif);font-size:46px;color:var(--cream);letter-spacing:.03em}
+.opt div:last-child{border-bottom:1px solid var(--rule)}
+.opt div span{color:var(--brick);margin-right:22px;font-size:34px}
+
+.mark{position:absolute;left:96px;bottom:190px;font-size:28px;
+  letter-spacing:.18em;color:var(--dim)}
+.arrow{margin-top:auto;padding-top:60px;font-family:var(--serif);
+  font-size:64px;color:var(--brick);letter-spacing:.04em}
+</style></head><body>
+
+<!-- S1 問答框 -->
+<div class="st">
+  <div class="kick">父親節 · 08.08</div>
+  <h1>你爸<br><span class="hl">最常說哪一句？</span></h1>
+  <div class="sub">不用是什麼名言。<br>就是那句他講到你會翻白眼的。</div>
+  <div class="slot">↓ 這裡放「問答」貼紙 ↓</div>
+  <div class="mark">@i_jamine_pa</div>
+</div>
+
+<!-- S2 投票 -->
+<div class="st">
+  <div class="kick">父親節 · 08.08</div>
+  <h1><span class="dim">今年，</span><br>你會跟他<br><span class="hl">說一句話嗎？</span></h1>
+  <div class="opt">
+    <div><span>A</span>已經說了</div>
+    <div><span>B</span>等一下就去說</div>
+    <div><span>C</span>我們家不講這種的</div>
+  </div>
+  <div class="slot">↓ 這裡放「投票／測驗」貼紙 ↓</div>
+  <div class="mark">@i_jamine_pa</div>
+</div>
+
+<!-- S3 導流貼文 -->
+<div class="st">
+  <div class="kick">新 貼 文</div>
+  <h1>爸爸<br>沒說出口的<br><span class="hl">6 句話</span></h1>
+  <div class="sub">他不會跟你說這些。<br>所以我幫他說了。<br><br>如果有一句讓你想到某個人——<br>傳給他。</div>
+  <div class="arrow">往上滑，看貼文 ↑</div>
+  <div class="mark">@i_jamine_pa</div>
+</div>
+
+</body></html>
