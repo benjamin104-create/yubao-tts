@@ -32,6 +32,8 @@ h2{font-size:13px;letter-spacing:.2em;color:#c9973f;margin:22px 0 10px;font-weig
 .grid{display:flex;flex-wrap:wrap;gap:14px}
 .cell{text-align:center;font-size:10px;color:#a99a7e;width:104px}
 .cell canvas{image-rendering:pixelated;width:96px;height:96px;background:#232c32;display:block;margin-bottom:4px}
+.cell.tall{width:104px}
+.cell.tall canvas{width:96px;height:144px}
 </style>
 <h1>美術驗收表</h1>
 <p class="note">全部放大到 6 倍。驗收標準：關掉名稱也要認得出是什麼，
@@ -81,6 +83,20 @@ TILE_ART.corr.forEach((c,i)=>add(g,c,'通道'+i));
 add(g,TILE_ART.wall,'牆'); add(g,TILE_ART.wallFace,'牆(有立面)');
 add(g,TILE_ART.stairs,'樓梯'); add(g,TILE_ART.rock,'未探索岩盤');
 add(g,goldIcon,'金錢'); add(g,trapIcon,'陷阱');
+g = sec('地標：一章一個（2 格寬 x 3 格高）');
+function addTall(g, cv, label){
+  const d=document.createElement('div'); d.className='cell tall';
+  const c=document.createElement('canvas'); c.width=32;c.height=48;
+  c.getContext('2d').drawImage(cv,0,0);
+  d.appendChild(c); const s=document.createElement('div'); s.textContent=label; d.appendChild(s);
+  g.appendChild(d);
+}
+[['forest','巨樹'],['beast','巨獸頭骨'],['mountain','界碑'],['lake','石燈籠'],
+ ['wood','鳥居'],['mirror','立鏡'],['crystal','水晶簇'],['spire','守望像'],
+ ['briar','守望像(紅)'],['void','裂隙'],['stone','礦車']].forEach(([t,n])=>{
+  const th = THEMES[t]; addTall(g, makeLandmark(th.mark, th.ramp), n);
+});
+
 g = sec('草藥 14 種外觀');
 for(let i=0;i<14;i++) add(g, makeHerb(i), 'herb_'+String(i).padStart(2,'0'));
 g = sec('卷軸 11 種外觀');

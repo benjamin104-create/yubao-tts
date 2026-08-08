@@ -2594,17 +2594,17 @@ function makeHat(i){
    `lightAll` = 這一章是戶外，不靠火把照明（山頂、湖畔、塔頂），
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
-  stone:    {ramp:['w','x','y','z']},                       // 礦坑、牢獄：原本的冷色石階
-  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist'},      // 苔綠，光是螢火不是火把
-  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind'},           // 灰藍岩階，天是亮的
-  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember'},      // 暗紅磚與藤蔓
-  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer'},           // 水藍
-  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist'},      // 獸巢：暖土色
-  wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer'},           // 鏡像：冷白無影
-  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer'},           // 水晶礦坑
-  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise'},           // 通天塔：白石與金線
-  void:     {ramp:['0','1','2','4'], wall:'void', air:'star'},                       // 最後的迷宮、混沌之間
+  stone:    {ramp:['w','x','y','z'], mark:'cart'},                       // 礦坑、牢獄：原本的冷色石階
+  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist',  mark:'tree'},      // 苔綠，光是螢火不是火把
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele'},           // 灰藍岩階，天是亮的
+  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember', mark:'statue'},      // 暗紅磚與藤蔓
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer', mark:'lantern'},           // 水藍
+  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist', mark:'bones'},      // 獸巢：暖土色
+  wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock', mark:'torii'},      // 木紋地板：忍者之里、平安京
+  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror'},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer', mark:'geode'},           // 水晶礦坑
+  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue'},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
@@ -2648,7 +2648,92 @@ const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
 const MW=30, MH=30, ZW=10, ZH=10, MARGIN=1;
 const WALL=0, ROOM=1, CORR=2, DOWN=3;
 
-function genFloor(rng, depth){
+/* 房間的形制：一章一個樣子。
+   在這之前每一章都是「矩形房 ＋ Z 字通道」—— 換了色盤、換了牆的剪影，
+   走起來還是同一座地牢。真正讓森林像森林的不是綠色，是**空地的形狀**。
+
+   為什麼是「先挖矩形、再雕形狀」而不是直接生成不規則房間：
+   連通性是這張圖最早寫死的規則（生成樹保證每個區域都到得了）。
+   矩形＋通道那一套已經被幾百趟走通測試驗證過，重寫等於把地基拆掉。
+   所以這裡只動房間的「內部」，而且雕完一定重跑一次連通檢查：
+   門一定留著、雕出來的孤島一律填回去。 */
+const THEME_SHAPE = {
+  forest:'round', beast:'round', lake:'round',   // 有機的林間空地 / 獸穴 / 湖畔
+  mountain:'terrace',                            // 階梯狀的山道
+  crystal:'jag',                                 // 礦脈：邊緣參差
+  mirror:'pillar',                               // 鏡廳：立柱成列
+  spire:'ring',                                  // 通天塔：同心
+};
+function shapeRooms(rooms, kind, rng, t, roomAt){
+  if(!kind) return;
+  for(const rk in rooms){
+    const r = rooms[rk];
+    const W = r.w, H = r.h;
+    const keep = [];                       // keep[j*W+i]
+    for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+      const u = (i+.5)/W*2-1, v = (j+.5)/H*2-1;
+      const edge = i===0 || j===0 || i===W-1 || j===H-1;
+      let k = true;
+      if(kind==='round'){
+        // 橢圓＋雜訊。閾值 1.05 剛好只削掉四個角，房間不會縮成一顆球
+        k = u*u + v*v <= 1.05 + (rng()-.5)*.34;
+      } else if(kind==='terrace'){
+        // 對角的階梯帶。帶寬留 max(3, w-3) —— 再窄就不是山道是水溝了
+        const bw = Math.max(3, W-3), rev = (+rk % 2) === 1;
+        const s = Math.round((rev ? (H-1-j) : j) * (W-bw) / Math.max(1,H-1));
+        k = i >= s && i < s + bw;
+      } else if(kind==='jag'){
+        k = !edge || !rng.chance(.42);
+      } else if(kind==='pillar'){
+        k = !(W>=5 && H>=5 && i%3===1 && j%3===1 && !edge);
+      } else if(kind==='ring'){
+        k = !(W>=6 && H>=5 && i>=2 && i<=W-3 && j>=2 && j<=H-3);
+      }
+      keep.push(k);
+    }
+    // 門邊那一格永遠留著 —— 雕掉它等於把整個房間封起來
+    const inner = [];
+    for(const d of r.doors){
+      const [dx,dy] = d.split(',').map(Number);
+      const i = Math.max(0, Math.min(W-1, dx-r.x)), j = Math.max(0, Math.min(H-1, dy-r.y));
+      keep[j*W+i] = true; inner.push([i,j]);
+    }
+    const ci = W>>1, cj = H>>1;
+    if(!inner.length){ keep[cj*W+ci] = true; inner.push([ci,cj]); }
+    // 連通檢查：從第一個門洪泛，到不了的門就打一條 L 型通路過去
+    const flood = (si,sj)=>{
+      const seen = new Uint8Array(W*H); const q=[[si,sj]]; seen[sj*W+si]=1;
+      while(q.length){ const [x,y]=q.pop();
+        for(const [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const nx=x+ox, ny=y+oy;
+          if(nx<0||ny<0||nx>=W||ny>=H) continue;
+          if(seen[ny*W+nx] || !keep[ny*W+nx]) continue;
+          seen[ny*W+nx]=1; q.push([nx,ny]);
+        }
+      }
+      return seen;
+    };
+    const [ri,rj] = inner[0];
+    let seen = flood(ri,rj);
+    for(const [i,j] of inner){
+      if(seen[j*W+i]) continue;
+      for(let x=Math.min(i,ri);x<=Math.max(i,ri);x++) keep[j*W+x]=true;
+      for(let y=Math.min(j,rj);y<=Math.max(j,rj);y++) keep[y*W+ri]=true;
+      seen = flood(ri,rj);
+    }
+    // 孤島填回去：連不到主體的地板只會讓玩家對著一塊到不了的地發呆
+    for(let j=0;j<H;j++) for(let i=0;i<W;i++)
+      if(keep[j*W+i] && !seen[j*W+i]) keep[j*W+i] = false;
+
+    for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+      if(keep[j*W+i]) continue;
+      const k = (r.y+j)*MW + (r.x+i);
+      t[k] = WALL; roomAt[k] = -1;
+    }
+  }
+}
+
+function genFloor(rng, depth, theme){
   const t = new Uint8Array(MW*MH);
   const roomAt = new Int8Array(MW*MH).fill(-1);
   const zones=[];
@@ -2708,21 +2793,81 @@ function genFloor(rng, depth){
     }
   }
 
+  // 房間雕形狀：一定要排在通道挖完之後，因為它需要 doors 才知道哪幾格不能動
+  shapeRooms(rooms, THEME_SHAPE[theme], rng, t, roomAt);
+  // 雕過形狀之後，房間矩形裡不再每一格都是地板 —— 挑格子的地方一律改用這支
+  const pickIn = (r)=>{
+    for(let i=0;i<80;i++){
+      const x=rng.i(r.x,r.x+r.w-1), y=rng.i(r.y,r.y+r.h-1);
+      if(t[y*MW+x]===ROOM) return {x,y};
+    }
+    for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++) if(t[y*MW+x]===ROOM) return {x,y};
+    return {x:r.x, y:r.y};
+  };
+
   // 出生點與樓梯：樓梯放在區域圖上最遠處，避免「落地就下樓」的退化玩法
   const keys=Object.keys(rooms);
   const spawnKey = rng.pick(keys);
-  const sr = rooms[spawnKey];
-  const spawn = {x:rng.i(sr.x,sr.x+sr.w-1), y:rng.i(sr.y,sr.y+sr.h-1)};
+  const spawn = pickIn(rooms[spawnKey]);
   const adj={}; for(const [a,b] of edges){ (adj[a]=adj[a]||[]).push(b); (adj[b]=adj[b]||[]).push(a); }
   const dist={[+spawnKey]:0}; const q=[+spawnKey];
   while(q.length){ const z=q.shift(); for(const n of (adj[z]||[])) if(dist[n]===undefined){ dist[n]=dist[z]+1; q.push(n); } }
   const far = keys.filter(k=>k!==spawnKey).sort((a,b)=>(dist[b]||0)-(dist[a]||0)).slice(0,3);
   const dk = far.length?rng.pick(far):spawnKey;
-  const dr = rooms[dk];
-  const stairs = {x:rng.i(dr.x,dr.x+dr.w-1), y:rng.i(dr.y,dr.y+dr.h-1)};
+  const stairs = pickIn(rooms[dk]);
   t[stairs.y*MW+stairs.x]=DOWN;
 
-  return {t, roomAt, rooms, spawn, stairs, depth};
+  /* 地標：佔 2x2、擋路。擋路是刻意的 —— 走得過去的東西是背景，
+     繞得過去的東西才是地標，玩家會記得自己繞過了它。
+     但擋路也代表它可能把某條路封死，所以放完一定重跑一次全圖連通，
+     封死了就整個收回。寧可這一層沒有地標，也不要有一層走不完。 */
+  let mark = null;
+  if((THEMES[theme] || {}).mark){
+    const rks = rng.shuffle(Object.keys(rooms));
+    const solid = (x,y)=> t[y*MW+x] === ROOM;
+    for(const rk of rks){
+      if(mark) break;
+      const r = rooms[rk];
+      if(r.w < 5 || r.h < 4) continue;
+      for(let tries=0; tries<40 && !mark; tries++){
+        const mx = rng.i(r.x+1, r.x+r.w-3), my = rng.i(r.y+1, r.y+r.h-3);
+        let ok = true;
+        for(let j=0;j<2 && ok;j++) for(let i=0;i<2;i++){
+          const cx2 = mx+i, cy2 = my+j;
+          if(!solid(cx2,cy2) ||
+             (cx2===spawn.x && cy2===spawn.y) || (cx2===stairs.x && cy2===stairs.y) ||
+             r.doors.includes((cx2)+','+(cy2))){ ok = false; break; }
+        }
+        // 頭頂那一格要留白，樹冠才不會長進牆裡
+        if(ok && my-1 >= 0){ for(let i=0;i<2;i++) if(t[(my-1)*MW+mx+i] === WALL) { ok = false; break; } }
+        if(!ok) continue;
+        const undo = [];
+        for(let j=0;j<2;j++) for(let i=0;i<2;i++){
+          const k2 = (my+j)*MW + mx+i;
+          undo.push([k2, t[k2], roomAt[k2]]);
+          t[k2] = WALL; roomAt[k2] = -1;
+        }
+        // 全圖連通複查：從出生點走一遍，有任何地板到不了就收回
+        const seen = new Uint8Array(MW*MH), st = [[spawn.x, spawn.y]];
+        seen[spawn.y*MW+spawn.x] = 1;
+        while(st.length){ const [x,y] = st.pop();
+          for(const [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+            const nx=x+ox, ny=y+oy;
+            if(nx<0||ny<0||nx>=MW||ny>=MH) continue;
+            const k3 = ny*MW+nx;
+            if(seen[k3] || t[k3]===WALL) continue;
+            seen[k3]=1; st.push([nx,ny]);
+          }
+        }
+        let bad = false;
+        for(let k3=0;k3<MW*MH && !bad;k3++) if(t[k3]!==WALL && !seen[k3]) bad = true;
+        if(bad){ for(const [k3,tv,rv] of undo){ t[k3]=tv; roomAt[k3]=rv; } }
+        else mark = {x:mx, y:my};
+      }
+    }
+  }
+
+  return {t, roomAt, rooms, spawn, stairs, depth, mark};
 }
 
 /* ─── 迷宮分區 ──────────────────────────────────────────────────
@@ -3154,7 +3299,7 @@ function buildFloor(){
   G.depth = absDepth(G.act, G.floor);
   G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
-  G.f = genFloor(rng, G.depth);
+  G.f = genFloor(rng, G.depth, themeNow());
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
   G.items = {}; G.gold = {}; G.traps = {}; G.mons = []; G.allies = []; G.shop = null; G.shopSeen = 0;
   G.seen = new Uint8Array(MW*MH);   // 0 未探索 1 已探索 2 可見
@@ -3331,7 +3476,8 @@ function buildFloor(){
       for(let i=0;i<rng.i(4,6);i++){
         const x = rng.i(r.x, r.x+r.w-1), y = rng.i(r.y, r.y+r.h-1);
         const k2 = key(x,y);
-        if(G.items[k2] || (x===G.p.x&&y===G.p.y)) continue;
+        // 房間雕過形狀之後，矩形裡會有牆。商品放到牆裡就等於沒放。
+        if(!walkable(x,y) || G.items[k2] || (x===G.p.x&&y===G.p.y)) continue;
         const it = shopItem(rng, G.md);
         it.shop = true;
         it.price = Math.max(40, Math.round((it.d.price || 200) * 1.15));
@@ -3358,6 +3504,9 @@ function buildFloor(){
     if(tileAt(x,y)!==WALL || !walkable(x,y+1)) continue;
     if(roomOf(x,y+1) < 0) continue;
     if((x*7 + y*13) % 5 !== 0) continue;
+    // 地標腳下那幾格畫的是地板，掛不了火把 —— 掛上去會浮在半空
+    const mk0 = G.f.mark;
+    if(mk0 && x>=mk0.x && x<mk0.x+2 && y>=mk0.y && y<mk0.y+2) continue;
     G.torches.push({x,y});
   }
   vision();
@@ -5393,6 +5542,181 @@ function themeProp(kind, i, ramp){
   }
   return c;
 }
+/* ─── 地標 ────────────────────────────────────────────────────
+   一章一個「看得出來是什麼」的大型物件。地面雜物解決的是
+   「地板不要一片死板」，地標解決的是完全不同的問題：
+   **記得住**。玩家講起這款遊戲時說的是「那棵大樹的那一層」，
+   不是「第二章第四層」—— 沒有地標的地圖，每一層都長得一樣。
+
+   尺寸刻意做成 2 格寬 × 3 格高：佔地只有 2×2（下面兩排），
+   最上面那一排長到隔壁格去。這樣它比任何怪物都高，
+   走進房間第一眼就看到它，但佔的路只有兩格見方。
+   顏色一樣壓在地貌自己的色階裡 —— 它是地形，不是活的東西。
+   唯一的例外是會發光的那幾個（燈籠的火、水晶的芯），
+   那跟火把同一個道理：光源本來就該是暖的。 */
+function makeLandmark(kind, ramp){
+  const R = ramp || RAMP, LW = T*2, LH = T*3;
+  const c = document.createElement('canvas'); c.width = LW; c.height = LH;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*7919 + 13);
+  const O = PAL['0'];
+  // 雜訊要「不規則」。用 %n 取模會排出斜線，看起來像織紋不像樹皮
+  const hash = (X,Y)=> (X*73856093 ^ Y*19349663) >>> 0;
+  /* 這裡不用一格一格 fillRect 疊形狀 —— 第一版就是那樣做的，
+     結果巨樹看起來像一塊路牌、守望像看起來像一個十字。
+     長方形的堆疊在 16px 的世界裡永遠讀成 UI，不會讀成「東西」。
+     改成先做剪影遮罩、再自動描邊：認得出來的是輪廓，不是顏色。 */
+  const m = Array.from({length:LH}, ()=>new Array(LW).fill(0));
+  const rect = (x0,y0,w,h)=>{ for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+    const X=x0+i, Y=y0+j; if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
+  const ell = (cx,cy,rx,ry)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
+    const u=(X-cx)/rx, v=(Y-cy)/ry; if(u*u+v*v<=1) m[Y][X]=1; } };
+  // 上窄下寬（或反過來）的錐體：樹幹、衣襬、礦車車斗都是這個形狀
+  const taper = (cx,y0,y1,w0,w1)=>{ for(let Y=y0;Y<=y1;Y++){
+    const k=(Y-y0)/Math.max(1,y1-y0), w=w0+(w1-w0)*k;
+    for(let X=Math.round(cx-w/2); X<Math.round(cx+w/2); X++)
+      if(X>=0&&X<LW&&Y>=0&&Y<LH) m[Y][X]=1; } };
+  const clear = ()=>{ for(let Y=0;Y<LH;Y++) m[Y].fill(0); };
+  // 填色＋自動描邊。描邊是這一整套的重點：有邊的東西才立得起來
+  const paint = (fill)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++){
+    if(m[Y][X]){ x.fillStyle=fill; x.fillRect(X,Y,1,1); }
+    else if((m[Y-1]&&m[Y-1][X])||(m[Y+1]&&m[Y+1][X])||m[Y][X-1]||m[Y][X+1]){
+      x.fillStyle=O; x.fillRect(X,Y,1,1); } } };
+  // 只在剪影裡上色，不會漏到外面去
+  const shade = (col, f)=>{ for(let Y=0;Y<LH;Y++) for(let X=0;X<LW;X++)
+    if(m[Y][X] && f(X,Y)){ x.fillStyle=col; x.fillRect(X,Y,1,1); } };
+  /* 腳下的投影。少了它，地標會像是浮在地板上的貼紙 ——
+     這一格是牆（擋路），但畫的是地板，所以只有影子能告訴玩家
+     「這東西是站在地上的」。裂隙沒有影子，因為它不是東西。 */
+  if(kind !== 'rift'){
+    x.globalAlpha = .32; x.fillStyle = PAL['0'];
+    for(let Y=40;Y<48;Y++){
+      const v=(Y-44)/4.5, w=Math.round(15*Math.sqrt(Math.max(0,1-v*v)));
+      x.fillRect(17-w, Y, w*2, 1);
+    }
+    x.globalAlpha = 1;
+  }
+
+  if(kind === 'tree'){                       // 巨樹：板根 → 樹幹 → 交疊成團的樹冠
+    // 幹要畫到樹冠裡面去。第一版讓幹停在樹冠下緣，
+    // 兩塊各自描邊的結果是中間浮出一條接縫 —— 看起來像一把傘，不像樹。
+    taper(16, 12, 43, 7, 12);
+    taper(16, 43, 47, 12, 22);               // 板根
+    paint(PAL[R[1]]);
+    shade(PAL[R[2]], (X,Y)=> X < 15);        // 左側受光
+    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 9 === 0);      // 樹皮
+    clear();
+    // 六團交疊的葉叢。單一橢圓會讀成傘或蘑菇，樹冠必須是「一團一團」的
+    ell(16,13,14,10); ell(6,16,7,6); ell(26,15,7,6);
+    ell(11,5,8,6);    ell(22,6,7,5); ell(16,21,10,5);
+    /* 樹冠要比林間空地的地面「暗」。上一版用了 R[2]，
+       跟地板同一階 —— 於是整團樹冠在亮綠色的空地上直接消失。
+       從上往下看，一棵大樹本來就是地面上的一塊陰影。 */
+    paint(PAL[R[1]]);
+    // 受光是一塊，不是條紋。條紋會讀成傘骨 —— 上一版就是敗在這裡。
+    shade(PAL[R[2]], (X,Y)=> (X-10)*(X-10)*.6 + (Y-8)*(Y-8) < 96);
+    shade(PAL[R[3]], (X,Y)=> (X-9)*(X-9)*.7 + (Y-7)*(Y-7) < 34);
+    shade(PAL[R[2]], (X,Y)=> (X-24)*(X-24) + (Y-9)*(Y-9)*.7 < 30);
+    shade(PAL[R[0]], (X,Y)=> (X-23)*(X-23)*.5 + (Y-21)*(Y-21) < 76);
+    shade(PAL[R[0]], (X,Y)=> hash(X,Y) % 23 === 0);     // 葉隙
+  } else if(kind === 'bones'){               // 幻獸洞窟：巨獸的頭骨
+    ell(16,20,14,13);                        // 顱
+    taper(16,29,44,20,13);                   // 吻
+    paint(PAL[R[3]]);
+    shade(PAL[R[2]], (X,Y)=> X > 19);
+    shade(PAL[R[1]], (X,Y)=> Y > 38);
+    shade(PAL['0'], (X,Y)=> (X-10)*(X-10) + (Y-19)*(Y-19)*1.4 < 17);   // 眼窩
+    shade(PAL['0'], (X,Y)=> (X-22)*(X-22) + (Y-19)*(Y-19)*1.4 < 17);
+    shade(PAL['0'], (X,Y)=> Y > 26 && Y < 32 && Math.abs(X-16) < (Y-25)/2); // 鼻腔
+    shade(PAL['0'], (X,Y)=> Y > 33 && Y < 43 && (X-16+40) % 4 === 0);       // 齒縫
+    shade(PAL[R[2]], (X,Y)=> Y < 12 && hash(X,Y) % 7 === 0);                // 裂痕
+  } else if(kind === 'stele'){               // 界碑：圓頂的刻字立石
+    rect(4,44,24,4);                         // 基座
+    taper(16, 9, 44, 15, 18);
+    ell(16,10,8,7);                          // 圓頂
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 13);
+    shade(PAL[R[1]], (X,Y)=> X > 21);
+    for(let i=0;i<5;i++) shade(PAL[R[0]], (X,Y)=> Y===19+i*5 && X>10 && X<22);
+    shade(PAL[R[0]], (X,Y)=> Y>21 && Y<41 && X===16 && Y%3);
+    shade(PAL['j'], (X,Y)=> Y>38 && (X*7+Y*3)%5===0);   // 底部青苔
+  } else if(kind === 'lantern'){             // 石燈籠：全戰役唯一會發光的地標
+    rect(9,42,14,6); taper(16,30,42,7,11);   // 基座與柱
+    ell(16,23,10,8);                         // 火袋
+    taper(16,10,17,22,15);                   // 笠
+    ell(16,7,4,4);                           // 寶珠
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 14);
+    shade(PAL[R[1]], (X,Y)=> X > 20);
+    px(x,O,11,19,10,9);                                 // 火口
+    px(x,PAL['h'],12,20,8,7); px(x,PAL['i'],13,21,6,5); px(x,PAL['v'],14,22,4,3);
+    px(x,PAL['v'],15,5,2,2);
+  } else if(kind === 'torii'){               // 鳥居：一眼就知道進了另一個地方
+    rect(4,14,6,34); rect(22,14,6,34);       // 柱
+    rect(0,4,32,7);                          // 笠木
+    rect(3,16,26,5);                         // 貫
+    rect(14,10,4,7);                         // 額束
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> Y<7 || X===4 || X===22);
+    shade(PAL[R[1]], (X,Y)=> Y>=9 && Y<11);
+    shade(PAL[R[0]], (X,Y)=> Y>30 && (X*3+Y*5)%13===0);
+  } else if(kind === 'mirror'){              // 立鏡：橢圓的鏡面，不是方框
+    rect(11,38,10,8); rect(5,45,22,3);       // 支架與底座
+    ell(16,21,13,18);                        // 鏡框
+    paint(PAL[R[3]]);
+    shade(PAL[R[2]], (X,Y)=> X > 18);
+    clear(); ell(16,21,10,15);
+    paint(PAL[R[0]]);                        // 鏡面：暗的，才照得出反光
+    shade(PAL[R[2]], (X,Y)=> ((X*2 + Y) % 17) < 3);
+    shade(PAL['6'],  (X,Y)=> ((X*2 + Y) % 17) === 0 && X < 16);
+  } else if(kind === 'geode'){               // 水晶簇：高低錯落的柱體
+    const sp = [[7,20,5,28],[13,8,7,40],[21,17,6,31],[3,31,5,17],[26,26,5,22]];
+    for(const [sx,sy,sw,sh] of sp){ clear(); taper(sx+sw/2, sy, sy+sh, sw*0.5, sw);
+      paint(PAL[R[1]]);
+      shade(PAL[R[3]], (X,Y)=> X < sx+sw*0.5);
+      shade(PAL['6'],  (X,Y)=> X < sx+sw*0.25 && Y < sy+sh*0.6); }
+    clear(); rect(3,43,26,5); paint(PAL[R[1]]);
+  } else if(kind === 'statue'){              // 守望像：有兜帽的人形，沒有臉
+    rect(5,43,22,5);                         // 台座
+    taper(16,20,43,11,20);                   // 衣襬
+    rect(3,20,26,5);                         // 張開的雙臂
+    ell(16,14,6,7);                          // 兜帽
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> X < 15);
+    shade(PAL[R[1]], (X,Y)=> X > 20);
+    shade(PAL[R[0]], (X,Y)=> Y>12 && Y<19 && X>12 && X<20);   // 兜帽下的暗
+    shade(PAL[R[0]], (X,Y)=> Y>24 && Y<43 && (X-16+((Y-24)>>2))%6===0);
+    px(x,PAL['u'],14,11,4,2);
+  } else if(kind === 'rift'){                // 虛空的裂隙：不是物體，是缺口
+    for(let i=0;i<15;i++){ const w = 3 + Math.abs(7-i)*1.4;
+      rect(Math.round(16-w), 6+i*3, Math.round(w*2), 3); }
+    paint(PAL['1']);
+    shade(PAL['4'], (X,Y)=> Math.abs(X-16) < 4);
+    shade(PAL['6'], (X,Y)=> Math.abs(X-16) < 2 && Y > 12 && Y < 38);
+    for(let i=0;i<26;i++) px(x, i%3 ? PAL['5'] : PAL['6'], 16+r.i(-10,9), r.i(4,46), 1, 1);
+  } else {                                   // stone：礦車
+    rect(9,42,6,6); rect(19,42,6,6);         // 輪
+    taper(16,26,43,26,18);                   // 車斗
+    paint(PAL[R[2]]);
+    shade(PAL[R[3]], (X,Y)=> Y < 29 || X < 8);
+    shade(PAL[R[1]], (X,Y)=> X > 21);
+    shade(PAL[R[0]], (X,Y)=> Y>32 && (Y-32)%5===0);          // 鉚接的橫帶
+    shade(PAL[R[0]], (X,Y)=> Y>=42 && ((X-12)*(X-12)+(Y-45)*(Y-45) < 4 ||
+                                       (X-22)*(X-22)+(Y-45)*(Y-45) < 4));
+    px(x,PAL['a'],7,27,7,5); px(x,PAL['c'],9,28,4,3);        // 車裡的礦石
+    px(x,PAL['b'],16,27,6,4); px(x,PAL['d'],18,28,3,2);
+    clear(); rect(1,2,4,30); paint(PAL[R[1]]);               // 靠在旁邊的坑木
+    shade(PAL[R[0]], (X,Y)=> Y%6===0);
+  }
+  return c;
+}
+const THEME_MARK = {};
+function markFor(theme){
+  if(THEME_MARK[theme] !== undefined) return THEME_MARK[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  return THEME_MARK[theme] = th.mark ? makeLandmark(th.mark, th.ramp) : null;
+}
+
 const THEME_PROPS = {};
 function propsFor(theme){
   if(THEME_PROPS[theme]) return THEME_PROPS[theme];
@@ -5464,6 +5788,7 @@ function draw(dt){
   const OUTDOOR = !!(THEMES[THEME_ID] || {}).lightAll;
   const TPROPS = propsFor(THEME_ID);
   const AIR = (THEMES[THEME_ID] || {}).air;
+  const MK = G.f.mark, MKART = MK ? markFor(THEME_ID) : null;
 
   // 目前「看得見」的範圍。空氣感只畫在這個框裡 ——
   // 不夾的話，霧與風會鋪滿整張畫布，連未探索的黑區都變成灰條，
@@ -5473,7 +5798,11 @@ function draw(dt){
     const s = G.seen[key(x,y)]; if(!s) continue;
     if(s===2){ if(x<vx0)vx0=x; if(y<vy0)vy0=y; if(x>vx1)vx1=x; if(y>vy1)vy1=y; }
     const px_=ox+x*T, py=oy+y*T, t=tileAt(x,y);
-    if(t===WALL){
+    // 地標腳下那 2x2 在地圖上是牆（所以擋路），但畫的是地板 ——
+    // 畫成牆的話，樹後面會浮出一塊方方正正的石壁，一眼就穿幫。
+    if(t===WALL && MK && x>=MK.x && x<MK.x+2 && y>=MK.y && y<MK.y+2){
+      cx.drawImage(TS.floor[(x*7+y*13)%TS.floor.length], px_, py);
+    } else if(t===WALL){
       cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
     } else if(t===DOWN){
       cx.drawImage(TILE_ART.stairs, px_, py);
@@ -5489,6 +5818,23 @@ function draw(dt){
     // 在戶外把視野外畫成純黑，那還是地牢。
     if(s===1){ cx.fillStyle = OUTDOOR ? 'rgba(0,0,0,.34)' : 'rgba(0,0,0,.62)';
                cx.fillRect(px_,py,T,T); }
+  }
+
+  /* 地標本體。畫在地磚之後、生物之前 ——
+     這樣站在它前面的怪物會蓋住它的下半，深度感才對。
+     只要腳下任一格看過就整個畫出來：一棵三格高的樹，
+     沒有理由要走到腳邊才看得到樹冠。 */
+  if(MKART){
+    let vis = 0;
+    for(let j=0;j<2;j++) for(let i=0;i<2;i++)
+      vis = Math.max(vis, G.seen[key(MK.x+i, MK.y+j)] || 0);
+    if(vis){
+      // 記憶中的地標畫淡一點。不能改用「蓋一層黑」——
+      // 那會連精靈周圍的透明區一起蓋，變成一個方形的暗塊。
+      if(vis === 1) cx.globalAlpha = OUTDOOR ? .62 : .34;
+      cx.drawImage(MKART, ox + MK.x*T, oy + (MK.y-1)*T);
+      cx.globalAlpha = 1;
+    }
   }
 
   // 店鋪地板鋪一層暖色地毯：踏進去就知道規則不一樣了
