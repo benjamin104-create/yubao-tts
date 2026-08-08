@@ -545,6 +545,31 @@ const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
+v.name|Hearth Village|ほのおの むら
+v.sub.win|You made it out alive.|いきて もどってきた。
+v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
+v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
+v.sub.out|You climbed out of B{d}F with {g} G　·　score {s}|B{d}F から いきて もどった　・{g} G　・スコア {s}
+v.gold|Gold on hand|しょじきん
+v.smith|The Smithy　—　gear you buy lasts {n} runs, then wears out.|かじや　—　かった そうびは {n}かい もつ。
+v.carry|Gear you can take down|もっていける そうび
+v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
+v.runs|{n} runs left|あと {n}かい
+b.title|Hall of the Fallen|きろくひ
+b.sub|This monument is carved only on your own device.|この ひは この きたいの なかにしか きざまれない。
+b.empty|No records yet. Go down, come back, and your name is carved.|きろくは まだ ない。もぐって もどれば なまえが きざまれる。
+b.anon|Nameless|ななし
+how.fall|fell|たおれた
+how.clear|cleared|クリア
+how.act|Act {n}|だい{n}しょう
+how.out|escaped|だっしゅつ
+o.dead|You have fallen|きみは たおれた
+o.rank|　·　#{n} on this device|　・この きたいで {n}い
+o.where|Fell on <b>B{d}F</b>　·　Level <b>{lv}</b>|<b>B{d}F</b> で たおれた　・レベル <b>{lv}</b>
+o.skills|　·　<b>{n}</b> skill points|　・スキル <b>{n}</b>てん
+o.lost|Levels reset, items lost, skills forgotten — only what <b>you</b> learned remains.|レベルも どうぐも スキルも きえる —— のこるのは <b>きみ</b>が まなんだ ことだけ。
+o.smite|Divine Punishment|てんばつ
+o.smitebody|You walked out carrying goods you never paid for.<br>Struck to ash on <b>B{d}F</b> — levels, items and skills <b>all reset</b>.|かねを はらわずに みせを でた。<br><b>B{d}F</b> で かみなりに うたれ、レベルも どうぐも スキルも <b>ぜんぶ 0</b> に。
 m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
 m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
 m.crit| A critical hit!| かいしんの いちげき！
@@ -632,6 +657,11 @@ ui.village|Hearthfire Village|かまどの村
 ui.board|Hall of the Fallen|いしぶみ
 ui.dive|Descend again|もういちど潜る
 ui.retry|Into the dungeon again|もういちどダンジョンへ
+ui.score|Score|スコア
+m.blocked|The shopkeeper blocks your way: "Pay first."|みせのひとが みちを ふさぐ：「さきに かいけい を。」
+m.stepaside|The shopkeeper steps aside.|みせのひとが みちを あけた。
+m.sure|Shopkeeper: "...So that is your answer."|みせのひと：「……そう きめたんだね。」
+m.bolt|The ceiling splits open and lightning falls on you.|てんじょうが さけ、かみなりが おちてきた。
 ui.confirm|Confirm|けってい
 ui.cancel|Cancel|とりけし
 ui.wait|Wait|まつ
@@ -1139,6 +1169,15 @@ const locSpell = sp => TX('sp.' + sp.id, sp.nm);
 const locSpellD = sp => TX('sd.' + sp.id, sp.desc);
 const locSummon = sm => TX('sm.' + sm.id, sm.nm);
 const locAct  = a => TX('act.' + a.id, a.nm);
+/* 紀錄碑上的「怎麼結束的」。存進去的是鍵（fall / clear / out / act:3），
+   翻譯在顯示的時候才做 —— 存中文的話，換了語言舊紀錄也改不掉了。
+   認不得的值原樣顯示：那是改成存鍵之前留下來的舊紀錄。 */
+function locHow(h){
+  if(typeof h !== 'string') return h;
+  if(h.startsWith('act:')) return M('how.act','第{n}章',{n:h.slice(4)});
+  const zh = {fall:'倒下', clear:'通關', out:'生還'}[h];
+  return zh ? TX('how.' + h, zh) : h;
+}
 
 const LOOK = {
  herb:['赤紅的草','靛藍的草','嫩黃的草','灰白的草','墨綠的草','斑點的草','捲曲的草',

@@ -42,11 +42,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: 名牌位置測試（需要真的瀏覽器）
+      - name: 版面與多語言測試（需要真的瀏覽器）
         run: |
           pip install --quiet playwright
           python -m playwright install --with-deps chromium
           python tools/check_tags.py
+          python tools/check_screens.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

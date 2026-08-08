@@ -176,9 +176,20 @@ body{
 .brow.me{border-color:var(--brass); background:rgba(60,40,16,.42)}
 .brow .rk{font-family:var(--mono); font-size:12px; color:var(--parch-dim); width:22px; text-align:right}
 .brow canvas{width:24px; height:24px; flex:none; image-rendering:pixelated}
-.brow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--parch)}
-.brow .de{font-family:var(--mono); font-size:10.5px; color:var(--parch-dim)}
-.brow .sc{font-family:var(--mono); font-size:13px; color:var(--brass); min-width:52px; text-align:right}
+/* 名字要留得住至少四個字。只寫 min-width:0 的話，右邊那串
+   「B3F · Lv2 · Novice · fell」會把名字擠成「Nam…」——
+   紀錄碑上唯一屬於玩家的東西就是那個名字，它不該是第一個被犧牲的。 */
+/* 一列裡三段文字要爭寬度，優先順序是：名字 > 分數 > 明細。
+   名字是紀錄碑上唯一屬於玩家的東西，不該第一個被犧牲；
+   分數是這張表存在的理由。所以讓明細（B3F · Lv2 · 職業 · 結局）
+   吸收所有的壓縮 —— 它是三者中最不重要、而且日文最長的一段。 */
+.brow{overflow:hidden}
+.brow .nm{flex:0 1 auto; min-width:4.5em; overflow:hidden; text-overflow:ellipsis;
+          white-space:nowrap; color:var(--parch)}
+.brow .de{flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis;
+          white-space:nowrap; font-family:var(--mono); font-size:10.5px; color:var(--parch-dim)}
+.brow .sc{flex:0 0 auto; font-family:var(--mono); font-size:13px; color:var(--brass);
+          min-width:52px; text-align:right}
 #bx{padding:10px 26px; font-size:13px; min-height:44px; touch-action:manipulation}
 #over .score{font-family:var(--mono); font-size:13px; color:var(--brass)}
 #over .score b{font-size:19px; color:var(--brass)}
@@ -827,17 +838,17 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div id="vfolk"></div>
     <div class="vhead">
       <em>SAFE HAVEN</em>
-      <h3>爐火村</h3>
+      <h3 id="vname">爐火村</h3>
       <p id="vsub">你活著走出來了。</p>
     </div>
-    <div class="vgold">持有金錢 <b id="vgold">0</b> G</div>
+    <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
     <div id="vstock"></div>
     <div id="vowned"></div>
     <div class="vbtns"><button id="vboard">紀錄碑</button><button id="vgo">再次下潛　B1F</button></div>
       </div>
 
   <div id="board">
-    <div class="vhead"><em>HALL OF THE FALLEN</em><h3>紀錄碑</h3>
+    <div class="vhead"><em>HALL OF THE FALLEN</em><h3 id="btitle">紀錄碑</h3>
       <p id="bsub">這座碑只刻在你的裝置上。</p></div>
     <div id="blist"></div>
     <button id="bx">關閉</button>
@@ -1520,6 +1531,31 @@ const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
+v.name|Hearth Village|ほのおの むら
+v.sub.win|You made it out alive.|いきて もどってきた。
+v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
+v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
+v.sub.out|You climbed out of B{d}F with {g} G　·　score {s}|B{d}F から いきて もどった　・{g} G　・スコア {s}
+v.gold|Gold on hand|しょじきん
+v.smith|The Smithy　—　gear you buy lasts {n} runs, then wears out.|かじや　—　かった そうびは {n}かい もつ。
+v.carry|Gear you can take down|もっていける そうび
+v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
+v.runs|{n} runs left|あと {n}かい
+b.title|Hall of the Fallen|きろくひ
+b.sub|This monument is carved only on your own device.|この ひは この きたいの なかにしか きざまれない。
+b.empty|No records yet. Go down, come back, and your name is carved.|きろくは まだ ない。もぐって もどれば なまえが きざまれる。
+b.anon|Nameless|ななし
+how.fall|fell|たおれた
+how.clear|cleared|クリア
+how.act|Act {n}|だい{n}しょう
+how.out|escaped|だっしゅつ
+o.dead|You have fallen|きみは たおれた
+o.rank|　·　#{n} on this device|　・この きたいで {n}い
+o.where|Fell on <b>B{d}F</b>　·　Level <b>{lv}</b>|<b>B{d}F</b> で たおれた　・レベル <b>{lv}</b>
+o.skills|　·　<b>{n}</b> skill points|　・スキル <b>{n}</b>てん
+o.lost|Levels reset, items lost, skills forgotten — only what <b>you</b> learned remains.|レベルも どうぐも スキルも きえる —— のこるのは <b>きみ</b>が まなんだ ことだけ。
+o.smite|Divine Punishment|てんばつ
+o.smitebody|You walked out carrying goods you never paid for.<br>Struck to ash on <b>B{d}F</b> — levels, items and skills <b>all reset</b>.|かねを はらわずに みせを でた。<br><b>B{d}F</b> で かみなりに うたれ、レベルも どうぐも スキルも <b>ぜんぶ 0</b> に。
 m.miss|Your attack on {nm} misses.|{nm} への こうげきは はずれた。
 m.hit|You hit {nm} for {n}.{c}|{nm} に {n} の ダメージ。{c}
 m.crit| A critical hit!| かいしんの いちげき！
@@ -1607,6 +1643,11 @@ ui.village|Hearthfire Village|かまどの村
 ui.board|Hall of the Fallen|いしぶみ
 ui.dive|Descend again|もういちど潜る
 ui.retry|Into the dungeon again|もういちどダンジョンへ
+ui.score|Score|スコア
+m.blocked|The shopkeeper blocks your way: "Pay first."|みせのひとが みちを ふさぐ：「さきに かいけい を。」
+m.stepaside|The shopkeeper steps aside.|みせのひとが みちを あけた。
+m.sure|Shopkeeper: "...So that is your answer."|みせのひと：「……そう きめたんだね。」
+m.bolt|The ceiling splits open and lightning falls on you.|てんじょうが さけ、かみなりが おちてきた。
 ui.confirm|Confirm|けってい
 ui.cancel|Cancel|とりけし
 ui.wait|Wait|まつ
@@ -2114,6 +2155,15 @@ const locSpell = sp => TX('sp.' + sp.id, sp.nm);
 const locSpellD = sp => TX('sd.' + sp.id, sp.desc);
 const locSummon = sm => TX('sm.' + sm.id, sm.nm);
 const locAct  = a => TX('act.' + a.id, a.nm);
+/* 紀錄碑上的「怎麼結束的」。存進去的是鍵（fall / clear / out / act:3），
+   翻譯在顯示的時候才做 —— 存中文的話，換了語言舊紀錄也改不掉了。
+   認不得的值原樣顯示：那是改成存鍵之前留下來的舊紀錄。 */
+function locHow(h){
+  if(typeof h !== 'string') return h;
+  if(h.startsWith('act:')) return M('how.act','第{n}章',{n:h.slice(4)});
+  const zh = {fall:'倒下', clear:'通關', out:'生還'}[h];
+  return zh ? TX('how.' + h, zh) : h;
+}
 
 const LOOK = {
  herb:['赤紅的草','靛藍的草','嫩黃的草','灰白的草','墨綠的草','斑點的草','捲曲的草',
@@ -3730,9 +3780,12 @@ function runScore(){
 function submitScore(how){
   const p = G.p;
   const entry = {
-    name: (VILLAGE.name || '無名的旅人').slice(0,12),
+    /* 存「鍵」而不是當下語言的字串。存中文的話，玩家用英文玩、
+       紀錄碑上還是會出現「見習者・倒下」—— 而且已經存進去的
+       紀錄永遠改不掉。舊紀錄（存的是中文）由 locJob / locHow 原樣放行。 */
+    name: (VILLAGE.name || '').slice(0,12),
     col: VILLAGE.col, score: runScore(), depth: G.depth, lv: p.lv,
-    job: JOB_NM[p.job] || '見習者', how, at: Date.now(),
+    job: p.job || 'none', how, at: Date.now(),
   };
   VILLAGE.board.push(entry);
   VILLAGE.board.sort((a,b)=> b.score - a.score);
@@ -4289,9 +4342,9 @@ function tryMove(dx,dy){
   // 店員只擋「欠錢的人」。無條件擋路的話，只有一個出口的店會把
   // 沒偷東西的玩家永久關在裡面 —— 那不是難度，那是 bug。
   if(keeperAt(nx,ny)){
-    if(unpaid().length){ say('店員擋住去路：「先結帳。」','bad'); return; }
+    if(unpaid().length){ say(TX('m.blocked','店員擋住去路：「先結帳。」'),'bad'); return; }
     G.shop.keeper.x = p.x; G.shop.keeper.y = p.y;      // 與店員交換位置
-    say('店員讓出了通道。');
+    say(TX('m.stepaside','店員讓出了通道。'));
   }
   // 未結帳就要跨出店門：先問「確定 / 取消」。
   // 以前這裡是直接落雷 —— 玩家連自己按下的那一步做了什麼都不知道。
@@ -4317,12 +4370,12 @@ function steal(){
   SFX.play('death');
   G.shake = 26;
   burst(G.p.x, G.p.y, 60, '#f5dc7a', 90, 30, 1.1);
-  say('店員：「……你確定了。」','bad');
-  say('天花板裂開，一道雷落在你身上。','bad');
-  $('otitle').textContent = '天罰';
-  $('otext').innerHTML =
-    `你帶著沒有結帳的商品離開了店鋪。<br>` +
-    `在 <b>B${G.depth}F</b> 被雷劈成灰 —— 等級、道具、技能<b>全部歸零</b>。`;
+  say(TX('m.sure','店員：「……你確定了。」'),'bad');
+  say(TX('m.bolt','天花板裂開，一道雷落在你身上。'),'bad');
+  $('otitle').textContent = TX('o.smite','天罰');
+  $('otext').innerHTML = M('o.smitebody',
+    '你帶著沒有結帳的商品離開了店鋪。<br>在 <b>B{d}F</b> 被雷劈成灰 —— 等級、道具、技能<b>全部歸零</b>。',
+    {d:G.depth});
   $('over').classList.add('show');
   refresh();
 }
@@ -5667,11 +5720,11 @@ function clearAct(){
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
   saveVillage();
-  const sc = submitScore(last ? '通關' : `第${G.act+1}章`);
+  const sc = submitScore(last ? 'clear' : 'act:' + (G.act + 1));
   G.over = true;
   if(last){ G.won = true; ending(); return; }
-  $('vsub').textContent =
-    `${act.nm} 通關　·　帶回 ${G.p.gold} G　·　積分 ${sc.score}　·　下一章：${actAt(G.act+1).nm}`;
+  $('vsub').textContent = M('v.sub.clear','{nm} 通關　·　帶回 {g} G　·　積分 {s}　·　下一章：{nx}',
+    {nm:locAct(act), g:G.p.gold, s:sc.score, nx:locAct(actAt(G.act+1))});
   openVillage();
 }
 /* 章節獎勵。能直接掛到既有系統上的就掛，掛不上的先記在村莊裡 ——
@@ -5732,15 +5785,16 @@ function death(){
     SFX.play('level'); burst(G.p.x, G.p.y, 34, '#e87a4a', 70, 24, 1.0);
     say('不死鳥的羽毛燒了起來 —— 你又站了回來。（這一趟只有一次）','good'); return; }
   SFX.play('death');
-  const sc = submitScore('倒下');
+  const sc = submitScore('fall');
   const rank = VILLAGE.board.indexOf(sc) + 1;
   const sp = schoolTotal(G.p);
-  document.getElementById('otitle').textContent = '你倒下了';
+  document.getElementById('otitle').textContent = TX('o.dead','你倒下了');
   document.getElementById('otext').innerHTML =
-    `<span class="score">積分 <b>${sc.score}</b>${rank && rank<=20 ? `　·　本機第 ${rank} 名` : ''}</span><br>` +
-    `在 <b>B${G.depth}F</b> 倒下　·　等級 <b>${G.p.lv}</b>` +
-    (sp ? `　·　技能 <b>${sp}</b> 點` : '') + `<br>` +
-    `等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。`;
+    `<span class="score">${TX('ui.score','積分')} <b>${sc.score}</b>` +
+    (rank && rank<=20 ? M('o.rank','　·　本機第 {n} 名',{n:rank}) : '') + `</span><br>` +
+    M('o.where','在 <b>B{d}F</b> 倒下　·　等級 <b>{lv}</b>',{d:G.depth, lv:G.p.lv}) +
+    (sp ? M('o.skills','　·　技能 <b>{n}</b> 點',{n:sp}) : '') + `<br>` +
+    TX('o.lost','等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。');
   document.getElementById('over').classList.add('show');
 }
 
@@ -7552,6 +7606,12 @@ const STATIC_T = [
   ['vgo','ui.dive','再次下潛　B1F'], ['vboard','ui.board','紀錄碑'],
   ['bx','ui.close','關閉'], ['bigx','ui.close','關閉'],
   ['restart','ui.retry','再下一次地牢'], ['oboard','ui.board','紀錄碑'],
+  // 村莊與紀錄碑的靜態標題。漏掉這幾個的代價是「整個畫面都是中文」——
+  // 使用者截圖抓到的就是這裡。
+  ['vname','v.name','爐火村'], ['vsub','v.sub.win','你活著走出來了。'],
+  ['vgoldl','v.gold','持有金錢'],
+  ['btitle','b.title','紀錄碑'], ['bsub','b.sub','這座碑只刻在你的裝置上。'],
+  ['ptitle','p.bag','背包'],
 ];
 function applyLangText(){
   for(const [id,key,zh] of STATIC_T){ const el = $(id); if(el) el.textContent = TX(key, zh); }
@@ -7705,7 +7765,7 @@ $('restart').onclick = ()=>{
   // 解鎖過村莊的話，死亡之後先回村 —— 買到的裝備還在，那是繼續玩下去的理由
   if(VILLAGE.unlocked){
     $('over').classList.remove('show');
-    $('vsub').textContent = '你倒在了地牢裡。村莊還在，鐵匠鋪也還開著。';
+    $('vsub').textContent = TX('v.sub.die','你倒在了地牢裡。村莊還在，鐵匠鋪也還開著。');
     openVillage();
     return;
   }
@@ -7725,7 +7785,7 @@ function restart(){
 
 /* ─── 村莊 ──────────────────────────────────────────────────── */
 function leaveDungeon(){
-  const sc = submitScore('生還');
+  const sc = submitScore('out');
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
   saveVillage();
@@ -7733,7 +7793,8 @@ function leaveDungeon(){
   SFX.play('level'); BGM.stop();
   burst(G.p.x, G.p.y, 40, '#f5dc7a', 70, 26, 1.0);
   say(`帶著 ${G.p.gold} G 離開了迷宮。`,'gold');
-  $('vsub').textContent = `你從 B${G.depth}F 活著走了出來，帶回 ${G.p.gold} G　·　積分 ${sc.score}`;
+  $('vsub').textContent = M('v.sub.out','你從 B{d}F 活著走了出來，帶回 {g} G　·　積分 {s}',
+                            {d:G.depth, g:G.p.gold, s:sc.score});
   openVillage();
 }
 function openVillage(){
@@ -7759,7 +7820,8 @@ function renderVillage(){
   const stock = $('vstock'); stock.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'vhint';
-  head.textContent = '鐵匠鋪　—　買下的裝備能撐 ' + RUNS_PER_GEAR + ' 趟迷宮，之後會磨損殆盡。';
+  head.textContent = M('v.smith','鐵匠鋪　—　買下的裝備能撐 {n} 趟迷宮，之後會磨損殆盡。',
+                       {n:RUNS_PER_GEAR});
   stock.appendChild(head);
 
   for(const g of VILLAGE_STOCK){
@@ -7769,9 +7831,10 @@ function renderVillage(){
     const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
     c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
     const nm = document.createElement('div'); nm.className='nm';
-    nm.textContent = d.nm;
+    nm.textContent = locName(g.cat, d);
     const st = document.createElement('div'); st.className='st';
-    st.textContent = g.cat==='weap' ? `攻 +${d.atk}` : `防 +${d.def}`;
+    st.textContent = g.cat==='weap' ? `${TX('ui.atk','攻')} +${d.atk}`
+                                    : `${TX('ui.def','防')} +${d.def}`;
     const b = document.createElement('button');
     b.textContent = `${d.price} G`;
     b.disabled = VILLAGE.gold < d.price;
@@ -7788,7 +7851,8 @@ function renderVillage(){
   const owned = $('vowned'); owned.innerHTML = '';
   const h2 = document.createElement('div'); h2.className='vhint';
   h2.textContent = VILLAGE.stock.length
-    ? '帶下去的裝備' : '目前沒有可帶下去的裝備 —— 下一趟依然是赤手空拳。';
+    ? TX('v.carry','帶下去的裝備')
+    : TX('v.none','目前沒有可帶下去的裝備 —— 下一趟依然是赤手空拳。');
   owned.appendChild(h2);
   for(const g of VILLAGE.stock){
     const d = defOf(g.cat, g.id);
@@ -7796,9 +7860,10 @@ function renderVillage(){
     const c = document.createElement('canvas'); c.width = T; c.height = T;
     const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
     c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
-    const nm = document.createElement('div'); nm.className='nm'; nm.textContent = d.nm;
+    const nm = document.createElement('div'); nm.className='nm';
+    nm.textContent = locName(g.cat, d);
     const st = document.createElement('div'); st.className='st';
-    st.textContent = `還能撐 ${g.runs} 趟`;
+    st.textContent = M('v.runs','還能撐 {n} 趟',{n:g.runs});
     row.appendChild(c); row.appendChild(nm); row.appendChild(st);
     owned.appendChild(row);
   }
@@ -7835,7 +7900,7 @@ function openBoard(){
   const list = $('blist'); list.innerHTML = '';
   if(!VILLAGE.board.length){
     const e = document.createElement('div'); e.className = 'vhint';
-    e.textContent = '還沒有任何紀錄。走進去，走出來，名字就會刻上。';
+    e.textContent = TX('b.empty','還沒有任何紀錄。走進去，走出來，名字就會刻上。');
     list.appendChild(e);
   }
   const newest = VILLAGE.board.reduce((a,b)=> !a || b.at > a.at ? b : a, null);
@@ -7845,9 +7910,10 @@ function openBoard(){
     const rk = document.createElement('div'); rk.className='rk'; rk.textContent = (i+1)+'.';
     const c = document.createElement('canvas'); c.width=T; c.height=T;
     c.getContext('2d').drawImage(blobFor(BLOB_COLS.includes(e.col)?e.col:'#'), 0, 0);
-    const nm = document.createElement('div'); nm.className='nm'; nm.textContent = e.name;
+    const nm = document.createElement('div'); nm.className='nm';
+    nm.textContent = e.name || TX('b.anon','無名旅人');
     const de = document.createElement('div'); de.className='de';
-    de.textContent = `B${e.depth}F · Lv${e.lv} · ${e.job} · ${e.how}`;
+    de.textContent = `B${e.depth}F · Lv${e.lv} · ${locJob(e.job)} · ${locHow(e.how)}`;
     const sc = document.createElement('div'); sc.className='sc'; sc.textContent = e.score;
     row.append(rk, c, nm, de, sc);
     list.appendChild(row);
