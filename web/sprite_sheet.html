@@ -1565,16 +1565,16 @@ function makeHat(i){
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
   stone:    {ramp:['w','x','y','z']},                       // 礦坑、牢獄：原本的冷色石階
-  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1},      // 苔綠，光是螢火不是火把
-  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1},           // 灰藍岩階，天是亮的
-  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a'},      // 暗紅磚與藤蔓
-  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1},           // 水藍
-  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1},      // 獸巢：暖土色
-  wood:     {ramp:['7','8','9','b'], torch:'#dcae35'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], lightAll:1},           // 鏡像：冷白無影
-  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1},           // 水晶礦坑
-  spire:    {ramp:['4','5','6','d'], lightAll:1},           // 通天塔：白石與金線
-  void:     {ramp:['0','1','2','4']},                       // 最後的迷宮、混沌之間
+  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist'},      // 苔綠，光是螢火不是火把
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind'},           // 灰藍岩階，天是亮的
+  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember'},      // 暗紅磚與藤蔓
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer'},           // 水藍
+  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist'},      // 獸巢：暖土色
+  wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock'},      // 木紋地板：忍者之里、平安京
+  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer'},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer'},           // 水晶礦坑
+  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise'},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4'], wall:'void', air:'star'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
@@ -1591,7 +1591,7 @@ function tilesFor(theme){
   return TILE_SETS[theme] = {
     floor:[makeFloor(1,0,r,sf),makeFloor(2,0,r,sf),makeFloor(3,0,r,sf),makeFloor(4,0,r,sf)],
     corr:[makeFloor(11,1,r,sf),makeFloor(12,1,r,sf),makeFloor(13,1,r,sf)],
-    wall:makeWall(0,r), wallFace:makeWall(1,r),
+    wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
   };
 }
 const TILE_ART = {

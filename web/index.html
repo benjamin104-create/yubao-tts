@@ -2534,16 +2534,16 @@ function makeHat(i){
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
   stone:    {ramp:['w','x','y','z']},                       // 礦坑、牢獄：原本的冷色石階
-  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1},      // 苔綠，光是螢火不是火把
-  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1},           // 灰藍岩階，天是亮的
-  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a'},      // 暗紅磚與藤蔓
-  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1},           // 水藍
-  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1},      // 獸巢：暖土色
-  wood:     {ramp:['7','8','9','b'], torch:'#dcae35'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], lightAll:1},           // 鏡像：冷白無影
-  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1},           // 水晶礦坑
-  spire:    {ramp:['4','5','6','d'], lightAll:1},           // 通天塔：白石與金線
-  void:     {ramp:['0','1','2','4']},                       // 最後的迷宮、混沌之間
+  forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist'},      // 苔綠，光是螢火不是火把
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind'},           // 灰藍岩階，天是亮的
+  briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember'},      // 暗紅磚與藤蔓
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer'},           // 水藍
+  beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist'},      // 獸巢：暖土色
+  wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock'},      // 木紋地板：忍者之里、平安京
+  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer'},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer'},           // 水晶礦坑
+  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise'},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4'], wall:'void', air:'star'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
@@ -2560,7 +2560,7 @@ function tilesFor(theme){
   return TILE_SETS[theme] = {
     floor:[makeFloor(1,0,r,sf),makeFloor(2,0,r,sf),makeFloor(3,0,r,sf),makeFloor(4,0,r,sf)],
     corr:[makeFloor(11,1,r,sf),makeFloor(12,1,r,sf),makeFloor(13,1,r,sf)],
-    wall:makeWall(0,r), wallFace:makeWall(1,r),
+    wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
   };
 }
 const TILE_ART = {
@@ -5138,6 +5138,121 @@ function makeProp(i){
 }
 const PROPS = [makeProp(0),makeProp(1),makeProp(2),makeProp(3),makeProp(4)];
 
+/* ═══ 章節專屬的牆與地面物件 ═════════════════════════════════
+   只換顏色是不夠的。玩家看得出來的是**剪影**：一塊 2x2 的磚頭
+   染成綠色還是磚頭，不會變成樹。所以每種地貌各有自己的牆形，
+   還有自己的地面雜物 —— 森林有草叢與蕈菇，山道有碎石，
+   通天塔有金線嵌紋。這些東西不影響任何規則，
+   但它們是「這是一款用心做的遊戲」唯一的證據。 */
+function themeWall(kind, face, ramp){
+  const R = ramp || RAMP;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*7919 + (face?31:17));
+  x.fillStyle = PAL['0']; x.fillRect(0,0,T,T);
+
+  if(kind === 'tree'){                       // 森林：樹幹並排，樹皮縱紋
+    for(const tx of [0,6,11]){
+      const w = tx===6 ? 5 : 4;
+      x.fillStyle = PAL[R[1]]; x.fillRect(tx, 0, w, T);
+      x.fillStyle = PAL[R[2]]; x.fillRect(tx+1, 0, 1, T);
+      x.fillStyle = PAL['0'];
+      for(let i=0;i<5;i++) x.fillRect(tx + r.i(0,w-1), r.i(0,15), 1, r.i(1,3));
+    }
+    x.fillStyle = PAL[R[3]];                 // 樹冠壓在上緣，讓上下有別
+    for(let i=0;i<14;i++) x.fillRect(r.i(0,15), r.i(0,3), r.i(1,2), 1);
+  } else if(kind === 'cliff'){               // 山道：岩層橫紋，上緣鋸齒
+    x.fillStyle = PAL[R[0]]; x.fillRect(0,2,T,14);
+    for(let y=3;y<16;y+=3){
+      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,1);
+      x.fillStyle = PAL['0']; x.fillRect(r.i(0,10), y, r.i(2,5), 1);
+    }
+    x.fillStyle = PAL[R[2]];                 // 頂緣的碎岩
+    for(let i=0;i<16;i++) x.fillRect(i, 1 + (r.chance(.5)?0:1), 1, 1);
+  } else if(kind === 'column'){              // 通天塔：直立石柱，柱頭有金線
+    x.fillStyle = PAL[R[1]]; x.fillRect(2,0,12,T);
+    x.fillStyle = PAL[R[2]]; x.fillRect(3,0,2,T); x.fillRect(8,0,2,T);
+    x.fillStyle = PAL[R[3]]; x.fillRect(3,0,1,T);
+    x.fillStyle = PAL['0']; x.fillRect(0,0,2,T); x.fillRect(14,0,2,T);
+    x.fillStyle = PAL['u']; x.fillRect(2,3,12,1); x.fillRect(2,12,12,1);
+  } else if(kind === 'shard'){               // 水晶：斜切的稜面
+    x.fillStyle = PAL[R[1]]; x.fillRect(0,0,T,T);
+    x.fillStyle = PAL[R[2]];
+    for(let i=0;i<16;i++) x.fillRect(i, Math.max(0,i-3), 1, 6);
+    x.fillStyle = PAL[R[3]];
+    for(let i=0;i<16;i+=2) x.fillRect(i, Math.max(0,15-i), 1, 2);
+    x.fillStyle = PAL['0'];
+    for(let i=0;i<10;i++) x.fillRect(r.i(0,15), r.i(0,15), 1, 1);
+  } else if(kind === 'plank'){               // 木造：橫向木板與釘子
+    for(let y=0;y<16;y+=4){
+      x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,3);
+      x.fillStyle = PAL[R[2]]; x.fillRect(0,y,T,1);
+      x.fillStyle = PAL['0']; x.fillRect(0,y+3,T,1);
+      x.fillStyle = PAL[R[0]]; x.fillRect(r.i(1,13), y+1, 1, 1);
+    }
+  } else if(kind === 'void'){                // 虛空：幾乎全黑，只有幾點光
+    x.fillStyle = PAL[R[0]]; x.fillRect(0,0,T,T);
+    for(let i=0;i<7;i++){ x.fillStyle = r.chance(.5)?PAL[R[2]]:PAL[R[1]];
+      x.fillRect(r.i(0,15), r.i(0,15), 1, 1); }
+  } else {
+    return makeWall(face, R);                // 石造：沿用原本的磚牆
+  }
+  if(face){                                  // 立面：下方是地板時畫出厚度
+    x.fillStyle=PAL[R[3]]; x.fillRect(0,10,T,1);
+    x.fillStyle=PAL[R[2]]; x.fillRect(0,11,T,2);
+    x.fillStyle=PAL[R[0]]; x.fillRect(0,13,T,3);
+    x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+  }
+  return c;
+}
+/* 地面雜物：每種地貌 4 個。一樣壓在地形自己的色階裡 ——
+   飽和的顏色只屬於活的東西與道具，這條規則不能為了好看破例。 */
+function themeProp(kind, i, ramp){
+  const R = ramp || RAMP;
+  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  const x = c.getContext('2d');
+  const r = RNG(kind.length*131 + i*977);
+  if(kind === 'grass'){                      // 草叢、蕨、蕈菇、樹根
+    if(i===0){ for(const gx of [4,6,8,10]) { px(x,PAL['0'],gx,11,1,3); px(x,PAL[R[3]],gx,10,1,2); } }
+    else if(i===1){ px(x,PAL['0'],7,9,2,5); px(x,PAL[R[3]],5,10,2,1); px(x,PAL[R[3]],9,10,2,1);
+                    px(x,PAL[R[2]],6,12,4,1); }
+    else if(i===2){ px(x,PAL['0'],6,9,4,4); px(x,PAL['d'],6,9,4,2); px(x,PAL['b'],7,11,2,2); }
+    else { px(x,PAL['0'],3,12,10,2); px(x,PAL[R[1]],3,12,10,1); px(x,PAL[R[2]],5,12,3,1); }
+  } else if(kind === 'rock'){                // 碎石、裂縫、小石堆
+    if(i===0){ px(x,PAL['0'],5,11,4,3); px(x,PAL[R[3]],5,11,3,2); }
+    else if(i===1){ px(x,PAL['0'],3,10,1,4); px(x,PAL['0'],4,12,3,1); px(x,PAL['0'],8,11,1,3); }
+    else if(i===2){ px(x,PAL['0'],4,12,8,2); px(x,PAL[R[2]],4,12,8,1);
+                    px(x,PAL['0'],6,10,4,2); px(x,PAL[R[3]],6,10,3,1); }
+    else { for(let k=0;k<6;k++) px(x,PAL[R[3]],r.i(2,13),r.i(9,14),1,1); }
+  } else if(kind === 'ripple'){               // 水紋與蘆葦
+    if(i===0){ px(x,PAL[R[3]],3,11,6,1); px(x,PAL[R[3]],8,13,5,1); }
+    else if(i===1){ px(x,PAL[R[3]],4,10,4,1); px(x,PAL[R[3]],9,12,5,1); px(x,PAL[R[2]],5,12,3,1); }
+    else if(i===2){ px(x,PAL['0'],5,8,1,6); px(x,PAL['0'],9,9,1,5); px(x,PAL[R[3]],5,8,1,2); }
+    else { px(x,PAL[R[2]],2,11,12,1); }
+  } else if(kind === 'inlay'){                // 通天塔：金線嵌紋
+    if(i===0){ px(x,PAL['t'],3,11,10,1); px(x,PAL['u'],3,11,4,1); }
+    else if(i===1){ px(x,PAL['t'],7,8,2,7); px(x,PAL['u'],7,8,1,4); }
+    else if(i===2){ px(x,PAL['t'],5,10,6,1); px(x,PAL['t'],7,8,2,5); px(x,PAL['v'],7,10,2,1); }
+    else { px(x,PAL['u'],4,12,2,2); px(x,PAL['u'],10,12,2,2); }
+  } else if(kind === 'glint'){                // 水晶碎屑
+    if(i===0){ px(x,PAL['0'],6,10,3,4); px(x,PAL[R[3]],6,10,2,3); px(x,PAL['6'],6,10,1,1); }
+    else if(i===1){ px(x,PAL['0'],4,12,2,2); px(x,PAL[R[3]],4,12,1,1);
+                    px(x,PAL['0'],10,11,2,3); px(x,PAL[R[3]],10,11,1,2); }
+    else if(i===2){ for(let k=0;k<5;k++) px(x,PAL[R[3]],r.i(3,12),r.i(9,14),1,1); }
+    else { px(x,PAL['0'],7,9,3,5); px(x,PAL[R[3]],7,9,2,4); px(x,PAL['6'],7,9,1,2); }
+  } else {
+    return PROPS[i % PROPS.length];
+  }
+  return c;
+}
+const THEME_PROPS = {};
+function propsFor(theme){
+  if(THEME_PROPS[theme]) return THEME_PROPS[theme];
+  const th = THEMES[theme] || THEMES.stone;
+  if(!th.prop) return THEME_PROPS[theme] = PROPS;
+  return THEME_PROPS[theme] = [0,1,2,3].map(i => themeProp(th.prop, i, th.ramp));
+}
+
 /* 粒子：踩地的塵、命中的火星、死亡的爆散。
    全部共用一個陣列，畫面上永遠不會超過兩三百顆，直接畫矩形最快。 */
 function burst(x, y, n, col, spd, up, life){
@@ -5199,9 +5314,16 @@ function draw(dt){
   const THEME_ID = ACT_THEME[actAt(G.act).id] || 'stone';
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
   const OUTDOOR = !!(THEMES[THEME_ID] || {}).lightAll;
+  const TPROPS = propsFor(THEME_ID);
+  const AIR = (THEMES[THEME_ID] || {}).air;
 
+  // 目前「看得見」的範圍。空氣感只畫在這個框裡 ——
+  // 不夾的話，霧與風會鋪滿整張畫布，連未探索的黑區都變成灰條，
+  // 看起來像破圖不像天氣。
+  let vx0=1e9, vy0=1e9, vx1=-1e9, vy1=-1e9;
   for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
     const s = G.seen[key(x,y)]; if(!s) continue;
+    if(s===2){ if(x<vx0)vx0=x; if(y<vy0)vy0=y; if(x>vx1)vx1=x; if(y>vy1)vy1=y; }
     const px_=ox+x*T, py=oy+y*T, t=tileAt(x,y);
     if(t===WALL){
       cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
@@ -5212,7 +5334,7 @@ function draw(dt){
       cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
-      if(h % 9 === 0) cx.drawImage(PROPS[(h>>4) % PROPS.length], px_, py);
+      if(h % 9 === 0) cx.drawImage(TPROPS[(h>>4) % TPROPS.length], px_, py);
     }
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
@@ -5234,6 +5356,73 @@ function draw(dt){
   // 牆上的火把（只在看得見的時候燒）
   const litTorches = [];
   const TSET = torchesFor(ACT_THEME[actAt(G.act).id] || 'stone');
+  /* ── 空氣感 ────────────────────────────────────────────────
+     森林要有霧、山道要有風、荊棘城堡要有飛灰、水面要有反光。
+     這一層不存任何狀態：每一顆粒子的位置都從「時間 + 索引」算出來，
+     所以它不佔記憶體、不需要更新迴圈，關掉也不影響任何規則。
+
+     它做的事只有一件：讓畫面看起來是「有空氣的地方」，
+     而不是一張靜止的地磚圖。那正是玩家願不願意截圖分享的分界線。 */
+  if(AIR && vx1 >= vx0){
+    const W = cv.width, H = cv.height;
+    cx.save();
+    cx.beginPath();
+    cx.rect(ox + vx0*T, oy + vy0*T, (vx1-vx0+1)*T, (vy1-vy0+1)*T);
+    cx.clip();
+    /* 霧與風是「面」，直接畫在畫布上會連未探索的純黑區也一起變灰 ——
+       看起來像破圖不像霧。改用 overlay：它在接近黑的地方幾乎不顯色，
+       在有光的地板上才浮出來，剛好就是霧該在的地方。
+       火星與星光是「點」，畫在黑底上本來就該看得見，所以維持一般疊加。 */
+    if(AIR === 'mist' || AIR === 'wind' || AIR === 'shimmer')
+      cx.globalCompositeOperation = 'overlay';
+    if(AIR === 'mist'){
+      cx.globalAlpha = .30; cx.fillStyle = '#cfe6b4';
+      for(let i=0;i<7;i++){
+        const yy = ((i*53) % H), h = 10 + (i%3)*7;
+        const xx = ((clock*(7+i*3) + i*97) % (W+140)) - 70;
+        cx.fillRect(xx, yy, 120, h);
+      }
+    } else if(AIR === 'wind'){
+      cx.globalAlpha = .34; cx.fillStyle = '#e8f0f6';
+      for(let i=0;i<8;i++){
+        const yy = ((i*37 + ((clock*5)|0)) % H);
+        const xx = ((clock*(60+i*9) + i*131) % (W+90)) - 45;
+        cx.fillRect(xx, yy, 14 + (i%3)*8, 1);
+      }
+    } else if(AIR === 'ember'){
+      cx.fillStyle = '#f5a95e';
+      for(let i=0;i<16;i++){
+        const t2 = (clock*(11+i%5) + i*61) % 100;
+        const xx = (i*89 + Math.sin(clock*1.4+i)*7) % W;
+        cx.globalAlpha = .55 * (1 - t2/100);
+        cx.fillRect(xx, H - t2/100*H, 1, 2);
+      }
+    } else if(AIR === 'shimmer'){
+      cx.fillStyle = '#dff0ff';
+      for(let i=0;i<18;i++){
+        const ph = Math.sin(clock*1.6 + i*1.7);
+        if(ph < .55) continue;
+        cx.globalAlpha = (ph-.55)/.45 * .8;
+        cx.fillRect((i*71)%W, (i*53)%H, 2, 1);
+      }
+    } else if(AIR === 'rise'){
+      cx.fillStyle = '#f5dc7a';
+      for(let i=0;i<12;i++){
+        const t2 = (clock*(9+i%4) + i*77) % 100;
+        cx.globalAlpha = .5 * (1 - t2/100);
+        cx.fillRect((i*101 + (i%2?3:0))%W, H - t2/100*H, 1, 1);
+      }
+    } else if(AIR === 'star'){
+      cx.fillStyle = '#f6efe3';
+      for(let i=0;i<24;i++){
+        const ph = Math.sin(clock*.9 + i*2.3);
+        cx.globalAlpha = Math.max(0, ph) * .55;
+        cx.fillRect((i*67)%W, (i*43)%H, 1, 1);
+      }
+    }
+    cx.restore();
+  }
+
   for(const tc of G.torches){
     const s = G.seen[key(tc.x,tc.y)]; if(s !== 2) continue;
     const f = ((clock*9 + tc.x*2 + tc.y*3) | 0) % 3;      // 每支火把的相位不同才不會同步跳動
