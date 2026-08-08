@@ -61,7 +61,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'DIRS, key, walkable, monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN,' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, hatHere, restStep, dwellCheck,' +
-  'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act,' +
+  'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'i18n:{setLang, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +
   ' ITEM_TABLES:[["herb",HERB],["scroll",SCROLL],["wand",WAND],["pot",POT],' +

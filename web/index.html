@@ -5853,25 +5853,173 @@ const SFX = (()=>{
 
    一樣零音檔：全部是 WebAudio 即時合成的方波與三角波。 */
 const BGM = (()=>{
-  const BPM = 112, SPB = 60 / BPM / 4;        // 一步＝十六分音符
   const BARS = 4, STEPS = 16, LOOP = BARS * STEPS;
   const hz = n => 440 * Math.pow(2, (n - 69) / 12);
 
-  // 和弦進行：Am – F – G – Am。最好認的「冒險」進行，四小節就記得住。
-  const ROOT = [45, 41, 43, 45];              // 低音根音
-  const CHORD = [[57,60,64],[53,57,60],[55,59,62],[57,60,64]];
+  /* 一章一首。九十三層配同一首曲子，再好聽也會變成噪音 ——
+     而且場景已經一章一個樣子了，音樂卻沒跟上，反而更明顯。
 
-  // 主旋律：[步, 音高, 長度(步)]。寫死的動機才有記憶點。
-  const LEAD = [
-    [[0,64,2],[2,69,2],[4,72,2],[6,71,2],[8,69,3],[12,64,3]],
-    [[0,65,2],[2,69,2],[4,72,2],[6,69,2],[8,65,3],[12,60,3]],
-    [[0,67,2],[2,71,2],[4,74,2],[6,71,2],[8,67,3],[12,62,3]],
-    [[0,69,2],[4,72,2],[6,71,1],[7,69,1],[8,67,2],[10,65,2],[12,64,4]],
-  ];
-  const BASS = [0,3,6,8,11,14];               // 行進低音的落點
-  const HAT  = [2,6,10,14];
+     每一首都是「四小節 x 四個聲部」：走動的低音、八分琶音、
+     寫死的主旋律、鼓組。旋律一定要寫死 —— 隨機取音永遠寫不出
+     讓人記得住的動機，這是第一版就試過並且失敗的路。
+
+     曲子跟地貌用同一個 key（THEMES / ACT_THEME），
+     所以「換了場景音樂沒換」這種事在結構上就不會發生。 */
+  const T_ = (o) => Object.assign({
+    bpm:112, bass:[0,3,6,8,11,14], hat:[2,6,10,14], kick:[0,8],
+    wave:'square', pad:'triangle', lvol:.085, cut:2600, avol:.055,
+  }, o);
+
+  const TRACKS = {
+    // 礦坑／牢獄：Am–F–G–Am。整套的主題曲，最好認的「冒險」進行。
+    stone: T_({
+      root:[45,41,43,45],
+      chord:[[57,60,64],[53,57,60],[55,59,62],[57,60,64]],
+      lead:[
+        [[0,64,2],[2,69,2],[4,72,2],[6,71,2],[8,69,3],[12,64,3]],
+        [[0,65,2],[2,69,2],[4,72,2],[6,69,2],[8,65,3],[12,60,3]],
+        [[0,67,2],[2,71,2],[4,74,2],[6,71,2],[8,67,3],[12,62,3]],
+        [[0,69,2],[4,72,2],[6,71,1],[7,69,1],[8,67,2],[10,65,2],[12,64,4]],
+      ],
+    }),
+    // 迷霧森林：F–C–Dm–Bb。慢、柔、幾乎沒有鼓 —— 森林不該有行軍感。
+    forest: T_({
+      bpm:96, wave:'triangle', pad:'sine', cut:2000,
+      bass:[0,6,8,14], hat:[4,12], kick:[0],
+      root:[41,48,50,46],
+      chord:[[57,60,65],[55,60,64],[57,62,65],[58,62,65]],
+      lead:[
+        [[0,72,3],[4,69,2],[6,72,2],[8,74,4],[12,72,4]],
+        [[0,71,3],[4,67,2],[6,71,2],[8,72,4],[12,67,4]],
+        [[0,69,3],[4,72,2],[6,74,2],[8,77,4],[12,74,4]],
+        [[0,72,3],[4,70,2],[6,69,2],[8,65,6]],
+      ],
+    }),
+    // 試煉的山道：C–G–Am–F 大調。開闊、明亮，濾波拉高 —— 這裡的光來自天空。
+    mountain: T_({
+      bpm:124, cut:3200, bass:[0,4,8,12],
+      root:[48,43,45,41],
+      chord:[[55,60,64],[55,59,62],[57,60,64],[53,57,60]],
+      lead:[
+        [[0,67,2],[2,72,2],[4,76,4],[8,74,2],[10,72,2],[12,67,4]],
+        [[0,71,2],[2,74,2],[4,79,4],[8,76,4],[12,74,4]],
+        [[0,69,3],[4,76,3],[8,72,2],[10,69,2],[12,64,4]],
+        [[0,65,4],[4,72,4],[8,69,2],[10,67,2],[12,65,4]],
+      ],
+    }),
+    // 荊棘城堡：和聲小調 Am–E–Am–Dm，八分低音一路推。半音動機製造焦躁。
+    briar: T_({
+      bpm:132, cut:2400,
+      bass:[0,2,4,6,8,10,12,14], kick:[0,6,8,14],
+      root:[45,40,45,50],
+      chord:[[57,60,64],[56,59,64],[57,60,64],[57,62,65]],
+      lead:[
+        [[0,69,1],[1,68,1],[2,69,2],[4,72,2],[6,71,2],[8,69,4],[12,68,4]],
+        [[0,68,1],[1,69,1],[2,71,2],[4,68,2],[6,64,2],[8,68,4],[12,71,4]],
+        [[0,72,2],[2,71,1],[3,69,1],[4,68,2],[6,69,2],[8,76,4],[12,72,4]],
+        [[0,74,2],[2,72,2],[4,71,2],[6,69,2],[8,68,4],[12,69,4]],
+      ],
+    }),
+    // 南湖畔：大七和弦、無鼓、長音。水面上不會有鼓聲。
+    lake: T_({
+      bpm:84, wave:'sine', pad:'sine', cut:2200, lvol:.075,
+      bass:[0,8], hat:[], kick:[],
+      root:[41,48,50,46],
+      chord:[[57,60,64,65],[55,60,64,67],[57,60,62,65],[58,62,65,69]],
+      lead:[
+        [[0,72,6],[8,76,8]],
+        [[0,71,6],[8,74,8]],
+        [[0,69,6],[8,72,8]],
+        [[0,74,8],[10,69,6]],
+      ],
+    }),
+    // 幻獸洞窟：五聲音階 + 重鼓。牠們在等你證明自己，鼓聲就是那個等待。
+    beast: T_({
+      bpm:104, cut:2200,
+      hat:[2,4,6,10,12,14], kick:[0,4,8,10,14],
+      root:[45,45,43,41],
+      chord:[[57,60,64],[57,60,64],[55,60,64],[53,57,60]],
+      lead:[
+        [[0,69,2],[2,67,2],[4,64,2],[6,67,2],[8,69,4],[12,72,4]],
+        [[0,72,2],[2,69,2],[4,67,2],[6,64,2],[8,62,4],[12,64,4]],
+        [[0,67,2],[2,64,2],[4,62,2],[6,60,2],[8,64,4],[12,67,4]],
+        [[0,69,3],[4,72,3],[8,74,2],[10,72,2],[12,69,4]],
+      ],
+    }),
+    /* 幻忍之里／平安京：都節音階（D-E♭-G-A-B♭）。
+       那個半音 + 完全四度的組合是「日本」在音樂上唯一不需要解釋的記號。 */
+    wood: T_({
+      bpm:92, wave:'triangle', cut:2600, lvol:.095,
+      bass:[0,8], hat:[4,12], kick:[0,8],
+      root:[50,46,48,50],
+      chord:[[62,67,69],[58,62,67],[60,64,67],[62,67,69]],
+      lead:[
+        [[0,74,3],[4,73,1],[5,74,2],[8,69,4],[12,67,4]],
+        [[0,70,3],[4,69,3],[8,67,2],[10,63,2],[12,62,4]],
+        [[0,67,2],[2,69,2],[4,70,4],[8,74,4],[12,73,4]],
+        [[0,74,2],[2,70,2],[4,69,2],[6,67,2],[8,63,4],[12,62,4]],
+      ],
+    }),
+    // 水晶礦坑：利底亞調 + 高音鐘聲。光在這裡走直線，音也是。
+    crystal: T_({
+      bpm:100, cut:4200, lvol:.07,
+      bass:[0,8], kick:[0],
+      root:[48,48,50,45],
+      chord:[[60,64,67],[62,66,69],[62,65,69],[57,60,64]],
+      lead:[
+        [[0,84,4],[4,86,2],[6,88,2],[8,84,4],[12,79,4]],
+        [[0,86,4],[4,83,4],[8,81,4],[12,86,4]],
+        [[0,88,2],[2,86,2],[4,83,4],[8,79,4],[12,81,4]],
+        [[0,84,4],[4,81,2],[6,79,2],[8,76,8]],
+      ],
+    }),
+    // 通天塔：低音一小節升一階、旋律一小節爬一層。整首曲子都在往上。
+    spire: T_({
+      bpm:118, cut:3400,
+      bass:[0,4,8,12],
+      root:[41,43,45,48],
+      chord:[[53,57,60],[55,59,62],[57,60,64],[60,64,67]],
+      lead:[
+        [[0,65,2],[2,69,2],[4,72,4],[8,74,4],[12,72,4]],
+        [[0,67,2],[2,71,2],[4,74,4],[8,76,4],[12,74,4]],
+        [[0,69,2],[2,72,2],[4,76,4],[8,79,4],[12,76,4]],
+        [[0,72,2],[2,76,2],[4,79,4],[8,84,8]],
+      ],
+    }),
+    // 最後的迷宮／混沌之間：沒有鼓、沒有節奏，只有慢慢往下滑的半音。
+    void: T_({
+      bpm:72, wave:'sine', pad:'sine', cut:1200, lvol:.06, avol:.03,
+      bass:[0], hat:[], kick:[],
+      root:[45,45,44,44],
+      chord:[[57,63,64],[57,63,64],[56,62,63],[56,62,63]],
+      lead:[ [[0,69,8]], [[8,68,8]], [[0,63,8]], [[8,62,8]] ],
+    }),
+  };
+
+  /* 鏡像世界：把礦坑主題**上下顛倒**過來 —— 原本往上的音變成往下。
+     手寫一首「聽起來很鏡像」的曲子做不到這件事；
+     真的把主題反過來，走進第十一章的人會認出那是同一首。 */
+  TRACKS.mirror = (()=>{
+    const src = TRACKS.stone, AXIS = 69 * 2;    // 以 A4 為軸做倒影
+    /* 音高翻過來還不夠 —— 只翻音高的話速度與鼓組跟礦坑一模一樣，
+       走進第十一章會覺得「這不就是第一章嗎」。左右相反的世界，
+       節奏也要相反：第 k 步變成第 (15-k) 步。
+       結果是同一首曲子，但重拍全部落在原本的空拍上。 */
+    const revStep = k => 15 - k;
+    const revPat  = a => a.map(revStep).sort((x,y)=>x-y);
+    return T_(Object.assign({}, src, {
+      cut:3000,
+      root: src.root.map(n => n),               // 低音留著，才聽得出是同一首
+      chord: src.chord.map(c => c.map(n => AXIS - n).sort((a,b)=>a-b)),
+      lead: src.lead.map(bar =>
+        bar.map(([s3,n,d]) => [16 - s3 - d, AXIS - n, d]).sort((a,b)=>a[0]-b[0])),
+      bass: revPat(src.bass), hat: revPat(src.hat), kick: revPat(src.kick),
+    }));
+  })();
 
   let running = false, gain = null, timer = null, step = 0, nextT = 0;
+  let curId = 'stone', cur = TRACKS.stone, fadeAt = 0;
+  const spb = () => 60 / cur.bpm / 4;          // 一步＝十六分音符
 
   function ctx(){ return SFX.ctx(); }
   function bus(){
@@ -5912,36 +6060,69 @@ const BGM = (()=>{
   }
 
   function playStep(i, t){
-    const bar = (i / STEPS) | 0, k = i % STEPS;
-    // 樓層越深整體越低沉：每 5 層降半音，並把濾波拉低
-    const depth = (typeof G !== 'undefined' && G) ? G.depth : 1;
-    const tr = -Math.min(7, Math.floor((depth - 1) / 5));
-    const dim = 1 - Math.min(.45, (depth - 1) * 0.03);
+    const bar = (i / STEPS) | 0, k = i % STEPS, S = spb();
+    /* 章節內越深越低沉：每 5 層降半音、濾波拉低。
+       用「本章第幾層」而不是絕對深度 —— 吃絕對深度的話，
+       第十三章一開始就已經降了七個半音、悶到聽不出旋律，
+       等於後半段的六首曲子全部白寫。 */
+    const fl = (typeof G !== 'undefined' && G) ? G.floor : 1;
+    const tr = -Math.min(4, Math.floor((fl - 1) / 5));
+    const dim = 1 - Math.min(.30, (fl - 1) * 0.02);
 
-    if(BASS.includes(k)){                      // 行進低音
-      const n = ROOT[bar] + tr + (k === 11 ? 12 : 0) + (k === 6 || k === 14 ? 7 : 0);
-      voice(t, hz(n), SPB * 2.2, 'triangle', .30, 900 * dim);
+    const bi = cur.bass.indexOf(k);
+    if(bi >= 0){                               // 行進低音
+      /* 八度與五度的點綴照「第幾個低音」算，不照步數算。
+         寫死步數的話，換了鼓組編排的曲子（例如鏡像世界把節奏整個翻過來）
+         就永遠踩不到那兩個點，低音會變成一條沒有起伏的直線。 */
+      const n = cur.root[bar] + tr
+              + (bi === cur.bass.length - 2 ? 12 : 0)
+              + (bi === 2 || bi === cur.bass.length - 1 ? 7 : 0);
+      voice(t, hz(n), S * 2.2, 'triangle', .30, 900 * dim);
     }
     if(k % 2 === 0){                           // 八分琶音
-      const ch = CHORD[bar];
+      const ch = cur.chord[bar];
       const n = ch[(k / 2) % ch.length] + tr;
-      voice(t, hz(n), SPB * 1.6, 'square', .055, 1700 * dim);
+      voice(t, hz(n), S * 1.6, cur.pad === 'sine' ? 'sine' : 'square', cur.avol, 1700 * dim);
     }
-    for(const [s3, n, d] of LEAD[bar]){        // 主旋律
+    for(const [s3, n, d] of cur.lead[bar]){    // 主旋律
       if(s3 !== k) continue;
-      voice(t, hz(n + tr), SPB * d * 0.95, 'square', .085, 2600 * dim);
-      voice(t, hz(n + tr - 12), SPB * d * 0.9, 'triangle', .045, 1400 * dim);
+      voice(t, hz(n + tr), S * d * 0.95, cur.wave, cur.lvol, cur.cut * dim);
+      voice(t, hz(n + tr - 12), S * d * 0.9, cur.pad, cur.lvol * 0.52, 1400 * dim);
     }
-    if(k === 0 || k === 8) perc(t, .12, .30, 160, 45);        // 底鼓
-    if(HAT.includes(k))    perc(t, .045, .10, 7000, 4000, 2); // 腳踏鈸
+    if(cur.kick.includes(k)) perc(t, .12, .30, 160, 45);        // 底鼓
+    if(cur.hat.includes(k))  perc(t, .045, .10, 7000, 4000, 2); // 腳踏鈸
+  }
+
+  /* 換章時換曲。做法是「壓下去 → 換 → 拉回來」而不是直接切：
+     直接切會在小節中間硬接，聽起來像當掉。 */
+  function swap(id){
+    curId = id; cur = TRACKS[id] || TRACKS.stone;
+    step = 0;
+    const c = ctx(), g = bus();
+    if(!c || !g) return;
+    const now = c.currentTime;
+    g.gain.cancelScheduledValues(now);
+    g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
+    g.gain.exponentialRampToValueAtTime(0.42, now + 1.40);
+    fadeAt = now;
+  }
+
+  function wantId(){
+    if(typeof G === 'undefined' || !G) return 'stone';
+    if(typeof themeNow !== 'function') return 'stone';
+    const id = themeNow();
+    return TRACKS[id] ? id : 'stone';
   }
 
   function tick(){
     const c = ctx(); if(!c){ running = false; return; }
+    const w = wantId();
+    if(w !== curId) swap(w);
     // 前瞻排程：只靠 setTimeout 觸發音符會抖，必須提前把音排進音訊時鐘
     while(nextT < c.currentTime + 0.14){
       playStep(step, nextT);
-      nextT += SPB;
+      nextT += spb();
       step = (step + 1) % LOOP;
     }
     timer = setTimeout(tick, 25);
@@ -5952,10 +6133,13 @@ const BGM = (()=>{
       if(running) return;
       const c = ctx(); if(!c) return;
       running = true; step = 0; nextT = c.currentTime + 0.1;
+      curId = wantId(); cur = TRACKS[curId];
       tick();
     },
     stop(){ running = false; clearTimeout(timer); timer = null; },
     get running(){ return running; },
+    get track(){ return curId; },
+    TRACKS,
   };
 })();
 
@@ -6483,11 +6667,19 @@ function updateTags(){
         n++;
         el.className = 'tag ' + t.cls;
         if(el.textContent !== t.txt) el.textContent = t.txt;
-        // 夾在畫布內。名牌用 translate(-50%) 置中，所以左右各要留半個寬度；
-        // 不夾的話靠邊的怪會顯示成「eton Soldier」這種讀到一半的名字。
+        /* 夾在畫布內。名牌用 translate(-50%) 置中，所以左右各要留半個寬度；
+           不夾的話靠邊的怪會顯示成「eton Soldier」這種讀到一半的名字。
+
+           夾的上界一定要用 rect.width（CSS 像素），不能用 cv.width。
+           t.x 在 push() 裡已經乘過縮放 s 了，是 CSS 座標；
+           而 cv.width 是畫布的內部像素（11 格 x 16px = 176）。
+           手機上畫布被放大到 393px 寬，拿 176 去夾 CSS 座標的結果是
+           **每一個名牌都被壓到畫面左半邊** —— 樓梯在最右邊，
+           「下樓」卻貼在主角旁邊。使用者截圖回報的就是這個。
+           桌機看不出來：那裡 rect.width 跟 cv.width 剛好接近。 */
         const halfW = t.w / 2 + 2;
-        el.style.left = Math.max(halfW, Math.min(cv.width - halfW, t.x)) + 'px';
-        el.style.top  = t.y + 'px';
+        el.style.left = Math.max(halfW, Math.min(rect.width - halfW, t.x)) + 'px';
+        el.style.top  = Math.max(0, Math.min(rect.height - 14, t.y)) + 'px';
         el.style.display = '';
       }
     }

@@ -35,6 +35,7 @@ jobs:
           node web/connect.js
           node web/items.js
           node web/i18n.js
+          node web/music.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
