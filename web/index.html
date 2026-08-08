@@ -339,11 +339,18 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   display:grid; grid-template-columns:repeat(3,var(--k)); grid-template-rows:repeat(3,var(--k));
   gap:4px;
 }
+/* S 疊在 B 上面、A 靠右佔滿兩排。
+   排成一橫排的話手把會多吃 1.05k 的寬度，窄框上又會撞回十字鍵；
+   疊起來則寬度完全不變。 */
 #ab{
   right:max(16px, env(safe-area-inset-right));
   bottom:max(30px, calc(env(safe-area-inset-bottom) + 16px));
-  display:grid; grid-template-columns:auto auto; gap:12px; align-items:end;
+  display:grid; grid-template-columns:auto auto; grid-template-rows:auto auto;
+  gap:17px 12px; align-items:end; justify-items:center;   /* 直向留白要放得下 S 的小標籤 */
 }
+#btnS{grid-column:1; grid-row:1}
+#btnB{grid-column:1; grid-row:2}
+#btnA{grid-column:2; grid-row:1 / span 2; align-self:end}
 #pad button{
   font-family:var(--mono); color:rgba(244,236,218,.96);
   background:rgba(20,17,14,.55); border:1px solid rgba(201,151,63,.55);
@@ -379,6 +386,12 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border-color:rgba(201,151,63,.75); background:rgba(201,151,63,.24);
 }
 #btnB{border-color:rgba(168,60,50,.6); background:rgba(168,60,50,.2); color:#f0c4bd; margin-bottom:14px}
+#btnS{
+  width:calc(var(--k)*.95); height:calc(var(--k)*.95); font-size:calc(var(--k)*.32);
+  border-color:rgba(122,168,214,.6); background:rgba(91,134,184,.22); color:#cfe2f5;
+}
+/* 有技能點沒分配、或有技能可以用，S 就呼吸一下 */
+#btnS.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s ease-in-out infinite}
 #padhint{
   position:absolute; left:50%; transform:translateX(-50%);
   bottom:max(12px, env(safe-area-inset-bottom));
@@ -827,6 +840,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
           <button class="dg" data-dir="1,1"   aria-label="右下">↘</button>
         </div>
         <div id="ab">
+          <button id="btnS" data-lbl="技能" aria-label="技能">S</button>
           <button id="btnB" data-lbl="背包·地圖" aria-label="背包／地圖／取消">B</button>
           <button id="btnA" data-lbl="確定" aria-label="確定">A</button>
         </div>
@@ -855,7 +869,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
         <div id="aimlbl">選擇方向</div>
       </div>
       <div id="card"><b id="cardf">B1F</b><em id="cardz">苔濕迴廊</em><i id="cards">MOSSFALL GALLERY</i></div>
-      <div id="hint">用<b>十字鍵</b>走　·　<b>A</b> 確定　·　<b>B</b> 取消</div>
+      <div id="hint">十字鍵走　·　中央<b>長按休息</b>　·　<b>A</b> 確定　<b>B</b> 取消　<b>S</b> 技能</div>
       <div id="over">
         <div>
           <h3 id="otitle">你倒下了</h3>
@@ -1277,17 +1291,32 @@ for(const k in SPR) atlas[k] = bake(SPR[k]);
 
    共用剪影是刻意的 —— 玩家要先認出「這是同一族」，再分辨是誰。
    剪影一致、顏色分派，順序不能反過來。 */
+/* 上下要一眼分得出來。舊剪影是「上下對稱的橢圓 + 最寬的一排在正中間」，
+   腳只是身體下緣兩根暗色短柱 —— 暗色在暗色描邊旁邊等於沒有畫。
+   於是整隻生物讀起來上下顛倒：中間那排側鰭看起來才像張開的腳。
+
+   三個修正，缺一不可：
+   1. 頂緣收窄成圓頂，底緣維持寬 —— 重心壓到下面
+   2. 最寬的側鰭從 y7 移到 y8–9，也就是身體的下半
+   3. 四隻腳寫進剪影本身，讓自動描邊替每一隻畫外框，
+      中間那道 2px 的空隙把前腳與後腳分開 */
 const BLOB_BODY = [
+  [2,5,6],                                  // 圓頂
   [3,4,8],
   [4,3,10],[5,3,10],[6,3,10],
-  [7,1,14],[8,1,14],
-  [9,3,10],[10,3,10],[11,3,10],
+  [7,2,12],
+  [8,1,14],[9,1,14],                        // 側鰭：最寬的一排在下半
+  [10,2,12],[11,2,12],
+  [12,2,2],[12,5,2],[12,9,2],[12,12,2],     // 四隻腳
+  [13,2,2],[13,5,2],[13,9,2],[13,12,2],
 ];
 const BLOB_CHILD = [
-  [5,5,6],
-  [6,4,8],[7,4,8],
-  [8,2,12],[9,2,12],
-  [10,4,8],[11,4,8],
+  [4,6,4],
+  [5,5,6],[6,4,8],
+  [7,3,10],[8,3,10],
+  [9,4,8],[10,4,8],
+  [11,4,2],[11,7,2],[11,10,2],
+  [12,4,2],[12,7,2],[12,10,2],
 ];
 /* 六頂帽子＝六種職業。帽子畫在頭頂那一排，剪影要一眼分得出來 —— 
    職業是靠帽子辨識的，帽子長得像就等於職業長得像。 */
@@ -1318,24 +1347,27 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
   const m = shapeMask(child ? BLOB_CHILD : BLOB_BODY);
   paintMask(x, m, PAL[body], PAL[dark], null, 99);
 
-  const ey = child ? 8 : 7, ex1 = child ? 5 : 5, ex2 = child ? 9 : 9;
+  // 眼睛放在身體的上三分之一。放在正中間的話，眼睛會跟最寬的那一排
+  // 對齊，整隻生物就失去上下的方向感。
+  // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
+  const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
   px(x,PAL[dark],ex1,ey,2,2); px(x,PAL[dark],ex2,ey,2,2);
   if(child){ px(x,PAL['6'],ex1,ey,1,1); px(x,PAL['6'],ex2,ey,1,1); }   // 小孩眼睛有光
 
-  // 腳：四根短柱，比身體暗一階
-  const ly = child ? 12 : 12, lh = child ? 1 : 2;
-  for(const lx of (child ? [5,7,9,10] : [4,6,9,11])) px(x,PAL[dark],lx,ly,1,lh);
+  // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
+  const ly = child ? 11 : 12;
+  for(const lx of (child ? [5,8,11] : [3,6,10,13])) px(x,PAL[dark],lx,ly,1,2);
 
-  px(x,PAL['6'],child?5:4,child?6:4,1,1);                              // 左上受光
+  px(x,PAL['6'],child?5:4,child?5:3,1,1);                              // 左上受光
 
   if(age === 'old'){                                                    // 老人：白鬍與垂眼
-    px(x,PAL['6'],6,10,4,1); px(x,PAL['6'],5,11,6,1);
-    px(x,PAL[dark],5,11,1,1); px(x,PAL[dark],10,11,1,1);
+    px(x,PAL['6'],6,9,4,1); px(x,PAL['6'],5,10,6,1);
+    px(x,PAL[dark],5,10,1,1); px(x,PAL[dark],10,10,1,1);
     px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
   }
   if(star){
     // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
-    const sy = 10;
+    const sy = 9;
     px(x,PAL['+'],7,sy-1,2,1);
     px(x,PAL['+'],6,sy,4,1);
     px(x,PAL['+'],7,sy+1,2,1);
@@ -1852,7 +1884,8 @@ loadVillage();
    只算深度的話，衝樓梯是最優解，探索與轉職就沒有意義了。 */
 function runScore(){
   const p = G.p;
-  const ident = Object.keys(G.known).length;
+  // 只算草藥 —— 杖／卷軸／壺開局就是已知的，算進去等於每個人白拿 22×30 分
+  const ident = Object.keys(G.known).filter(k => k.startsWith('herb/')).length;
   const learned = Object.keys(p.learned).length;
   return G.depth*120 + p.lv*50 + Math.floor(p.gold/4) + ident*30 + learned*80;
 }
@@ -1904,9 +1937,18 @@ function newGame(seed){
     const idx = rng.shuffle([...LOOK[k].keys()]);
     KIND[k].forEach((d,i)=> look[k+'/'+d.id] = idx[i]);
   }
+  /* 杖／卷軸／壺一開始就叫得出真名。
+     「猜猜這根杖是什麼」在 1993 年是核心樂趣，因為當時玩家有的是時間；
+     現在它主要的效果是「不敢用」—— 玩家把整背包的未知道具帶到死為止。
+     外觀（哪一根杖長什麼樣）還是每局重洗，所以圖示依然有變化，
+     只是名字不再是謎題。
+     草藥留著盲喝：它便宜、可再取得，賭一口才是真的有得選。 */
+  const known = {};
+  for(const k of ['wand','scroll','pot'])
+    KIND[k].forEach(d => known[k+'/'+d.id] = 1);
   G = {
     rng, seed, depth:1, turn:0, over:false,
-    look, known:{}, notes:{},
+    look, known, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
         hat:null, job:'none', jp:{}, learned:{}, slots:[null,null,null,null], mastered:{},
@@ -2089,6 +2131,10 @@ function buildFloor(){
     spawnMon(md, p.x, p.y); n--;
     if(md.pack){ for(let k=0;k<md.pack && n>0;k++){ const q=free(0); if(!q) break; spawnMon(md,q.x,q.y); n--; } }
   }
+  // 這一層的基準怪數與進來的時刻 —— 滯留太久要拿它當倍數的基準
+  G.f.baseMons = G.mons.length;
+  G.f.enterAt = Date.now();
+  G.f.surge = 0;
   // 隱藏商店：三層以後偶爾出現。守門店員站在唯一的出入口上，
   // 所以「偷了就跑」不是速度問題，是要不要繞過他的問題。
   if(G.depth >= 3 && rng.chance(.24)){
@@ -2413,8 +2459,75 @@ function endTurn(){
 
   G.turn++;
   vision();
+  dwellCheck();
   if(p.hp<=0) death();
   refresh();
+}
+
+/* ═══ 原地休息 ═══════════════════════════════════════════════
+   長按十字鍵中央就一直休息。回體力，但吃掉的飽足度是走路的四倍 ——
+   所以「在安全的地方把血養回來」永遠是拿糧食換的，不是免費的。
+   看到怪就自動停：休息到一半被咬死，玩家會覺得是介面害的，而且他是對的。 */
+const REST_SAT = 4;                       // 飽足消耗倍率
+function monInSight(){
+  return G.mons.some(m => m.hp > 0 && G.seen[key(m.x,m.y)] === 2);
+}
+function restStep(){
+  const p = G.p;
+  if(G.over) return false;
+  if(monInSight()){ say('附近有動靜 —— 沒辦法休息。','bad'); return false; }
+  if(p.hp >= p.mhp && p.mp >= p.mmp){ say('已經完全恢復了。','good'); return false; }
+  if(p.sat <= 0){ say('肚子太餓了，休息不了。','bad'); return false; }
+  // 額外回復：休息一回合抵得上好幾回合的自然回復
+  p.regen += p.mhp * 3;
+  p.mregen += 260;
+  p.sat = Math.max(0, p.sat - Math.floor(100 * (REST_SAT - 1)));
+  G.resting = 1;
+  endTurn();
+  G.resting = 0;
+  return !G.over && p.hp < p.mhp;
+}
+
+/* ═══ 樓層滯留：待太久，怪就變多 ═══════════════════════════════
+   原因很簡單：這款遊戲的所有張力都來自「補給有限」，
+   而「在安全樓層無限刷怪練級」會把那個張力整個抽掉。
+   五分鐘 1.5 倍、十五分鐘 2 倍 —— 而且新怪生在你看不見的房間裡，
+   所以你會先聽到訊息，再遇到牠們。 */
+const DWELL = [[300000, 1.5, '空間開始扭曲 —— 有東西被引過來了。'],
+               [900000, 2.0, '這一層已經不歡迎你了。大量的氣息從四面湧來。']];
+function dwellCheck(){
+  if(!G.f || !G.f.enterAt) return;
+  const el = Date.now() - G.f.enterAt;
+  for(let i = G.f.surge|0; i < DWELL.length; i++){
+    const [ms, mult, line] = DWELL[i];
+    if(el < ms) break;
+    G.f.surge = i + 1;
+    const want = Math.round((G.f.baseMons||4) * mult);
+    surgeTo(want);
+    say(line, 'bad');
+    SFX.play('trap');
+  }
+}
+function surgeTo(want){
+  let need = want - G.mons.length;
+  if(need <= 0) return;
+  // 只生在「玩家現在看不到」的地方，而且優先放在房間裡 ——
+  // 憑空出現在眼前是作弊，出現在隔壁房間才是壓力。
+  const spots = [];
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    if(!walkable(x,y) || G.seen[key(x,y)]===2 || monAt(x,y)) continue;
+    if(x===G.p.x && y===G.p.y) continue;
+    if(G.shop && roomOf(x,y) === G.shop.room) continue;       // 店裡不生怪
+    spots.push({x,y, room: roomOf(x,y) >= 0});
+  }
+  if(!spots.length) return;
+  spots.sort((a,b)=> (b.room?1:0) - (a.room?1:0));
+  const pool = spots.slice(0, Math.max(need*3, 12));
+  while(need-- > 0 && pool.length){
+    const s = pool.splice(G.rng.i(0, pool.length-1), 1)[0];
+    const md = G.rng.weight(MONS, m => (G.depth>=m.fl[0] && G.depth<=m.fl[1]) ? m.w : 0);
+    if(md) spawnMon(md, s.x, s.y);
+  }
 }
 
 /* ─── 怪物 AI：三種行為模式 ─────────────────────────────────── */
@@ -4010,14 +4123,18 @@ function fitCanvas(){
   const maxW = Math.floor((innerHeight - top - padH - tick) * VW / VH);
   wrap.style.margin = '0 auto';
   wrap.style.maxWidth = (maxW > 240 && maxW < innerWidth) ? maxW + 'px' : '';
-  fitPad(wrap.clientWidth || innerWidth);
+  fitPad(wrap.clientWidth || innerWidth, padH);
 }
 /* 手把佔的橫向寬度：左緣 12 ＋ 十字（3k+8）＋ 中間留白 10 ＋ AB（2.85k+12）＋ 右緣 14。
    解出 k 就是「這個寬度塞得下的最大按鍵」。以前是寫死 46px，
    框一變窄就換成十字鍵與 B 鍵互相重疊 —— 按鍵重疊比按鍵小更難用。 */
-function fitPad(w){
+function fitPad(w, zone){
   const pad = $('pad'); if(!pad || !pad.style.setProperty) return;
-  const k = Math.max(30, Math.min(52, Math.floor((w - 56) / 5.85)));
+  const byW = (w - 56) / 5.85;
+  // 高度也要管：十字是 3k+8 高，S/B/A 那一疊是 2.25k+6 高。
+  // 只看寬度的話，矮螢幕上手把會從專屬區往上長，蓋掉半個房間。
+  const byH = zone ? (zone - 20) / 3 : 99;
+  const k = Math.max(28, Math.min(52, Math.floor(Math.min(byW, byH))));
   pad.style.setProperty('--k', k + 'px');
 }
 function fitViewport(){
@@ -4092,6 +4209,7 @@ function refresh(){
   $('mp').textContent = `${p.mp}/${p.mmp}`;
   $('mpbar').firstElementChild.style.width = Math.max(0,100*p.mp/Math.max(1,p.mmp))+'%';
   $('magbtn').classList.toggle('ping', p.sp > 0);
+  $('btnS').classList.toggle('ping', p.sp > 0);
 
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
@@ -4609,9 +4727,46 @@ let pressB = ()=>{};
     for(const e of ['pointerup','pointercancel','lostpointercapture'])
       b.addEventListener(e, release);
   }
-  $('padwait').addEventListener('pointerdown', ev=>{
+  /* 中央鍵：點一下＝待機一回合，長按＝一直休息。
+     兩者用同一顆鍵是刻意的 —— 「原地不動」本來就是同一件事，
+     差別只在做幾次。按住 340ms 才進入休息，避免點一下就開始耗糧。 */
+  (function centre(){
+    const b = $('padwait');
+    let hold = null, loop = null, rested = false;
+    const stop = ()=>{
+      if(hold){ clearTimeout(hold); hold = null; }
+      if(loop){ clearInterval(loop); loop = null; }
+      b.classList.remove('on');
+      if(rested){ say('停止休息。'); refresh(); }
+      rested = false;
+    };
+    b.addEventListener('pointerdown', ev=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(!live()) return;
+      b.setPointerCapture && b.setPointerCapture(ev.pointerId);
+      SFX.unlock(); BGM.start();
+      endTurn();                              // 第一下永遠是「待機一回合」
+      hold = setTimeout(()=>{
+        if(!live()) return;
+        rested = true; b.classList.add('on');
+        say('原地休息中……（消耗飽足度）','gold');
+        loop = setInterval(()=>{
+          if(!live() || !restStep()){ stop(); refresh(); }
+        }, 70);
+      }, 340);
+    });
+    for(const e of ['pointerup','pointercancel','lostpointercapture'])
+      b.addEventListener(e, stop);
+  })();
+
+  /* S＝技能。以前只能從選單裡翻出「魔法」那一頁 ——
+     技能是每一場戰鬥都要按的東西，不該藏在兩層之後。 */
+  $('btnS').addEventListener('pointerdown', ev=>{
     ev.preventDefault(); ev.stopPropagation();
-    if(live()) endTurn();
+    if(!live()) return;
+    SFX.play('open');
+    panelMode === 'magic' ? closePanel() : openPanel('magic');
+    refresh();
   });
 
   /* A＝確定：看情況做「現在最該做的那件事」。
@@ -4708,9 +4863,11 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     if(a==='tags') toggleTags();
     if(a==='mute') toggleMute();
     if(a==='help'){
-      say('畫面上的十字鍵可按住連走，中央圓點＝待機。','gold');
+      say('畫面上的十字鍵可按住連走。中央圓點：點一下＝待機，長按＝原地休息。','gold');
+      say('休息會一直回體力與魔力，但飽足度掉得是走路的四倍，看到怪就自動停。','gold');
       say('A＝確定：站樓梯上就下樓、腳下有東西就直接撿（背包滿了會往前拋開）','gold');
-      say('B＝取消（關視窗、退出瞄準）　G 鍵開腳下選單可以不撿起直接使用','gold');
+      say('B＝取消（關視窗、退出瞄準）　S＝技能與魔法　G 鍵開腳下選單可不撿起直接用','gold');
+      say('同一層待超過 5 分鐘怪會變 1.5 倍、15 分鐘變 2 倍 —— 別在一層磨太久。','bad');
       say('鍵盤：方向鍵/WASD 移動　QEZC 斜向　G 腳下　I 背包　K 魔法　> 下樓','gold');
       say('L 名稱標籤　M 音效　Esc 取消　右側是樓層圖','gold');
       refresh();

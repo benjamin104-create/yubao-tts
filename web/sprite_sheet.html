@@ -216,38 +216,64 @@ for(const h of HAT) JOB_NM[h.job] = h.jobnm;
 
 const JP_TIER = 40;                 // 第二個技能需要的 JP
 /* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
+/* ── 技能的魔力代價：規則本身就是設計說明 ──────────────────────
+   t='atk' 攻擊型 / t='def' 防禦輔助型 —— 依強弱扣固定量，強的貴
+   t='pass'      被動型 —— 不扣魔力。裝進格子就一直生效，不能「發動」
+   t='esc' 逃跑 / t='rev' 復活 —— 最後一張牌。一次抽走大半甚至全部魔力，
+                  所以它救得了你一次，救不了你第二次
+   mpPct：扣掉「最大魔力的百分比」　mpAll：清空，且魔力低於一半時發不動 */
 const ABIL = [
-  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       mp:5, k:'melee',  desc:'對面前的敵人重擊'},
-  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, mp:4, k:'self',   desc:'5 回合內傷害減半'},
-  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       mp:6, k:'blast',  desc:'命中後炸開一圈'},
-  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, mp:0, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
-  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       mp:5, k:'self',   desc:'回復體力並解除異常'},
-  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
-  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
-  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, mp:4, k:'self',   desc:'10 回合內速度加倍'},
-  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       mp:4, k:'beam',   desc:'直線貫穿所有敵人'},
-  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, mp:5, k:'self',   desc:'揭露整層地圖'},
-  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       mp:5, k:'around', desc:'攻擊周圍所有敵人'},
-  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, mp:0, k:'self',   desc:'體力越低攻擊越高，持續 12 回合'},
+  {job:'war', id:'smash',  nm:'渾身一擊', jp:0,       t:'atk',  mp:5, k:'melee',  desc:'對面前的敵人重擊'},
+  {job:'war', id:'guard',  nm:'堅守',     jp:JP_TIER, t:'def',  mp:4, k:'self',   desc:'5 回合內傷害減半'},
+  {job:'blk', id:'blast',  nm:'爆裂',     jp:0,       t:'atk',  mp:8, k:'blast',  desc:'命中後炸開一圈'},
+  {job:'blk', id:'drain',  nm:'汲取',     jp:JP_TIER, t:'atk',  mp:3, k:'melee',  desc:'吸取面前敵人的體力轉成魔力'},
+  {job:'wht', id:'mend',   nm:'療傷',     jp:0,       t:'def',  mp:5, k:'self',   desc:'回復體力並解除異常'},
+  {job:'wht', id:'ward',   nm:'結界',     jp:JP_TIER, t:'def',  mp:6, k:'self',   desc:'8 回合內免疫狀態異常'},
+  {job:'thf', id:'steal',  nm:'偷取',     jp:0,       t:'atk',  mp:3, k:'melee',  desc:'從面前的敵人身上偷東西'},
+  {job:'thf', id:'dash',   nm:'疾走',     jp:JP_TIER, t:'esc',  mpPct:.6, k:'self', desc:'10 回合內速度加倍（逃跑用，代價極高）'},
+  {job:'hnt', id:'pierce', nm:'貫穿射',   jp:0,       t:'atk',  mp:6, k:'beam',   desc:'直線貫穿所有敵人'},
+  {job:'hnt', id:'survey', nm:'鷹眼',     jp:JP_TIER, t:'def',  mp:5, k:'self',   desc:'揭露整層地圖'},
+  {job:'ber', id:'ramp',   nm:'亂舞',     jp:0,       t:'atk',  mp:7, k:'around', desc:'攻擊周圍所有敵人'},
+  {job:'ber', id:'rage',   nm:'血怒',     jp:JP_TIER, t:'pass', mp:0, k:'self',   desc:'被動：體力越低攻擊越高（最多 1.8 倍）'},
 ];
 /* 五系奧義：該系練到 10 級才會出現，一攻一輔。
    解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
    格子不會變多，所以「練哪一系」跟「帶哪四個」是兩個獨立的取捨。 */
 const MASTER = [
-  {sc:'heal', id:'m_judge', nm:'聖光審判', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
-  {sc:'heal', id:'m_revive',nm:'復甦之息', mp:12, k:'self',  desc:'體力全滿並解除所有異常'},
-  {sc:'bolt', id:'m_smite', nm:'天雷殛',   mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
-  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
-  {sc:'fire', id:'m_pyre',  nm:'焚天',     mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
-  {sc:'fire', id:'m_core',  nm:'熔心',     mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
-  {sc:'aqua', id:'m_zero',  nm:'絕對零度', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
-  {sc:'aqua', id:'m_mirror',nm:'水鏡',     mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
-  {sc:'wind', id:'m_gale',  nm:'神風斬',   mp:13, k:'around',desc:'八方向同時貫穿'},
-  {sc:'wind', id:'m_shift', nm:'縮地',     mp:11, k:'self',  desc:'瞬間移動到本層樓梯'},
+  {sc:'heal', id:'m_judge', nm:'聖光審判', t:'atk', mp:14, k:'room',  desc:'視野內全體受審，你越傷越痛'},
+  {sc:'heal', id:'m_revive',nm:'復甦之息', t:'rev', mpAll:1, k:'self', desc:'體力全滿並解除所有異常（耗盡全部魔力）'},
+  {sc:'bolt', id:'m_smite', nm:'天雷殛',   t:'atk', mp:12, k:'beam',  desc:'直線貫穿並麻痺，威力極高'},
+  {sc:'bolt', id:'m_mail',  nm:'雷紋護體', t:'def', mp:10, k:'self',  desc:'15 回合內受擊反彈雷擊'},
+  {sc:'fire', id:'m_pyre',  nm:'焚天',     t:'atk', mp:15, k:'room',  desc:'視野內全體大傷並持續灼燒'},
+  {sc:'fire', id:'m_core',  nm:'熔心',     t:'def', mp:10, k:'self',  desc:'15 回合內攻擊力大幅提升'},
+  {sc:'aqua', id:'m_zero',  nm:'絕對零度', t:'atk', mp:14, k:'room',  desc:'視野內全體凍結並受傷'},
+  {sc:'aqua', id:'m_mirror',nm:'水鏡',     t:'def', mp:10, k:'self',  desc:'15 回合內免疫並反彈遠程'},
+  {sc:'wind', id:'m_gale',  nm:'神風斬',   t:'atk', mp:13, k:'around',desc:'八方向同時貫穿'},
+  {sc:'wind', id:'m_shift', nm:'縮地',     t:'esc', mpAll:1, k:'self', desc:'瞬間移動到本層樓梯（耗盡全部魔力）'},
 ];
 const ALL_ABIL = () => ABIL.concat(MASTER);
 const abilById = id => ALL_ABIL().find(a => a.id === id);
 const SLOTS = 4;
+
+/* 發動需要的魔力。被動不需要；抽乾型要求至少半條，
+   否則「剩 1 MP 也能瞬移逃走」會讓逃跑技能完全沒有代價。 */
+function abilCost(a, p){
+  if(a.t === 'pass') return 0;
+  if(a.mpAll) return Math.ceil(p.mmp * .5);
+  if(a.mpPct) return Math.ceil(p.mmp * a.mpPct);
+  return a.mp || 0;
+}
+function payAbil(a, p){
+  if(a.t === 'pass') return;
+  if(a.mpAll){ p.mp = 0; return; }
+  p.mp = Math.max(0, p.mp - abilCost(a, p));
+}
+const ABIL_T = {atk:'攻擊', def:'輔助', pass:'被動', esc:'逃跑', rev:'復活'};
+function costLabel(a, p){
+  if(a.t === 'pass') return '被動';
+  if(a.mpAll) return `全部 MP（需 ${abilCost(a,p)}）`;
+  return abilCost(a, p) + ' MP';
+}
 
 /* ─── 魔法：五系 + 技能點 ─────────────────────────────────────
    原本的成長只有「攻擊力變大」，那是一條沒有選擇的直線。
@@ -346,17 +372,32 @@ for(const k in SPR) atlas[k] = bake(SPR[k]);
 
    共用剪影是刻意的 —— 玩家要先認出「這是同一族」，再分辨是誰。
    剪影一致、顏色分派，順序不能反過來。 */
+/* 上下要一眼分得出來。舊剪影是「上下對稱的橢圓 + 最寬的一排在正中間」，
+   腳只是身體下緣兩根暗色短柱 —— 暗色在暗色描邊旁邊等於沒有畫。
+   於是整隻生物讀起來上下顛倒：中間那排側鰭看起來才像張開的腳。
+
+   三個修正，缺一不可：
+   1. 頂緣收窄成圓頂，底緣維持寬 —— 重心壓到下面
+   2. 最寬的側鰭從 y7 移到 y8–9，也就是身體的下半
+   3. 四隻腳寫進剪影本身，讓自動描邊替每一隻畫外框，
+      中間那道 2px 的空隙把前腳與後腳分開 */
 const BLOB_BODY = [
+  [2,5,6],                                  // 圓頂
   [3,4,8],
   [4,3,10],[5,3,10],[6,3,10],
-  [7,1,14],[8,1,14],
-  [9,3,10],[10,3,10],[11,3,10],
+  [7,2,12],
+  [8,1,14],[9,1,14],                        // 側鰭：最寬的一排在下半
+  [10,2,12],[11,2,12],
+  [12,2,2],[12,5,2],[12,9,2],[12,12,2],     // 四隻腳
+  [13,2,2],[13,5,2],[13,9,2],[13,12,2],
 ];
 const BLOB_CHILD = [
-  [5,5,6],
-  [6,4,8],[7,4,8],
-  [8,2,12],[9,2,12],
-  [10,4,8],[11,4,8],
+  [4,6,4],
+  [5,5,6],[6,4,8],
+  [7,3,10],[8,3,10],
+  [9,4,8],[10,4,8],
+  [11,4,2],[11,7,2],[11,10,2],
+  [12,4,2],[12,7,2],[12,10,2],
 ];
 /* 六頂帽子＝六種職業。帽子畫在頭頂那一排，剪影要一眼分得出來 —— 
    職業是靠帽子辨識的，帽子長得像就等於職業長得像。 */
@@ -387,24 +428,27 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0'}={}){
   const m = shapeMask(child ? BLOB_CHILD : BLOB_BODY);
   paintMask(x, m, PAL[body], PAL[dark], null, 99);
 
-  const ey = child ? 8 : 7, ex1 = child ? 5 : 5, ex2 = child ? 9 : 9;
+  // 眼睛放在身體的上三分之一。放在正中間的話，眼睛會跟最寬的那一排
+  // 對齊，整隻生物就失去上下的方向感。
+  // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
+  const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
   px(x,PAL[dark],ex1,ey,2,2); px(x,PAL[dark],ex2,ey,2,2);
   if(child){ px(x,PAL['6'],ex1,ey,1,1); px(x,PAL['6'],ex2,ey,1,1); }   // 小孩眼睛有光
 
-  // 腳：四根短柱，比身體暗一階
-  const ly = child ? 12 : 12, lh = child ? 1 : 2;
-  for(const lx of (child ? [5,7,9,10] : [4,6,9,11])) px(x,PAL[dark],lx,ly,1,lh);
+  // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
+  const ly = child ? 11 : 12;
+  for(const lx of (child ? [5,8,11] : [3,6,10,13])) px(x,PAL[dark],lx,ly,1,2);
 
-  px(x,PAL['6'],child?5:4,child?6:4,1,1);                              // 左上受光
+  px(x,PAL['6'],child?5:4,child?5:3,1,1);                              // 左上受光
 
   if(age === 'old'){                                                    // 老人：白鬍與垂眼
-    px(x,PAL['6'],6,10,4,1); px(x,PAL['6'],5,11,6,1);
-    px(x,PAL[dark],5,11,1,1); px(x,PAL[dark],10,11,1,1);
+    px(x,PAL['6'],6,9,4,1); px(x,PAL['6'],5,10,6,1);
+    px(x,PAL[dark],5,10,1,1); px(x,PAL[dark],10,10,1,1);
     px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
   }
   if(star){
     // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
-    const sy = 10;
+    const sy = 9;
     px(x,PAL['+'],7,sy-1,2,1);
     px(x,PAL['+'],6,sy,4,1);
     px(x,PAL['+'],7,sy+1,2,1);
