@@ -36,6 +36,11 @@ for(const lang of ['en', 'ja']){
   for(const d of T.HAT){
                           check(lang, 'hat.'  + d.id, T.locName('hat', d), d.nm);
                           check(lang, 'job.'  + d.job, T.locJob(d.job), d.jobnm);
+    /* 練滿職業拿到的永久被動。這張表漏了很久 —— 而且不是「沒翻」，
+       是畫面上寫著「只有中文版才顯示這一句」，於是英日文玩家練滿之後
+       遊戲一個字都不告訴他拿到了什麼。
+       靜態掃描抓不到（中文在變數裡，不在字面值裡），只有這裡驗得到。 */
+                          check(lang, 'mp.'   + d.job, T.locPassive(d.job), T.MASTER_PASSIVE[d.job]);
   }
   for(const a of T.ABIL){
                           check(lang, 'ab.'   + a.id, T.locAbil(a), a.nm);

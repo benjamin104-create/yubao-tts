@@ -78,6 +78,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, defOf, HALL_FROM, forgeCost,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
+  ' locPassive, MASTER_PASSIVE,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +
   ' ITEM_TABLES:[["herb",HERB],["scroll",SCROLL],["wand",WAND],["pot",POT],' +
   ' ["food",FOOD],["weap",WEAP],["shld",SHLD]]}' +

@@ -35,6 +35,10 @@ jobs:
           node web/connect.js
           node web/items.js
           node web/i18n.js
+          # 靜態掃：有沒有中文直接送到玩家眼前而沒有經過 TX()。
+          # 前面每一支多語言檢查都是「跑起來才掃得到」，
+          # 但施法、錢不夠、按開關這些路徑機器人跑不到 —— 這一支從原始碼掃。
+          node web/strings.js
           node web/music.js
           node web/save.js
           node web/msgs.js

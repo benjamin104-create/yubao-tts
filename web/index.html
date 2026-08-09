@@ -1450,6 +1450,12 @@ const jobRank = lv => lv >= JOB_MAX ? TX('ui.master','Master') : ('Lv' + lv);
 
 /* Master（職業 3 級）的永久被動。練滿之後不戴帽子也生效 ——
    那是「這個職業我已經是它了」的意思。 */
+/* 練滿一個職業拿到的永久被動。這張表原本只有中文，而且畫面上寫著
+   `LANG === 'zh' ? ... : ''` —— 也就是說英文與日文的玩家練滿之後，
+   遊戲一個字都不會告訴他拿到了什麼。那不是「省略」，是漏翻。
+   靜態掃描抓不到這一類（中文在變數裡，不在字面值裡），
+   所以 web/i18n.js 現在把這張表也一起逐條驗。 */
+const locPassive = job => TX('mp.' + job, MASTER_PASSIVE[job] || '');
 const MASTER_PASSIVE = {
   war: '防禦力 +3',
   brd: '每回合微量回復魔力',
@@ -1891,6 +1897,27 @@ s.163|The {pot} hits the ground and shatters.|{pot}は じめんに あたって
 s.164|{n} items spill out across the floor.|なかみ {n}こが ゆかに ちらばった。
 s.165|Everything inside the pot broke.|つぼの なかみは すべて こわれた。
 s.166|The pain jolts you awake!|いたみで めが さめた！
+s.167|You are already at full strength.|たいりょくは もう まんタンだ。
+s.168|The requiem puts {n} enemies to sleep.|レクイエムが てき {n}たいを ねむらせた。
+s.169|They are unmoved.|かれらには きかなかった。
+m.jobpassive| —— {p} (permanent)| —— {p}（えいぞく）
+k.poor|Not enough money.|おかねが たりない。
+ui.starving|STARVING!|くうふく！
+ui.on|On|オン
+ui.off|Off|オフ
+ui.tagsw|Name tags: {v}|なまえふだ：{v}
+ui.sfxsw|Sound: {v}|おと：{v}
+mp.war|Defence +3|ぼうぎょ +3
+mp.brd|Regain a little MP each turn|まいターン MPが すこし かいふく
+mp.red|All skills cost 1 less MP|すべての わざの MPしょうひ -1
+mp.sum|Summons last 50% longer|げんじゅうの じぞくターン +50%
+mp.wht|Natural regeneration doubled|しぜんかいふくが 2ばい
+mp.hnt|Sight +2|しかい +2
+mp.nin|Traps never trigger under you|トラップを ふまなくなる
+mp.oni|Regain a little HP on each kill|てきを たおすと HPが すこし かいふく
+mp.sor|Max MP +20%|さいだいMP +20%
+p.dir2|Choose a direction|ほうこうを えらぶ
+p.dpad|　(D-pad)|　（じゅうじキー）
 m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
 m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
 m.pierce|The spear runs through - {nm} is hit too.|やりが つらぬいた —— {nm}にも あたった。
@@ -5727,8 +5754,11 @@ function jobLevelUp(){
   SFX.play('level');
   burst(p.x, p.y, 24, '#f5dc7a', 46, 24, .9);
   if(rec.lv >= JOB_MAX){
+    /* Master 的永久被動要講出來。本來寫成「只有中文版才附這一句」，
+       但那不是設計，是英日文沒寫 —— 練滿一個職業卻不告訴你拿到了什麼，
+       換成哪一種語言都一樣糟。 */
     say(M('m.jobmaster','★★ {nm}　達到 Master',{nm:locJob(p.job)}) +
-        (LANG === 'zh' ? ` —— ${MASTER_PASSIVE[p.job]}（永久生效）` : ''),'gold');
+        M('m.jobpassive',' —— {p}（永久生效）',{p:TX('mp.' + p.job, MASTER_PASSIVE[p.job])}),'gold');
     float(p.x, p.y, 'MASTER', '#f5dc7a');
   } else {
     say(M('m.jobup','★ {nm}　職業等級 {n}。',{nm:locJob(p.job),n:rec.lv}),'gold');
@@ -6028,7 +6058,7 @@ function doSpell(sp, dx, dy){
     case 'cure': {
       const h = Math.min(power(p, sp, 18, 12), p.mhp - p.hp);
       p.hp += h; burst(p.x,p.y,14,'#6a8f4a',30,14);
-      say(h ? `恢復了 ${h} 點體力。` : '體力已經是滿的。', h?'good':null);
+      say(h ? M('s.035','恢復了 {v0} 點體力。',{v0:h}) : TX('s.167','體力已經是滿的。'), h?'good':null);
       if(h) float(p.x,p.y,'+'+h,'#6a8f4a');
       break;
     }
@@ -6131,7 +6161,7 @@ function doAbil(a, dx, dy){
       let n = 0;
       for(const m of list){ if(!m.d.boss){ m.st['睡'] = G.rng.i(6,10); n++; } }
       burst(p.x,p.y,20,'#7cb8ea',44,10,.7);
-      say(n?`安魂曲讓 ${n} 個敵人睡去。`:'牠們不為所動。', n?'good':null); break;
+      say(n ? M('s.168','安魂曲讓 {n} 個敵人睡去。',{n}) : TX('s.169','牠們不為所動。'), n?'good':null); break;
     }
     case 'anthem': p.st['歌'] = 12; say(TX('s.073','戰意之歌響起 —— 攻擊力提升。'),'good'); break;
 
@@ -6209,7 +6239,7 @@ function doAbil(a, dx, dy){
       const k0 = Object.keys(p.st).filter(k=>k!=='守'&&k!=='怒'&&k!=='界');
       if(k0.length) delete p.st[k0[0]];
       burst(p.x,p.y,14,'#6a8f4a',30,14);
-      say(h?`恢復了 ${h} 點體力。`:'體力已滿。', h?'good':null); break;
+      say(h ? M('s.035','恢復了 {v0} 點體力。',{v0:h}) : TX('s.167','體力已經是滿的。'), h?'good':null); break;
     }
     case 'ward': p.st['界'] = 8; say(TX('s.087','身周浮現了結界。'),'good'); break;
     case 'pierce': {
@@ -6378,7 +6408,7 @@ function keeperReclaim(){
 }
 function payBill(){
   const p = G.p, total = billTotal();
-  if(p.gold < total){ keeperSay('錢不夠。', 'bad'); return false; }
+  if(p.gold < total){ keeperSay(TX('k.poor','錢不夠。'), 'bad'); return false; }
   p.gold -= total;
   for(const it of unpaid()){ delete it.shop; delete it.price; delete it.spot; it.known = 1; }
   SFX.play('coin');
@@ -7981,7 +8011,7 @@ function refresh(){
   $('hpbar').firstElementChild.style.width = Math.max(0,100*p.hp/p.mhp)+'%';
   $('hp').className = p.hp/p.mhp<=.25 ? 'crit' : (p.hp/p.mhp<=.5?'warn':'');
   const fp = p.sat/p.msat;
-  $('full').textContent = p.sat<=0 ? '飢餓！' : (p.sat/1000).toFixed(0)+'%';
+  $('full').textContent = p.sat<=0 ? TX('ui.starving','飢餓！') : (p.sat/1000).toFixed(0)+'%';
   $('full').className = p.sat<=0?'crit':(fp<=.3?'warn':'');
   $('fullbar').firstElementChild.style.width = Math.max(0,100*fp)+'%';
   $('mp').textContent = `${p.mp}/${p.mmp}`;
@@ -8136,7 +8166,7 @@ function renderPanel(){
       const nextA = ABIL.find(a => a.job===p.job && a.lv === rec.lv+1);
       jh.textContent = `${TX('ui.job','職業')}　${locJob(p.job)}　${jobRank(rec.lv)}`
         + (rec.lv >= JOB_MAX
-            ? (LANG === 'zh' ? `　—　${MASTER_PASSIVE[p.job]}` : '')
+            ? '　—　' + locPassive(p.job)
             : M('p.jobprog','　升級進度 {a}/{p}',{a:rec.prog,p:JOB_PER_LV})
               + (nextA ? M('p.jobnext','　（下一個：{nm}）',{nm:locAbil(nextA)})
                        : TX('p.jobmax','　（下一級：Master）')));
@@ -8530,7 +8560,8 @@ const KEYDIR = {
 function openAim(label){
   const el = $('aim'); if(!el) return;
   const padOn = $('pad').classList.contains('show');
-  $('aimlbl').textContent = (label || '選擇方向') + (padOn ? '　（十字鍵）' : '');
+  $('aimlbl').textContent = (label || TX('p.dir2','選擇方向'))
+                          + (padOn ? TX('p.dpad','　（十字鍵）') : '');
   el.classList.toggle('lite', padOn);
   el.classList.add('show');
 }
@@ -8553,12 +8584,12 @@ addEventListener('pointerdown', ()=>{ SFX.unlock(); BGM.start(); }, {once:true})
 function toggleTags(){
   tagsOn = !tagsOn;
   SFX.play('open');
-  say(tagsOn ? '顯示名稱：開' : '顯示名稱：關','gold');
+  say(M('ui.tagsw','顯示名稱：{v}',{v:TX(tagsOn?'ui.on':'ui.off', tagsOn?'開':'關')}),'gold');
   refresh();
 }
 function toggleMute(){
   const on = SFX.toggle();
-  say(on ? '音效：開' : '音效：關','gold');
+  say(M('ui.sfxsw','音效：{v}',{v:TX(on?'ui.on':'ui.off', on?'開':'關')}),'gold');
   refresh();
 }
 
