@@ -160,17 +160,18 @@ body{
   border:1px solid var(--edge); letter-spacing:.06em;
 }
 #pname:focus{outline:none; border-color:var(--brass)}
-#skins, #cols{display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-width:260px}
-#skins button, #cols button{
-  width:30px; height:30px; padding:0; border:1px solid var(--edge);
+/* 封面上只有「顏色」一排。曾經還有一排選體型（史萊姆／貓／鳥／……），
+   但那讓開場第一個畫面變成一張角色創建表 —— 玩家還不知道這是什麼遊戲，
+   就先被要求做兩個決定。顏色一排夠了：它同樣是「這是我」，而且一眼選完。
+   體型的資料還留著（BLOB_SKINS），只是不再擺在門口問人。 */
+#cols{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:260px}
+#cols button{
+  width:34px; height:34px; padding:0; border:1px solid var(--edge);
   background:transparent; touch-action:manipulation;
 }
-#skins button canvas, #cols button canvas{
-  width:24px; height:24px; image-rendering:pixelated; display:block; margin:auto}
-#skins button.on, #cols button.on{border-color:var(--brass); background:rgba(201,151,63,.16)}
-/* 造型那一排大一點：它決定的是「這是誰」，比顏色重要 */
-#skins button{width:36px; height:36px}
-#skins button canvas{width:30px; height:30px}
+#cols button canvas{
+  width:28px; height:28px; image-rendering:pixelated; display:block; margin:auto}
+#cols button.on{border-color:var(--brass); background:rgba(201,151,63,.16)}
 
 /* ── 選單：手機上把側欄與控制列全部收進來 ──
    手機的垂直空間裡，遊戲畫面本來只佔 30%，其餘全是介面。
@@ -642,7 +643,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   text-align:center;
 }
 #village.show{display:flex}
-#vfolk{display:flex; gap:6px; justify-content:center}
+/* 村莊的場景。地牢有天空與雲了，村莊卻只有一排村民站在漸層前面 ——
+   那讀起來是「一個選單」，不是「一個地方」。 */
+#vscene{
+  width:min(100%,420px); height:auto; image-rendering:pixelated;
+  display:block; margin:0 auto -14px; border-radius:2px;
+}
+#vfolk{display:flex; gap:6px; justify-content:center; position:relative}
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
 #vfolk canvas:nth-child(odd){animation:bob 3.1s ease-in-out infinite}
 #vfolk canvas:nth-child(even){animation:bob 2.6s ease-in-out infinite .4s}
@@ -656,6 +663,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   text-shadow:0 0 22px rgba(217,119,87,.5);
 }
 .vhead p{margin:0; font-size:12.5px; color:#cbbca0; line-height:1.7}
+/* 村民說的話。用引號與縮排跟系統訊息分開 —— 這一行是「有人對你說話」，
+   不是「遊戲告訴你狀態」，兩者混在一起村莊就只是個結算畫面。 */
+#vtalk{
+  margin-top:8px; max-width:32ch; font-size:12.5px; line-height:1.8;
+  color:#f0d9a8; border-left:2px solid var(--brass-dim); padding-left:10px;
+  text-align:left;
+}
+#vtalk:empty{display:none}
+#vtalk b{color:var(--brass); font-weight:600}
 .vgold{
   font-family:var(--mono); font-size:12px; color:var(--parch-dim);
   border:1px solid var(--edge); padding:6px 14px;
@@ -680,9 +696,11 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .vbtns{
   position:sticky; bottom:0; z-index:2;
   display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
-  margin-top:auto; padding:10px 0 calc(4px + env(safe-area-inset-bottom));
+  margin-top:auto; padding:16px 0 calc(6px + env(safe-area-inset-bottom));
   width:100%;
-  background:linear-gradient(180deg, rgba(13,10,8,0), rgba(13,10,8,.94) 38%);
+  /* 不透明的漸層要夠深、夠早。半透明的話商店那幾列會從按鍵底下透出來，
+     兩層字疊在一起 —— 那比按鍵看不到還糟。 */
+  background:linear-gradient(180deg, rgba(13,10,8,0), rgba(13,10,8,.97) 30%, #0d0a08 60%);
 }
 .vbtns button{min-height:46px}
 #over button + button{margin-left:8px}
@@ -862,7 +880,6 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div id="coverfoot">
       <div id="ident">
         <input id="pname" maxlength="12" placeholder="你的名字" autocomplete="off">
-        <div id="skins"></div>
         <div id="cols"></div>
       </div>
       <button id="resume" hidden>繼續冒險</button>
@@ -877,11 +894,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div>
 
   <div id="village">
+    <canvas id="vscene" width="208" height="104" aria-hidden="true"></canvas>
     <div id="vfolk"></div>
     <div class="vhead">
       <em>SAFE HAVEN</em>
       <h3 id="vname">爐火村</h3>
       <p id="vsub">你活著走出來了。</p>
+      <p id="vtalk"></p>
     </div>
     <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
     <div id="vstock"></div>
@@ -1196,7 +1215,11 @@ const MONS = [
     加一隻怪同時等於「把溫和的怪拿掉一半」。 */
  {id:'centip', nm:'坑道蜈蚣', ai:'C', hp:18,atk:8, def:3, exp:26, spd:2,   sight:5, ev:6, fl:[6,16], w:55, zn:['stone'], bd:'bug', col:'f'},
  {id:'ratking',nm:'鼠王',     ai:'C', hp:30,atk:14,def:6, exp:48, spd:1,   sight:7, ev:4, fl:[7,18], w:45, zn:['stone'], bd:'quad', col:'a', pack:1},
- {id:'moth',   nm:'幻光蝶',   ai:'W', hp:18,atk:10,def:3, exp:30, spd:2,   sight:5, ev:22,fl:[3,13], w:55, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:4,ch:.22}},
+ /* 幻光蝶第一版是 spd 2 / ev 22 / 睡 4 回合 / 22%，出現在第 3 層。
+    三件事各自都合理，疊起來是處刑：一回合打兩下、你有兩成打不中它、
+    中了就白挨八下。牠該給人的感覺是「抓不到、很煩」，不是「會死」。
+    所以留下閃避（那是蝴蝶的樣子），把速度與睡眠的長度拿掉。 */
+ {id:'moth',   nm:'幻光蝶',   ai:'W', hp:16,atk:6, def:3, exp:30, spd:1,   sight:5, ev:20,fl:[4,14], w:45, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:2,ch:.12}},
  {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}},
  {id:'shinobi',nm:'影忍',     ai:'C', hp:38,atk:28,def:10,exp:160,spd:2,   sight:9, ev:26,fl:[12,26],w:50, zn:['wood'], bd:'human', col:'4', glow:'g', clone:1},
  {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:16,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:.85},
@@ -1355,6 +1378,12 @@ const WAND = [
     多一條路比多三十點傷害有用得多。 */
  {id:'lava',  nm:'熔岩杖',   price:2800, dig:1},
 ];
+/* 壺分兩種用法。
+   保存壺是**空間**：放進去的東西不佔背包格，而且跟著你走到下一座迷宮 ——
+   那是村莊之外唯一能讓道具跨越章節的辦法，所以「這一趟要留什麼下來」
+   變成一個真的要想的問題。cap 對它是容量。
+   其餘三種是**一次性的處理**（識別／解咒／吞掉），cap 對它們是還能用幾次，
+   用完就裂。 */
 const POT = [
  {id:'store', nm:'保存壺', beh:'store', price:1200},
  {id:'ident', nm:'識別壺', beh:'ident', price:2000},
@@ -1573,16 +1602,24 @@ const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
-v.name|Hearth Village|ほのおの むら
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
 v.sub.out|You climbed out of B{d}F with {g} G　·　score {s}|B{d}F から いきて もどった　・{g} G　・スコア {s}
 v.gold|Gold on hand|しょじきん
-v.smith|The Smithy　—　gear you buy lasts {n} runs, then wears out.|かじや　—　かった そうびは {n}かい もつ。
+v.who.0|The Old Smith|としおいた かじや
+v.who.1|The Nightwatch Child|よるばんの こども
+v.who.2|The Travelling Merchant|たびの しょうにん
+v.who.3|The Village Elder|むらおさ
+v.talkfmt|<b>{who}</b>: "{body}"<br>— Next: <b>{nx}</b>|<b>{who}</b>：「{body}」<br>—— つぎ：<b>{nx}</b>
+v.smith|The Smithy　—　what you buy is yours to keep, even through death. Forge it further below.|かじや　—　かった そうびは ずっと きみのもの。しんでも のこる。したで きたえられる。
+v.name.euro|Hearthfire|かがりびむら
+v.name.cave|Hollowstone|いわむろのさと
+v.name.edo|Lanterntown|ちょうちんまち
+v.forge|+{n}　{g} G|+{n}　{g} G
+v.forgemax|Fully forged|げんかい
 v.carry|Gear you can take down|もっていける そうび
 v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
-v.runs|{n} runs left|あと {n}かい
 b.title|Hall of the Fallen|きろくひ
 b.sub|This monument is carved only on your own device.|この ひは この きたいの なかにしか きざまれない。
 b.empty|No records yet. Go down, come back, and your name is carved.|きろくは まだ ない。もぐって もどれば なまえが きざまれる。
@@ -1683,7 +1720,7 @@ ui.empty|(empty)|（から）
 ui.normal|normal|ふつう
 ui.village|Hearthfire Village|かまどの村
 ui.board|Hall of the Fallen|いしぶみ
-ui.dive|Descend again|もういちど潜る
+ui.dive|Head for {nm}|{nm} へ むかう
 ui.retry|Into the dungeon again|もういちどダンジョンへ
 ui.score|Score|スコア
 ui.resume|Continue　Act {n}　B{d}F|つづきから　だい{n}しょう　B{d}F
@@ -1693,7 +1730,6 @@ m.shrine|★ Ring of Record — progress saved, health and magic full.|★ き�
 m.shrine2|The next floor is the boss. Get ready before you go down.|つぎの かいは ボスだ。したくを してから おりよう。
 lg.shrine|save point|きろくてん
 m.resumed|Resuming from your save point — Act {n} {nm} B{d}F|きろくてんから さいかい —— だい{n}しょう {nm} B{d}F
-m.worn|"{nm}" has worn out completely.|「{nm}」は すりきれて しまった。
 s.001|The all-purpose pocket saved "{v0}".|まんのうポケットが「{v0}」を まもった。
 s.002|Your body will not move...|からだが うごかない……
 s.003|{v0} is standing in the way.|{v0} が みちを ふさいでいる。
@@ -1828,7 +1864,6 @@ s.129|B = cancel（close panels, exit aiming）　S = skills and magic　G opens
 s.130|Stay on one floor over 5 minutes and monsters go 1.5x, over 15 minutes 2x — do not grind one floor.|おなじ かいに 5ふん いると てきが 1.5ばい、15ふんで 2ばい —— ひとつの かいで ねばりすぎない。
 s.131|Keyboard: arrows/WASD to move, QEZC diagonal, G underfoot, I pack, K magic, > descend|キーボード：やじるし/WASD いどう　QEZC ななめ　G あしもと　I かばん　K まほう　> おりる
 s.132|L name tags　M sound　Esc cancel　the floor map is on the right|L なまえふだ　M おと　Esc キャンセル　みぎに かいそうず
-s.133|"{v0}" has worn out completely.|「{v0}」は すりきれて しまった。
 s.134|You left the dungeon carrying {v0} G.|{v0} G を もって ダンジョンを あとにした。
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
@@ -1840,6 +1875,26 @@ s.141|Nobody on any side.|しほうに だれも いない。
 s.142|{a} G. You only have {b} G.|{a} G。もちがねは {b} G しか ない。
 s.143|Flame devours {n} enemies around you.|ほのおが まわりの てき {n}たいを のみこんだ。
 s.144|The flame burns out in mid-air.|ほのおは くうちゅうで もえつきた。
+s.151|The {pot} is already full.|{pot}は もう いっぱいだ。
+s.152|A pot will not fit inside another pot.|つぼは つぼに はいらない。
+s.153|"{nm}" goes into the {pot}.|「{nm}」を {pot}に しまった。
+s.154|The {pot} has no power left.|{pot}には もう ちからが のこっていない。
+s.155|The {pot} reveals "{nm}" for what it is.|{pot}が「{nm}」の しょうたいを うつしだした。
+s.156|The curse on "{nm}" is washed away.|「{nm}」の のろいが あらいながされた。
+s.157|The {pot} swallows "{nm}" - it is gone for good.|{pot}が「{nm}」を のみこんだ —— もう もどらない。
+s.158|The {pot} spends the last of its power and cracks apart.|{pot}は ちからを つかいはたし、ひび われた。
+s.159|You take "{nm}" out of the {pot}.|{pot}から「{nm}」を とりだした。
+s.160|The {pot} came down with you, {n} items inside.|{pot}が なかみ {n}こと いっしょに ついてきた。
+s.161|The {pot} came down with you.|{pot}が いっしょに ついてきた。
+s.162|The {pot} shatters on {v0} for {v1} damage.|{pot}が {v0}に あたって くだけ、{v1}の ダメージ。
+s.163|The {pot} hits the ground and shatters.|{pot}は じめんに あたって くだけた。
+s.164|{n} items spill out across the floor.|なかみ {n}こが ゆかに ちらばった。
+s.165|Everything inside the pot broke.|つぼの なかみは すべて こわれた。
+s.166|The pain jolts you awake!|いたみで めが さめた！
+m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
+m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
+m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
+o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
 skin.blob|Slime|スライム
 skin.biped|Traveller|たびびと
@@ -2186,6 +2241,15 @@ p.forceout|Walk out anyway (divine punishment)|むりやり でる（てんば�
 p.tapitem|Tap an item to see what you can do.|アイテムを タップすると そうさが でる。
 p.equipped|equipped|そうびちゅう
 p.nothinghere|Nothing underfoot.|あしもとには なにも ない。
+p.potuses|{n} uses left|あと {n}かい つかえる
+p.pot.store|What goes in takes up no bag slot, and follows you down to the next dungeon.|なかに いれた ものは かばんの わくを つかわず、つぎの ダンジョンにも ついてくる。
+p.pot.ident|What goes in shows its true form.|なかに いれた ものは しょうたいを あらわす。
+p.pot.dispel|The curse on what goes in is washed away.|なかに いれた ものの のろいが あらいながされる。
+p.pot.devour|What goes in is swallowed - you cannot get it back.|なかに いれた ものは のみこまれる —— もう もどらない。
+p.potheld|Inside (tap to take out)|なかみ（タップで とりだす）
+p.potempty|The pot is empty.|つぼは からっぽだ。
+p.potfeed|Bag (tap to put in)|かばん（タップで いれる）
+p.potnofeed|Nothing in the bag will go in.|かばんに いれられる ものが ない。
 b.eat|Eat|たべる
 b.drink|Drink|のむ
 b.read|Read|よむ
@@ -2207,6 +2271,10 @@ b.pocketswap|Swap into pocket (holds {nm})|ポケットと いれかえ（いま
 b.throw|Throw|なげる
 b.drop|Drop|おく
 b.close|Close|とじる
+b.openpot|Open the pot|つぼを あける
+b.potout|Take out|とりだす
+b.back|Back to the bag|かばんに もどる
+b.mark|Make a note|メモする
 e.pickfirst|Pick it up before equipping.|ひろってから そうびしよう。
 e.cursedoff|It is cursed - you cannot take it off!|のろわれている —— はずせない！
 e.tookoff|You take it off.|そうびを はずした。
@@ -2221,6 +2289,7 @@ e.putground|You drop "{a}" and take "{b}".|「{a}」を おいて「{b}」を �
 e.pocketback|You take "{nm}" back out of the pocket.|ポケットから「{nm}」を とりだした。
 e.pocketin|"{nm}" goes into the universal pocket - it survives one death.|「{nm}」を まんのうポケットへ —— 1かいの しを こえられる。
 e.throwdir|Choose a direction to throw.|なげる ほうこうを えらぼう。
+e.markask|Leave a note on this look (e.g. "?risky")|この みための メモ（れい：「?あぶない」）
 k.sell1|Taken.|うけとった。
 k.sell2|I will keep this one for myself.|これは じぶんで つかおう。
 k.sell3|Bring me more next time.|つぎも もってきてくれ。
@@ -3059,15 +3128,15 @@ function makeHat(i){
 const THEMES = {
   stone:    {ramp:['w','x','y','z'], mark:'cart'},                       // 礦坑、牢獄：原本的冷色石階
   forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist',  mark:'tree'},      // 苔綠，光是螢火不是火把
-  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele'},           // 灰藍岩階，天是亮的
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele', back:'sky'},           // 灰藍岩階，天是亮的
   briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember', mark:'statue'},      // 暗紅磚與藤蔓
-  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer', mark:'lantern'},           // 水藍
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer', mark:'lantern', back:'water'},           // 水藍
   beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist', mark:'bones'},      // 獸巢：暖土色
   wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock', mark:'torii'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror'},           // 鏡像：冷白無影
+  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror', back:'pale'},           // 鏡像：冷白無影
   crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer', mark:'geode'},           // 水晶礦坑
-  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue'},           // 通天塔：白石與金線
-  void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift'},                       // 最後的迷宮、混沌之間
+  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue', back:'high'},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
@@ -3758,7 +3827,12 @@ function genFloor(rng, depth, theme){
   for(const z of zones){
     const ux0=z.x0+MARGIN, ux1=z.x1-MARGIN, uy0=z.y0+MARGIN, uy1=z.y1-MARGIN;
     if(empties.has(z.i)){ junc[z.i]={x:rng.i(ux0+1,ux1-1), y:rng.i(uy0+1,uy1-1)}; continue; }
-    const w=rng.i(4,8), h=rng.i(4,7);
+    /* 房間大小刻意拉開差距。全部都是 4~8 × 4~7 的時候，每一層長得都一樣 ——
+       走過的房間玩家一個都記不住。先擲一次「這是個什麼房間」，再決定尺寸：
+       同一層裡就會同時出現轉個身就滿的小室與空曠的大廳。 */
+    const cls = rng.i(1,100);
+    const w = cls<=28 ? rng.i(3,4) : cls>=78 ? rng.i(7,8) : rng.i(4,6);
+    const h = cls<=28 ? rng.i(3,4) : cls>=78 ? rng.i(6,8) : rng.i(4,6);
     const x=rng.i(ux0,ux1-w+1), y=rng.i(uy0,uy1-h+1);
     rooms[z.i]={x,y,w,h,doors:[]};
   }
@@ -3998,11 +4072,12 @@ const VILLAGE_KEY = 'claude-abyss-village';
 let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: [],
                 sp: 0, sch: {heal:0,bolt:0,fire:0,aqua:0,wind:0},
                 jobs: {}, pocket: {open:false, item:null},
+                /* pots = 上一趟收在保存壺裡的東西。它跨的是「章節」不是「死亡」。 */
+                pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
                 act: 0, hpBonus: 0, defBonus: 0, feather: 0, godsword: 0, cleared: 0,
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
-const RUNS_PER_GEAR = 3;
 
 /* 舊存檔沒有 jobs，或有人手動改壞了 —— 只收得懂的欄位，
    其餘一律歸零。存檔在 localStorage，本來就不能當成可信輸入。 */
@@ -4044,6 +4119,7 @@ function loadVillage(){
           pocket: (v.pocket && typeof v.pocket === 'object')
             ? {open: !!v.pocket.open, item: v.pocket.item || null}
             : {open:false, item:null},
+          pots: Array.isArray(v.pots) ? v.pots.slice(0, 3) : [],
         };
       }
     }
@@ -4079,7 +4155,10 @@ const packItem = it => it && ({
   contents:(it.contents||[]).map(packItem).filter(Boolean),
 });
 function unpackItem(q){
-  if(!q || !q.cat || !q.id) return null;
+  // cat 必須是真的存在的那幾張表。存檔在 localStorage，任何人都改得動 ——
+  // 一個 {"cat":"xxx"} 會讓 mk() 直接爆掉，而爆掉的地方是「讀檔」，
+  // 也就是玩家最不能接受壞掉的那一步。
+  if(!q || !q.id || !ALL_DEF()[q.cat]) return null;
   const it = mk(q.cat, q.id, {up:q.up|0, uses:q.uses|0, known:!!q.known, cursed:!!q.cursed});
   if(q.cap) it.cap = q.cap;
   it.contents = (q.contents||[]).map(unpackItem).filter(Boolean);
@@ -4140,7 +4219,11 @@ const STORAGE_OK = (()=>{
    缺一半的東西 —— 缺的欄位會由 newGame() 補上預設值。 */
 function resumeRun(q){
   VILLAGE.act = q.act;
+  // newGame() 會把村莊寄放的保存壺發出來並清空。讀檔時那些壺已經在
+  // 存檔的背包裡了，發第二次等於憑空多一份 —— 所以先收好，之後原樣放回。
+  const keepPots = VILLAGE.pots;
   newGame(q.seed);
+  VILLAGE.pots = keepPots; saveVillage();
   const p = G.p, r = q.p;
   for(const k of ['lv','exp','hp','mhp','mp','mmp','str','strb','sat','msat',
                   'gold','sp','mregen','regen','job'])
@@ -4204,15 +4287,15 @@ const ALL_DEF = () => ({herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,
 const defNm = q => { const t = ALL_DEF()[q.cat]; const d = t && t.find(x=>x.id===q.id);
                      return d ? d.nm : '？'; };
 
-/* 每趟扣一次耐久。扣在「真的下去」的時候，不是在頁面載入的時候 —— 
-   否則重新整理一次就吃掉一趟。 */
-function consumeRun(){
-  const gone = [];
-  for(const g of VILLAGE.stock){ g.runs--; if(g.runs <= 0) gone.push(g); }
-  VILLAGE.stock = VILLAGE.stock.filter(g => g.runs > 0);
-  saveVillage();
-  return gone;
-}
+/* 鐵匠鋪的裝備曾經有耐久：買下之後只撐三趟就磨損殆盡。
+   那條規則跟「進下一章不再白送裝備」放在一起會長出一個踏車：
+   村裡買的東西是唯一穩定的裝備來源，而它每三趟就會蒸發一次 ——
+   於是每三趟就要重買一次全遊戲最貴的那把劍，錢永遠攢不起來，
+   強化更是丟進水裡。走通測試量出來的：加了強化反而少過一章。
+
+   現在買下就是你的。金錢的去處改成**鍛造**：+1、+2、+3……
+   越往上越貴，而且那才是深章節真正的成長（鐵匠鋪最好的一把
+   到第十三章就追不上怪物表了，能追上的只有把它打得更利）。 */
 
 /* ─── 遊戲狀態 ──────────────────────────────────────────────── */
 let G = null;
@@ -4265,22 +4348,13 @@ function newGame(seed){
     G.p.lv++; G.p.mhp += rng.i(6,11);
   }
   G.p.hp = G.p.mhp;
-  /* 中途章節不能赤手空拳開場。
-     走通測試在第三章連續四十次死在第一層 —— 原因是等級有跟著章節長，
-     裝備沒有：一個等級 7、防禦 0 的角色站在深度 13 的骷髏兵面前，
-     四回合就結束了。等級與裝備必須一起長。 */
+  /* 中途章節多給的只有「口糧」，不給裝備。
+     曾經給過：一章開場自動配一把該深度最好的劍與盾。那是為了讓走通測試
+     過得去，但對玩家是把整個村莊的意義抹掉 —— 在鐵匠鋪咬牙買下鋼之劍，
+     下去才發現遊戲本來就要送你一把，那一刻買的不是裝備，是被騙的感覺。
+     裝備現在只有三個來源，而且全部是玩家自己的決定：
+     地牢裡撿到的、村裡買的、上一趟收進保存壺帶下來的。 */
   if(G.act > 0){
-    const d0 = scaleDepth(absDepth(G.act, 1));
-    const cap = 400 + d0 * 280;
-    /* 用「數值」挑，不要用價格挑。鏡之盾比鋼之盾貴一倍，
-       但防禦是 6 對 7 —— 它貴在反射，不貴在硬。
-       照價格挑的結果是每一章的開場盾都比該有的差一階。 */
-    const bestIn = (list, key2) => list.filter(x => (x.price||0) <= cap)
-      .reduce((a,b) => !a || (b[key2]||0) > (a[key2]||0) ? b : a, null) || list[0];
-    const up = Math.min(5, Math.floor(d0 / 5));
-    const w = mk('weap', bestIn(WEAP,'atk').id, {known:1, up});
-    const s = mk('shld', bestIn(SHLD,'def').id, {known:1, up});
-    G.p.inv.push(w, s); G.p.weap = w; G.p.shld = s;
     for(let i=0;i<2;i++) G.p.inv.push(mk('herb','heal',{known:1}));
     G.p.inv.push(mk('food','big'));
     G.known['herb/heal'] = 1;
@@ -4298,6 +4372,20 @@ function newGame(seed){
     G.p.inv.push(it);
     VILLAGE.pocket.item = null; saveVillage();
     say(M('s.001','萬用口袋保住了「{v0}」。',{v0:(nameOf(it))}),'gold');
+  }
+
+  /* 保存壺：上一趟收進壺裡的東西跟著走到這一座迷宮。
+     沒放進壺裡的東西不會跟過來 —— 那個取捨就是壺的全部價值。 */
+  if(Array.isArray(VILLAGE.pots) && VILLAGE.pots.length){
+    for(const q of VILLAGE.pots){
+      const pot = unpackItem(q);
+      if(!pot || pot.cat !== 'pot') continue;
+      G.p.inv.push(pot);
+      say(pot.contents.length
+            ? M('s.160','{pot}帶著 {n} 件東西一起下來了。',{pot:locName('pot',pot.d), n:pot.contents.length})
+            : M('s.161','{pot}跟著下來了。',{pot:locName('pot',pot.d)}), 'gold');
+    }
+    VILLAGE.pots = []; saveVillage();
   }
 
   // 諸神之劍：打倒人魚王后之後永久持有
@@ -4418,6 +4506,57 @@ function shopItem(rng, depth){
   return it;
 }
 
+/* 第一章整章不會出現怪物之間。它是教學：玩家還在學撞怪＝攻擊、
+   還沒有武器也沒有藥草，這時候開一間大廳等於用機率決定他要不要繼續玩。
+   模擬量出來的：從第 3 層就開始放，第一章的死亡率 8% → 17%。 */
+const HALL_FROM = 6, HALL_CHANCE = 0.16;
+/* 把某一間房撐開成整個區塊那麼大的大廳，再站滿怪。
+   只把牆變成地板，從來不把地板變回牆 —— 所以它不可能弄出一張走不完的地圖。
+   出生的那一間永遠不選：一落地就站在九隻怪中間，那不是驚喜，是判死刑。 */
+function buildHall(hrng, occ){
+  const f = G.f, spawnRoom = roomOf(G.p.x, G.p.y);
+  const keys = Object.keys(f.rooms).filter(k => +k !== spawnRoom);
+  if(!keys.length) return;
+  // 挑面積最大的那一間 —— 大廳應該長得像大廳，而不是硬撐開的小房
+  let rk = keys[0];
+  for(const k of keys) if(f.rooms[k].w * f.rooms[k].h > f.rooms[rk].w * f.rooms[rk].h) rk = k;
+  const r = f.rooms[rk];
+  const zx = Math.floor(r.x / ZW), zy = Math.floor(r.y / ZH);
+  const x0 = zx*ZW + MARGIN, x1 = zx*ZW + ZW - 1 - MARGIN;
+  const y0 = zy*ZH + MARGIN, y1 = zy*ZH + ZH - 1 - MARGIN;
+  // 地標是刻意擋路的 2x2 —— 撐開房間的時候要繞過它，不然它就不擋了
+  const isMark = (x,y) => f.mark && x >= f.mark.x && x < f.mark.x+2
+                                 && y >= f.mark.y && y < f.mark.y+2;
+  const cells = [];
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+    if(isMark(x,y)) continue;
+    const k = y*MW + x;
+    // 走廊也一起併進來 —— 大廳中間橫過一條顏色不同的通道會看起來像沒畫完
+    if(f.t[k] === WALL || f.t[k] === CORR){ f.t[k] = ROOM; f.roomAt[k] = +rk; }
+    if(f.t[k] === ROOM) cells.push({x,y});
+  }
+  f.rooms[rk] = {x:x0, y:y0, w:x1-x0+1, h:y1-y0+1, doors:r.doors};
+  f.hall = {room:+rk, seen:0};
+
+  // 密度：每七格一隻，上下都夾住。「不要噁心到故意讓人失敗」是規格的一部分。
+  const spots = hrng.shuffle(cells.filter(c =>
+    !occ.has(key(c.x,c.y)) && f.t[c.y*MW+c.x] === ROOM &&
+    Math.max(Math.abs(c.x-G.p.x), Math.abs(c.y-G.p.y)) > 2));
+  const n = Math.max(4, Math.min(11, Math.round(cells.length / 7)));
+  for(let i=0;i<n && i<spots.length;i++){
+    const md = hrng.weight(MONS, m => monWeight(m, G.md, themeNow()));
+    if(!md) break;
+    spawnMon(md, spots[i].x, spots[i].y);
+    occ.add(key(spots[i].x, spots[i].y));
+  }
+  // 報酬。願意打的人要拿得到東西，不然「怪物之間」只是一個純粹的懲罰。
+  for(let i=0;i<3;i++){
+    const s = spots[spots.length-1-i];
+    if(!s || occ.has(key(s.x,s.y))) continue;
+    G.items[key(s.x,s.y)] = rollItem(hrng, G.md); occ.add(key(s.x,s.y));
+  }
+}
+
 function buildFloor(){
   // 絕對深度由章節推出來 —— 既有的難度系統（道具分級、怪物表、
   // 帽子池、增援節奏）全部吃這一個值，不需要第二套平行數值。
@@ -4443,9 +4582,17 @@ function buildFloor(){
   // 第一層保證有一把武器與一面盾牌，但放在「地上」而不是背包裡。
   // 背包依然只有一個麵包（第一件武器因此是一個事件），
   // 但不會出現連走三層都沒撿到武器、赤手空拳撞上骷髏兵的死局。
-  if(G.depth === 1){
-    // 放在「出生的那個房間」。丟在地圖另一頭等於沒放 ——
-    // 玩家會在找到之前就先撞上老鼠。
+  /* ── 入口房的保底裝備 ──────────────────────────────────────
+     每一章的第一層，如果玩家「這一項真的空著」，就在入口房的地上
+     放一件。三個字很重要：**地上**、**空著**、**一件**。
+
+     地上：它是撿到的，不是背包裡憑空多出來的。第一件武器因此是一個
+     事件（「啊，有東西」），而不是一個預設值。
+     空著：手上已經有武器的人永遠不會看到它 —— 在村裡咬牙買下鋼之劍，
+     下去卻發現遊戲本來就要送你一把，那一刻買的不是裝備，是被騙的感覺。
+     一件：等級只有商店的四成五上限，明顯比鐵匠鋪賣的差一階。
+     它的作用是「不會赤手空拳撞上骷髏兵」，不是「不必去村裡買」。 */
+  if(G.floor === 1){
     const r0 = G.f.rooms[roomOf(G.p.x, G.p.y)];
     const inRoom = ()=>{
       if(!r0) return free(0);
@@ -4455,8 +4602,14 @@ function buildFloor(){
       }
       return free(0);
     };
-    const wp = inRoom();  if(wp)  G.items[key(wp.x,wp.y)]   = mk('weap','club',{known:1});
-    const sp2 = inRoom(); if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld','leath',{known:1});
+    // 第一章仍然是木棒與皮盾 —— 那一章的重點是「什麼都沒有」
+    const floorCap = G.depth === 1 ? 0 : (400 + G.md * 280) * 0.45;
+    const worst = (list, k2) => list.filter(x => (x.price||0) <= floorCap)
+      .reduce((a,b) => !a || (b[k2]||0) > (a[k2]||0) ? b : a, null) || list[0];
+    if(!G.p.weap){ const wp = inRoom();
+      if(wp) G.items[key(wp.x,wp.y)] = mk('weap', worst(WEAP,'atk').id, {known:1}); }
+    if(!G.p.shld){ const sp2 = inRoom();
+      if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld', worst(SHLD,'def').id, {known:1}); }
   }
   // 這一層該有職業帽的話，放進某個房間 —— 招牌不該掉在走廊上。
   const hat = hatHere(G.depth);
@@ -4518,6 +4671,25 @@ function buildFloor(){
         }
     }
   }
+  /* ── 怪物之間 ──────────────────────────────────────────────
+     房間的大小已經有落差了，但落差還不是事件。這裡把其中一間撐開成
+     整個區塊那麼大的**大廳**，裡面站滿怪 —— 推開門的那一刻，
+     這一層突然變成一個要做決定的地方：硬打，或退回走廊一隻一隻收。
+
+     刻意不做成必死的房間。密度算的是「每七格一隻」，不是塞滿：
+     一間 8×8 大約九隻。九隻在開闊地當然打不贏，但門口的走廊一次只進得來
+     一隻 —— 也就是說它考的是**你會不會退**，不是骰子。
+     而且退了也不虧：大廳裡多撒三件道具，願意打的人拿得到報酬。
+
+     自己一條亂數流，理由同紀錄之環：共用 rng 多抽一個數字，
+     後面所有怪物與道具的位置整個位移，已經驗證過的平衡就白驗了。 */
+  G.f.hall = null;
+  if(!G.f.rest && !G.f.shrine && !(act0.boss && G.floor >= act0.floors)
+     && act0.id !== 'chaos' && G.depth >= HALL_FROM){
+    const hrng = RNG(mix32(G.depth * 104729 + 29, G.seed));
+    if(hrng.chance(HALL_CHANCE)) buildHall(hrng, occ);
+  }
+
   if(G.f.rest){
     for(let i=0;i<3;i++){ const q=free(0); if(q) G.items[key(q.x,q.y)] = mk('herb','heal',{known:1}); }
     const fq = free(0); if(fq) G.items[key(fq.x,fq.y)] = mk('food','big');
@@ -4631,8 +4803,11 @@ function buildFloor(){
     const bossRoom = G.f.bossLock ? roomOf(G.mons[G.mons.length-1].x, G.mons[G.mons.length-1].y) : -1;
     const keys = Object.keys(G.f.rooms).filter(k => {
       const r = G.f.rooms[k];
+      /* 怪物之間也不能挑。挑到的話下面那行「店裡不生怪」會把整間大廳的怪
+         一次清空 —— 玩家看到的是一間空蕩蕩的大廳，而那正是這一層的事件。 */
       return r.w >= 4 && r.h >= 3 && r.doors.length >= 1
-          && G.f.roomAt[key(G.p.x,G.p.y)] !== +k && bossRoom !== +k;
+          && G.f.roomAt[key(G.p.x,G.p.y)] !== +k && bossRoom !== +k
+          && !(G.f.hall && G.f.hall.room === +k);
     });
     if(keys.length){
       const rk = rng.pick(keys), r = G.f.rooms[rk];
@@ -4837,6 +5012,15 @@ function stepOn(){
     burst(p.x, p.y, 30, '#79c97a', 55, 20, .9);
     say(TX('m.shrine','★ 紀錄之環 —— 進度已保存，體力與魔力全滿。'),'good');
     say(TX('m.shrine2','下一層是頭目。整理好再下去。'),'gold');
+  }
+  /* 怪物之間：踏進去才講。在門外就跳提示的話，玩家永遠不會真的走進去 ——
+     這個房間的重點就是「推開門的那一秒」。 */
+  const hl = G.f.hall;
+  if(hl && !hl.seen && roomOf(p.x,p.y) === hl.room){
+    hl.seen = 1;
+    SFX.play('trap'); G.shake = Math.max(G.shake, 7);
+    say(TX('m.hall','★ 怪物之間 —— 整個大廳都是敵人！'),'bad');
+    say(TX('m.hall2','退回走廊，一次只會進來一隻。'),'gold');
   }
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   // 忍者 Master：踩上去也不會觸發
@@ -5364,6 +5548,11 @@ function act(m,it){
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     say(M('m.mhit','{nm} 的{r}攻擊命中，受到 {n} 點傷害。',
       {nm:locName('mon',m.d), n:dmg, r:ranged?TX('m.ranged','遠程'):''}),'bad');
+    /* 挨打會醒。沒有這一條的時候，「睡 4 回合」在速度 2 的怪面前
+       就是「白挨八下」—— 玩家從中招到死中間一步都不能動，
+       那不是難度，是看著自己被處決。醒過來還是虧了一回合，
+       但至少下一步在你手上。 */
+    if(p.st['睡']){ delete p.st['睡']; say(TX('s.166','痛得醒了過來！'),'good'); }
     const oh = m.d.onhit;
     if(p.st['雷']){                                          // 雷紋護體：受擊反彈
       const back = rollDmg(20 + p.lv*3, m.d.def, true, 1);
@@ -5401,6 +5590,11 @@ function act(m,it){
 
 /* ─── 道具名稱與使用 ────────────────────────────────────────── */
 function lookKey(it){ return it.cat+'/'+it.id; }
+/* 壺後面那個括號。保存壺寫「裝了幾件／能裝幾件」，其餘三種寫「還能用幾次」——
+   兩種壺的 cap 意思不同，用同一種寫法會讓「識別壺 [0/4]」看起來像壞掉的空壺。 */
+function potGauge(it){
+  return it.d.beh === 'store' ? ` [${it.contents.length}/${it.cap}]` : ` [${it.cap}]`;
+}
 function nameOf(it){
   if(LOOK[it.cat]){
     const idx = G.look[lookKey(it)];
@@ -5408,7 +5602,7 @@ function nameOf(it){
       // 外觀名也要翻。它是未鑑定草藥在畫面上唯一的名字 ——
       // 沒翻的話，英文玩家的背包裡會躺著一排「赤紅的草」。
       let n = TX('lk.' + it.cat + '.' + idx, LOOK[it.cat][idx]);
-      if(it.cat==='pot') n += ` [${it.contents.length}/${it.cap}]`;
+      if(it.cat==='pot') n += potGauge(it);
       if(G.notes[lookKey(it)]) n += `（${G.notes[lookKey(it)]}）`;
       return n;
     }
@@ -5416,7 +5610,7 @@ function nameOf(it){
   let n = locName(it.cat, it.d);
   if(it.cat === 'hat') n += `（${locJob(it.d.job)}）`;
   if(it.cat==='wand' && G.known[lookKey(it)]) n += ` [${it.uses}]`;
-  if(it.cat==='pot') n += ` [${it.contents.length}/${it.cap}]`;
+  if(it.cat==='pot') n += potGauge(it);
   if((it.cat==='weap'||it.cat==='shld') && it.known){
     if(it.up) n += ` ${it.up>0?'+':''}${it.up}`;
     if(it.cursed) n += TX('ui.cursed','【詛咒】');
@@ -5540,6 +5734,74 @@ function autoEquip(it){
 function removeItem(it){ G.p.inv = G.p.inv.filter(i=>i!==it);
   if(G.p.weap===it) G.p.weap=null; if(G.p.shld===it) G.p.shld=null; }
 
+/* ── 壺 ────────────────────────────────────────────────────────
+   入口只有一個：把壺選起來，按「開壺」。四種壺共用同一個畫面，
+   差別只在提示那一行講什麼、以及放進去之後發生什麼事。
+
+   為什麼壺裝不下壺：兩個壺互相放進對方，裡面的東西就從世界上消失了，
+   而且不會報任何錯 —— 玩家只會覺得「我的東西不見了」。 */
+const POT_HINT = {
+  store:  '放進去的東西不佔背包格，而且會跟著你走到下一座迷宮。',
+  ident:  '放進去的東西會現出真面目。',
+  dispel: '放進去的東西上的詛咒會被洗掉。',
+  devour: '放進去的東西會被吞掉 —— 拿不回來。',
+};
+// 訊息裡的壺名用真名，不用 nameOf —— 後面那個 [2/4] 夾在句子中間很難讀
+const potNm = pot => locName('pot', pot.d);
+function potPut(pot, it){
+  const p = G.p, beh = pot.d.beh, pn = potNm(pot);
+  if(it === pot) return false;
+  if(it.cursed && (it === p.weap || it === p.shld)){
+    it.known = 1; say(TX('s.116','被詛咒了，拿不下來！'),'bad'); return false;
+  }
+  if(it.cat === 'pot'){ say(TX('s.152','壺裝不進另一個壺裡。')); return false; }
+  if(beh === 'store'){
+    if(pot.contents.length >= pot.cap){ say(M('s.151','{pot}已經滿了。',{pot:pn})); return false; }
+    removeItem(it); pot.contents.push(it);
+    SFX.play('drop');
+    say(M('s.153','把「{nm}」收進了{pot}。',{nm:nameOf(it), pot:pn}),'gold');
+    return true;
+  }
+  if(pot.cap <= 0){ say(M('s.154','{pot}已經沒有力量了。',{pot:pn})); return false; }
+  if(beh === 'ident'){
+    if(!((LOOK[it.cat] && !G.known[lookKey(it)]) || !it.known)){
+      say(TX('m.nothing','什麼都沒有發生……')); return false;
+    }
+    identify(it);
+    say(M('s.155','{pot}照出了「{nm}」的真面目。',{pot:pn, nm:nameOf(it)}),'good');
+  } else if(beh === 'dispel'){
+    if(!it.cursed){ say(TX('m.nothing','什麼都沒有發生……')); return false; }
+    it.cursed = false; it.known = 1;
+    say(M('s.156','「{nm}」上的詛咒被洗掉了。',{nm:nameOf(it)}),'good');
+  } else {                                     // devour
+    const gone = nameOf(it);
+    removeItem(it);
+    say(M('s.157','{pot}把「{nm}」吞了下去 —— 再也拿不回來了。',{nm:gone, pot:pn}),'bad');
+  }
+  SFX.play('ident');
+  pot.cap--;
+  if(pot.cap <= 0){ removeItem(pot); say(M('s.158','{pot}用盡了力量，裂成了碎片。',{pot:pn})); }
+  return true;
+}
+function potTake(pot, i){
+  const p = G.p, it = pot.contents[i];
+  if(!it) return false;
+  if(p.inv.length >= 20){ say(TX('m.bagfull','背包已經滿了。')); return false; }
+  pot.contents.splice(i, 1); p.inv.push(it);
+  SFX.play('pick');
+  say(M('s.159','從{pot}裡拿出了「{nm}」。',{nm:nameOf(it), pot:potNm(pot)}));
+  return true;
+}
+/* 保存壺跨章節。存的是「壺本身＋裡面的東西」，不是一份完整背包 ——
+   沒放進壺裡的東西一樣留在那座迷宮裡，這正是壺的價值所在。
+   死亡不會走到這裡（clearAct / leaveDungeon 才呼叫），所以死還是全失。 */
+const POT_CARRY = 3;
+function stashPots(){
+  if(!G) return;
+  VILLAGE.pots = G.p.inv.filter(i => i.cat === 'pot' && i.d.beh === 'store')
+                        .slice(0, POT_CARRY).map(packItem);
+}
+
 function useItem(it, fromGround){
   const p=G.p, d=it.d;
   let consumed = true, ok = true;
@@ -5571,7 +5833,7 @@ function useItem(it, fromGround){
     if(it.uses<=0){ say(TX('s.040','已經沒有效力了。')); return false; }
     pendWand = it; say(M('s.041','{v0} —— 選擇方向。',{v0:(nameOf(it))}),'gold'); refresh(); return null;
   } else if(it.cat==='pot'){
-    say(TX('s.042','壺不能直接使用 —— 用「放入」把道具放進去。')); return false;
+    say(TX('s.042','壺不是拿來用的 —— 選起來按「打開壺」，把道具放進去。')); return false;
   } else { say(TX('s.043','這個東西不能用。')); return false; }
 
   if(consumed){ if(fromGround) delete G.items[key(p.x,p.y)]; else removeItem(it); }
@@ -6054,10 +6316,16 @@ const keepLine = pair => TX(pair[0], pair[1]);
 
 /* 賣價：底價的一半，強化值另外算。買一件再賣回去會虧 ——
    不然玩家就會站在店裡把錢磨出來，而不是下樓。 */
+/* 收購價。bad 標的是「用了會後悔」的東西（毒草、召喚卷軸、吸物壺……）——
+   店員認得出來的就不肯付全價，只給四分之一。
+   但要看得出來才算：沒鑑定過的毒草在店員眼裡跟別的草沒兩樣，照樣全價收。
+   所以「賭一口不明的草」多了一條出路 —— 不喝，拿去賣。 */
 function sellPrice(it){
   if(it.shop) return 0;
   const base = (it.d.price || 80) + (it.up|0) * 60;
-  return Math.max(10, Math.round(base * 0.5));
+  const seen = !LOOK[it.cat] || G.known[lookKey(it)];
+  const rate = (it.d.bad && seen) ? 0.25 : 0.5;
+  return Math.max(10, Math.round(base * rate));
 }
 
 /* 把沒結帳的東西放回架上。找得到原位就放回原位，
@@ -6164,7 +6432,7 @@ function descend(){
    一百層的戰役如果死一次就從頭，沒有人會走完第三章。 */
 function clearAct(){
   const act = actAt(G.act);
-  SFX.play('level'); BGM.stop();
+  SFX.play('level');
   burst(G.p.x, G.p.y, 46, '#f5dc7a', 80, 28, 1.1);
   say(M('m.actclear','★ 第 {n} 章「{nm}」通關！',{n:G.act+1,nm:locAct(act)}),'gold');
   if(act.reward){
@@ -6173,15 +6441,24 @@ function clearAct(){
   }
   const last = G.act >= ACTS.length - 1;
   if(!last && (VILLAGE.act|0) <= G.act){ VILLAGE.act = G.act + 1; }
-  VILLAGE.gold += G.p.gold;
+  /* 通關賞金。從「進下一章不再白送裝備」開始，村莊的鐵匠鋪就是取得裝備的
+     正規途徑 —— 那條路必須真的走得通。撿來的錢會隨著死亡歸零，
+     光靠它，第八章之後永遠買不起那個深度該有的裝備（走通測試就卡在這裡：
+     身上只有 3200 G，買完鋼之劍就只剩下木盾了）。
+     賞金按深度給，而且是**看得見的一行字**：玩家知道自己賺到了什麼，
+     然後自己決定要換武器還是換盾。 */
+  const bounty = Math.round(G.depth * 120);
+  say(M('m.bounty','通關賞金　{n} G　—— 拿去村裡換裝備。',{n:bounty}),'gold');
+  VILLAGE.gold += G.p.gold + bounty;
   VILLAGE.unlocked = true;
+  stashPots();                     // 收在保存壺裡的東西跟著進下一章
   saveVillage();
   clearRun();                      // 過關了，下一趟從村莊開始，不是從舊紀錄點
   const sc = submitScore(last ? 'clear' : 'act:' + (G.act + 1));
   G.over = true;
   if(last){ G.won = true; ending(); return; }
   $('vsub').textContent = M('v.sub.clear','{nm} 通關　·　帶回 {g} G　·　積分 {s}　·　下一章：{nx}',
-    {nm:locAct(act), g:G.p.gold, s:sc.score, nx:locAct(actAt(G.act+1))});
+    {nm:locAct(act), g:G.p.gold + bounty, s:sc.score, nx:locAct(actAt(G.act+1))});
   openVillage();
 }
 /* 章節獎勵。能直接掛到既有系統上的就掛，掛不上的先記在村莊裡 ——
@@ -6191,7 +6468,7 @@ function grantReward(act){
   if(act.id === 'forest'){                       // 神秘之帽：隨機一頂基本職業帽
     const h = G.rng.pick(OPEN_HAT);
     p.inv.push(mk('hat', h.id, {known:1}));
-    say(M('s.111','神秘之帽的真面目是「{v0}」。',{v0:(h.nm)}),'gold');
+    say(M('s.111','神秘之帽的真面目是「{v0}」。',{v0:(locName('hat', h))}),'gold');
   }
   if(act.id === 'briar') VILLAGE.jobs.sor = VILLAGE.jobs.sor || {lv:0, prog:0};
   if(act.id === 'ninja') VILLAGE.jobs.nin = VILLAGE.jobs.nin || {lv:0, prog:0};
@@ -6243,6 +6520,17 @@ function death(){
     SFX.play('level'); burst(G.p.x, G.p.y, 34, '#e87a4a', 70, 24, 1.0);
     say(TX('s.112','不死鳥的羽毛燒了起來 —— 你又站了回來。（這一趟只有一次）'),'good'); return; }
   SFX.play('death');
+  /* ── 遺物：倒下時把身上一半的錢送回村莊 ────────────────────
+     以前死亡是「全歸零」，包括錢。配上「進下一章不再白送裝備」之後，
+     那條規則會長出一個死結：在第八章倒下的人，回到村裡是空的 ——
+     沒有裝備、也沒有錢買裝備，於是下一趟一樣空手下去，一樣倒在同一層。
+     走通測試把這件事量了出來：買得起裝備的三趟之後，剩下的三十七趟
+     全部赤手空拳，四十趟全滅。那不是難度，那是死路。
+
+     一半，不是全部。這一趟的等級、道具、技能仍然全部歸零 ——
+     倒下依然很痛，但每一次倒下都讓下一次更有機會。 */
+  const relic = Math.floor(G.p.gold * 0.5);
+  if(relic > 0){ VILLAGE.gold += relic; saveVillage(); }
   const sc = submitScore('fall');
   const rank = VILLAGE.board.indexOf(sc) + 1;
   const sp = schoolTotal(G.p);
@@ -6252,7 +6540,8 @@ function death(){
     (rank && rank<=20 ? M('o.rank','　·　本機第 {n} 名',{n:rank}) : '') + `</span><br>` +
     M('o.where','在 <b>B{d}F</b> 倒下　·　等級 <b>{lv}</b>',{d:G.depth, lv:G.p.lv}) +
     (sp ? M('o.skills','　·　技能 <b>{n}</b> 點',{n:sp}) : '') + `<br>` +
-    TX('o.lost','等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。');
+    TX('o.lost','等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。') +
+    (relic ? '<br>' + M('o.relic','搜救隊把身上的 <b>{n} G</b> 送回了村莊。',{n:relic}) : '');
   document.getElementById('over').classList.add('show');
 }
 
@@ -6509,6 +6798,22 @@ const BGM = (()=>{
     }),
   };
 
+  /* 爐火村：整套裡唯一一首大調、唯一一首沒有小調三音的曲子。
+     村莊要跟地牢**聽起來就不一樣** —— 玩家一回到這裡，
+     身體會先知道「這裡是安全的」，然後眼睛才看到畫面。 */
+  TRACKS.village = T_({
+    bpm:88, wave:'triangle', pad:'sine', cut:2400, lvol:.085, avol:.05,
+    bass:[0,6,8,14], hat:[4,12], kick:[0,8],
+    root:[41,45,43,48],                       // F – A – G – C
+    chord:[[53,57,60],[57,60,64],[55,59,62],[60,64,67]],
+    lead:[
+      [[0,72,3],[4,74,2],[6,72,2],[8,69,4],[12,72,4]],
+      [[0,76,3],[4,74,2],[6,72,2],[8,69,6]],
+      [[0,71,3],[4,74,2],[6,71,2],[8,67,4],[12,71,4]],
+      [[0,72,4],[4,76,4],[8,79,4],[12,72,4]],
+    ],
+  });
+
   /* 鏡像世界：把礦坑主題**上下顛倒**過來 —— 原本往上的音變成往下。
      手寫一首「聽起來很鏡像」的曲子做不到這件事；
      真的把主題反過來，走進第十一章的人會認出那是同一首。 */
@@ -6621,7 +6926,9 @@ const BGM = (()=>{
     fadeAt = now;
   }
 
+  let forced = null;                          // 村莊之類「不在地貌表裡」的場合
   function wantId(){
+    if(forced && TRACKS[forced]) return forced;
     if(typeof G === 'undefined' || !G) return 'stone';
     if(typeof themeNow !== 'function') return 'stone';
     const id = themeNow();
@@ -6650,6 +6957,10 @@ const BGM = (()=>{
       tick();
     },
     stop(){ running = false; clearTimeout(timer); timer = null; },
+    /* 指定曲目：傳 null 就交還給「跟著章節走」。
+       這裡刻意不自己 start() —— 音訊必須由使用者手勢啟動，
+       而且在無頭測試裡根本沒有 AudioContext。跑著就換，沒跑就等。 */
+    force(id){ forced = id; },
     get running(){ return running; },
     get track(){ return curId; },
     TRACKS,
@@ -6706,6 +7017,183 @@ function panelTiles(){
 }
 let lastOx=0, lastOy=0, rockPat=null;
 
+/* ═══ 迷宮外側的景色 ═════════════════════════════════════════
+   全部即時算，不存狀態：每一片雲、每一道流都是從
+   「時間 + 鏡頭位置 + 索引」推出來的。所以它不佔記憶體、
+   關掉不影響任何規則，而且會隨鏡頭有視差 —— 沒有視差的背景
+   會跟著地圖一起走，一眼就看得出是貼在畫面上的圖。 */
+function drawBackdrop(kind, ox, oy){
+  const W = cv.width, H = cv.height;
+  if(!kind){                                  // 沒指定就維持全黑（岩盤會蓋上來）
+    cx.fillStyle = '#07070a'; cx.fillRect(0,0,W,H);
+    return;
+  }
+  // 視差：背景移動得比地圖慢，遠的比近的更慢
+  const px1 = ox * 0.18, py1 = oy * 0.10;
+  const px2 = ox * 0.34, py2 = oy * 0.20;
+
+  if(kind === 'sky' || kind === 'high'){
+    const hi = kind === 'high';
+    const g = cx.createLinearGradient(0, 0, 0, H);
+    if(hi){                                    // 通天塔：高空，越往下越亮（雲海在腳下）
+      g.addColorStop(0,   '#0f2447');
+      g.addColorStop(0.42,'#2f57a0');
+      g.addColorStop(0.78,'#7cb8ea');
+      g.addColorStop(1,   '#cfe0f2');
+    } else {                                   // 山道：一般的高山天空
+      g.addColorStop(0,   '#1d3468');
+      g.addColorStop(0.55,'#2f57a0');
+      g.addColorStop(1,   '#4a86cf');
+    }
+    cx.fillStyle = g; cx.fillRect(0,0,W,H);
+
+    // 太陽：一團暖光，位置固定在畫面上方，只受一點點視差
+    const sx = W*0.72 - px1*0.3, sy = H*(hi ? 0.14 : 0.18) - py1*0.3;
+    const sg = cx.createRadialGradient(sx, sy, 2, sx, sy, H*0.55);
+    sg.addColorStop(0, hi ? 'rgba(246,239,227,.55)' : 'rgba(245,220,122,.34)');
+    sg.addColorStop(1, 'rgba(245,220,122,0)');
+    cx.fillStyle = sg; cx.fillRect(0,0,W,H);
+
+    /* 雲。第一版是一顆一顆的長橢圓，使用者的評語是「形狀太規則太刻意」——
+       他說得完全對：真實的雲沒有一朵是橢圓的，而一整排等大的橢圓
+       只會讀成「貼上去的裝飾」。
+
+       改成用一串大小不同的圓疊出**凹凸不平的輪廓**，而且底部壓平
+       （積雲的底是被凝結高度切齊的一條線，這是它最好認的特徵）。
+       每一朵的團數、每一團的位置與大小都由自己的雜湊決定，
+       所以沒有兩朵一樣，也不會每幀變形。 */
+    cx.save();
+    for(let L=0; L<3; L++){
+      const sp   = [5, 11, 19][L];            // 飄動速度
+      const par  = [px1*0.5, px1, px2][L];    // 視差
+      const yBase= hi ? [0.60, 0.74, 0.88][L] : [0.24, 0.40, 0.58][L];
+      const a    = hi ? [0.30, 0.46, 0.68][L] : [0.16, 0.22, 0.30][L];
+      const rw   = [42, 62, 88][L], rh = [9, 13, 19][L];
+      for(let i=0;i<6;i++){
+        const sd  = mix32(i * 131 + L * 977, 20260809);
+        const fx  = (sd % 1000) / 1000;
+        const fy  = ((sd >>> 10) % 1000) / 1000;
+        const x = ((fx*1.7*W + clock*sp - par) % (W + rw*3)) - rw*1.5;
+        const y = H*yBase + (fy - .5) * H * 0.10 - py1*0.4;
+        const wide = rw * (0.65 + fy*0.7), tall = rh * (0.7 + fx*0.7);
+        // 一朵雲＝五到八團，底線對齊 —— 上緣自然就凹凸，下緣是平的
+        const lobes = 5 + (sd >>> 20) % 4;
+        cx.fillStyle = `rgba(246,243,238,${a})`;
+        cx.beginPath();
+        for(let j=0;j<lobes;j++){
+          const q  = mix32(j * 37 + i * 4099, sd);
+          const t2 = (j + 0.5) / lobes;                  // 0..1，沿著雲的長邊
+          // 中間那幾團高、兩端矮：雲的剪影是隆起的，不是一條香腸
+          const hump = Math.sin(t2 * Math.PI);
+          const r = tall * (0.42 + hump * 0.75) * (0.7 + (q % 100)/160);
+          const cxx = x + (t2 - 0.5) * wide * 2;
+          const cyy = y - r * 0.55 + ((q >>> 8) % 100) / 100 * tall * 0.28;
+          cx.moveTo(cxx + r, cyy);
+          cx.arc(cxx, cyy, r, 0, Math.PI*2);
+        }
+        // 平底：把所有團的下緣切齊成一條線
+        cx.rect(x - wide, y - tall*0.1, wide*2, tall*0.55);
+        cx.fill();
+      }
+    }
+    cx.restore();
+
+    if(!hi){
+      // 山道：遠山剪影。有地平線，「室外」才成立。
+      cx.fillStyle = 'rgba(16,28,58,.72)';
+      cx.beginPath();
+      const base = H*0.74 - py2*0.5;
+      cx.moveTo(-40, H+40);
+      for(let i=0;i<=10;i++){
+        const x = -40 + i*(W+80)/10 - (px2 % ((W+80)/10));
+        const h = base - (Math.sin(i*2.3)*0.5 + 0.5) * H*0.22;
+        cx.lineTo(x, h);
+      }
+      cx.lineTo(W+40, H+40); cx.closePath(); cx.fill();
+    }
+  } else if(kind === 'water'){
+    const g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#12224a'); g.addColorStop(0.55, '#28488c'); g.addColorStop(1, '#3f6fc4');
+    cx.fillStyle = g; cx.fillRect(0,0,W,H);
+    // 水面的光紋：緩慢橫向漂移的亮線
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for(let i=0;i<14;i++){
+      const y = ((i*97) % 100) / 100 * H - py1*0.6;
+      const w2 = 40 + (i*53 % 70);
+      const x = ((i*211 + clock*(6 + i%5)*2) % (W + 200)) - 100 - px1*0.4;
+      cx.fillStyle = `rgba(160,206,244,${0.10 + (i%3)*0.05})`;
+      cx.fillRect(x, y, w2, 1);
+    }
+    cx.restore();
+  } else if(kind === 'pale'){
+    /* 鏡像世界：刺眼的白。第一版做成暗灰色，結果跟其他章分不出來 ——
+       這一章的主題是「什麼都反過來」，那麼連「地牢是暗的」也該反過來。 */
+    const pg = cx.createLinearGradient(0, 0, 0, H);
+    pg.addColorStop(0, '#5a6070'); pg.addColorStop(0.5, '#8d94a4'); pg.addColorStop(1, '#5a6070');
+    cx.fillStyle = pg; cx.fillRect(0,0,W,H);
+    // 中央一團更亮的光暈，讓白有深度而不是一片死板
+    const wg = cx.createRadialGradient(W*0.5, H*0.44, 2, W*0.5, H*0.44, H*0.7);
+    wg.addColorStop(0, 'rgba(246,243,238,.55)'); wg.addColorStop(1, 'rgba(246,243,238,0)');
+    cx.fillStyle = wg; cx.fillRect(0,0,W,H);
+    cx.save(); cx.globalAlpha = .16; cx.strokeStyle = '#2b2b38'; cx.lineWidth = 1;
+    const step = 48, offx = (-px2) % step, offy = (-py2) % step;
+    cx.beginPath();
+    for(let x=offx-step; x<W+step; x+=step){ cx.moveTo(x, 0); cx.lineTo(x, H); }
+    for(let y=offy-step; y<H+step; y+=step){ cx.moveTo(0, y); cx.lineTo(W, y); }
+    cx.stroke(); cx.restore();
+  } else if(kind === 'flow'){
+    /* 最後的迷宮／混沌之間：時間與暗物質的流動。
+       做法是「拖著尾巴的粒子」而不是靜止的星點 ——
+       靜止的點是星空，會流動的線才讀得出「時間在走」。 */
+    cx.fillStyle = '#05050a'; cx.fillRect(0,0,W,H);
+    // 底層：幾團緩慢翻滾的暗物質
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for(let i=0;i<7;i++){
+      const t2 = clock*0.06 + i*1.7;
+      const bx = W*(0.5 + 0.42*Math.sin(t2*0.7 + i)) - px1*0.5;
+      const by = H*(0.5 + 0.42*Math.cos(t2*0.5 + i*2)) - py1*0.5;
+      const r  = H*(0.30 + 0.10*Math.sin(t2));
+      const bg = cx.createRadialGradient(bx, by, 1, bx, by, r);
+      bg.addColorStop(0, i%2 ? 'rgba(47,87,160,.30)' : 'rgba(107,26,30,.24)');
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      cx.fillStyle = bg; cx.fillRect(bx-r, by-r, r*2, r*2);
+    }
+    // 上層：沿著流場走的時間絲
+    for(let i=0;i<110;i++){
+      const sd = (i*2654435761 ^ (i<<7)) >>> 0;
+      const lane = (sd % 1000) / 1000;
+      const sp = 14 + (sd >>> 10) % 34;
+      const len = 14 + (sd >>> 6) % 38;
+      const y = lane * (H + 60) - 30 - py2*0.6;
+      // 流場：每一條的水平位置隨時間走，並依 y 做正弦擺動
+      const x = ((clock*sp + (sd >>> 3) % 900) % (W + 160)) - 80 - px2*0.6;
+      const wob = Math.sin(clock*0.8 + lane*9) * 6;
+      const a = 0.22 + ((sd >>> 16) % 46)/100;
+      const grd = cx.createLinearGradient(x, y+wob, x+len, y+wob);
+      grd.addColorStop(0, 'rgba(124,184,234,0)');
+      grd.addColorStop(0.5, `rgba(200,200,212,${a})`);
+      grd.addColorStop(1, 'rgba(124,184,234,0)');
+      cx.fillStyle = grd;
+      cx.fillRect(x, y + wob, len, i % 7 === 0 ? 2 : 1);
+    }
+    // 偶爾一道特別亮的：讓畫面有事件感，不是均勻的雜訊
+    const bt = clock % 6;
+    if(bt < 1.2){
+      const k = Math.floor(clock / 6);
+      const by2 = ((k * 7919) % 1000) / 1000 * H;
+      const a2 = Math.sin(bt / 1.2 * Math.PI) * 0.5;
+      const gg = cx.createLinearGradient(0, by2, W, by2);
+      gg.addColorStop(0, 'rgba(245,220,122,0)');
+      gg.addColorStop(0.5, `rgba(245,220,122,${a2})`);
+      gg.addColorStop(1, 'rgba(245,220,122,0)');
+      cx.fillStyle = gg; cx.fillRect(0, by2, W, 1);
+    }
+    cx.restore();
+  } else {
+    cx.fillStyle = '#07070a'; cx.fillRect(0,0,W,H);
+  }
+}
+
 function draw(dt){
   if(!G) return;
   // 鏡頭永遠對準玩家，不夾在地圖邊界內。
@@ -6718,22 +7206,82 @@ function draw(dt){
   camY += (ty - camY) * Math.min(1, dt*14);
 
   const ox = -Math.round(camX*T), oy = -Math.round(camY*T);
-  // 岩盤鋪底，隨鏡頭捲動 —— 對齊 32px 的圖樣週期就不會有接縫閃爍
-  if(!rockPat) rockPat = cx.createPattern(TILE_ART.rock, 'repeat');
-  cx.save();
-  cx.translate(ox % 32, oy % 32);
-  cx.fillStyle = rockPat;
-  cx.fillRect(-32, -32, cv.width+64, cv.height+64);
-  cx.restore();
+  const THEME_ID0 = ACT_THEME[actAt(G.act).id] || 'stone';
+
+  /* ── 迷宮外側的景色 ────────────────────────────────────────
+     故事的主標是「通天之塔」，但每一章的地圖外圍都是同一片岩盤 ——
+     山道與塔頂看起來還是在地底。玩家判斷「我在室內還是室外」靠的
+     不是地板，是**牆外面有什麼**。
+
+     兩層畫法，順序不能反：
+       1. 先把整張畫布鋪成這一章的「外面」（天空 / 雲海 / 水 / 虛空）
+       2. 再把 30x30 的地圖範圍蓋成岩盤
+
+     只做第 1 層的話，地圖裡還沒探索的地方也會透出天空 ——
+     那讀起來是「山裡面有好幾個洞」，不是「山」。 */
+  const BACK = (THEMES[THEME_ID0] || {}).back;
+  drawBackdrop(BACK, ox, oy);
+
+  /* 有「外面」的章節就不鋪岩盤。
+
+     第一版只在地圖範圍外畫天空 —— 但地圖有 30x30 格、視野只有 11x15，
+     玩家幾乎永遠在地圖深處，於是天空只剩畫面角落一條，等於沒做。
+
+     想清楚之後答案很簡單：山道與塔頂**本來就沒有「還沒挖開的岩盤」**。
+     那裡沒走過的地方不是石頭，是空的 —— 是懸崖外、是雲、是水面、是虛空。
+     所以走在山脊上會看到自己腳下那條路浮在天空裡，那正是「室外」。 */
+  if(!BACK){
+    // 岩盤鋪底，隨鏡頭捲動 —— 對齊 32px 的圖樣週期就不會有接縫閃爍
+    if(!rockPat) rockPat = cx.createPattern(TILE_ART.rock, 'repeat');
+    cx.save();
+    cx.translate(ox % 32, oy % 32);
+    cx.fillStyle = rockPat;
+    cx.fillRect(-32, -32, cv.width+64, cv.height+64);
+    cx.restore();
+  }
 
   const x0=Math.max(0,Math.floor(camX)-1), x1=Math.min(MW-1,Math.ceil(camX+VW)+1);
   const y0=Math.max(0,Math.floor(camY)-1), y1=Math.min(MH-1,Math.ceil(camY+VH)+1);
-  const THEME_ID = ACT_THEME[actAt(G.act).id] || 'stone';
+
+  const THEME_ID = THEME_ID0;
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
   const OUTDOOR = !!(THEMES[THEME_ID] || {}).lightAll;
   const TPROPS = propsFor(THEME_ID);
   const AIR = (THEMES[THEME_ID] || {}).air;
   const MK = G.f.mark, MKART = MK ? markFor(THEME_ID) : null;
+
+  /* ── 外牆 ──────────────────────────────────────────────────
+     使用者的評語：「通天塔的外側應該有牆壁，不然就好像一個色塊貼在天空上」。
+     完全正確 —— 原本走過的那一格畫地磚，旁邊直接就是天空，
+     所以整片地板讀起來是浮貼在藍色上的一張色紙：沒有厚度，也沒有重量。
+
+     做法是把走過的範圍往下擠出一段塔身：同一個剪影用**這一章自己的牆磚**
+     畫三次，每次往下挪一點、再壓暗一點。等一下地磚會蓋在上面，
+     所以只有「露在外面的那一截」看得見 —— 也就是牆。
+     用牆磚而不是純色，是因為純色只會變成一塊灰板；石頭要有縫才是石頭。
+     最後沿著頂緣描一條受光線（太陽在上面），轉角才立得起來。
+
+     只有戶外章節需要。地底章節外面本來就是岩盤，不會露出天空。 */
+  if(BACK === 'sky' || BACK === 'high' || BACK === 'water'){
+    const SKIRT = [[22,.62], [12,.36], [5,.14]];
+    for(const [dy, dark] of SKIRT){
+      for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+        if(!G.seen[key(x,y)]) continue;
+        cx.drawImage(TS.wall, ox + x*T, oy + y*T + dy);
+      }
+      cx.fillStyle = `rgba(9,12,22,${dark})`;
+      for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+        if(!G.seen[key(x,y)]) continue;
+        cx.fillRect(ox + x*T, oy + y*T + dy, T, T);
+      }
+    }
+    // 頂緣的受光線：只描在「上面沒有東西」的那一排
+    cx.fillStyle = 'rgba(207,224,242,.5)';
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      if(!G.seen[key(x,y)] || (y > 0 && G.seen[key(x,y-1)])) continue;
+      cx.fillRect(ox + x*T, oy + y*T - 1, T, 1);
+    }
+  }
 
   // 目前「看得見」的範圍。空氣感只畫在這個框裡 ——
   // 不夾的話，霧與風會鋪滿整張畫布，連未探索的黑區都變成灰條，
@@ -7487,7 +8035,7 @@ function refresh(){
   if(panelMode) renderPanel();
 }
 
-let panelMode = null, sel = null;
+let panelMode = null, sel = null, potTarget = null;
 function openPanel(mode){
   panelMode = mode; sel = null;
   $('panel').classList.add('open');
@@ -7681,6 +8229,44 @@ function renderPanel(){
     btn(TX('p.forceout','硬闖出去（天罰）'), ()=>{ closePanel(); steal(); });
     return;
   }
+  /* 壺的畫面。上半是壺裡有什麼（點一下拿出來），下半是背包裡放得進去的東西
+     （點一下放進去）。做成一個畫面而不是「放入／取出」兩個模式，是因為
+     玩家在壺前面想的是「這一趟要留什麼」—— 那需要兩邊同時看得到。 */
+  if(panelMode==='pot'){
+    const pot = potTarget;
+    if(!pot || !p.inv.includes(pot)){ closePanel(); return; }
+    const store = pot.d.beh === 'store';
+    $('ptitle').textContent = locName('pot', pot.d);
+    $('pcount').textContent = store ? `${pot.contents.length} / ${pot.cap}`
+                                    : M('p.potuses','還能用 {n} 次',{n:pot.cap});
+    $('phint').textContent = TX('p.pot.' + pot.d.beh, POT_HINT[pot.d.beh] || '');
+    const line = (it, tail, fn) => {
+      const row = document.createElement('div'); row.className = 'row';
+      const c = document.createElement('canvas'); c.width=T; c.height=T;
+      c.getContext('2d').drawImage(iconOf(it),0,0);
+      const nm = document.createElement('div'); nm.className='nm'; nm.textContent = nameOf(it);
+      row.appendChild(c); row.appendChild(nm);
+      if(tail){ const e=document.createElement('span'); e.className='eq'; e.textContent=tail; row.appendChild(e); }
+      row.onclick = fn;
+      list.appendChild(row);
+      return row;
+    };
+    const head = t => { const h=document.createElement('div'); h.className='hint'; h.textContent=t; list.appendChild(h); };
+    if(store){
+      head(pot.contents.length ? TX('p.potheld','壺裡（點一下拿出來）') : TX('p.potempty','壺裡是空的。'));
+      pot.contents.forEach((it, i) => line(it, TX('b.potout','取出'),
+        ()=>{ if(potTake(pot, i)) SFX.play('open'); renderPanel(); refresh(); }));
+    }
+    const able = p.inv.filter(it => it !== pot && !(store && it.cat === 'pot'));
+    head(able.length ? TX('p.potfeed','背包（點一下放進去）') : TX('p.potnofeed','背包裡沒有放得進去的東西。'));
+    for(const it of able){
+      const tail = (it===p.weap||it===p.shld) ? TX('p.equipped','裝備中') : '';
+      line(it, tail, ()=>{ potPut(pot, it); renderPanel(); refresh(); });
+    }
+    btn(TX('b.back','回到背包'), ()=>{ panelMode='inv'; sel=pot; potTarget=null; renderPanel(); });
+    btn(TX('b.close','關閉'), ()=>{ potTarget=null; closePanel(); refresh(); });
+    return;
+  }
   if(panelMode==='inv'){
     $('ptitle').textContent = TX('p.bag','背包');
     $('pcount').textContent = `${p.inv.length} / 20　${p.gold} G`;
@@ -7726,6 +8312,12 @@ function buildActions(it, ground){
     if(r===null){ closePanel(); openAim(TX('p.wanddir','揮杖方向')); return; }   // 杖進入瞄準
     if(r){ if(!ground) {} closePanel(); endTurn(); } else refresh();
   });
+  if(it.cat === 'pot'){
+    btn(TX('b.openpot','打開壺'), ()=>{
+      if(ground){ say(TX('e.pickfirst','要先撿起來才能裝備。')); refresh(); return; }
+      potTarget = it; panelMode = 'pot'; sel = null; renderPanel();
+    }, ground);
+  }
   if(it.cat === 'hat'){
     const on = p.hat === it.d.id;
     btn(TX(on ? 'b.worn' : 'b.wear', on ? '已戴上' : '戴上'), ()=>{ wearHat(it); closePanel(); endTurn(); }, on);
@@ -7828,8 +8420,8 @@ function buildActions(it, ground){
       say(M('s.117','放下了「{v0}」。',{v0:(nameOf(it))})); closePanel(); endTurn();
     });
     if(!G.known[lookKey(it)] && LOOK[it.cat])
-      btn('標註', ()=>{
-        const n = prompt('給這個外觀一個備註（例如「?危險」）', G.notes[lookKey(it)]||'');
+      btn(TX('b.mark','標註'), ()=>{
+        const n = prompt(TX('e.markask','給這個外觀一個備註（例如「?危險」）'), G.notes[lookKey(it)]||'');
         if(n!==null){ if(n) G.notes[lookKey(it)]=n; else delete G.notes[lookKey(it)]; refresh(); }
       });
   }
@@ -7842,6 +8434,17 @@ function doThrow(dx,dy){
   throwItem(it, dx, dy);
   endTurn();
 }
+// 從一格往外找一格「走得到而且還沒有東西」的地板。找不到就回 null ——
+// 讓呼叫端決定那件東西的下場，而不是偷偷疊在別的東西上面。
+function spillSpot(cx, cy){
+  for(let r = 0; r <= 3; r++){
+    for(let yy = cy - r; yy <= cy + r; yy++) for(let xx = cx - r; xx <= cx + r; xx++){
+      if(Math.max(Math.abs(xx-cx), Math.abs(yy-cy)) !== r) continue;
+      if(walkable(xx, yy) && !G.items[key(xx, yy)]) return {x:xx, y:yy};
+    }
+  }
+  return null;
+}
 /* 丟東西的飛行判定。背包裡丟出去、背包滿了把地上的東西往前撥開，
    走的是同一段程式 —— 兩份會不同步，而不同步的規則玩家一定會發現。 */
 function throwItem(it, dx, dy){
@@ -7853,6 +8456,33 @@ function throwItem(it, dx, dy){
     x+=dx; y+=dy;
   }
   say(M('s.118','投擲了「{v0}」。',{v0:(nameOf(it))}));
+  /* 壺是陶的：丟出去就碎，壺本身不會落地。
+     但裡面的東西會撒在碎裂的那一格附近 —— 失手丟掉整個保存壺
+     如果連內容物一起蒸發，那不是「失手」，是懲罰。 */
+  if(it.cat === 'pot'){
+    const bx = target ? target.x : x - dx, by = target ? target.y : y - dy;
+    SFX.play('hit');
+    burst(bx, by, 12, '#8c7a5e', 46, 12, .7);
+    if(target){
+      const dmg = rollDmg(10, target.d.def, false, 1);
+      target.hp -= dmg; float(target.x, target.y, String(dmg), '#e8dcc0');
+      say(M('s.162','{pot}在 {v0} 身上砸得粉碎，造成 {v1} 點傷害。',
+            {pot:potNm(it), v0:locName('mon', target.d), v1:dmg}));
+      if(target.hp<=0) kill(target);
+    } else {
+      say(M('s.163','{pot}撞上地面，碎了。',{pot:potNm(it)}));
+    }
+    const spill = it.contents.slice(); it.contents = [];
+    let n = 0;
+    for(const inner of spill){
+      const s2 = spillSpot(bx, by);
+      if(!s2) break;
+      G.items[key(s2.x, s2.y)] = inner; n++;
+    }
+    if(spill.length) say(n ? M('s.164','壺裡的 {n} 件東西撒了一地。',{n})
+                           : TX('s.165','壺裡的東西全都摔壞了。'), n ? null : 'bad');
+    return;
+  }
   if(target){
     if(it.cat==='herb' && it.d.self){
       target.st[it.d.self.st] = it.d.self.dur*2;
@@ -8105,12 +8735,12 @@ function autoLang(){
    只換動態產生的部分，畫面會變成兩種語言混在一起 —— 那比不翻更難讀。 */
 const STATIC_T = [
   ['start','ui.start','開始下潛'],
-  ['vgo','ui.dive','再次下潛　B1F'], ['vboard','ui.board','紀錄碑'],
+  ['vboard','ui.board','紀錄碑'],
   ['bx','ui.close','關閉'], ['bigx','ui.close','關閉'],
   ['restart','ui.retry','再下一次地牢'], ['oboard','ui.board','紀錄碑'],
   // 村莊與紀錄碑的靜態標題。漏掉這幾個的代價是「整個畫面都是中文」——
   // 使用者截圖抓到的就是這裡。
-  ['vname','v.name','爐火村'], ['vsub','v.sub.win','你活著走出來了。'],
+  ['vsub','v.sub.win','你活著走出來了。'],
   ['vgoldl','v.gold','持有金錢'],
   ['btitle','b.title','紀錄碑'], ['bsub','b.sub','這座碑只刻在你的裝置上。'],
   ['ptitle','p.bag','背包'],
@@ -8280,8 +8910,6 @@ function restart(){
   closePanel(); closeBigMap(); closeVillage();
   pendWand=null; pendThrow=null; pendSpell=null; swapMode=null;
   newGame((Math.random()*1e9)|0);
-  const gone = consumeRun();
-  for(const g of gone) say(M('s.133','「{v0}」已經磨損殆盡。',{v0:(defOf(g.cat,g.id).nm)}),'bad');
   BGM.start(); showCard();
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
   refresh();
@@ -8292,6 +8920,7 @@ function leaveDungeon(){
   const sc = submitScore('out');
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
+  stashPots();                     // 活著走出來也算 —— 壺裡的東西跟著回村
   saveVillage();
   clearRun();                      // 主動離開迷宮也結束了這一趟
   G.over = true;                        // 停掉這一趟，但不是死亡
@@ -8304,12 +8933,276 @@ function leaveDungeon(){
 }
 function openVillage(){
   renderVillage();
+  BGM.force('village');
   $('village').classList.add('show');
   // 村莊是整頁的，外層若停在半空中會看不到標題與金錢
   try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){}
 }
+/* 村莊的遠景。用跟地牢同一套規則畫：程序化、零圖檔、
+   暖色只給活的東西（這裡是爐火與窗）。
+   它每次開村莊重畫一次就好 —— 不需要動畫，村莊的重點是「停下來」。 */
+/* ─── 村莊的場景 ────────────────────────────────────────────
+   一排村民站在漸層前面，讀起來是「一個選單」，不是「一個地方」。
+   村莊要有屋子、有池子、有路、有草、有幾棵樹 —— 那才是一個人住的地方。
+
+   三個村莊，三種建築，但**同一套文法**：天空／遠景 → 屋列 → 路 → 草地與池
+   由後往前疊。文法一樣，玩家一眼就知道「這也是村莊」；
+   詞彙不一樣（石造／岩窟／木造），才知道「這是別的村莊」。
+   使用者的話：「每個村莊的設計各自不同，但是都要一致，避免視覺錯亂」。
+
+     euro　中古世紀歐洲：半木構、陡坡瓦頂、石砌煙囪、水井、圓冠樹
+     cave　土耳其地下城市／義大利山城：鑿進凝灰岩錐的拱形洞屋、蓄水池、絲柏
+     edo 　江戶城下町：低矮町家、深屋簷、暖簾、紙燈籠、石板路、松、遠方天守
+
+   每一章走到哪一村，是由進度決定的 —— 故事往前，鎮也換一個。 */
+const VSTYLES = ['euro', 'cave', 'edo'];
+function villageStyle(){
+  const a = Math.max(0, Math.min(ACTS.length-1, VILLAGE.act|0));
+  return VSTYLES[Math.min(VSTYLES.length-1, Math.floor(a / 5))];
+}
+const VNAME = {euro:'爐火村', cave:'岩窟聚落', edo:'燈籠町'};
+const VPAL = {
+  euro: {sky:['#243051','#4a4460','#8a6a4c'], far:'#232c3e', mid:'#2f3a4a',
+         wall:'#cdb894', wall2:'#a8916d', beam:'#4a3324', roof:'#8a3f2f', roof2:'#5f2a20',
+         road:'#7a6446', grass:'#3f5334', grass2:'#33452b', tree:'#38562f', trunk:'#432f22',
+         pond:'#3a5f7e', lit:'#f5a95e'},
+  cave: {sky:['#171d2c','#2a2620','#43331f'], far:'#1e1a17', mid:'#2c241c',
+         wall:'#c6a677', wall2:'#9d7f56', beam:'#4a3524', roof:'#b18f63', roof2:'#7d6244',
+         // 地底沒有草坪。這兩格是苔與碎岩，不是草地 —— 綠得太乾淨會讓人以為在地面上
+         road:'#8a7350', grass:'#57503a', grass2:'#464031', tree:'#42583a', trunk:'#3a2c1e',
+         pond:'#2f5a6b', lit:'#f5c268'},
+  edo:  {sky:['#101a35','#1d2a4a','#3b3c58'], far:'#141d33', mid:'#1e2740',
+         wall:'#d3c7ae', wall2:'#a89b84', beam:'#3a2a20', roof:'#414a5c', roof2:'#2b3140',
+         road:'#5d5a52', grass:'#33452f', grass2:'#293a27', tree:'#2b4030', trunk:'#3a2a20',
+         pond:'#25415e', lit:'#f2b45a'},
+};
+function paintVillageScene(){
+  const c = $('vscene'); if(!c) return;
+  const x = c.getContext('2d'), W = c.width, H = c.height;
+  const st = villageStyle(), P = VPAL[st];
+  const r = RNG(mix32(st.charCodeAt(0) * 7919, 20260809));
+  x.clearRect(0,0,W,H);
+
+  // ── 天空／穹頂 ──
+  const g = x.createLinearGradient(0,0,0,H*0.7);
+  g.addColorStop(0,P.sky[0]); g.addColorStop(0.6,P.sky[1]); g.addColorStop(1,P.sky[2]);
+  x.fillStyle = g; x.fillRect(0,0,W,H);
+  if(st === 'cave'){
+    /* 地下城市沒有天空，有的是岩頂與一道天井。
+       所以這一格畫的是「上面壓著一整座山」—— 鐘乳石與那道光。 */
+    x.fillStyle = P.far;
+    x.beginPath(); x.moveTo(0,0); x.lineTo(W,0); x.lineTo(W,H*0.20);
+    for(let i=12;i>=0;i--){
+      const px2 = i*W/12, dep = H*(0.10 + ((mix32(i,7)%100)/100)*0.16);
+      x.lineTo(px2, dep);
+    }
+    x.closePath(); x.fill();
+    for(let i=0;i<9;i++){                        // 鐘乳石
+      const sx = 6 + i*(W-12)/8, len = 5 + (mix32(i,31)%10);
+      const top = H*0.14 + (mix32(i,53)%6);
+      x.fillStyle = P.far;
+      x.beginPath(); x.moveTo(sx-3, top); x.lineTo(sx+3, top); x.lineTo(sx, top+len);
+      x.closePath(); x.fill();
+    }
+    const shaft = x.createLinearGradient(W*0.5, 0, W*0.5, H*0.7);   // 天井漏下來的光
+    shaft.addColorStop(0,'rgba(245,220,122,.20)'); shaft.addColorStop(1,'rgba(245,220,122,0)');
+    x.fillStyle = shaft;
+    x.beginPath(); x.moveTo(W*0.44, 0); x.lineTo(W*0.56, 0);
+    x.lineTo(W*0.66, H*0.7); x.lineTo(W*0.34, H*0.7); x.closePath(); x.fill();
+  } else {
+    for(let i=0;i<44;i++){                       // 星
+      const sx = r.i(0,W-1), sy = r.i(0,Math.floor(H*0.42));
+      x.fillStyle = r.chance(.25) ? '#f6efe3' : '#a99a7e';
+      x.fillRect(sx, sy, 1, 1);
+    }
+    // 遠景：兩層山稜
+    for(const [base, col] of [[H*0.50,P.far], [H*0.56,P.mid]]){
+      x.fillStyle = col; x.beginPath(); x.moveTo(-4, H);
+      for(let i=0;i<=8;i++)
+        x.lineTo(-4 + i*(W+8)/8, base - (Math.sin(i*1.9 + base)*0.5+0.5) * H*0.14);
+      x.lineTo(W+4, H); x.closePath(); x.fill();
+    }
+    if(st === 'edo'){
+      // 遠方的天守。城下町之所以叫城下町，是因為那座城看得見。
+      const kx = W*0.87, ky = H*0.48;
+      x.fillStyle = P.far;
+      for(let t2=0;t2<3;t2++){
+        const w2 = 26 - t2*7, h2 = 7;
+        const ty = ky - t2*10;
+        x.fillRect(kx - w2/2, ty - h2, w2, h2);
+        x.beginPath();                            // 每一層都有一片外翻的屋簷
+        x.moveTo(kx - w2/2 - 4, ty - h2); x.lineTo(kx, ty - h2 - 5);
+        x.lineTo(kx + w2/2 + 4, ty - h2); x.closePath(); x.fill();
+      }
+    }
+  }
+
+  // ── 地面：草地 → 路 → 前景草 ──
+  const gy = Math.round(H*0.60);                  // 屋子的基準線
+  x.fillStyle = P.grass2; x.fillRect(0, gy, W, H-gy);
+  const roadY = Math.round(H*0.74);
+  x.fillStyle = P.road; x.fillRect(0, roadY, W, Math.round(H*0.13));
+  if(st === 'edo'){                               // 石板：橫向的縫
+    x.fillStyle = 'rgba(0,0,0,.22)';
+    for(let i=0;i<W;i+=11) x.fillRect(i + ((i/11)%2?5:0), roadY+3, 7, 1);
+    for(let i=0;i<W;i+=11) x.fillRect(i, roadY+8, 6, 1);
+  } else {                                        // 泥土／碎石：散點
+    for(let i=0;i<70;i++){
+      x.fillStyle = i%3 ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.08)';
+      x.fillRect(r.i(0,W-1), roadY + r.i(1, Math.round(H*0.12)), 1, 1);
+    }
+  }
+  x.fillStyle = P.grass; x.fillRect(0, roadY + Math.round(H*0.13), W, H);
+
+  // ── 池子 ──
+  const pw = 44, ph = 13, pxx = Math.round(W*0.13), pyy = H - ph - 4;
+  x.fillStyle = P.pond;
+  x.beginPath(); x.ellipse(pxx+pw/2, pyy+ph/2, pw/2, ph/2, 0, 0, Math.PI*2); x.fill();
+  x.fillStyle = 'rgba(0,0,0,.28)';                // 岸邊的暗
+  x.beginPath(); x.ellipse(pxx+pw/2, pyy+ph/2+1, pw/2, ph/2, 0, Math.PI, Math.PI*2); x.fill();
+  x.fillStyle = 'rgba(246,243,238,.30)';          // 水面反光
+  for(let i=0;i<4;i++) x.fillRect(pxx + 7 + i*9, pyy + 3 + (i%2)*4, 5, 1);
+
+  // ── 屋子 ──
+  const litWin = (bx, by, bw2, bh2) => {
+    x.fillStyle = P.lit;
+    x.fillRect(bx+3, by+4, 3, 3);
+    if(bw2 > 22) x.fillRect(bx+bw2-6, by+4, 3, 3);
+    x.fillStyle = 'rgba(245,169,94,.13)';         // 窗口漏出來的光暈
+    x.fillRect(bx+1, by+2, bw2-2, bh2-2);
+  };
+  const houses = [[10, 30, 20], [46, 26, 17], [96, 34, 22], [138, 28, 18]];
+  for(const [hx, hw, hh] of houses){
+    const hy = gy - hh + r.i(0,3);
+    if(st === 'euro'){
+      // 半木構：白灰泥牆 + 交叉的深色木樑 + 陡坡瓦頂 + 石砌煙囪
+      x.fillStyle = P.wall; x.fillRect(hx, hy, hw, hh);
+      x.fillStyle = P.wall2; x.fillRect(hx, hy+hh-4, hw, 4);
+      x.fillStyle = P.beam;
+      x.fillRect(hx, hy, 2, hh); x.fillRect(hx+hw-2, hy, 2, hh);
+      x.fillRect(hx, hy+Math.round(hh*0.55), hw, 2);
+      for(let i=1;i<3;i++) x.fillRect(hx + Math.round(i*hw/3), hy, 2, Math.round(hh*0.55));
+      x.fillStyle = P.roof;                       // 陡坡屋頂
+      x.beginPath(); x.moveTo(hx-4, hy); x.lineTo(hx+hw/2, hy-Math.round(hh*0.62));
+      x.lineTo(hx+hw+4, hy); x.closePath(); x.fill();
+      x.fillStyle = P.roof2;
+      x.beginPath(); x.moveTo(hx+hw/2, hy-Math.round(hh*0.62));
+      x.lineTo(hx+hw+4, hy); x.lineTo(hx+hw/2, hy); x.closePath(); x.fill();
+      x.fillStyle = P.wall2; x.fillRect(hx+hw-9, hy-Math.round(hh*0.72), 4, Math.round(hh*0.4));
+    } else if(st === 'cave'){
+      // 岩窟屋：鑿進凝灰岩錐裡，所以是一個尖錐加幾個拱形洞口
+      x.fillStyle = P.wall;
+      x.beginPath(); x.moveTo(hx, gy);
+      x.lineTo(hx + hw*0.12, hy - Math.round(hh*0.7));
+      x.lineTo(hx + hw*0.5,  hy - Math.round(hh*1.05));
+      x.lineTo(hx + hw*0.88, hy - Math.round(hh*0.7));
+      x.lineTo(hx + hw, gy); x.closePath(); x.fill();
+      x.fillStyle = P.wall2;                      // 受光面在左，右邊壓暗
+      x.beginPath(); x.moveTo(hx + hw*0.5, hy - Math.round(hh*1.05));
+      x.lineTo(hx + hw*0.88, hy - Math.round(hh*0.7));
+      x.lineTo(hx + hw, gy); x.lineTo(hx + hw*0.5, gy); x.closePath(); x.fill();
+      for(let i=0;i<2;i++){                       // 拱形洞口
+        const ax = hx + 5 + i*Math.round(hw*0.45), ay = gy - 8;
+        x.fillStyle = '#20160f';
+        x.beginPath(); x.moveTo(ax, gy); x.lineTo(ax, ay+3);
+        x.arc(ax+3, ay+3, 3, Math.PI, 0); x.lineTo(ax+6, gy); x.closePath(); x.fill();
+        if(i === 0){ x.fillStyle = P.lit; x.fillRect(ax+2, ay+4, 2, 3); }
+      }
+      continue;                                   // 岩窟屋不需要方窗
+    } else {
+      // 町家：低矮、寬、深屋簷；暖簾與燈籠是它的招牌
+      x.fillStyle = P.wall; x.fillRect(hx, hy, hw, hh);
+      x.fillStyle = P.beam;                       // 木格子
+      for(let i=0;i<=4;i++) x.fillRect(hx + Math.round(i*(hw-2)/4), hy+3, 1, hh-3);
+      x.fillRect(hx, hy, hw, 2);
+      x.fillStyle = P.roof;                       // 緩坡瓦頂＋外挑的簷
+      x.beginPath(); x.moveTo(hx-5, hy); x.lineTo(hx+hw/2, hy-Math.round(hh*0.42));
+      x.lineTo(hx+hw+5, hy); x.closePath(); x.fill();
+      x.fillStyle = P.roof2; x.fillRect(hx-5, hy-1, hw+10, 2);
+      x.fillStyle = '#7d2f28';                    // 暖簾
+      x.fillRect(hx+2, hy+hh-7, hw-4, 4);
+      x.fillStyle = P.lit;                        // 門口的紙燈籠
+      x.fillRect(hx+hw-4, hy+hh-9, 3, 4);
+    }
+    litWin(hx, hy, hw, hh);
+  }
+
+  // ── 林木 ──
+  const trees = st === 'edo'   ? [[30,12],[86,10],[164,13]]
+              : st === 'cave'  ? [[34,14],[88,11],[160,15]]
+                               : [[32,13],[84,11],[162,14]];
+  for(const [tx, th] of trees){
+    const ty = gy + 4;
+    x.fillStyle = P.trunk;
+    x.fillRect(tx-1, ty - th*(st==='edo' ? 0.9 : 0.5), 2, th*(st==='edo' ? 0.95 : 0.6));
+    x.fillStyle = P.tree;
+    if(st === 'cave'){                            // 絲柏：又細又高的紡錘
+      x.beginPath(); x.ellipse(tx, ty-th*0.55, 3.2, th*0.62, 0, 0, Math.PI*2); x.fill();
+    } else if(st === 'edo'){                      // 松：三層橫展的傘
+      for(let i=0;i<3;i++){
+        const w2 = 12 - i*3.4, yy = ty - th*0.35 - i*6;
+        x.beginPath(); x.ellipse(tx, yy, w2, 2.2, 0, 0, Math.PI*2); x.fill();
+      }
+    } else {                                      // 闊葉：圓冠
+      x.beginPath(); x.ellipse(tx, ty-th*0.62, th*0.55, th*0.5, 0, 0, Math.PI*2); x.fill();
+      x.beginPath(); x.ellipse(tx-th*0.32, ty-th*0.42, th*0.34, th*0.3, 0, 0, Math.PI*2); x.fill();
+    }
+  }
+
+  // ── 村子的中心 ──
+  const fx = Math.round(W*0.66), fy = H - 12;
+  if(st === 'euro'){                              // 水井
+    x.fillStyle = P.wall2; x.fillRect(fx-6, fy, 12, 7);
+    x.fillStyle = '#1a1410'; x.fillRect(fx-4, fy+1, 8, 3);
+    x.fillStyle = P.trunk; x.fillRect(fx-6, fy-8, 2, 8); x.fillRect(fx+4, fy-8, 2, 8);
+    x.fillStyle = P.roof; x.fillRect(fx-8, fy-11, 16, 3);
+  } else if(st === 'edo'){                        // 石燈籠
+    x.fillStyle = '#6d6a62'; x.fillRect(fx-2, fy, 4, 7);
+    x.fillRect(fx-5, fy-6, 10, 2);
+    x.fillStyle = P.lit;  x.fillRect(fx-3, fy-5, 6, 4);
+    x.fillStyle = '#6d6a62'; x.fillRect(fx-6, fy-9, 12, 3);
+  } else {                                        // 岩窟：中央的爐火
+    x.fillStyle = '#2a1d14'; x.fillRect(fx-6, fy+4, 12, 3);
+  }
+  // 爐火／燈火的光暈。整張圖唯一飽和的暖色，village 的中心點就是它。
+  const glow = x.createRadialGradient(fx, fy-2, 1, fx, fy-2, 34);
+  glow.addColorStop(0,'rgba(245,169,94,.42)'); glow.addColorStop(1,'rgba(245,169,94,0)');
+  x.fillStyle = glow; x.fillRect(fx-34, fy-36, 68, 68);
+  if(st !== 'edo'){
+    x.fillStyle = '#e87a4a'; x.fillRect(fx-3, fy-1, 6, 6);
+    x.fillStyle = '#f5a95e'; x.fillRect(fx-2, fy+1, 4, 4);
+    x.fillStyle = '#f5dc7a'; x.fillRect(fx-1, fy+2, 2, 3);
+  }
+  // 最前景壓一道暗，村民站上去才不會浮在圖上
+  const fade = x.createLinearGradient(0, H-10, 0, H);
+  fade.addColorStop(0,'rgba(13,10,8,0)'); fade.addColorStop(1,'rgba(13,10,8,.75)');
+  x.fillStyle = fade; x.fillRect(0, H-10, W, 10);
+}
+
+/* 村民會講下一章。村莊如果只有買賣，它就只是一個商店介面 ——
+   有人在這裡對你說「接下來要去哪、那裡有什麼」，主線才接得起來。
+   講的是**下一章**而不是這一章：村莊的作用是把人推出門。 */
+function villagerLine(){
+  const nx = Math.min(VILLAGE.act | 0, ACTS.length - 1);
+  const a = ACTS[nx];
+  const who = TX('v.who.' + (nx % 4), ['老鐵匠','守夜的孩子','旅行商人','村長'][nx % 4]);
+  // 直接用章節簡介 —— 那本來就是「這一章是什麼」的一句話，
+  // 而且已經有三語翻譯。再開一組 v.talk.* 只會多一份要維護的東西。
+  const body = TX('acti.' + a.id, a.intro);
+  return { who, body, act: a };
+}
+
 function renderVillage(){
   $('vgold').textContent = VILLAGE.gold;
+  // 走到哪一段故事就住哪一個鎮。名字跟著場景一起換 ——
+  // 換了建築卻不換名字，玩家會以為是同一個地方換了佈景。
+  const vs = villageStyle();
+  $('vname').textContent = TX('v.name.' + vs, VNAME[vs]);
+  paintVillageScene();
+  const t = villagerLine();
+  $('vtalk').innerHTML = M('v.talkfmt','<b>{who}</b>：「{body}」<br>—— 下一章：<b>{nx}</b>',
+    {who:t.who, body:t.body, nx:locAct(t.act)});
+  $('vgo').textContent = M('ui.dive','前往　{nm}', {nm: locAct(t.act)});
 
   // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
   const folk = $('vfolk');
@@ -8325,8 +9218,7 @@ function renderVillage(){
   const stock = $('vstock'); stock.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'vhint';
-  head.textContent = M('v.smith','鐵匠鋪　—　買下的裝備能撐 {n} 趟迷宮，之後會磨損殆盡。',
-                       {n:RUNS_PER_GEAR});
+  head.textContent = TX('v.smith','鐵匠鋪　—　買下就是你的，死亡也帶不走。買完可以繼續鍛造。');
   stock.appendChild(head);
 
   for(const g of VILLAGE_STOCK){
@@ -8346,7 +9238,7 @@ function renderVillage(){
     b.onclick = ()=>{
       if(VILLAGE.gold < d.price) return;
       VILLAGE.gold -= d.price;
-      VILLAGE.stock.push({cat:g.cat, id:g.id, up:0, runs:RUNS_PER_GEAR});
+      VILLAGE.stock.push({cat:g.cat, id:g.id, up:0});
       saveVillage(); SFX.play('coin'); renderVillage();
     };
     row.appendChild(c); row.appendChild(nm); row.appendChild(st); row.appendChild(b);
@@ -8366,14 +9258,38 @@ function renderVillage(){
     const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
     c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
     const nm = document.createElement('div'); nm.className='nm';
-    nm.textContent = locName(g.cat, d);
+    nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '');
     const st = document.createElement('div'); st.className='st';
-    st.textContent = M('v.runs','還能撐 {n} 趟',{n:g.runs});
+    st.textContent = g.cat==='weap' ? `${TX('ui.atk','攻')} +${(d.atk||0) + g.up*2}`
+                                    : `${TX('ui.def','防')} +${(d.def||0) + g.up*2}`;
     row.appendChild(c); row.appendChild(nm); row.appendChild(st);
+    /* 鍛造。深章節的關鍵不是「換一把更好的劍」—— 鐵匠鋪最好的一把
+       到第十三章就到頂了 —— 而是「把手上這把打得更利」。
+       沒有這一格的時候，通關賞金到後期沒有東西可以買，
+       而玩家的數值就永遠停在鐵匠鋪的天花板上（走通測試在通天塔全滅）。 */
+    if(g.up < (d.up || 0)){
+      const cost = forgeCost(d, g.up);
+      const b = document.createElement('button');
+      b.textContent = M('v.forge','＋{n}　{g} G',{n:g.up+1, g:cost});
+      b.disabled = VILLAGE.gold < cost;
+      b.onclick = ()=>{
+        if(VILLAGE.gold < cost) return;
+        VILLAGE.gold -= cost; g.up++;
+        saveVillage(); SFX.play('ident'); renderVillage();
+      };
+      row.appendChild(b);
+    } else {
+      const e = document.createElement('div'); e.className='st';
+      e.textContent = TX('v.forgemax','已達極限');
+      row.appendChild(e);
+    }
     owned.appendChild(row);
   }
 }
-function closeVillage(){ $('village').classList.remove('show'); }
+/* 鍛造價：越往上越貴，而且吃裝備本身的價值 ——
+   把木棒打到 +2 應該是零錢，把秘銀之劍打到 +4 應該是一整章的收入。 */
+function forgeCost(d, up){ return Math.round((d.price || 800) / 8) * (up + 1); }
+function closeVillage(){ $('village').classList.remove('show'); BGM.force(null); }
 
 /* ─── 選單：手機把側欄與控制列搬進來，桌機維持原位 ──────────────
    CSS 沒辦法把元素搬到別的父層，所以這件事必須在 JS 做。
@@ -8546,26 +9462,11 @@ let coverUp = true;
   const nameEl = $('pname');
   nameEl.value = VILLAGE.name || '';
   nameEl.oninput = ()=>{ VILLAGE.name = nameEl.value.trim().slice(0,12); saveVillage(); };
-  /* 造型與顏色分成兩排。合成一排（六體型 × 十色 = 六十顆）沒有人會看完，
-     拆開之後玩家做的是兩個各自很小的決定。
-     兩排都即時重畫：選了體型，下面那排顏色立刻變成那個體型。 */
-  const skins = $('skins'), cols = $('cols');
+  /* 封面只問一件事：你是什麼顏色。一顆一顆都是主角本人的圖，
+     所以選的時候看到的就是等一下會出現在地牢裡的那隻。 */
+  const cols = $('cols');
   function paintPickers(){
-    skins.innerHTML = ''; cols.innerHTML = '';
-    for(const sk of SKINS){
-      const b2 = document.createElement('button');
-      b2.title = TX('skin.' + sk, sk);
-      const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(blobFor(VILLAGE.col, sk), 0, 0);
-      b2.appendChild(c);
-      if(sk === VILLAGE.skin) b2.classList.add('on');
-      b2.onclick = ()=>{
-        VILLAGE.skin = sk; saveVillage();
-        refreshHero();                     // 換了體型，主角的圖要重畫
-        paintPickers(); SFX.play('open'); refresh();
-      };
-      skins.appendChild(b2);
-    }
+    cols.innerHTML = '';
     for(const col of BLOB_COLS){
       const b2 = document.createElement('button');
       b2.title = TX('col.' + col, BLOB_COL_NM[col]);
@@ -8615,9 +9516,6 @@ let coverUp = true;
   $('start').onclick = ()=>{
     clearRun();                   // 重新開始就是放棄紀錄點，講明白就好
     enterDungeon();
-    const gone = consumeRun();
-    for(const g of gone) say(M('m.worn','「{nm}」已經磨損殆盡。',
-                               {nm:locName(g.cat, defOf(g.cat,g.id))}),'bad');
   };
   $('resume').onclick = ()=>{
     const q = loadedRun();

@@ -9,7 +9,9 @@ function fakeCtx(){
   const noop = () => {};
   return new Proxy({}, {
     get(t, k){
-      if(k === 'createRadialGradient') return () => ({ addColorStop: noop });
+      if(k === 'createRadialGradient' || k === 'createLinearGradient')
+        return () => ({ addColorStop: noop });
+      if(k === 'createPattern') return () => ({});
       if(k === 'canvas') return { width: 320, height: 240 };
       // 精靈生成會讀寫像素。回傳真的 buffer，頭目描邊那條路徑才跑得到 ——
       // 讓它回 undefined 的話，等於整個美術層都沒被測到。
@@ -73,6 +75,8 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
   'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
+  'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
+  'VILLAGE_STOCK, defOf, HALL_FROM, forgeCost,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +
   ' ITEM_TABLES:[["herb",HERB],["scroll",SCROLL],["wand",WAND],["pot",POT],' +

@@ -168,7 +168,11 @@ const MONS = [
     加一隻怪同時等於「把溫和的怪拿掉一半」。 */
  {id:'centip', nm:'坑道蜈蚣', ai:'C', hp:18,atk:8, def:3, exp:26, spd:2,   sight:5, ev:6, fl:[6,16], w:55, zn:['stone'], bd:'bug', col:'f'},
  {id:'ratking',nm:'鼠王',     ai:'C', hp:30,atk:14,def:6, exp:48, spd:1,   sight:7, ev:4, fl:[7,18], w:45, zn:['stone'], bd:'quad', col:'a', pack:1},
- {id:'moth',   nm:'幻光蝶',   ai:'W', hp:18,atk:10,def:3, exp:30, spd:2,   sight:5, ev:22,fl:[3,13], w:55, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:4,ch:.22}},
+ /* 幻光蝶第一版是 spd 2 / ev 22 / 睡 4 回合 / 22%，出現在第 3 層。
+    三件事各自都合理，疊起來是處刑：一回合打兩下、你有兩成打不中它、
+    中了就白挨八下。牠該給人的感覺是「抓不到、很煩」，不是「會死」。
+    所以留下閃避（那是蝴蝶的樣子），把速度與睡眠的長度拿掉。 */
+ {id:'moth',   nm:'幻光蝶',   ai:'W', hp:16,atk:6, def:3, exp:30, spd:1,   sight:5, ev:20,fl:[4,14], w:45, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:2,ch:.12}},
  {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}},
  {id:'shinobi',nm:'影忍',     ai:'C', hp:38,atk:28,def:10,exp:160,spd:2,   sight:9, ev:26,fl:[12,26],w:50, zn:['wood'], bd:'human', col:'4', glow:'g', clone:1},
  {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:16,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:.85},
@@ -327,6 +331,12 @@ const WAND = [
     多一條路比多三十點傷害有用得多。 */
  {id:'lava',  nm:'熔岩杖',   price:2800, dig:1},
 ];
+/* 壺分兩種用法。
+   保存壺是**空間**：放進去的東西不佔背包格，而且跟著你走到下一座迷宮 ——
+   那是村莊之外唯一能讓道具跨越章節的辦法，所以「這一趟要留什麼下來」
+   變成一個真的要想的問題。cap 對它是容量。
+   其餘三種是**一次性的處理**（識別／解咒／吞掉），cap 對它們是還能用幾次，
+   用完就裂。 */
 const POT = [
  {id:'store', nm:'保存壺', beh:'store', price:1200},
  {id:'ident', nm:'識別壺', beh:'ident', price:2000},
@@ -545,16 +555,24 @@ const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
-v.name|Hearth Village|ほのおの むら
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
 v.sub.out|You climbed out of B{d}F with {g} G　·　score {s}|B{d}F から いきて もどった　・{g} G　・スコア {s}
 v.gold|Gold on hand|しょじきん
-v.smith|The Smithy　—　gear you buy lasts {n} runs, then wears out.|かじや　—　かった そうびは {n}かい もつ。
+v.who.0|The Old Smith|としおいた かじや
+v.who.1|The Nightwatch Child|よるばんの こども
+v.who.2|The Travelling Merchant|たびの しょうにん
+v.who.3|The Village Elder|むらおさ
+v.talkfmt|<b>{who}</b>: "{body}"<br>— Next: <b>{nx}</b>|<b>{who}</b>：「{body}」<br>—— つぎ：<b>{nx}</b>
+v.smith|The Smithy　—　what you buy is yours to keep, even through death. Forge it further below.|かじや　—　かった そうびは ずっと きみのもの。しんでも のこる。したで きたえられる。
+v.name.euro|Hearthfire|かがりびむら
+v.name.cave|Hollowstone|いわむろのさと
+v.name.edo|Lanterntown|ちょうちんまち
+v.forge|+{n}　{g} G|+{n}　{g} G
+v.forgemax|Fully forged|げんかい
 v.carry|Gear you can take down|もっていける そうび
 v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
-v.runs|{n} runs left|あと {n}かい
 b.title|Hall of the Fallen|きろくひ
 b.sub|This monument is carved only on your own device.|この ひは この きたいの なかにしか きざまれない。
 b.empty|No records yet. Go down, come back, and your name is carved.|きろくは まだ ない。もぐって もどれば なまえが きざまれる。
@@ -655,7 +673,7 @@ ui.empty|(empty)|（から）
 ui.normal|normal|ふつう
 ui.village|Hearthfire Village|かまどの村
 ui.board|Hall of the Fallen|いしぶみ
-ui.dive|Descend again|もういちど潜る
+ui.dive|Head for {nm}|{nm} へ むかう
 ui.retry|Into the dungeon again|もういちどダンジョンへ
 ui.score|Score|スコア
 ui.resume|Continue　Act {n}　B{d}F|つづきから　だい{n}しょう　B{d}F
@@ -665,7 +683,6 @@ m.shrine|★ Ring of Record — progress saved, health and magic full.|★ き�
 m.shrine2|The next floor is the boss. Get ready before you go down.|つぎの かいは ボスだ。したくを してから おりよう。
 lg.shrine|save point|きろくてん
 m.resumed|Resuming from your save point — Act {n} {nm} B{d}F|きろくてんから さいかい —— だい{n}しょう {nm} B{d}F
-m.worn|"{nm}" has worn out completely.|「{nm}」は すりきれて しまった。
 s.001|The all-purpose pocket saved "{v0}".|まんのうポケットが「{v0}」を まもった。
 s.002|Your body will not move...|からだが うごかない……
 s.003|{v0} is standing in the way.|{v0} が みちを ふさいでいる。
@@ -800,7 +817,6 @@ s.129|B = cancel（close panels, exit aiming）　S = skills and magic　G opens
 s.130|Stay on one floor over 5 minutes and monsters go 1.5x, over 15 minutes 2x — do not grind one floor.|おなじ かいに 5ふん いると てきが 1.5ばい、15ふんで 2ばい —— ひとつの かいで ねばりすぎない。
 s.131|Keyboard: arrows/WASD to move, QEZC diagonal, G underfoot, I pack, K magic, > descend|キーボード：やじるし/WASD いどう　QEZC ななめ　G あしもと　I かばん　K まほう　> おりる
 s.132|L name tags　M sound　Esc cancel　the floor map is on the right|L なまえふだ　M おと　Esc キャンセル　みぎに かいそうず
-s.133|"{v0}" has worn out completely.|「{v0}」は すりきれて しまった。
 s.134|You left the dungeon carrying {v0} G.|{v0} G を もって ダンジョンを あとにした。
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
@@ -812,6 +828,26 @@ s.141|Nobody on any side.|しほうに だれも いない。
 s.142|{a} G. You only have {b} G.|{a} G。もちがねは {b} G しか ない。
 s.143|Flame devours {n} enemies around you.|ほのおが まわりの てき {n}たいを のみこんだ。
 s.144|The flame burns out in mid-air.|ほのおは くうちゅうで もえつきた。
+s.151|The {pot} is already full.|{pot}は もう いっぱいだ。
+s.152|A pot will not fit inside another pot.|つぼは つぼに はいらない。
+s.153|"{nm}" goes into the {pot}.|「{nm}」を {pot}に しまった。
+s.154|The {pot} has no power left.|{pot}には もう ちからが のこっていない。
+s.155|The {pot} reveals "{nm}" for what it is.|{pot}が「{nm}」の しょうたいを うつしだした。
+s.156|The curse on "{nm}" is washed away.|「{nm}」の のろいが あらいながされた。
+s.157|The {pot} swallows "{nm}" - it is gone for good.|{pot}が「{nm}」を のみこんだ —— もう もどらない。
+s.158|The {pot} spends the last of its power and cracks apart.|{pot}は ちからを つかいはたし、ひび われた。
+s.159|You take "{nm}" out of the {pot}.|{pot}から「{nm}」を とりだした。
+s.160|The {pot} came down with you, {n} items inside.|{pot}が なかみ {n}こと いっしょに ついてきた。
+s.161|The {pot} came down with you.|{pot}が いっしょに ついてきた。
+s.162|The {pot} shatters on {v0} for {v1} damage.|{pot}が {v0}に あたって くだけ、{v1}の ダメージ。
+s.163|The {pot} hits the ground and shatters.|{pot}は じめんに あたって くだけた。
+s.164|{n} items spill out across the floor.|なかみ {n}こが ゆかに ちらばった。
+s.165|Everything inside the pot broke.|つぼの なかみは すべて こわれた。
+s.166|The pain jolts you awake!|いたみで めが さめた！
+m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
+m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
+m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
+o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
 skin.blob|Slime|スライム
 skin.biped|Traveller|たびびと
@@ -1158,6 +1194,15 @@ p.forceout|Walk out anyway (divine punishment)|むりやり でる（てんば�
 p.tapitem|Tap an item to see what you can do.|アイテムを タップすると そうさが でる。
 p.equipped|equipped|そうびちゅう
 p.nothinghere|Nothing underfoot.|あしもとには なにも ない。
+p.potuses|{n} uses left|あと {n}かい つかえる
+p.pot.store|What goes in takes up no bag slot, and follows you down to the next dungeon.|なかに いれた ものは かばんの わくを つかわず、つぎの ダンジョンにも ついてくる。
+p.pot.ident|What goes in shows its true form.|なかに いれた ものは しょうたいを あらわす。
+p.pot.dispel|The curse on what goes in is washed away.|なかに いれた ものの のろいが あらいながされる。
+p.pot.devour|What goes in is swallowed - you cannot get it back.|なかに いれた ものは のみこまれる —— もう もどらない。
+p.potheld|Inside (tap to take out)|なかみ（タップで とりだす）
+p.potempty|The pot is empty.|つぼは からっぽだ。
+p.potfeed|Bag (tap to put in)|かばん（タップで いれる）
+p.potnofeed|Nothing in the bag will go in.|かばんに いれられる ものが ない。
 b.eat|Eat|たべる
 b.drink|Drink|のむ
 b.read|Read|よむ
@@ -1179,6 +1224,10 @@ b.pocketswap|Swap into pocket (holds {nm})|ポケットと いれかえ（いま
 b.throw|Throw|なげる
 b.drop|Drop|おく
 b.close|Close|とじる
+b.openpot|Open the pot|つぼを あける
+b.potout|Take out|とりだす
+b.back|Back to the bag|かばんに もどる
+b.mark|Make a note|メモする
 e.pickfirst|Pick it up before equipping.|ひろってから そうびしよう。
 e.cursedoff|It is cursed - you cannot take it off!|のろわれている —— はずせない！
 e.tookoff|You take it off.|そうびを はずした。
@@ -1193,6 +1242,7 @@ e.putground|You drop "{a}" and take "{b}".|「{a}」を おいて「{b}」を �
 e.pocketback|You take "{nm}" back out of the pocket.|ポケットから「{nm}」を とりだした。
 e.pocketin|"{nm}" goes into the universal pocket - it survives one death.|「{nm}」を まんのうポケットへ —— 1かいの しを こえられる。
 e.throwdir|Choose a direction to throw.|なげる ほうこうを えらぼう。
+e.markask|Leave a note on this look (e.g. "?risky")|この みための メモ（れい：「?あぶない」）
 k.sell1|Taken.|うけとった。
 k.sell2|I will keep this one for myself.|これは じぶんで つかおう。
 k.sell3|Bring me more next time.|つぎも もってきてくれ。
@@ -2031,15 +2081,15 @@ function makeHat(i){
 const THEMES = {
   stone:    {ramp:['w','x','y','z'], mark:'cart'},                       // 礦坑、牢獄：原本的冷色石階
   forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist',  mark:'tree'},      // 苔綠，光是螢火不是火把
-  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele'},           // 灰藍岩階，天是亮的
+  mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele', back:'sky'},           // 灰藍岩階，天是亮的
   briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember', mark:'statue'},      // 暗紅磚與藤蔓
-  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer', mark:'lantern'},           // 水藍
+  lake:     {ramp:['n','o','p','q'], lightAll:1, soft:1, wall:'cliff', prop:'ripple', air:'shimmer', mark:'lantern', back:'water'},           // 水藍
   beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist', mark:'bones'},      // 獸巢：暖土色
   wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock', mark:'torii'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror'},           // 鏡像：冷白無影
+  mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror', back:'pale'},           // 鏡像：冷白無影
   crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer', mark:'geode'},           // 水晶礦坑
-  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue'},           // 通天塔：白石與金線
-  void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift'},                       // 最後的迷宮、混沌之間
+  spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue', back:'high'},           // 通天塔：白石與金線
+  void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',

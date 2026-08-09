@@ -73,6 +73,46 @@ function playFloorLoop(G, cap){
   return t;
 }
 
+/* 出發前先去一趟鐵匠鋪。
+   這不是在幫機器人作弊 —— 從「進下一章不再白送裝備」開始，村莊就是
+   取得裝備的**正規途徑**：打完一章帶回來的錢，換下一章的一把劍。
+   機器人如果不進村就下去，量到的是「一個不玩村莊的人」，
+   那不是這款遊戲的玩法，測出來的難度也不是玩家會遇到的難度。
+   買最貴的買得起的那一件，跟真人會做的事一樣。 */
+function shopTrip(V){
+  const stat = c => c === 'weap' ? 'atk' : 'def';
+  // 手上那件的實力（含強化）。已經有一把好的就不再買第二把 ——
+  // 每次重來都再買一把，錢會全部漏在重複的裝備上，永遠攢不到強化的錢。
+  const held = cat => V.stock.filter(g => g.cat === cat)
+    .reduce((n, g) => Math.max(n, (api.defOf(g.cat, g.id)[stat(cat)] || 0) + g.up * 2), 0);
+  for(const cat of ['weap', 'shld']){
+    /* 挑「數值」最高的，不是最貴的。鏡之盾比鋼之盾貴一倍，防禦卻是 6 對 7 ——
+       它貴在反射。照價格挑的結果是每一章都買到比該有的差一階的盾，
+       而減傷是 (15/16)^防禦 的指數式，差一點防禦在深層差很多。 */
+    const k = stat(cat);
+    const want = api.VILLAGE_STOCK.filter(g => g.cat === cat)
+      .map(g => ({g, d: api.defOf(g.cat, g.id)}))
+      .filter(o => o.d.price <= V.gold)
+      .reduce((a, b) => !a || (b.d[k]||0) > (a.d[k]||0) ? b : a, null);
+    if(!want || (want.d[k] || 0) <= held(cat)) continue;
+    V.gold -= want.d.price;
+    V.stock.push({cat, id: want.g.id, up: 0});
+  }
+  /* 剩下的錢全部拿去鍛造。到了第十三章，鐵匠鋪最貴的那一把也追不上怪物表 ——
+     深章節真正的成長來自「把手上這把打得更利」，而裝備買下就是你的，
+     不會磨損，所以錢沒有必要留著重買。 */
+  for(let i = 0; i < 40; i++){
+    const best = V.stock
+      .map(g => ({g, d: api.defOf(g.cat, g.id)}))
+      .filter(o => o.g.up < (o.d.up || 0))
+      .map(o => Object.assign(o, {cost: api.forgeCost(o.d, o.g.up)}))
+      .filter(o => o.cost <= V.gold)
+      .reduce((a, b) => !a || b.cost < a.cost ? b : a, null);
+    if(!best) break;
+    V.gold -= best.cost; best.g.up++;
+  }
+}
+
 const V = api.VILLAGE();
 V.act = 0;
 const ACTS = api.ACTS;
@@ -84,6 +124,7 @@ for(let a = 0; a < ACTS.length; a++){
   while(tries < RETRY && !done){
     tries++;
     V.act = a;
+    shopTrip(V);
     api.newGame(seed++);
     const G = api.G();
     const t = playFloorLoop(G, MAX_TURNS);

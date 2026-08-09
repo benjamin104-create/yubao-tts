@@ -49,7 +49,18 @@ SCREENS = [
     ('遊戲中', "()=>{ $('cover').classList.add('gone'); VILLAGE.act=0; newGame(9); refresh(); }"),
     ('背包', "()=>{ for(const h of HERB) G.p.inv.push(mk('herb',h.id));"
              " G.p.inv.push(mk('wand','lava',{known:1}));"
-             " G.p.inv.push(mk('weap','drgn',{known:1})); openPanel('inv'); }"),
+             " G.p.inv.push(mk('weap','drgn',{known:1})); openPanel('inv');"
+             # 操作鈕只有「選了某一件」才會長出來 —— 不選就等於整排按鍵沒被掃到，
+             # 而「標註」正是這樣漏掉的：它從頭到尾都是寫死的中文。
+             " sel = G.p.inv.find(i=>i.cat==='herb' && !G.known[lookKey(i)]); renderPanel(); }"),
+    # 壺是新開的一個畫面。四種壺的提示各講一句不同的話，而它們只在
+    # 「把壺選起來、按開壺」之後才看得到 —— 沒有掃過的畫面就是會漏的畫面。
+    ('壺（保存）', "()=>{ const p=G.p.inv.find(i=>i.cat==='pot')||mk('pot','store');"
+                  " if(!G.p.inv.includes(p)) G.p.inv.push(p);"
+                  " p.id='store'; p.d=POT[0]; p.cap=4; p.contents=[mk('herb','heal',{known:1})];"
+                  " potTarget=p; panelMode='pot'; renderPanel(); }"),
+    ('壺（吸物）', "()=>{ const p=potTarget; p.id='devour'; p.d=POT[2]; p.cap=2;"
+                  " p.contents=[]; renderPanel(); }"),
     ('技能', "()=>{ closePanel(); VILLAGE.jobs={war:{lv:3,prog:0},nin:{lv:2,prog:0}};"
              " syncJobSkills(true); G.p.sp=3; G.p.sch={heal:3,fire:2}; openPanel('magic'); }"),
     ('腳下', "()=>{ closePanel(); G.items[key(G.p.x,G.p.y)]=mk('herb','heal'); openPanel('ground'); }"),

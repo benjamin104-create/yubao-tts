@@ -56,6 +56,13 @@ function play(G){
 }
 
 const V = api.VILLAGE();
+/* 出發前先給村莊一筆錢與一套裝備。理由不是「讓機器人贏」，是**覆蓋率**：
+   赤手空拳的機器人在中段章節走不到三層就倒了，收得到的句子少一半 ——
+   而收不到的句子就是掃不到的句子。玩家會走到的地方，掃描也要走得到。 */
+function outfit(){
+  V.gold = 40000;
+  V.stock = [{cat:'weap', id:'mith', up:3}, {cat:'shld', id:'steel', up:3}];
+}
 const seen = { en: new Set(), ja: new Set() };
 const hooked = api.hookSay(txt => {
   const L = api.i18n.LANG();
@@ -67,6 +74,7 @@ for(const lang of ['en', 'ja']){
   // 每一章都走一遍：章節專屬的訊息（頭目台詞、獎勵、增援）才碰得到
   for(let g = 0; g < GAMES; g++){
     V.act = g % api.ACTS.length;
+    outfit();
     api.newGame(2000 + g * 37);
     play(api.G());
   }
