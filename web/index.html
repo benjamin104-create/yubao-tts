@@ -977,8 +977,9 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
         <div class="bmhead"><b id="bigf">B1F</b><em id="bigz">苔濕迴廊</em><i id="bigstat"></i></div>
         <canvas id="bigc" width="450" height="450"></canvas>
         <div class="bmlegend">
-          <span><i style="background:#4b5c66"></i>視野內</span>
-          <span><i style="background:#232c32"></i>走過</span>
+          <span><i style="background:#9fb4c0"></i>視野內</span>
+          <span><i style="background:#63757f"></i>走過</span>
+          <span><i style="background:#333f49"></i>牆</span>
           <span><i style="background:#e8dcc0"></i>你</span>
           <span><i style="background:#c9973f"></i>樓梯</span>
           <span><i style="background:#a83c32"></i>怪物</span>
@@ -1034,8 +1035,9 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <h3>樓層圖 <em id="mapstat"></em></h3>
       <canvas id="mini" width="270" height="270"></canvas>
       <div id="legend">
-        <span><i style="background:#4b5c66"></i>視野內</span>
-        <span><i style="background:#232c32"></i>走過</span>
+        <span><i style="background:#9fb4c0"></i>視野內</span>
+        <span><i style="background:#63757f"></i>走過</span>
+        <span><i style="background:#333f49"></i>牆</span>
         <span><i style="background:#e8dcc0"></i>你</span>
         <span><i style="background:#c9973f"></i>樓梯</span>
         <span><i style="background:#a83c32"></i>怪物</span>
@@ -1578,15 +1580,34 @@ const SUMMONS = [
 const SUMMON_COST = 0.30;
 const SUMMON_AT = 4;
 
-const SCH_MAX = 10;          // 每系上限。到 10 會開出該系的兩個奧義
-const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點數
+/* ── 五系的格數與取得速度 ──────────────────────────────────────
+   原本是「每系十格、等級 10 之後每升一級 +1 點」。使用者玩到第五章、
+   等級 8 的時候，畫面上是五排各十個空格、手上零點 ——
+   他的原話：「很難拿魔法點數……如果原本是設定不太好升級的遊戲參數，
+   是不是魔法點數各屬性不需要調這麼多格？也許各 3 格就好？」
+
+   他指到的是真的問題，但病灶不在格數，在**第一點來得太晚**：
+   等級 10 之前完全沒有魔法，而戰役前五章的等級只到 8 左右 ——
+   也就是說整套魔法系統在前五章根本不存在。
+
+   兩件事一起改：
+     · 第一點提前到等級 3 —— 第一章就摸得到魔法。
+     · 每系上限 10 → 5 —— 有意義的門檻本來就只有 1（第一個法術）、
+       3（第二個）、4（幻獸）、滿級（奧義）四個，塞進十格只是把
+       每一點稀釋成看不出差別。五格剛好一格一個門檻。
+   威力與魔力上限用 SCH_SCALE 補回來，所以「點滿一系」的強度不變 ——
+   改的是節奏，不是數值。 */
+const SCH_MAX = 5;
+const SCH_SCALE = 10 / SCH_MAX;   // 格數變少，每一格就要更值錢
+const SP_FROM_LV = 3;        // 從第 3 級開始，每升一級 +1 魔法點數
+const POCKET_LV = 10;        // 萬用口袋還是等級 10 的里程碑，跟魔法點數脫鉤
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
-const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
+const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
                               * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
-const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
+const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
@@ -2371,6 +2392,7 @@ end.count|Runs completed: {n}|クリアかいすう {n}
 lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
 lg.seen|in sight|しかいない
+lg.wall|wall|かべ
 lg.walked|explored|たんさくずみ
 lg.you|you|きみ
 lg.stairs|stairs|かいだん
@@ -4122,6 +4144,12 @@ function sanitizeJobs(raw){
   }
   return out;
 }
+function sanitizeSch(raw){
+  const out = {heal:0, bolt:0, fire:0, aqua:0, wind:0};
+  if(!raw || typeof raw !== 'object') return out;
+  for(const k in out) out[k] = Math.max(0, Math.min(SCH_MAX, raw[k] | 0));
+  return out;
+}
 function loadVillage(){
   try{
     const raw = localStorage.getItem(VILLAGE_KEY);
@@ -4134,7 +4162,10 @@ function loadVillage(){
           col: BLOB_COLS.includes(v.col) ? v.col : '#',
           board: Array.isArray(v.board) ? v.board : [],
           sp: v.sp | 0,
-          sch: Object.assign({heal:0,bolt:0,fire:0,aqua:0,wind:0}, v.sch || {}),
+          /* 每系上限從 10 降到 5 之後，舊存檔裡會有 6~10 的值。
+             不夾住的話威力會**加倍**（SCH_SCALE 是照新上限算的）——
+             那不是獎勵舊玩家，那是數值失控，而且不會報任何錯。 */
+          sch: sanitizeSch(v.sch),
           jobs: sanitizeJobs(v.jobs),
           act: Math.max(0, Math.min(ACTS.length-1, v.act|0)),
           hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
@@ -4356,7 +4387,7 @@ function newGame(seed){
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
-    log:[], anim:[], shake:0, floats:[], parts:[], corpses:[],
+    log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[],
   };
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
@@ -4451,16 +4482,29 @@ function mk(cat, id, o){
 /* 依深度挑「這一層該有」的東西。
    池子被上限清空時退回「最便宜的那一件」，而不是退回整份表 ——
    舊寫法一旦上限太低就整份放行，等於完全沒有分級。 */
-function pickTier(rng, list, cap){
-  const pool = list.filter(d => (d.price||0) <= cap);
+/* 分級不能只有上限。只設上限的結果是池子**變寬**而不是**往上移**：
+   實測深度 68 的通天塔，最常掉的還是防禦 2 的皮之盾（166 次），
+   而鏡之盾只有 21 次 —— 走了六十幾層，撿到的仍然是第一層那面盾。
+   使用者的原話：「好像沒看到什麼好的盾牌？一直都是皮之盾和木之盾？」
+
+   所以再加一道**下限**：低於這個價位的東西不再出現。
+   只對裝備套用。消耗品的低階（回復草、麵包）到最後一層都還有用，
+   把它們一起篩掉會讓深層變成一個沒有補給的地方。 */
+function pickTier(rng, list, cap, lowRatio){
+  let pool = list.filter(d => (d.price||0) <= cap);
   if(!pool.length){
     let best = list[0];
     for(const d of list) if((d.price||0) < (best.price||0)) best = d;
     return best;
   }
-  // 上限之內也不是等機率：越貴越少見，深度才會有「越下去東西越好」的手感。
+  if(lowRatio){
+    const up = pool.filter(d => (d.price||0) >= cap / lowRatio);
+    if(up.length) pool = up;              // 篩空了就退回原池，寧可掉舊東西也不要不掉
+  }
+  // 上限之內也不是等機率：越貴越少見，同一層裡才會有「這件是好貨」的落差。
   return rng.weight(pool, d => 1 / (1 + (d.price||0) / 500));
 }
+const GEAR_BAND = 6;                       // 裝備只掉「上限的六分之一」以上的等級
 function rollItem(rng, depth){
   const table = [
     ['herb',HERB,26],['scroll',SCROLL,20],['wand',WAND,10],['pot',POT,8],
@@ -4472,7 +4516,8 @@ function rollItem(rng, depth){
   // 一成的機率放行「超出這一層」的東西。分級是為了讓深度有意義，
   // 但完全沒有意外之財的地下城也沒有人想再下去一次。
   const cap = (400 + depth * 280) * (rng.chance(.10) ? 2.6 : 1);
-  const d = pickTier(rng, pick[1], cap);
+  const gear = pick[0] === 'weap' || pick[0] === 'shld';
+  const d = pickTier(rng, pick[1], cap, gear ? GEAR_BAND : 0);
   const it = mk(pick[0], d.id);
   if(pick[0]==='weap'||pick[0]==='shld'){
     it.up = rng.i(0, Math.min(3, d.up));
@@ -4486,7 +4531,25 @@ function rollItem(rng, depth){
    結果職業變成隨手可換的配件，而它應該是這款遊戲的招牌。
    現在改成：一座迷宮＝20 層，第一座只放「一頂」，更深的迷宮兩頂，
    樓層由本趟的種子決定，所以每一趟找帽子的路線都不一樣。 */
-const HAT_SEG = 20;
+/* ── 職業帽的稀有度 ──────────────────────────────────────────
+   帽子曾經在一般掉落表裡（權重 7），走三層就會撿到兩頂 ——
+   職業於是變成隨手可換的配件，而它應該是這款遊戲的招牌。
+   所以改成「刻意放置」：每一章保證一頂，樓層由本趟的種子決定。
+
+   ── 為什麼重寫 ──
+   上一版是照**絕對深度**每 20 層切一段，一段裡挑一到兩層放帽子。
+   那是為「一座連續的 20 層地牢」寫的，可是戰役把深度切成了十五章，
+   每一章都是各自 newGame() 的一趟。於是一段的帽子樓層常常落在
+   別章的深度範圍裡，而下一章換了種子又重擲一次 ——
+   量出來的結果是：第 3、4、9、15 章「二十趟裡一頂都沒有」，
+   第 1 章 5/20、第 5 章 3/20、第 11 章 2/20。
+
+   使用者實際回報的就是這件事：「每一個章節都沒有撿到帽子，
+   所以好像也無法測試職業技能」—— 九個職業、技能欄、Master 被動，
+   整套系統對他來說等於不存在。
+
+   現在改成**以章為單位**：每一章至少一頂，十層以上的長章兩頂。
+   隱藏職業（忍者／鬼武者／術士）依然只在夠深的章節才進池子。 */
 /* 種子要先攪過再用。直接 `常數*n ^ seed` 只動到低位元，
    xorshift 第一個輸出的擴散不夠，結果幾百個種子挑出來的帽子幾乎都一樣。 */
 function mix32(a, b){
@@ -4495,22 +4558,22 @@ function mix32(a, b){
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
   return (h ^ (h >>> 16)) >>> 0;
 }
-function hatFloors(depth){
-  const seg = Math.floor((depth-1) / HAT_SEG);
-  const r = RNG(mix32(seg + 1, G ? G.seed : 1));
-  const base = seg * HAT_SEG;
-  const a = base + r.i(3, 9);
-  if(seg === 0) return [a];                     // 第一座迷宮只有一頂
-  let b = base + r.i(10, 19);
-  if(b === a) b = base + ((b - base + 5) % HAT_SEG);
+function hatFloors(act, floors){
+  // 用 (章, 種子) 決定，跟深度無關 —— 章才是玩家實際走完的單位
+  const r = RNG(mix32(act * 7919 + 3, G ? G.seed : 1));
+  const a = 1 + r.i(0, Math.max(0, floors - 1));
+  if(floors < 10) return [a];
+  let b = 1 + r.i(0, floors - 1);
+  if(b === a) b = 1 + ((b + Math.floor(floors/2)) % floors);
   return [a, b];
 }
-function hatHere(depth){
-  if(!hatFloors(depth).includes(depth)) return null;
-  const r = RNG(mix32(depth * 977 + 7, G ? G.seed : 1));
-  // 隱藏職業（忍者／鬼武者／術士）不在一般的帽子池裡。
-  // 第一座迷宮只會掉六種基本職業之一 —— 隱藏職業要留給更深的地方。
-  const pool = depth <= HAT_SEG ? OPEN_HAT : HAT;
+function hatHere(floor){
+  if(!G) return null;
+  const act = actAt(G.act);
+  if(!hatFloors(G.act, act.floors).includes(floor)) return null;
+  const r = RNG(mix32(G.act * 977 + floor * 31 + 7, G.seed));
+  // 隱藏職業（忍者／鬼武者／術士）不在一般的帽子池裡 —— 留給更深的章節
+  const pool = G.depth <= 20 ? OPEN_HAT : HAT;
   return mk('hat', r.pick(pool).id, {known:1});
 }
 
@@ -4528,7 +4591,8 @@ function shopItem(rng, depth){
   // 上架的東西要「這一層的玩家買得起」。以前的上限是 900+260×層，
   // B3 就會出現 2760 G 的杖 —— 那時候玩家身上大概兩百塊，
   // 整間店等於一排看得到吃不到的裝飾。
-  const d = pickTier(rng, pick[1], 300 + depth*200);
+  const gear = pick[0] === 'weap' || pick[0] === 'shld';
+  const d = pickTier(rng, pick[1], 300 + depth*200, gear ? GEAR_BAND : 0);
   const it = mk(pick[0], d.id);
   if(pick[0]==='weap'||pick[0]==='shld') it.up = rng.i(0, Math.min(2, d.up));
   return it;
@@ -4640,7 +4704,7 @@ function buildFloor(){
       if(sp2) G.items[key(sp2.x,sp2.y)] = mk('shld', worst(SHLD,'def').id, {known:1}); }
   }
   // 這一層該有職業帽的話，放進某個房間 —— 招牌不該掉在走廊上。
-  const hat = hatHere(G.depth);
+  const hat = hatHere(G.floor);
   if(hat){
     const rks = Object.keys(G.f.rooms);
     let spot = null;
@@ -5219,7 +5283,7 @@ function kill(m){
       say(M('s.012','★ 魔法點數 +1（目前 {v0} 點）—— 這個不會因為失敗消失。',{v0:(VILLAGE.sp)}),'gold');
       float(p.x,p.y,'MP+1','#4a86cf');
     }
-    if(p.lv === SP_FROM_LV && !VILLAGE.pocket.open){
+    if(p.lv === POCKET_LV && !VILLAGE.pocket.open){
       VILLAGE.pocket.open = true; saveVillage();
       say(TX('s.013','★ 你獲得了「萬用口袋」—— 放進去的一件東西能撐過一次死亡。'),'gold');
       SFX.play('ident');
@@ -5584,6 +5648,7 @@ function act(m,it){
        那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
     if(m.d.mimic) dmg = Math.max(dmg, rollDmg(Math.round(pAtk()*m.d.mimic), pDef(), false, mult));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
+    if(!ranged) SFX.play('claw', 60);
     SFX.play(ranged?'zap':'hurt', 60);
     m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
     p.flash = 0.11;
@@ -5945,6 +6010,9 @@ let pendWand = null;
 function fireWand(dx,dy){
   const it = pendWand; pendWand = null;
   it.uses--; SFX.play('zap');
+  // 揮杖也要看得見：前傾、腳下一圈光、魔力沿著射線飛出去
+  castFx(dx, dy, it.d.dig ? '#e87a4a' : '#a88cd8');
+  trail(G.p.x, G.p.y, dx, dy, it.d.dig ? 6 : 9, it.d.dig ? '#f5a95e' : '#c9b6ea');
   /* 熔岩杖走另一條路：它打的是牆，不是怪，所以不用先找目標。
      只往外挖，永遠不會把地板變回牆 —— 也就是說它不可能挖出
      「樓梯到不了」的地圖。地圖最外一圈必須留著，否則會漏出邊界。 */
@@ -6051,7 +6119,13 @@ function knock(m, dx, dy, n){
 
 function doSpell(sp, dx, dy){
   const p = G.p;
-  SFX.play(sp.sc === 'heal' ? 'quaff' : 'zap');
+  SFX.play('cast');
+  if(sp.sc !== 'heal') SFX.play('zap', 40);
+  /* 詠唱的顏色取自系別 —— 火是橘的、水是藍的，
+     玩家不用讀訊息簿就知道剛才放出去的是什麼。 */
+  const scc = (SCHOOLS.find(x => x.id === sp.sc) || {}).col || '#f6efe3';
+  castFx((dx|0), (dy|0), scc);
+  if(dx || dy) trail(p.x, p.y, dx, dy, 9, scc);
   const sl = p.sch[sp.sc] || 0;
 
   switch(sp.id){
@@ -6646,6 +6720,17 @@ const SFX = (()=>{
     crit:  ()=>{ hiss(.09,.26, 2600, 300); tone(320,90,.16,'sawtooth',.14);
                  tone(880,440,.14,'square',.08,.03); },
     miss:  ()=>hiss(.07,.07, 1800, 1200, 0, 2.5),
+    /* 詠唱：兩個往上爬的純音疊一層氣音 —— 魔法要聽起來「正在成形」，
+       所以是上行的；打擊音全部是下行的，兩者不會混淆。 */
+    cast:  ()=>{ tone(330, 880, .26,'triangle',.10); tone(495,1320,.22,'sine',.06,.04);
+                 hiss(.20,.05, 400, 2400, 0, 1.2); },
+    /* 陶器碎裂：一記脆的高頻，接三顆散開的小碎片。
+       跟 hit 的差別在「碎片」—— 那是耳朵認得出陶器的地方。 */
+    shatter:()=>{ hiss(.05,.22, 5200, 2600, 0, 3); tone(1400, 600,.07,'square',.09);
+                  for(let i=0;i<3;i++) tone(900+i*260, 300, .05,'square',.045, .05+i*.045); },
+    /* 敵人揮擊：比玩家的 swing 低八度、粗一點。
+       玩家聽得出「這一下不是我打的」，才會有被反擊的實感。 */
+    claw:  ()=>{ hiss(.08,.11, 1200, 320, 0, .9); tone(150, 70, .09,'sawtooth',.07); },
     hurt:  ()=>{ tone(150,55,.20,'sawtooth',.15); hiss(.10,.12, 500, 140); },
     kill:  ()=>{ tone(420,70,.24,'triangle',.14); hiss(.16,.12, 900, 160, .02); },
     level: ()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,0,.16,'square',.11,i*.075)); },
@@ -7041,6 +7126,43 @@ function burst(x, y, n, col, spd, up, life){
     });
   }
 }
+/* ── 施法／揮杖看得見 ──────────────────────────────────────
+   使用者：「使用杖、武器，是否能有『揮動』的動作？魔法詠唱會有簡單的動畫嗎？」
+   之前只有近戰有前刺（p.lunge），杖與魔法完全沒有動作 ——
+   按下去，數字就直接跳出來了，中間什麼都沒發生。
+
+   兩個原語就夠：
+     ring()  施術者腳下擴散出去的光環，說明「是我發動的」
+     trail() 沿著彈道撒的粒子，說明「東西飛過去了」
+   兩者都吃系別的顏色，所以火是橘的、水是藍的，一眼認得出剛才放了什麼。 */
+function ring(x, y, col, r1, life){
+  if(!G) return;
+  (G.rings = G.rings || []).push({
+    px: x*T + 8, py: y*T + 8, col,
+    r0: 3, r1: r1 || T*1.6, t: 0, life: life || .34,
+  });
+}
+function trail(x, y, dx, dy, len, col){
+  if(!G || !G.parts) return;
+  for(let i=1;i<=len;i++){
+    const tx = x + dx*i, ty = y + dy*i;
+    if(!walkable(tx, ty)) break;
+    for(let k=0;k<3;k++)
+      G.parts.push({
+        px: tx*T + 4 + Math.random()*8, py: ty*T + 4 + Math.random()*8,
+        vx: dx*10 + (Math.random()-.5)*8, vy: dy*10 + (Math.random()-.5)*8,
+        t: -i*0.012,                    // 依距離延後出生 —— 這樣才看得出「飛過去」
+        life: .30 + Math.random()*.16, col, s: Math.random()<.35 ? 2 : 1,
+      });
+  }
+}
+// 施術者的動作：面向那一邊前傾，腳下亮一圈
+function castFx(dx, dy, col){
+  const p = G.p;
+  if(dx || dy) p.lunge = {dx, dy, t:0};
+  ring(p.x, p.y, col, T*1.7, .36);
+}
+
 /* 空氣中的浮塵：跟著鏡頭在世界座標裡飄，不是貼在螢幕上。
    貼在螢幕上的粒子會在鏡頭移動時「跟著走」，一眼就穿幫。 */
 const MOTES = [];
@@ -7644,8 +7766,22 @@ function draw(dt){
     drawEnt(G.p, heroNow(), 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-'), 0);
   }
 
+  // 施法光環：畫在粒子之前，讓火星疊在光圈上面
+  for(const r of (G.rings || [])){
+    const k = Math.max(0, r.t / r.life);
+    const rad = r.r0 + (r.r1 - r.r0) * (1 - (1-k)*(1-k));   // 先快後慢地擴出去
+    cx.save();
+    cx.globalCompositeOperation = 'lighter';
+    cx.globalAlpha = (1 - k) * .75;
+    cx.strokeStyle = r.col; cx.lineWidth = k < .5 ? 2 : 1;
+    cx.beginPath(); cx.arc(ox + r.px, oy + r.py, rad, 0, Math.PI*2); cx.stroke();
+    cx.restore();
+  }
+  cx.globalAlpha = 1;
+
   // 粒子（塵、火星、爆散）
   for(const p of G.parts){
+    if(p.t < 0) continue;                      // 軌跡粒子依距離延後出生
     const k = p.t/p.life;
     cx.globalAlpha = Math.max(0, 1-k*k);       // 尾端快速收掉，不要拖泥帶水
     cx.fillStyle = p.col;
@@ -7857,9 +7993,16 @@ function paintMap(mcx, mini, MMS){
     if(t!==WALL){ total++; if(s) known++; }
     if(!s) continue;
     let col;
-    if(t===WALL)      col = s===2 ? '#1b2329' : '#141a1e';
-    else if(t===CORR) col = s===2 ? '#3d4a53' : '#1e262b';
-    else              col = s===2 ? '#4b5c66' : '#232c32';
+    /* 三件事必須一眼分得開：走得到的地板、走不進去的牆、還沒去過的地方。
+       舊配色裡「記得的牆」#141a1e 跟「沒去過」#07090a 幾乎同色，
+       而「記得的地板」#232c32 也只比牆亮一點點 ——
+       於是一整片實心岩壁在地圖上讀起來就是「一個還沒進去的大房間」。
+       使用者實際回報的就是這句：「大房間，但是進不去？要有鑰匙嗎？」
+       這遊戲沒有鑰匙，是地圖沒有把牆畫成牆。
+       現在三層亮度拉開：底色（沒去過）→ 牆 → 地板，一階比一階亮一大截。 */
+    if(t===WALL)      col = s===2 ? '#333f49' : '#252e36';   // 牆＝看得見的實體
+    else if(t===CORR) col = s===2 ? '#8296a3' : '#54646f';   // 走廊
+    else              col = s===2 ? '#9fb4c0' : '#63757f';   // 房間：最亮
     mcx.fillStyle = col;
     mcx.fillRect(x*MMS, y*MMS, MMS, MMS);
   }
@@ -7980,6 +8123,8 @@ function loop(ts){
     for(const m of G.mons) tickFx(m);
     for(const c of G.corpses) c.t += dt;
     G.corpses = G.corpses.filter(c=>c.t < .4);
+    for(const r of (G.rings || [])) r.t += dt;
+    if(G.rings) G.rings = G.rings.filter(r => r.t < r.life);
     for(const p of G.parts){
       p.t += dt;
       p.px += p.vx*dt; p.py += p.vy*dt;
@@ -8061,7 +8206,7 @@ function refresh(){
   $('eqs').className = p.shld && p.shld.cursed && p.shld.known ? 'bad' : '';
   $('eqi').textContent = `${p.inv.length} / 20`;
   $('eqe').textContent = `${p.exp} / ${needExp(p.lv)}`;
-  $('eqp').textContent = !VILLAGE.pocket.open ? M('p.pocketat','等級 {n} 取得',{n:SP_FROM_LV})
+  $('eqp').textContent = !VILLAGE.pocket.open ? M('p.pocketat','等級 {n} 取得',{n:POCKET_LV})
     : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : TX('ui.empty','（空）'));
 
   const last = G.log[G.log.length-1];
@@ -8507,7 +8652,7 @@ function throwItem(it, dx, dy){
      如果連內容物一起蒸發，那不是「失手」，是懲罰。 */
   if(it.cat === 'pot'){
     const bx = target ? target.x : x - dx, by = target ? target.y : y - dy;
-    SFX.play('hit');
+    SFX.play('shatter');
     burst(bx, by, 12, '#8c7a5e', 46, 12, .7);
     if(target){
       const dmg = rollDmg(10, target.d.def, false, 1);
@@ -8852,7 +8997,9 @@ function applyLangText(){
   const kb = $('langbtn');
   if(kb) kb.textContent = TX('ui.lang','語言') + '：' + (LANGS.find(l=>l[0]===LANG)||['','中文'])[1];
   // 小地圖圖例（側欄與全螢幕地圖各一份）
-  const lg = [['lg.seen','視野內'],['lg.walked','走過'],['lg.you','你'],
+  /* 順序必須跟 HTML 裡那幾個 <span> 一模一樣 —— 這份表是照索引對上去的，
+     插了一格「牆」而忘了改這裡，圖例的字就會整排錯位一格。 */
+  const lg = [['lg.seen','視野內'],['lg.walked','走過'],['lg.wall','牆'],['lg.you','你'],
               ['lg.stairs','樓梯'],['lg.mon','怪物'],['lg.item','道具']];
   for(const box of document.querySelectorAll('#legend, .bmlegend')){
     const sp = box.querySelectorAll('span');

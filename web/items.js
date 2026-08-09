@@ -358,6 +358,48 @@ t('第一章不會出現怪物之間 —— 那一章還在教怎麼玩', ()=>{
   }
 });
 
+// ── 職業帽 ──────────────────────────────────────────────────
+// 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
+// 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，
+// 那是為一座連續的 20 層地牢寫的，可是戰役把深度切成十五章、
+// 每章各自 newGame()。量出來第 3、4、9、15 章二十趟一頂都沒有。
+// 九個職業、技能欄、Master 被動，整套系統對玩家等於不存在，而且不報錯。
+t('每一章都撿得到職業帽（最後的競技場除外）', ()=>{
+  V.pots = [];
+  for(let a = 0; a < api.ACTS.length; a++){
+    const act = api.ACTS[a];
+    if(act.id === 'chaos') continue;            // 最終競技場刻意清空場地
+    for(let s = 0; s < 8; s++){
+      V.act = a; V.stock = [];
+      api.newGame(90000 + s * 811);
+      const G = api.G();
+      let hats = 0;
+      for(let f = 1; f <= act.floors; f++){
+        G.floor = f; api.buildFloor();
+        hats += Object.values(G.items).filter(i => i.cat === 'hat').length;
+      }
+      assert(hats >= 1, '第 ' + (a+1) + ' 章「' + act.nm + '」種子 ' + s + ' 一頂帽子都沒有');
+      assert(hats <= 2, '第 ' + (a+1) + ' 章一趟出現 ' + hats + ' 頂 —— 帽子該是招牌，不是配件');
+    }
+  }
+});
+
+t('淺章節只掉得到公開職業，隱藏職業要更深才進池子', ()=>{
+  const hidden = api.HAT.filter(h => !api.OPEN_HAT.includes(h)).map(h => h.id);
+  assert(hidden.length, '應該有隱藏職業');
+  V.act = 0; V.stock = []; V.pots = [];
+  for(let s = 0; s < 20; s++){
+    api.newGame(12000 + s * 37);
+    const G = api.G();
+    for(let f = 1; f <= api.ACTS[0].floors; f++){
+      G.floor = f; api.buildFloor();
+      for(const it of Object.values(G.items))
+        if(it.cat === 'hat')
+          assert(!hidden.includes(it.id), '第一章不該掉隱藏職業的帽子：' + it.id);
+    }
+  }
+});
+
 // ── 有害道具的收購價 ────────────────────────────────────────
 t('店員認得出來的爛東西只給四分之一，認不出來的照樣全價', ()=>{
   V.act = 0; api.newGame(9007);

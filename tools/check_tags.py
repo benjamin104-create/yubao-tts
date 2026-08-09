@@ -38,17 +38,36 @@ MEASURE = """()=>{
   const rect = cv.getBoundingClientRect();
   const s = rect.width / cv.width;
   const wx = x => (lastOx + x*16 + 8) * s;
+  /* 同名的東西可能同時在場（兩張召喚卷軸、兩隻洞穴鼠）。
+     一個名字只記一個 x 的話，量到的會是「另一個同名物件」的座標 ——
+     誤差剛好是一格（桌機 61.6px），看起來像名牌錯位，其實是測試自己對錯人。
+     所以一個名字記一串候選，比對時取最接近的那一個。 */
   const map = {};
-  for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2) map[locName('mon',m.d)] = m.x;
-  for(const k in G.items) map[nameOf(G.items[k])] = k % MW;
-  for(const k in G.gold)  map[G.gold[k]+' G']     = k % MW;
-  map['下樓'] = G.f.stairs.x;
+  const add = (t, x) => { (map[t] = map[t] || []).push(x); };
+  for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2) add(locName('mon',m.d), m.x);
+  for(const k in G.items) add(nameOf(G.items[k]), k % MW);
+  for(const k in G.gold)  add(G.gold[k]+' G',     k % MW);
+  add('下樓', G.f.stairs.x);
   const out = [];
   for(const e of document.querySelectorAll('#tags .tag')){
     if(e.style.display === 'none') continue;
     const t = e.textContent;
     if(!(t in map)) continue;
-    out.push({txt:t, want:wx(map[t]), got:parseFloat(e.style.left)});
+    /* 期望值也要夾。名牌靠邊時本來就會被壓回畫面內 —— 那是刻意的，
+       不夾的話一個長名字（「召喚卷軸」）貼在右緣就會被算成 60px 誤差。
+
+       重點：這裡**必須**用 rect.width（CSS 像素）去夾。
+       如果程式改回用 cv.width（畫布內部像素，手機上只有 176），
+       兩邊夾出來的結果就會差一大截，這支測試照樣會紅 ——
+       也就是說模擬夾值並沒有把原本要抓的那個 bug 放掉。 */
+    const halfW = e.getBoundingClientRect().width / 2 + 2;
+    const got = parseFloat(e.style.left);
+    let want = null;
+    for(const gx of map[t]){
+      const w = Math.max(halfW, Math.min(rect.width - halfW, wx(gx)));
+      if(want === null || Math.abs(w - got) < Math.abs(want - got)) want = w;
+    }
+    out.push({txt:t, want, got});
   }
   return {rectW:rect.width, cvW:cv.width, rows:out};
 }"""
