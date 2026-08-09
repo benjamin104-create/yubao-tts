@@ -183,6 +183,52 @@ t('影法師的傷害會跟著玩家的攻擊力變高', ()=>{
 });
 
 
+// ── 長槍：刺穿後面那一隻 ────────────────────────────────────
+// 這個欄位在表上寫了很久，程式裡一次都沒讀過 —— 也就是說長槍花 1600 G
+// 買到的只有「攻擊力比鋼之劍低」。沉默失效的欄位就是這樣長出來的。
+t('長槍會連同後面那一隻一起刺穿，普通劍不會', ()=>{
+  const twoInLine = (weap) => {
+    V.act = 0; api.newGame(4242);
+    const G = api.G(), p = G.p;
+    p.hp = p.mhp = 99999; G.mons.length = 0;
+    p.weap = api.mk('weap', weap, {known:1}); p.inv.push(p.weap);
+    const d = api.DIRS.find(dd => api.walkable(p.x+dd[0], p.y+dd[1])
+                               && api.walkable(p.x+dd[0]*2, p.y+dd[1]*2));
+    assert(d, '這顆種子找不到連續兩格的方向');
+    const rat = api.MONS.find(m => m.id === 'rat');
+    const a = api.spawnMon(rat, p.x+d[0],   p.y+d[1]);
+    const b = api.spawnMon(rat, p.x+d[0]*2, p.y+d[1]*2);
+    a.hp = a.mhp = 99999; b.hp = b.mhp = 99999;
+    api.attack(a);
+    return {front: 99999 - a.hp, back: 99999 - b.hp};
+  };
+  const spear = twoInLine('spear'), steel = twoInLine('steel');
+  assert(spear.front > 0, '長槍該打中前面那一隻');
+  assert(spear.back > 0, '長槍該刺穿到後面那一隻，實際 ' + spear.back);
+  assert.strictEqual(steel.back, 0, '一般的劍不該打到後面那一隻');
+});
+
+// ── 鏡之盾：彈回遠程攻擊 ────────────────────────────────────
+t('鏡之盾把遠程攻擊彈回去，木盾不會', ()=>{
+  const shot = (shld) => {
+    V.act = 0; api.newGame(5150);
+    const G = api.G(), p = G.p;
+    p.hp = p.mhp = 99999; p.st = {}; G.mons.length = 0;
+    p.shld = api.mk('shld', shld, {known:1}); p.inv.push(p.shld);
+    const gz = api.MONS.find(m => m.rng);                    // 隨便一隻會射的怪
+    const d = api.DIRS.find(dd => api.walkable(p.x+dd[0]*2, p.y+dd[1]*2));
+    const m = api.spawnMon(gz, p.x+d[0]*2, p.y+d[1]*2);
+    m.hp = m.mhp = 99999;
+    api.act(m, {k:'shoot'});
+    return {me: 99999 - p.hp, them: 99999 - m.hp};
+  };
+  const mirr = shot('mirr'), wood = shot('wood');
+  assert(mirr.them > 0, '鏡之盾該把傷害彈回去，實際 ' + mirr.them);
+  assert.strictEqual(mirr.me, 0, '彈回去的那一下不該同時打到自己');
+  assert.strictEqual(wood.them, 0, '木盾不該彈任何東西');
+  assert(wood.me > 0, '木盾擋不住，該受傷');
+});
+
 // ── 壺 ──────────────────────────────────────────────────────
 // 這四個是使用者親口回報的那個坑：「壺的作用是什麼？只是撿起沒作用很怪吧？」
 // 表上有 beh 欄位，程式裡一次都沒有讀 —— 撿起來就只是一個佔格子的圖示。

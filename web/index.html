@@ -1893,6 +1893,7 @@ s.165|Everything inside the pot broke.|つぼの なかみは すべて こわ�
 s.166|The pain jolts you awake!|いたみで めが さめた！
 m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
 m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
+m.pierce|The spear runs through - {nm} is hit too.|やりが つらぬいた —— {nm}にも あたった。
 m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
 o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
@@ -5092,6 +5093,21 @@ function attack(m, mult){
       hurtMon(o, rollDmg(pAtk(), o.d.def, false, .5), '#f5dc7a');
     }
   }
+  /* 長槍：連同**後面那一隻**一起刺穿。
+     這個欄位在表上寫了很久，程式裡一次都沒讀過 —— 也就是說長槍花 1600 G
+     買到的是「攻擊力比鋼之劍低一點」，賣點完全不存在。
+
+     刺穿的價值在走廊：走廊一次只進得來一隻，那本來是防守的地形，
+     長槍讓它同時變成攻擊的地形。天空之劍打的是「被圍住」，
+     長槍打的是「排成一列」—— 兩把武器因此各有各的戰場，而不是誰比誰強。 */
+  if(wp && wp.pierce){
+    const dx = Math.sign(m.x - p.x), dy = Math.sign(m.y - p.y);
+    const o = monAt(m.x + dx, m.y + dy);
+    if(o && o.hp > 0){
+      hurtMon(o, rollDmg(pAtk(), o.d.def, false, .7), '#cfe0f2');
+      say(M('m.pierce','槍尖穿了過去 —— {nm} 也被刺中。',{nm:locName('mon',o.d)}));
+    }
+  }
 }
 /* ── 頭目倒下 ────────────────────────────────────────────────
    「意識」不是一場戰鬥，是三場：凝視 → 複寫 → 歸一。
@@ -6447,7 +6463,7 @@ function clearAct(){
      身上只有 3200 G，買完鋼之劍就只剩下木盾了）。
      賞金按深度給，而且是**看得見的一行字**：玩家知道自己賺到了什麼，
      然後自己決定要換武器還是換盾。 */
-  const bounty = Math.round(G.depth * 120);
+  const bounty = Math.round(G.depth * BOUNTY_PER_DEPTH);
   say(M('m.bounty','通關賞金　{n} G　—— 拿去村裡換裝備。',{n:bounty}),'gold');
   VILLAGE.gold += G.p.gold + bounty;
   VILLAGE.unlocked = true;
@@ -9289,6 +9305,13 @@ function renderVillage(){
 /* 鍛造價：越往上越貴，而且吃裝備本身的價值 ——
    把木棒打到 +2 應該是零錢，把秘銀之劍打到 +4 應該是一整章的收入。 */
 function forgeCost(d, up){ return Math.round((d.price || 800) / 8) * (up + 1); }
+
+/* 通關賞金的係數。第一版寫 120，走通測試量出來的結果是：
+   打到第十五章手上躺著十四萬金幣沒地方花 —— 錢一旦花不完，
+   「這一章要換武器還是換盾」就不是選擇題了，村莊也就不再是一個決定。
+   45 讓走到通天塔時大約攢得起「一把秘銀 +4」或「一把秘銀 + 一面好盾」，
+   但攢不起兩者都滿。那個「攢不起」才是鐵匠鋪存在的意義。 */
+const BOUNTY_PER_DEPTH = 45;
 function closeVillage(){ $('village').classList.remove('show'); BGM.force(null); }
 
 /* ─── 選單：手機把側欄與控制列搬進來，桌機維持原位 ──────────────

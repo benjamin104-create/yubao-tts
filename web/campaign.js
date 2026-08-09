@@ -81,35 +81,39 @@ function playFloorLoop(G, cap){
    買最貴的買得起的那一件，跟真人會做的事一樣。 */
 function shopTrip(V){
   const stat = c => c === 'weap' ? 'atk' : 'def';
-  // 手上那件的實力（含強化）。已經有一把好的就不再買第二把 ——
-  // 每次重來都再買一把，錢會全部漏在重複的裝備上，永遠攢不到強化的錢。
-  const held = cat => V.stock.filter(g => g.cat === cat)
-    .reduce((n, g) => Math.max(n, (api.defOf(g.cat, g.id)[stat(cat)] || 0) + g.up * 2), 0);
+  // 一件裝備的「潛力」＝ 打滿之後的數值。真人挑的是潛力不是現值 ——
+  // 秘銀 +0（攻 14）確實比鋼劍 +5（攻 18）弱，但秘銀打得到 +8（攻 30），
+  // 鋼劍打到 +5 就到頂了。只看現值的話會永遠停在鋼劍上，
+  // 錢愈攢愈多卻沒地方花（第一版量到的就是這個：第十五章手上十四萬）。
+  const pot = (cat, id, up) => {
+    const d = api.defOf(cat, id);
+    return (d[stat(cat)] || 0) + Math.max(up|0, d.up || 0) * 2;
+  };
   for(const cat of ['weap', 'shld']){
-    /* 挑「數值」最高的，不是最貴的。鏡之盾比鋼之盾貴一倍，防禦卻是 6 對 7 ——
-       它貴在反射。照價格挑的結果是每一章都買到比該有的差一階的盾，
-       而減傷是 (15/16)^防禦 的指數式，差一點防禦在深層差很多。 */
-    const k = stat(cat);
+    const best = V.stock.filter(g => g.cat === cat)
+      .reduce((n, g) => Math.max(n, pot(cat, g.id, g.up)), 0);
     const want = api.VILLAGE_STOCK.filter(g => g.cat === cat)
       .map(g => ({g, d: api.defOf(g.cat, g.id)}))
-      .filter(o => o.d.price <= V.gold)
-      .reduce((a, b) => !a || (b.d[k]||0) > (a.d[k]||0) ? b : a, null);
-    if(!want || (want.d[k] || 0) <= held(cat)) continue;
+      .filter(o => o.d.price <= V.gold && pot(cat, o.g.id, 0) > best)
+      .reduce((a, b) => !a || b.d.price > a.d.price ? b : a, null);
+    if(!want) continue;
     V.gold -= want.d.price;
     V.stock.push({cat, id: want.g.id, up: 0});
   }
-  /* 剩下的錢全部拿去鍛造。到了第十三章，鐵匠鋪最貴的那一把也追不上怪物表 ——
-     深章節真正的成長來自「把手上這把打得更利」，而裝備買下就是你的，
-     不會磨損，所以錢沒有必要留著重買。 */
-  for(let i = 0; i < 40; i++){
-    const best = V.stock
+  /* 錢全部拿去鍛造，而且挑「潛力最高的那一件」往上打 ——
+     鐵匠鋪最好的一把到第十三章就追不上怪物表了，深章節真正的成長
+     來自把手上這把打得更利。裝備買下就是你的，不會磨損，
+     所以沒有必要留一筆重買的錢。 */
+  for(let i = 0; i < 60; i++){
+    const cand = V.stock
       .map(g => ({g, d: api.defOf(g.cat, g.id)}))
       .filter(o => o.g.up < (o.d.up || 0))
-      .map(o => Object.assign(o, {cost: api.forgeCost(o.d, o.g.up)}))
+      .map(o => Object.assign(o, {cost: api.forgeCost(o.d, o.g.up),
+                                  pot: pot(o.g.cat, o.g.id, o.g.up)}))
       .filter(o => o.cost <= V.gold)
-      .reduce((a, b) => !a || b.cost < a.cost ? b : a, null);
-    if(!best) break;
-    V.gold -= best.cost; best.g.up++;
+      .reduce((a, b) => !a || b.pot > a.pot ? b : a, null);
+    if(!cand) break;
+    V.gold -= cand.cost; cand.g.up++;
   }
 }
 
@@ -118,6 +122,9 @@ V.act = 0;
 const ACTS = api.ACTS;
 const log = [];
 let seed = 101, stuck = null;
+// 中段章節：此時鐵匠鋪還有東西可買、也還鍛造得動，錢應該是緊的
+const MID = Math.min(12, ACTS.length - 1);
+let midGold = 0;
 
 for(let a = 0; a < ACTS.length; a++){
   let tries = 0, done = false, deepest = 0; const cause = {};
@@ -125,6 +132,7 @@ for(let a = 0; a < ACTS.length; a++){
     tries++;
     V.act = a;
     shopTrip(V);
+    if(a === MID && tries === 1) midGold = V.gold;
     api.newGame(seed++);
     const G = api.G();
     const t = playFloorLoop(G, MAX_TURNS);
@@ -153,4 +161,19 @@ for(const r of log){
 }
 console.log('\n通過 %d / %d 章', log.filter(r => r.done).length, ACTS.length);
 if(stuck !== null) console.log('卡在第 %d 章「%s」', stuck + 1, ACTS[stuck].nm);
+
+/* ── 經濟：錢有沒有地方花 ────────────────────────────────────
+   這一條是被量出來才加上去的。通關賞金第一版寫 depth*120，
+   結果打到第十五章手上躺著十四萬金幣沒地方花 —— 十五章全過、
+   每一支測試都綠燈，但村莊已經不是一個決定了：不管買什麼都買得起。
+
+   「錢花不完」不會讓任何東西壞掉，所以沒有測試會發現它。
+   量的是走到最後一章之前（此時鐵匠鋪還有東西可買）身上剩多少。 */
+const CAP = 20000;
+const spare = midGold;
+console.log('第 %d 章出發時的閒錢：%d G（上限 %d）', MID + 1, spare, CAP);
+if(spare > CAP){
+  console.log('✗ 錢多到花不完 —— 賞金或鍛造價需要重新配');
+  bad++;
+}
 process.exit(bad ? 1 : 0);
