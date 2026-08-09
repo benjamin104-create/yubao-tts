@@ -673,7 +673,17 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .vrow.own{border-color:var(--brass-dim); background:rgba(60,40,16,.4)}
 .vrow.own .st{color:var(--brass)}
 .vhint{font-size:11.5px; color:var(--parch-dim); line-height:1.7; max-width:34ch}
-.vbtns{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:2px}
+/* 動作鍵釘在畫面底部。加了 overflow-y 之後村莊「捲得到」，
+   但實測任何一款手機都是「不捲就看不到」—— 而畫面上沒有任何東西
+   告訴玩家下面還有。使用者因此以為第一章打完之後沒有村莊。
+   捲動能不能到不是重點，**看不看得到**才是。 */
+.vbtns{
+  position:sticky; bottom:0; z-index:2;
+  display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+  margin-top:auto; padding:10px 0 calc(4px + env(safe-area-inset-bottom));
+  width:100%;
+  background:linear-gradient(180deg, rgba(13,10,8,0), rgba(13,10,8,.94) 38%);
+}
 .vbtns button{min-height:46px}
 #over button + button{margin-left:8px}
 #vgo{
@@ -1679,6 +1689,9 @@ ui.score|Score|スコア
 ui.resume|Continue　Act {n}　B{d}F|つづきから　だい{n}しょう　B{d}F
 ui.fresh|Start a fresh run|さいしょから はじめる
 ui.nostore|This browser blocks saving — progress from this run will not be kept.|このブラウザは セーブを ブロックしている —— この たびの しんちょくは のこらない。
+m.shrine|★ Ring of Record — progress saved, health and magic full.|★ きろくの わ —— しんちょくを ほぞん、たいりょくと まりょくが ぜんかい。
+m.shrine2|The next floor is the boss. Get ready before you go down.|つぎの かいは ボスだ。したくを してから おりよう。
+lg.shrine|save point|きろくてん
 m.resumed|Resuming from your save point — Act {n} {nm} B{d}F|きろくてんから さいかい —— だい{n}しょう {nm} B{d}F
 m.worn|"{nm}" has worn out completely.|「{nm}」は すりきれて しまった。
 s.001|The all-purpose pocket saved "{v0}".|まんのうポケットが「{v0}」を まもった。
@@ -4466,6 +4479,45 @@ function buildFloor(){
      這裡不生怪、一定有商店、進來就補滿，玩家可以重新整隊再往下。 */
   const act0 = actAt(G.act);
   G.f.rest = !!(act0.rest && G.floor % act0.rest === 0 && G.floor < act0.floors);
+
+  /* ── 紀錄之環 ──────────────────────────────────────────────
+     樓層邊界本來就會自動存檔，但那是看不見的。看不見的東西玩家不會相信，
+     也不會安心 —— 而「打頭目之前能不能存」正是最需要安心的那一刻。
+
+     所以在**頭目層的前一層**放一個看得見的光環：踩上去存檔、
+     體力與魔力全滿。它同時是紀錄點與補給點，因為這兩件事在
+     頭目戰前本來就是同一個需求：「我準備好了再進去」。
+
+     只放在頭目前一層，不是每層都放 —— 每層都有就變成背景，
+     而它的意義正是「接下來有硬仗」的那個訊號。
+     只能用一次：不然它會變成站在原地補血的無限泉水。 */
+  const bossNext = !!(act0.boss && G.floor === act0.floors - 1);
+  G.f.shrine = null;
+  if(bossNext){
+    /* 自己一條亂數流。用共用的 rng 的話，光環多抽的那幾個數字會把
+       後面所有怪物與道具的位置整個推移 —— 加一個純視覺的東西，
+       第一章的死亡率從 8% 跳到 17%。新功能不該動到已經驗證過的平衡。 */
+    const srng = RNG(mix32(G.depth * 7919 + 13, G.seed));
+    // 放在跟樓梯不同的房間 —— 跟樓梯同格的話玩家會直接踩過去
+    const rks = srng.shuffle(Object.keys(G.f.rooms));
+    for(const rk of rks){
+      const r = G.f.rooms[rk];
+      if(roomOf(G.f.stairs.x, G.f.stairs.y) === +rk) continue;
+      let spot = null;
+      for(let i=0;i<60 && !spot;i++){
+        const x = srng.i(r.x, r.x+r.w-1), y = srng.i(r.y, r.y+r.h-1);
+        if(walkable(x,y) && !occ.has(key(x,y))) spot = {x,y};
+      }
+      if(spot){ G.f.shrine = spot; occ.add(key(spot.x, spot.y)); break; }
+    }
+    // 退而求其次也不用 free()（它會抽共用的 rng）：直接掃第一個空地
+    if(!G.f.shrine){
+      for(let y=1;y<MH-1 && !G.f.shrine;y++) for(let x=1;x<MW-1;x++)
+        if(walkable(x,y) && !occ.has(key(x,y)) && roomOf(x,y) >= 0){
+          G.f.shrine = {x,y}; occ.add(key(x,y)); break;
+        }
+    }
+  }
   if(G.f.rest){
     for(let i=0;i<3;i++){ const q=free(0); if(q) G.items[key(q.x,q.y)] = mk('herb','heal',{known:1}); }
     const fq = free(0); if(fq) G.items[key(fq.x,fq.y)] = mk('food','big');
@@ -4775,6 +4827,17 @@ function steal(){
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
   if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room) keeperReclaim();
+  // 紀錄之環：踩上去存檔並補滿，然後熄掉。只有一次，不是無限泉水。
+  const sh = G.f.shrine;
+  if(sh && sh.x === p.x && sh.y === p.y && !sh.used){
+    sh.used = 1;
+    p.hp = p.mhp; p.mp = p.mmp;
+    saveRun();
+    SFX.play('level');
+    burst(p.x, p.y, 30, '#79c97a', 55, 20, .9);
+    say(TX('m.shrine','★ 紀錄之環 —— 進度已保存，體力與魔力全滿。'),'good');
+    say(TX('m.shrine2','下一層是頭目。整理好再下去。'),'gold');
+  }
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   // 忍者 Master：踩上去也不會觸發
   if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say(TX('s.004','腳步輕得沒有觸動機關。'),'good'); }
@@ -6702,6 +6765,42 @@ function draw(dt){
                cx.fillRect(px_,py,T,T); }
   }
 
+  /* 紀錄之環。畫在地板上，會呼吸 —— 靜止的圓環讀起來像地磚的花紋，
+     會呼吸的才讀得出「這東西是活的、可以互動」。
+     用了幾乎純色的綠：這是整個地牢裡唯一一個「安全」的訊號，
+     它值得打破「飽和色只屬於活的東西」那條規則。 */
+  const SH = G.f.shrine;
+  if(SH && G.seen[key(SH.x, SH.y)]){
+    const sx = ox + SH.x*T + T/2, sy = oy + SH.y*T + T/2;
+    const on = !SH.used;
+    const pulse = on ? (0.62 + 0.38*Math.sin(clock*2.2)) : 0.18;
+    cx.save();
+    cx.globalCompositeOperation = 'lighter';
+    const g2 = cx.createRadialGradient(sx, sy, 1, sx, sy, T*1.15);
+    g2.addColorStop(0, `rgba(121,201,122,${0.30*pulse})`);
+    g2.addColorStop(0.55, `rgba(121,201,122,${0.16*pulse})`);
+    g2.addColorStop(1, 'rgba(121,201,122,0)');
+    cx.fillStyle = g2;
+    cx.fillRect(sx - T*1.2, sy - T*1.2, T*2.4, T*2.4);
+    cx.restore();
+    // 環本體：兩圈，外圈細、內圈亮
+    cx.save();
+    cx.globalAlpha = on ? pulse : 0.30;
+    cx.strokeStyle = '#79c97a'; cx.lineWidth = 1;
+    cx.beginPath(); cx.arc(sx, sy, T*0.42, 0, Math.PI*2); cx.stroke();
+    cx.strokeStyle = on ? '#cfe6b4' : '#4a5a44';
+    cx.beginPath(); cx.arc(sx, sy, T*0.26, 0, Math.PI*2); cx.stroke();
+    if(on){                                    // 環上繞行的三顆光點
+      cx.fillStyle = '#f2efe7';
+      for(let i=0;i<3;i++){
+        const a2 = clock*1.1 + i*Math.PI*2/3;
+        cx.fillRect(Math.round(sx + Math.cos(a2)*T*0.42) - 1,
+                    Math.round(sy + Math.sin(a2)*T*0.42) - 1, 2, 2);
+      }
+    }
+    cx.restore();
+  }
+
   /* 地標本體。畫在地磚之後、生物之前 ——
      這樣站在它前面的怪物會蓋住它的下半，深度感才對。
      只要腳下任一格看過就整個畫出來：一棵三格高的樹，
@@ -7082,6 +7181,9 @@ function updateTags(){
         push(G.shop.keeper.x, G.shop.keeper.y, TX('k.who','店員'), 'shop', 'keeper');
       const stt = G.f.stairs;
       if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, TX('k.down','下樓'), 'stair');
+      const shr = G.f.shrine;
+      if(shr && !shr.used && G.seen[key(shr.x, shr.y)])
+        push(shr.x, shr.y, TX('lg.shrine','紀錄點'), 'stair');
       if(G.f.exit && G.seen[key(G.f.exit.x,G.f.exit.y)])
         push(G.f.exit.x, G.f.exit.y, TX('k.leave','回到村莊'), 'shop', 'exit');
 

@@ -71,7 +71,8 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, hatHere, restStep, dwellCheck,' +
   'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
-  'hookSay, saveRun, loadedRun, clearRun, resumeRun,' +
+  'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
+  'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +
   ' ITEM_TABLES:[["herb",HERB],["scroll",SCROLL],["wand",WAND],["pot",POT],' +
