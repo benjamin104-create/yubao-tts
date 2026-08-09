@@ -123,6 +123,46 @@ t('存檔裡的道具不會帶著舊數值復活', ()=>{
   assert.strictEqual(w.up, 3, '強化值應該保留');
 });
 
+t('壺裡的東西也要撐過讀檔 —— 而且不會被村莊那份多發一次', ()=>{
+  V().act = 0; V().pots = [];
+  api.newGame(3131);
+  const G = api.G(), p = G.p;
+  const pot = api.mk('pot', 'store'); pot.cap = 4; p.inv.push(pot);
+  api.potPut(pot, api.mk('weap', 'steel', {known:1, up:3}));
+  api.potPut(pot, api.mk('herb', 'ygg',   {known:1}));
+  const ip = api.mk('pot', 'ident'); ip.cap = 2; p.inv.push(ip);
+  playToFloor(3);
+
+  // 巢狀的內容物也要進快照 —— snap() 只看得到背包第一層
+  const deep = () => api.G().p.inv.map(i =>
+    i.cat + '/' + i.id + '[' + (i.cap|0) + ']{' +
+    (i.contents||[]).map(c => c.cat + '/' + c.id + '+' + c.up).join('|') + '}').join(' ');
+  const before = deep();
+  assert(before.includes('weap/steel+3'), '壺裡應該有那把劍');
+
+  const q = api.loadedRun();
+
+  /* 這裡要**故意**把村莊寄放的那一份填起來再讀檔。
+     不填的話這條斷言等於沒寫：正常流程下 clearAct() 一定跟著 clearRun()，
+     所以「有存檔」與「村莊寄放著壺」不會同時成立，
+     把 resumeRun() 裡的保護整段刪掉，測試照樣全綠。
+     （這一條是驗證過的：刪掉保護之後第一版的斷言依然通過。）
+
+     但那份保護不是多餘的 —— 存檔壞掉、版本升級、使用者自己動了
+     localStorage，都會讓兩者同時存在，而後果是背包裡憑空多一個壺，
+     不報任何錯。守著的東西就要在守著的狀態下測。 */
+  V().pots = [{cat:'pot', id:'store', cap:4, contents:[{cat:'food', id:'bread'}]}];
+  const potsBefore = JSON.stringify(V().pots);
+
+  api.resumeRun(q);
+  assert.strictEqual(deep(), before, '壺與壺裡的東西讀檔後應該完全一致');
+  assert.strictEqual(JSON.stringify(V().pots), potsBefore,
+    '讀檔不該吃掉村莊寄放的那一份');
+  assert.strictEqual(api.G().p.inv.filter(i => i.cat === 'pot').length, 2,
+    '村莊那份不該在讀檔時被發進背包 —— 那是憑空多一個壺');
+  V().pots = [];
+});
+
 // ── 造型只屬於主角 ──────────────────────────────────────────
 t('換造型只影響主角，怪物與村民完全不受影響', ()=>{
   const shot = () => api.MONS.concat(api.BOSS)
