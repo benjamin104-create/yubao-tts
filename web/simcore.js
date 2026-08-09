@@ -49,6 +49,15 @@ global.addEventListener = () => {};
 global.innerWidth = 1280;
 global.innerHeight = 900;
 global.getComputedStyle = () => ({ paddingBottom: '0px' });
+// 記憶體版的 localStorage：存檔測試需要它，而且它必須真的能存能刪。
+// 沒有這一段的話，saveRun() 會被 try/catch 吞掉，測試永遠是綠的。
+const __store = new Map();
+global.localStorage = {
+  getItem: k => (__store.has(k) ? __store.get(k) : null),
+  setItem: (k, v) => { __store.set(k, String(v)); },
+  removeItem: k => { __store.delete(k); },
+  clear: () => __store.clear(),
+};
 global.requestAnimationFrame = () => {};
 global.prompt = () => null;
 
@@ -62,7 +71,8 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, hatHere, restStep, dwellCheck,' +
   'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
-  'i18n:{setLang, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
+  'hookSay, saveRun, loadedRun, clearRun, resumeRun,' +
+  'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +
   ' ITEM_TABLES:[["herb",HERB],["scroll",SCROLL],["wand",WAND],["pot",POT],' +
   ' ["food",FOOD],["weap",WEAP],["shld",SHLD]]}' +
