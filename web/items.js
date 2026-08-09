@@ -400,6 +400,110 @@ t('淺章節只掉得到公開職業，隱藏職業要更深才進池子', ()=>{
   }
 });
 
+// ── 解謎型頭目：砲座 ────────────────────────────────────────
+// 使用者要的：「小王普通攻擊無法受傷，要踩到房間裡不同顏色的地磚上按 A，
+// 對小王發射，然後這個砲台就失效，需要跑到另一個砲台裝置。」
+t('解謎型頭目刀砍不動，只有砲座打得動', ()=>{
+  const setup = (act) => {
+    V.act = act; V.stock = []; V.pots = [];
+    api.newGame(4242);
+    const G = api.G();
+    G.floor = api.ACTS[act].floors; api.buildFloor();
+    return {G, boss: G.mons.find(m => m.d.boss)};
+  };
+  // 第 3 章（投石小魔王）與第 12 章（光線人）都是解謎型
+  for(const act of [2, 11]){
+    const {G, boss} = setup(act);
+    assert(boss && boss.d.turret, '第 ' + (act+1) + ' 章的頭目應該是解謎型');
+    assert(G.f.turrets && G.f.turrets.length === boss.d.turret.n,
+      '砲座數量不對：' + (G.f.turrets || []).length);
+    // 砲座不能疊在頭目或玩家身上，也不能長在牆裡
+    for(const tt of G.f.turrets){
+      assert(api.walkable(tt.x, tt.y), '砲座長在牆裡');
+      assert(!(tt.x === boss.x && tt.y === boss.y), '砲座疊在頭目身上');
+    }
+    const hp0 = boss.hp;
+    // 近戰、橫掃、貫穿、魔法 —— 全部都不該打得動
+    G.p.weap = api.mk('weap', 'sky', {known:1});      // 天空之劍會橫掃
+    G.p.x = boss.x - 1; G.p.y = boss.y;
+    api.attack(boss);
+    api.hurtMon(boss, 999, '#fff');                   // 魔法／幻獸走的是這條
+    assert.strictEqual(boss.hp, hp0,
+      '第 ' + (act+1) + ' 章的頭目被普通手段打掉了 ' + (hp0 - boss.hp) + ' 點');
+
+    // 砲座打得動，而且打完要冷卻
+    const t0 = G.f.turrets[0];
+    G.p.x = t0.x; G.p.y = t0.y;
+    assert(api.fireTurret(), '站在砲座上應該開得了火');
+    assert(boss.hp < hp0, '砲座應該打得動');
+    assert(t0.cd > 0, '開完火應該進冷卻');
+    assert(!api.fireTurret(), '冷卻中的砲座不該再開火');
+
+    // 換一座 —— 這就是「跑到另一個砲台裝置」
+    const t1 = G.f.turrets[1];
+    const hp1 = boss.hp;
+    G.p.x = t1.x; G.p.y = t1.y;
+    assert(api.fireTurret(), '另一座應該是熱的');
+    assert(boss.hp < hp1, '另一座也該打得動');
+
+    /* 冷卻會隨回合恢復 —— 不恢復的話砲座用完就無解了。
+       迴圈上界要先抓下來：直接寫 i < t0.cd + 1 的話，
+       t0.cd 每一圈都在變小，迴圈會提早結束、測試會誤判成「沒回復」。 */
+    const wait = t0.cd + 1;
+    for(let i = 0; i < wait; i++) api.endTurn();
+    assert.strictEqual(G.f.turrets[0].cd, 0, '冷卻應該會回復');
+  }
+});
+
+t('砲座彼此要隔開 —— 擠在一起就退化成連按同一顆鍵', ()=>{
+  let checked = 0;
+  for(const act of [2, 11]){
+    for(let s = 0; s < 10; s++){
+      V.act = act; V.stock = []; V.pots = [];
+      api.newGame(6000 + s * 97);
+      const G = api.G();
+      G.floor = api.ACTS[act].floors; api.buildFloor();
+      const ts = G.f.turrets || [];
+      assert(ts.length >= 2, '砲座太少');
+      // 至少有一對是「要走上幾步」的距離
+      const far = ts.some(a => ts.some(b =>
+        Math.max(Math.abs(a.x-b.x), Math.abs(a.y-b.y)) >= 3));
+      assert(far, '所有砲座都擠在三格之內');
+      checked++;
+    }
+  }
+  assert(checked >= 20, '檢查數量不足');
+});
+
+// ── 試煉場 ──────────────────────────────────────────────────
+// ACTS 上的 arena:{every,kill} 寫了很久卻從來沒有人讀 ——
+// 第四章因此變成一層沒有頭目的空房間，使用者的回報是
+// 「怎麼會有那種一層的？好像剛進去就出來了？」
+t('試煉場：樓梯先鎖住，打倒指定數量才開', ()=>{
+  const idx = api.ACTS.findIndex(a => a.arena);
+  assert(idx >= 0, '應該有一章是試煉場');
+  V.act = idx; V.stock = []; V.pots = [];
+  api.newGame(88);
+  const G = api.G();
+  assert(G.f.arena, '試煉場的狀態應該建起來了');
+  assert.strictEqual(G.f.bossLock, 1, '一進場樓梯就該是鎖的');
+  const need = G.f.arena.left;
+  assert(need > 0, '應該有要打倒的數量');
+
+  // 會一波一波湧進來
+  const n0 = G.mons.length;
+  for(let i = 0; i < G.f.arena.every + 2; i++) api.arenaTick();
+  assert(G.mons.length > n0, '時間到了應該要有下一波');
+
+  // 打完就開門
+  let guard = 0;
+  while(G.f.bossLock && G.mons.length && ++guard < 200){
+    const m = G.mons[0];
+    api.kill(m); G.mons.shift();
+  }
+  assert.strictEqual(G.f.bossLock, 0, '打完之後樓梯應該解鎖');
+});
+
 // ── 有害道具的收購價 ────────────────────────────────────────
 t('店員認得出來的爛東西只給四分之一，認不出來的照樣全價', ()=>{
   V.act = 0; api.newGame(9007);

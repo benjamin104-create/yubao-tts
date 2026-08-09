@@ -1247,8 +1247,13 @@ const BOSS = [
   imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
  {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+ /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
+    n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
+    投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
+    到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
  {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
-  rng:9, still:1, telegraph:1, line:'白色的方塊亮起來了 —— 那是射程。'},
+  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5},
+  line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
  {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
   rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
@@ -1264,7 +1269,8 @@ const BOSS = [
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
   line:'打碎一次，她會再站起來。三次。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
-  rng:12, telegraph:1, line:'光走直線 —— 所以不要站在直線上。'},
+  rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
+  line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
   rng:9, line:'塔頂的歌聲。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
@@ -1942,6 +1948,19 @@ p.dpad|　(D-pad)|　（じゅうじキー）
 m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
 m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
 m.pierce|The spear runs through - {nm} is hit too.|やりが つらぬいた —— {nm}にも あたった。
+m.tnohurt|{nm} is unharmed - blades do nothing to this.|{nm}には きずひとつ つかない —— はもので きるものでは ない。
+m.thint|There are gun emplacements in this room. Stand on one and press Confirm.|へやに ほうざが ある。うえに たって「けってい」を おそう。
+m.tcool|This one is still cooling - {n} more turns.|この ほうは まだ ひえていない —— あと {n}ターン。
+m.tnotarget|Nothing to fire at.|ねらう あいてが いない。
+m.tfire|The emplacement roars - {nm} takes {n} damage!|ほうざが ほえた —— {nm}に {n}の ダメージ！
+m.tnext|{n} emplacements are still hot - run.|あと {n}きが まだ あつい —— はしれ。
+m.tallcool|Every emplacement is cooling - stay away from it.|すべての ほうざが ひえている —— いまは にげろ。
+m.wave2|Wave {n} - {c} come through the far door.|だい{n}は —— {c}たいが とびらの むこうから きた。
+m.arenaleft|{n} to go.|あと {n}たい。
+m.arenaclear|★ The door opens - the stairs are unsealed.|★ とびらが ひらいた —— かいだんの ふういんが とけた。
+m.arenago|The stairs are sealed - defeat {n} and the door will open.|かいだんは ふうじられている —— {n}たい たおせば ひらく。
+lg.turret|Emplacement ★|ほうざ ★
+lg.turretcd|Emplacement {n}|ほうざ {n}
 m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
 o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
@@ -3206,6 +3225,9 @@ function tilesFor(theme){
     wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
   };
 }
+/* 砲座的四種顏色。刻意用飽和色 —— 這是全遊戲少數
+   「不是活物、卻該被一眼看見」的東西，跟紀錄之環同一個理由。 */
+const TURRET_COL = ['#e8a33c', '#5fa9e8', '#79c97a', '#c98ad8'];
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
@@ -4466,6 +4488,7 @@ function newGame(seed){
   say(TX('acti.' + a0.id, a0.intro), 'gold');
   say(TX('m.enter','方向鍵移動，撞到怪物即攻擊。'), 'gold');
   if(G.bossLine){ say(TX('bl.' + G.bossLine.id, G.bossLine.line), 'bad'); G.bossLine = null; }
+  if(G.f.arena) say(M('m.arenago','樓梯被封住了 —— 打倒 {n} 個，門才會開。',{n:G.f.arena.left}),'gold');
   return G;
 }
 
@@ -4844,7 +4867,22 @@ function buildFloor(){
   // ── 頭目層 ──
   // 頭目在場時樓梯是鎖的。「繞過頭目直接下樓」會讓整章的鋪陳白費。
   G.f.bossLock = 0;
+  G.f.turrets = null;
+  G.f.arena = null;
   const act = actAt(G.act);
+  /* ── 試煉場 ────────────────────────────────────────────────
+     ACTS 上的 `arena:{every, kill}` 寫了很久，程式一次都沒有讀它 ——
+     跟 beh、bad、pierce 同一種病。結果第四章「魔王的考驗」變成
+     一層沒有頭目的空房間：走到樓梯，結束。使用者的原話是
+     「怎麼會有那種一層的？好像剛進去就出來了？」
+
+     它本來的設計寫在簡介裡：「一間空房，四面送東西進來。
+     這一關不考技巧，考你撐不撐得住。」現在它真的是那樣了：
+     樓梯鎖著，每隔幾回合從四面湧進來一批，打倒指定數量才開。 */
+  if(act.arena){
+    G.f.arena = {left: act.arena.kill|0, every: act.arena.every|0, t: 3, wave: 0};
+    G.f.bossLock = 1;
+  }
   if(G.floor >= act.floors && act.boss){
     const bd = bossById(act.boss);
     if(bd){
@@ -4867,6 +4905,30 @@ function buildFloor(){
           }
         }
       }
+      /* 解謎型頭目要一間夠大的房。砲座的價值在「你得跑過去」——
+         擠在三格之內的話，整個機制就退化成連按同一顆鍵。
+
+         而且不能用「房間中心」去挑：房間雕過形狀之後，
+         最大那一間的正中央很可能是牆，於是它被跳過，
+         挑到的反而是一間 3x4 的小室（量出來就是這樣）。
+         所以改成數**真的走得到幾格**，再從那一間裡找位置。 */
+      if(bd.turret){
+        let bestR = null, bestN = -1;
+        for(const rk in G.f.rooms){
+          const r = G.f.rooms[rk];
+          const cells = [];
+          for(let y=r.y; y<r.y+r.h; y++) for(let x=r.x; x<r.x+r.w; x++)
+            if(walkable(x,y) && !monAt(x,y) && !(x===G.p.x && y===G.p.y)) cells.push({x,y});
+          if(cells.length > bestN){ bestN = cells.length; bestR = cells; }
+        }
+        // 站在最寬敞那一間的正中間 —— 砲座才有機會散在它四周
+        if(bestR && bestR.length){
+          const mx = bestR.reduce((a,c)=>a+c.x,0)/bestR.length;
+          const my = bestR.reduce((a,c)=>a+c.y,0)/bestR.length;
+          spot = bestR.reduce((a,c)=> !a ||
+            (Math.abs(c.x-mx)+Math.abs(c.y-my)) < (Math.abs(a.x-mx)+Math.abs(a.y-my)) ? c : a, null);
+        }
+      }
       for(const rk in G.f.rooms){
         if(spot) break;
         const r = G.f.rooms[rk];
@@ -4879,6 +4941,48 @@ function buildFloor(){
         spawnMon(bd, spot.x, spot.y);
         G.f.bossLock = 1;
         G.f.bossId = bd.id;
+        /* ── 砲座 ────────────────────────────────────────────
+           有些小王的正解不是「站著互砍」，是**用場地打它**。
+           房間裡放幾座顏色不同的砲座，踩上去按確定就朝頭目射一發；
+           射完那一座要冷卻，所以你得跑到下一座 ——
+           整場仗因此是「在頭目的火力下跑位」，而不是站著比誰血厚。
+
+           位置挑「離頭目夠遠、彼此也夠開」的格子：擠在一起的話
+           連跑都不用跑，機制就退化成連按同一顆鍵。 */
+        if(bd.turret){
+          /* 候選格：頭目那一間房為主，房間排不下就往整層找。
+             「排不下就少放幾座」是不行的 —— 只有一座砲的解謎型頭目
+             會變成「開一砲、原地等六回合、再開一砲」，
+             那不是解謎，是罰站。所以間距要求會一路放寬到排得下為止。 */
+          const collect = (r) => {
+            const out = [];
+            const x0 = r ? r.x : 1, y0 = r ? r.y : 1;
+            const x1 = r ? r.x + r.w - 1 : MW - 2, y1 = r ? r.y + r.h - 1 : MH - 2;
+            for(let y=y0; y<=y1; y++) for(let x=x0; x<=x1; x++){
+              if(!walkable(x,y) || monAt(x,y)) continue;
+              if(x===G.p.x && y===G.p.y) continue;
+              if(x===G.f.stairs.x && y===G.f.stairs.y) continue;
+              if(Math.max(Math.abs(x-spot.x), Math.abs(y-spot.y)) < 2) continue;
+              out.push({x,y});
+            }
+            return out;
+          };
+          const br = G.f.rooms[roomOf(spot.x, spot.y)];
+          let cand = collect(br);
+          if(cand.length < bd.turret.n) cand = collect(null);   // 房間太小 → 整層找
+          rng.shuffle(cand);
+          const list = [];
+          for(const gap of [3, 2, 1, 0]){
+            for(const c of cand){
+              if(list.length >= bd.turret.n) break;
+              if(list.some(t => t.x===c.x && t.y===c.y)) continue;
+              if(gap && list.some(t => Math.max(Math.abs(t.x-c.x), Math.abs(t.y-c.y)) < gap)) continue;
+              list.push(c);
+            }
+            if(list.length >= bd.turret.n) break;
+          }
+          G.f.turrets = list.slice(0, bd.turret.n).map((t,i)=>({x:t.x, y:t.y, cd:0, i}));
+        }
         // 頭目的登場白。以前只有「意識」換型態時會講，
         // 其他十三隻是無聲出場的 —— 寫了台詞卻沒有人講出來。
         G.bossLine = bd;
@@ -5140,6 +5244,16 @@ function stepOn(){
 }
 function attack(m, mult){
   const p=G.p;
+  /* 解謎型頭目：刀砍不動。第一次撞上去要把「正解在哪」講清楚 ——
+     一個打不痛的敵人如果不解釋，玩家只會以為是 bug 或自己太弱。 */
+  if(m.d.turret){
+    p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
+    SFX.play('miss');
+    say(M('m.tnohurt','{nm} 毫髮無傷 —— 這種東西砍不動。',{nm:locName('mon',m.d)}),'bad');
+    say(TX('m.thint','房間裡有幾座砲座。站上去按「確定」，用它們打。'),'gold');
+    float(m.x, m.y, 'NO', '#a99a7e');
+    return;
+  }
   const hit = G.rng.i(1,100) <= Math.max(50, Math.min(99, 92 - (m.d.ev||0)));
   p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
   if(!hit){ SFX.play('miss'); say(M('m.miss','對 {nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); float(m.x,m.y,'MISS','#a99a7e'); return; }
@@ -5258,6 +5372,17 @@ function kill(m){
     const spot = nearestFree(m.x,m.y);
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(M('m.drop','掉落了「{nm}」。',{nm:nameOf(it)})); }
   }
+  // 試煉場：打倒指定數量就開門
+  const ar = G.f.arena;
+  if(ar && G.f.bossLock && !m.d.boss){
+    ar.left--;
+    if(ar.left > 0) say(M('m.arenaleft','還要 {n} 個。',{n:ar.left}),'gold');
+    else {
+      G.f.bossLock = 0;
+      SFX.play('level');
+      say(TX('m.arenaclear','★ 門開了 —— 樓梯的封印解除。'),'good');
+    }
+  }
   const p=G.p; p.exp += m.d.exp;
   // 鬼武者 Master：擊殺回血
   if(hasMaster('oni') && p.hp < p.mhp){
@@ -5305,6 +5430,8 @@ const DIRS=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
 function endTurn(){
   if(G.over) return;
   const p=G.p;
+  if(G.f.turrets) for(const t of G.f.turrets) if(t.cd > 0) t.cd--;
+  arenaTick();
   // 狀態遞減
   for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k];
     say(M('m.stoff','{nm}的狀態解除了。',{nm:TX('st.'+k, k)})); } }
@@ -6090,7 +6217,16 @@ function fireSpell(dx, dy){
   endTurn();
 }
 
+/* 所有「非砲座」的傷害都要從這裡過。
+   把免疫只寫在 attack() 裡是不夠的：天空之劍的橫掃、長槍的貫穿、
+   五系魔法、幻獸的攻擊全都直接呼叫 hurtMon —— 也就是說解謎型頭目
+   其實用一把好劍就砍得死，而走通測試「通過」正是因為機器人在
+   橫掃裡把它磨掉了。免疫要放在唯一的入口，不然它只是一句文案。 */
 function hurtMon(m, dmg, col, st, dur){
+  if(m.d.turret){
+    float(m.x, m.y, 'NO', '#a99a7e');
+    return;
+  }
   m.hp -= dmg; m.flash = 0.12;
   float(m.x, m.y, String(dmg), col);
   burst(m.x, m.y, 8, col, 34, 8);
@@ -7481,6 +7617,33 @@ function draw(dt){
                cx.fillRect(px_,py,T,T); }
   }
 
+  /* 砲座。地磚換色 + 上面一具裝置，冷卻時整個暗下來。
+     每一座顏色不同 —— 玩家講得出「我要去藍色那一座」，
+     這場仗才會變成一個有計畫的移動，而不是亂跑。 */
+  for(const t of (G.f.turrets || [])){
+    if(!G.seen[key(t.x, t.y)]) continue;
+    const px3 = ox + t.x*T, py3 = oy + t.y*T;
+    const hot = t.cd <= 0;
+    const col = TURRET_COL[t.i % TURRET_COL.length];
+    cx.save();
+    cx.globalAlpha = hot ? 1 : .42;
+    cx.fillStyle = col; cx.globalAlpha *= .30;
+    cx.fillRect(px3+1, py3+1, T-2, T-2);            // 地磚
+    cx.globalAlpha = hot ? .95 : .40;
+    cx.strokeStyle = col; cx.lineWidth = 1;
+    cx.strokeRect(px3+1.5, py3+1.5, T-3, T-3);
+    // 裝置本體：底座 + 朝向頭目的管子
+    cx.fillStyle = '#2b2620'; cx.fillRect(px3+4, py3+9, 8, 5);
+    cx.fillStyle = hot ? col : '#4a4038';
+    cx.fillRect(px3+6, py3+5, 4, 5);
+    if(hot){                                         // 熱著的時候會呼吸
+      const b2 = .45 + .55*Math.sin(clock*3 + t.i*1.7);
+      cx.globalAlpha = b2 * .9;
+      cx.fillStyle = '#f6efe3'; cx.fillRect(px3+7, py3+3, 2, 2);
+    }
+    cx.restore();
+  }
+
   /* 紀錄之環。畫在地板上，會呼吸 —— 靜止的圓環讀起來像地磚的花紋，
      會呼吸的才讀得出「這東西是活的、可以互動」。
      用了幾乎純色的綠：這是整個地牢裡唯一一個「安全」的訊號，
@@ -7914,6 +8077,11 @@ function updateTags(){
       const shr = G.f.shrine;
       if(shr && !shr.used && G.seen[key(shr.x, shr.y)])
         push(shr.x, shr.y, TX('lg.shrine','紀錄點'), 'stair');
+      for(const t of (G.f.turrets || [])){
+        if(G.seen[key(t.x,t.y)] !== 2) continue;
+        push(t.x, t.y, t.cd > 0 ? M('lg.turretcd','砲座 {n}',{n:t.cd})
+                                : TX('lg.turret','砲座 ★'), 'stair', 'T'+t.i);
+      }
       if(G.f.exit && G.seen[key(G.f.exit.x,G.f.exit.y)])
         push(G.f.exit.x, G.f.exit.y, TX('k.leave','回到村莊'), 'shop', 'exit');
 
@@ -8693,6 +8861,63 @@ function throwItem(it, dx, dy){
   }
 }
 
+/* 試煉場：每隔幾回合送一批進來。
+   從「玩家看得見的邊緣」生出來，不是憑空出現在腳邊 ——
+   突然出現在背後的敵人不是難度，是耍賴。 */
+function arenaTick(){
+  const a = G.f.arena;
+  if(!a || !G.f.bossLock) return;
+  if(--a.t > 0) return;
+  a.t = a.every;
+  a.wave++;
+  const n = Math.min(4, 2 + Math.floor(a.wave / 3));
+  let born = 0;
+  for(let i=0;i<40 && born<n;i++){
+    const x = G.rng.i(1, MW-2), y = G.rng.i(1, MH-2);
+    if(!walkable(x,y) || monAt(x,y)) continue;
+    if(Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) < 4) continue;
+    const md = G.rng.weight(MONS, m => monWeight(m, G.md, themeNow()));
+    if(!md) break;
+    spawnMon(md, x, y); born++;
+  }
+  if(born) say(M('m.wave2','第 {n} 波 —— {c} 個從門的另一邊進來了。',{n:a.wave, c:born}),'bad');
+}
+
+/* 站在砲座上開火。回傳 true 代表這一回合用掉了。 */
+function fireTurret(){
+  const p = G.p, ts = G.f.turrets;
+  if(!ts) return false;
+  const t = ts.find(t2 => t2.x === p.x && t2.y === p.y);
+  if(!t) return false;
+  if(t.cd > 0){
+    say(M('m.tcool','這座砲還在冷卻 —— 還要 {n} 回合。',{n:t.cd}),'bad');
+    return false;
+  }
+  const boss = G.mons.find(m => m.d.boss);
+  if(!boss){ say(TX('m.tnotarget','沒有目標。')); return false; }
+  const conf = boss.d.turret || {dmg:.15, cool:6};
+  const dmg = Math.max(10, Math.round(boss.mhp * conf.dmg));
+  t.cd = conf.cool;
+  SFX.play('crit');
+  const col = TURRET_COL[t.i % TURRET_COL.length];
+  // 從砲座畫一條到頭目的軌跡 —— 玩家要看得到「這一發是我打出去的」
+  const dx = Math.sign(boss.x - t.x), dy = Math.sign(boss.y - t.y);
+  ring(t.x, t.y, col, T*2.2, .4);
+  trail(t.x, t.y, dx, dy,
+        Math.max(Math.abs(boss.x-t.x), Math.abs(boss.y-t.y)), col);
+  burst(boss.x, boss.y, 26, col, 70, 16, .8);
+  G.shake = Math.max(G.shake, 10);
+  boss.hp -= dmg; boss.flash = 0.14;
+  float(boss.x, boss.y, String(dmg), col);
+  say(M('m.tfire','砲座轟出一發 —— {nm} 受到 {n} 點傷害！',
+        {nm:locName('mon', boss.d), n:dmg}),'good');
+  if(boss.hp <= 0){ kill(boss); return true; }
+  const ready = G.f.turrets.filter(x => x.cd <= 0).length;
+  say(ready ? M('m.tnext','還有 {n} 座是熱的 —— 快跑過去。',{n:ready})
+            : TX('m.tallcool','所有砲座都在冷卻 —— 先躲開它。'), ready ? 'gold' : 'bad');
+  return true;
+}
+
 /* ─── 輸入 ──────────────────────────────────────────────────── */
 const KEYDIR = {
   ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
@@ -8746,7 +8971,15 @@ addEventListener('keydown', ev=>{
   if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
-  if(k===' '){ ev.preventDefault(); endTurn(); return; }
+  if(k===' '){
+    ev.preventDefault();
+    // 站在砲座上時，「原地待機」的正解就是開火 —— 跟 A 鍵同一個語意
+    if(G.f.turrets && G.f.turrets.some(t => t.x===G.p.x && t.y===G.p.y)){
+      if(fireTurret()) endTurn(); else refresh();
+      return;
+    }
+    endTurn(); return;
+  }
   if(k==='g'||k==='G'){ SFX.play('open'); openPanel('ground'); return; }
   if(k==='i'||k==='I'){ SFX.play('open'); panelMode==='inv'?closePanel():openPanel('inv'); return; }
   if(k==='b'||k==='B'){ pressB(); return; }
@@ -8859,6 +9092,10 @@ let pressB = ()=>{};
     const p = G.p;
     if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y){ leaveDungeon(); return; }
     if(tileAt(p.x,p.y) === DOWN){ descend(); return; }
+    if(G.f.turrets && G.f.turrets.some(t => t.x===p.x && t.y===p.y)){
+      if(fireTurret()) endTurn(); else refresh();
+      return;
+    }
     const k = key(p.x,p.y), it = G.items[k];
     if(it){
       // 商店的東西不能一按就走 —— 拿不拿走是要玩家自己決定的事

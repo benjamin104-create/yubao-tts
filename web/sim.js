@@ -45,7 +45,24 @@ for(let r=0; r<RUNS; r++){
       if(bs && bs !== p.shld){ p.shld = bs; bs.known = 1; api.endTurn(); t++; continue; }
 
       // 相鄰有怪就打
-      let hit = false;
+      /* 解謎型頭目：刀砍不動，正解是房間裡的砲座。
+       機器人必須會用 —— 不會用的話那一章直接變成走不完，
+       而走通測試回報的會是「死亡 40」，看不出真正的原因。 */
+    const tboss = G.f.bossLock && G.mons.find(m => m.d.boss && m.d.turret);
+    if(tboss && G.f.turrets){
+      const here = G.f.turrets.find(t => t.x === p.x && t.y === p.y);
+      if(here && here.cd <= 0){ api.fireTurret(); api.endTurn(); t++; continue; }
+      const hot = G.f.turrets.filter(t2 => t2.cd <= 0);
+      const aim = (hot.length ? hot : G.f.turrets)
+        .reduce((a, b) => !a || (Math.abs(b.x-p.x)+Math.abs(b.y-p.y)) < (Math.abs(a.x-p.x)+Math.abs(a.y-p.y)) ? b : a, null);
+      if(aim){
+        const st2 = api.nextStep(G, {x:p.x, y:p.y}, aim);
+        if(st2){ api.tryMove(st2[0], st2[1]); t++; continue; }
+      }
+      api.endTurn(); t++; continue;          // 全部冷卻中：原地等，不要去撞它
+    }
+
+    let hit = false;
       for(const d of api.DIRS){
         const m = api.monAt(p.x+d[0], p.y+d[1]);
         if(m && api.cornerOK(p.x,p.y,p.x+d[0],p.y+d[1])){ api.tryMove(d[0],d[1]); hit=true; break; }
