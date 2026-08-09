@@ -27,8 +27,9 @@ LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
 # lastOx/lastOy 是 draw() 裡算的，而 draw() 跑在 rAF 上 ——
 # 同一個 evaluate 裡設完鏡頭馬上量，量到的是上一幀的偏移，
 # 所有名牌都會被判成出界而消失。所以要等兩幀。
-SETUP = """(seed)=>new Promise(done=>{
-  LANG='zh'; VILLAGE.act=0; newGame(seed); G.floor=2; buildFloor(); vision();
+SETUP = """(cfg)=>new Promise(done=>{
+  LANG='zh'; VILLAGE.act=0; newGame(cfg.seed); G.floor=2; buildFloor(); vision();
+  G.zoom = G.zoomTo = cfg.zoom;
   camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
   refresh();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ updateTags(); done(1); }));
@@ -37,7 +38,8 @@ SETUP = """(seed)=>new Promise(done=>{
 MEASURE = """()=>{
   const rect = cv.getBoundingClientRect();
   const s = rect.width / cv.width;
-  const wx = x => (lastOx + x*16 + 8) * s;
+  // 期望值也要吃縮放 —— 推近之後名牌若沒跟著走，這裡就會量出一大段偏移
+  const wx = x => ((lastOx + x*16 + 8 - cv.width/2) * lastZ + cv.width/2) * s;
   /* 同名的東西可能同時在場（兩張召喚卷軸、兩隻洞穴鼠）。
      一個名字只記一個 x 的話，量到的會是「另一個同名物件」的座標 ——
      誤差剛好是一格（桌機 61.6px），看起來像名牌錯位，其實是測試自己對錯人。
@@ -108,7 +110,10 @@ with sync_playwright() as pw:
         pg.click('#start'); pg.wait_for_timeout(500)
         worst, n, worstT = 0, 0, None
         for seed in (7, 21, 44, 88, 101, 205, 333):
-            pg.evaluate(SETUP, seed); pg.wait_for_timeout(80)
+          # 一般距離與「頭目登場的推近」都要量。推近時名牌整排飄掉是
+          # 典型的「不會報錯、只是看起來怪怪的」bug。
+          for zoom in (1.0, 1.2):
+            pg.evaluate(SETUP, {'seed': seed, 'zoom': zoom}); pg.wait_for_timeout(80)
             r = pg.evaluate(MEASURE)
             for row in r['rows']:
                 d = abs(row['got'] - row['want']); n += 1

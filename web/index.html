@@ -4410,6 +4410,7 @@ function newGame(seed){
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
     log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[],
+    zoom:1, zoomTo:1,
   };
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
@@ -4869,6 +4870,9 @@ function buildFloor(){
   G.f.bossLock = 0;
   G.f.turrets = null;
   G.f.arena = null;
+  G.f.bossSeen = 0;
+  // 換層就把鏡頭與音樂交還 —— 不還的話下一層會頂著戰鬥曲跟推近的鏡頭
+  G.zoomTo = 1; BGM.force(null);
   const act = actAt(G.act);
   /* ── 試煉場 ────────────────────────────────────────────────
      ACTS 上的 `arena:{every, kill}` 寫了很久，程式一次都沒有讀它 ——
@@ -5432,6 +5436,7 @@ function endTurn(){
   const p=G.p;
   if(G.f.turrets) for(const t of G.f.turrets) if(t.cd > 0) t.cd--;
   arenaTick();
+  bossWatch();
   // 狀態遞減
   for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k];
     say(M('m.stoff','{nm}的狀態解除了。',{nm:TX('st.'+k, k)})); } }
@@ -7193,6 +7198,25 @@ const BGM = (()=>{
     fadeAt = now;
   }
 
+  /* 頭目戰。整套裡最快、鼓最密、唯一一首用半音下行的 ——
+     半音下行（la-sol#-sol-fa#）是「事情正在失控」的聲音，
+     其他十一首都刻意避開它，所以它一響起來就跟前面完全不同。
+     它不屬於任何地貌，只由 force('boss') 叫出來。 */
+  TRACKS.boss = T_({
+    bpm:158,
+    root:[45,44,43,42],                        // A - G# - G - F#：半音一路往下
+    chord:[[57,60,64],[56,60,63],[55,59,62],[54,57,62]],
+    bass:[0,2,4,6,8,10,12,14],                 // 八分音符的驅動低音
+    hat:[0,2,4,6,8,10,12,14], kick:[0,3,6,8,11,14],
+    wave:'sawtooth', pad:'square', lvol:.10, cut:3400, avol:.05,
+    lead:[
+      [[0,69,1],[1,72,1],[2,76,2],[4,74,1],[5,72,1],[6,69,2],[8,76,2],[10,74,1],[11,72,1],[12,69,4]],
+      [[0,68,1],[1,72,1],[2,75,2],[4,72,1],[5,68,1],[6,63,2],[8,75,2],[10,72,1],[11,68,1],[12,63,4]],
+      [[0,67,1],[1,71,1],[2,74,2],[4,71,1],[5,67,1],[6,62,2],[8,74,2],[10,71,1],[11,67,1],[12,62,4]],
+      [[0,66,2],[2,69,2],[4,74,2],[6,73,1],[7,71,1],[8,69,2],[10,66,2],[12,62,4]],
+    ],
+  });
+
   let forced = null;                          // 村莊之類「不在地貌表裡」的場合
   function wantId(){
     if(forced && TRACKS[forced]) return forced;
@@ -7319,7 +7343,11 @@ function panelTiles(){
   if(!w) return 6.6;
   return document.getElementById('panel').getBoundingClientRect().width / (w/VW);
 }
-let lastOx=0, lastOy=0, rockPat=null;
+let lastOx=0, lastOy=0, lastZ=1, rockPat=null;
+// 世界座標 → 螢幕座標。名牌是 DOM 元素，滑鼠點擊也要反推，
+// 兩邊都必須跟畫布上的縮放走同一條公式，否則推近之後名牌會整排飄掉。
+const zx = v => (v - cv.width /2) * lastZ + cv.width /2;
+const zy = v => (v - cv.height/2) * lastZ + cv.height/2;
 
 /* ═══ 迷宮外側的景色 ═════════════════════════════════════════
    全部即時算，不存狀態：每一片雲、每一道流都是從
@@ -7509,6 +7537,12 @@ function draw(dt){
   camX += (tx - camX) * Math.min(1, dt*14);
   camY += (ty - camY) * Math.min(1, dt*14);
 
+  /* 鏡頭推近。進入頭目的房間時「唰」一下拉近，然後鬆回一點停在戰鬥距離 ——
+     推近本身沒有任何機制意義，它只是在說「接下來這一段不一樣」。
+     縮放是對畫布中心做的，而玩家永遠在畫布中心，所以推近不會失焦。 */
+  G.zoom += (G.zoomTo - G.zoom) * Math.min(1, dt * 4.5);
+  const Z = G.zoom;
+
   const ox = -Math.round(camX*T), oy = -Math.round(camY*T);
   const THEME_ID0 = ACT_THEME[actAt(G.act).id] || 'stone';
 
@@ -7524,7 +7558,15 @@ function draw(dt){
      只做第 1 層的話，地圖裡還沒探索的地方也會透出天空 ——
      那讀起來是「山裡面有好幾個洞」，不是「山」。 */
   const BACK = (THEMES[THEME_ID0] || {}).back;
-  drawBackdrop(BACK, ox, oy);
+  drawBackdrop(BACK, ox, oy);      // 背景不跟著推近 —— 遠景推近會像貼紙被放大
+
+  const zoomed = Z > 1.001;
+  if(zoomed){
+    cx.save();
+    cx.translate(cv.width/2, cv.height/2);
+    cx.scale(Z, Z);
+    cx.translate(-cv.width/2, -cv.height/2);
+  }
 
   /* 有「外面」的章節就不鋪岩盤。
 
@@ -7959,7 +8001,9 @@ function draw(dt){
     ox+G.p.x*T+8, oy+G.p.y*T+8, R*0.22,
     ox+G.p.x*T+8, oy+G.p.y*T+8, R);
   g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.34)');
-  cx.fillStyle=g; cx.fillRect(0,0,cv.width,cv.height);
+  /* 推近的時候整個世界層被放大了，所以「填滿畫布」要用比畫布大的矩形 ——
+     照 cv.width 填的話，畫面四周會露出一圈沒有暈影的亮邊。 */
+  cx.fillStyle=g; cx.fillRect(-cv.width, -cv.height, cv.width*3, cv.height*3);
 
   // 火把本身：玩家周圍一圈暖光。地形是冷色、光是暖色，
   // 兩者一疊才有「這裡有人拿著火把站著」的感覺，而不是一張平的貼圖。
@@ -7971,7 +8015,7 @@ function draw(dt){
   g2.addColorStop(0.55,'rgba(110,64,22,.15)');
   g2.addColorStop(1,   'rgba(0,0,0,0)');
   cx.globalCompositeOperation = 'lighter';
-  cx.fillStyle = g2; cx.fillRect(0,0,cv.width,cv.height);
+  cx.fillStyle = g2; cx.fillRect(-cv.width, -cv.height, cv.width*3, cv.height*3);
 
   // 牆上火把也要真的照亮周圍，否則就只是一張貼在牆上的圖。
   // 每支的閃爍相位不同 —— 全部同步跳動會像壞掉的日光燈。
@@ -7991,7 +8035,8 @@ function draw(dt){
   for(const m of MOTES){
     const wx = (m.x + clock*0.006*m.sp) % 1;
     const wy = (m.y + Math.sin(clock*m.sp + m.ph)*0.02 + clock*0.004) % 1;
-    const sx2 = wx*cv.width, sy2 = wy*cv.height;
+    const sx2 = (wx - .5) * cv.width / Z + cv.width/2,
+          sy2 = (wy - .5) * cv.height / Z + cv.height/2;
     const d = Math.hypot(sx2-lx, sy2-ly);
     if(d > R*0.7) continue;
     cx.globalAlpha = m.a * (1 - d/(R*0.7));
@@ -8011,7 +8056,9 @@ function draw(dt){
   }
   cx.globalAlpha=1;
 
-  lastOx=ox; lastOy=oy;
+  if(zoomed) cx.restore();
+
+  lastOx=ox; lastOy=oy; lastZ=Z;
   updateTags();
 }
 
@@ -8033,7 +8080,7 @@ function updateTags(){
       const want = [];
       const near = (x,y,r)=> Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) <= r;
       const push = (wx, wy, txt, cls, owner)=>{
-        const sx = lastOx + wx*T + T/2, sy = lastOy + wy*T;
+        const sx = zx(lastOx + wx*T + T/2), sy = zy(lastOy + wy*T);
         if(sx < -20 || sy < -20 || sx > cv.width+20 || sy > cv.height+20) return;
         // 中文約 11px、其他約 6.4px，加上左右內距與框線
         let w = 10;
@@ -8090,9 +8137,9 @@ function updateTags(){
       // 精靈本身也是障礙物。只讓名牌彼此閃避的話，名牌會準確地
       // 停在上一格那隻怪的臉上 —— 沒有撞到別的名牌，但擋住了角色。
       const placed = [];
-      const tw = T*s;
+      const tw = T*s*lastZ;
       const block = (x,y,owner)=>{
-        const bx = (lastOx + x*T + T/2)*s, top = (lastOy + y*T)*s;
+        const bx = zx(lastOx + x*T + T/2)*s, top = zy(lastOy + y*T)*s;
         placed.push({x:bx, y:top + H,  w:tw, blocker:1, owner});
         placed.push({x:bx, y:top + tw, w:tw, blocker:1, owner});
       };
@@ -8881,6 +8928,34 @@ function arenaTick(){
     spawnMon(md, x, y); born++;
   }
   if(born) say(M('m.wave2','第 {n} 波 —— {c} 個從門的另一邊進來了。',{n:a.wave, c:born}),'bad');
+}
+
+/* ── 頭目登場 ──────────────────────────────────────────────
+   看見頭目的那一刻：鏡頭「唰」一下推近，音樂切成戰鬥曲。
+   兩件事都沒有機制意義 —— 它們是在說「接下來這一段不一樣」。
+   觸發點是**看得見**，不是「踏進房間」：隔著門口先看到牠的那一秒，
+   本來就是這場仗真正開始的時候。
+
+   zoom 直接給一個比目標更大的值再讓它鬆回去，所以推近是「衝進來」
+   而不是「慢慢滑進來」—— 滑進來讀起來像鏡頭壞掉。
+   系統設定關掉動態效果的人只換音樂，不推鏡頭。 */
+const REDUCED = (()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+                       catch(e){ return false; } })();
+function bossWatch(){
+  if(!G || !G.f) return;
+  const on = G.f.bossLock && G.mons.some(m => m.d.boss && G.seen[key(m.x,m.y)] === 2);
+  if(on && !G.f.bossSeen){
+    G.f.bossSeen = 1;
+    BGM.force('boss');
+    if(!REDUCED){ G.zoom = 1.85; G.zoomTo = 1.2; }
+    SFX.play('level');
+    G.shake = Math.max(G.shake, 9);
+  } else if(!G.f.bossLock && G.f.bossSeen){
+    // 打完了：音樂交還給章節，鏡頭鬆回去
+    G.f.bossSeen = 0;
+    BGM.force(null);
+    G.zoomTo = 1;
+  }
 }
 
 /* 站在砲座上開火。回傳 true 代表這一回合用掉了。 */
@@ -9871,8 +9946,8 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
     // 輕點：換算成格座標，朝那一格走一步（點自己 = 開腳下選單）
     const r = cv.getBoundingClientRect(); if(!r.width) return;
     const s = r.width / cv.width;
-    const gx = Math.floor(((ev.clientX - r.left)/s - lastOx) / T);
-    const gy = Math.floor(((ev.clientY - r.top )/s - lastOy) / T);
+    const gx = Math.floor((((ev.clientX - r.left)/s - cv.width/2)/lastZ + cv.width/2 - lastOx) / T);
+    const gy = Math.floor((((ev.clientY - r.top )/s - cv.height/2)/lastZ + cv.height/2 - lastOy) / T);
     if(gx === G.p.x && gy === G.p.y){ SFX.play('open'); openPanel('ground'); return; }
     const dx = Math.sign(gx - G.p.x), dy = Math.sign(gy - G.p.y);
     if(dx || dy) handleDir(dx, dy);
