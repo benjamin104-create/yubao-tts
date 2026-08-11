@@ -6835,6 +6835,9 @@ function death(){
    全部用 WebAudio 即時合成，沒有任何外部檔案 —— 單檔遊戲不該為了
    十幾個音效去背 200KB 的 wav，而且合成音本來就比取樣更貼 16-bit。
    瀏覽器規定 AudioContext 必須由使用者手勢啟動，所以第一次按鍵才建立。 */
+/* 主音量。音效與音樂都掛在它下面，所以它同時是「總開關」。
+   只能有這一份 —— 寫死在兩個地方的音量遲早會對不起來。 */
+const MASTER_VOL = 1.0;
 const SFX = (()=>{
   let ctx=null, master=null, noiseBuf=null, on=true;
   let lastAt = {};                       // 同一種音效的最小間隔，避免同回合疊成爆音
@@ -6844,7 +6847,16 @@ const SFX = (()=>{
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     ctx = new AC();
-    master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+    master = ctx.createGain(); master.gain.value = MASTER_VOL;
+    /* 限幅器。沒有它就只能靠「把音量壓很低」來避免爆音 ——
+       而壓低的代價是實測音樂 RMS 只有 -40 dBFS（一般遊戲音樂在 -18~-14），
+       等於「有在播但聽不到」。使用者回報的「網頁版好像沒有音樂」就是這個。
+       尖峰交給限幅器壓，整體音量才推得上去。
+       master 只接限幅器、不再直接接 destination —— 接兩條會變成雙份音量。 */
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12;
+    lim.attack.value = 0.003; lim.release.value = 0.15;
+    master.connect(lim); lim.connect(ctx.destination);
     const n = Math.floor(ctx.sampleRate*.5);
     noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
@@ -6930,7 +6942,9 @@ const SFX = (()=>{
     toggle(){
       on = !on;
       const c = ensure();
-      if(c){ if(c.state==='suspended') c.resume(); master.gain.value = on ? .5 : 0; }
+      /* 用常數，不要寫死數字。這裡本來寫的是 .5，跟 ensure() 裡的設定各一份 ——
+         主音量一改，只要玩家按過一次靜音再打開，音量就永遠停在舊值。 */
+      if(c){ if(c.state==='suspended') c.resume(); master.gain.value = on ? MASTER_VOL : 0; }
       return on;
     },
     get on(){ return on; },
@@ -7132,6 +7146,10 @@ const BGM = (()=>{
     }));
   })();
 
+  /* 音樂總線的音量。0.42 配上主音量 0.5，整首曲子實測 RMS 只有 -40 dBFS ——
+     尖峰其實跟音效差不多（-22 對 -21~-30），但曲子稀疏、短音多、空隙大，
+     聽感上就變成「沒有音樂」。拉高之後由限幅器守著尖峰。 */
+  const MUSIC_GAIN = 1.9;
   let running = false, gain = null, timer = null, step = 0, nextT = 0;
   let curId = 'stone', cur = TRACKS.stone, fadeAt = 0;
   const spb = () => 60 / cur.bpm / 4;          // 一步＝十六分音符
@@ -7142,7 +7160,8 @@ const BGM = (()=>{
     if(!gain){
       gain = c.createGain();
       gain.gain.setValueAtTime(0.0001, c.currentTime);
-      gain.gain.linearRampToValueAtTime(0.42, c.currentTime + 2.5);
+      // 淡入從 2.5 秒縮到 1.2 秒 —— 一趟可能三十秒就結束，淡太久等於前半段沒音樂
+      gain.gain.linearRampToValueAtTime(MUSIC_GAIN, c.currentTime + 1.2);
       gain.connect(SFX.bus());
     }
     return gain;
@@ -7219,7 +7238,7 @@ const BGM = (()=>{
     g.gain.cancelScheduledValues(now);
     g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
-    g.gain.exponentialRampToValueAtTime(0.42, now + 1.40);
+    g.gain.exponentialRampToValueAtTime(MUSIC_GAIN, now + 1.40);
     fadeAt = now;
   }
 
@@ -9095,7 +9114,7 @@ function toggleTags(){
 }
 function toggleMute(){
   const on = SFX.toggle();
-  say(M('ui.sfxsw','音效：{v}',{v:TX(on?'ui.on':'ui.off', on?'開':'關')}),'gold');
+  say(M('ui.sfxsw','聲音：{v}',{v:TX(on?'ui.on':'ui.off', on?'開':'關')}),'gold');
   refresh();
 }
 
@@ -9357,7 +9376,7 @@ function applyLangText(){
      直接改 textContent 會把它一起洗掉 —— 只換後面那個文字節點。 */
   const keys2 = [['pick','k.ground','腳下'],['inv','k.bag','背包'],['down','k.down','下樓'],
                  ['wait','k.wait','待機'],['mag','k.magic','魔法'],
-                 ['tags','k.tags','名稱'],['mute','k.mute','音效'],['help','k.help','操作']];
+                 ['tags','k.tags','名稱'],['mute','k.mute','聲音'],['help','k.help','操作']];
   for(const [act,key,zh] of keys2){
     const el = document.querySelector(`[data-act="${act}"]`);
     if(!el) continue;
