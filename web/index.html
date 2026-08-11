@@ -23,8 +23,17 @@
 body{
   margin:0; background:var(--page); color:var(--parch);
   font-family:var(--sans); min-height:100vh;
-  display:flex; align-items:center; justify-content:center; padding:16px;
+  display:flex; padding:16px;
   -webkit-font-smoothing:antialiased;
+  /* 先寫一般的置中，再用 safe 覆蓋。順序不能反 ——
+     不支援 safe 的瀏覽器會丟掉第二行，留下第一行的行為。 */
+  align-items:center; justify-content:center;
+  /* flex 置中在「內容比容器高」的時候，會往上下**兩邊一起**溢出，
+     而上面那一半是捲不到的 —— 招牌與狀態列因此被推到畫面外，
+     玩家完全看不到自己剩多少血，而且怎麼捲都捲不回來。
+     使用者回報的就是這個：「hp 那一條狀態列被蓋掉，要縮到 50% 才看得清楚」。
+     safe 的意思是「有空間才置中，不夠就靠邊」，靠邊至少捲得到。 */
+  align-items:safe center; justify-content:safe center;
 }
 #cabinet{
   position:relative; overflow:hidden;
@@ -226,6 +235,22 @@ body{
 #rail{
   display:flex; flex-direction:column; min-width:0;
   background:var(--panel); border-left:1px solid var(--hair);
+}
+
+/* ── 桌機：機殼不准比視窗高 ────────────────────────────────────
+   量出來的問題不在畫布，在側欄：小地圖那張卡 343 + 角色 258 + 狀態 51
+   + 訊息簿 132 = 784，而視窗只有 620。側欄自己就比整個視窗高，
+   於是把機殼撐開、把上面的狀態列擠出畫面 —— 縮到 50% 才看得到血量。
+
+   解法不是把側欄的東西砍掉（那是玩家要看的資訊），
+   是**讓機殼收在視窗裡，塞不下的在自己的框裡捲**。
+   min-height:0 少一個都不行 —— flex/grid 的子項預設不肯縮到內容以下，
+   沒有它 overflow-y:auto 永遠不會生效。 */
+@media (min-width:621px){
+  #cabinet{max-height:calc(100vh - 32px)}
+  #body{min-height:0}
+  #main{min-height:0}
+  #rail{min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch}
 }
 .card{padding:10px 12px; border-bottom:1px solid var(--hair)}
 .card h3{
@@ -8261,7 +8286,43 @@ function fitCanvas(){
   const wrap = $('screenwrap');
   if(!wrap || !wrap.getBoundingClientRect) return;
   if(innerWidth > 620){
-    wrap.style.maxWidth = ''; wrap.style.margin = '';
+    /* 桌機也要看高度。這一支以前直接 return，只讓畫布吃滿寬度 ——
+       但畫布是 14:10，寬度一撐開高度就跟著長。1280x620 的視窗量出來
+       畫布自己就 616px 高，加上手把與招牌，整個機殼 742px：
+       比視窗高 122px，於是上緣被擠出畫面。
+
+       算法：機殼扣掉畫布本身，剩下的就是「畫布以外的東西」有多高；
+       視窗高度減掉它們，剩下多少就決定畫布能有多寬。
+       不用 getBoundingClientRect().top —— 溢出的時候它是負的，算出來會錯。 */
+    wrap.style.maxWidth = ''; wrap.style.margin = '0 auto';
+    const cab = $('cabinet'), main = $('main'), shake = wrap.parentElement;
+    if(cab && main && wrap.offsetHeight){
+      const bs = getComputedStyle(document.body);
+      const padY = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
+      /* 「畫布以外的東西」要一個一個量兄弟元素，不能用
+         `機殼高 - 畫布高` —— 機殼已經被 max-height 夾住了，
+         拿夾過的值回推會變成循環參照，算出來的空間偏小，
+         結果就是手把被切掉一半（實測十字鍵只剩最上面一排）。 */
+      /* 只數「真的佔高度」的兄弟。封面、村莊、紀錄碑、選單都是
+         position:absolute 的覆蓋層 —— 它們不佔流排版的空間，
+         但 offsetHeight 照樣有值。把它們一起加進去的話，
+         啟動時算出來的 chrome 是 719 而不是 162，maxW 變成負的，
+         守門條件把整段跳過，然後**再也不會重算** ——
+         症狀就是「桌機一開就爆版，改了也沒反應」。 */
+      const others = (parent, skip) => {
+        let n = 0;
+        for(const el of parent.children){
+          if(el === skip) continue;
+          const cs = getComputedStyle(el);
+          if(cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') continue;
+          n += el.offsetHeight || 0;
+        }
+        return n;
+      };
+      const chrome = others(cab, $('body')) + others(main, shake);
+      const maxW = Math.floor((innerHeight - padY - chrome - 4) * VW / VH);
+      if(maxW > 320 && maxW < wrap.clientWidth) wrap.style.maxWidth = maxW + 'px';
+    }
     fitPad(wrap.clientWidth || innerWidth); return;
   }
   const padH = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
