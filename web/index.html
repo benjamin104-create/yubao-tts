@@ -1659,7 +1659,7 @@ let LANG = 'zh';
 const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
-ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
+ui.credit|Presented by Jamine’s Dad × Little Jamine Inc.|ジャミンパパ × リトルジャミン株式会社 おくり
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
@@ -2774,27 +2774,11 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 對齊，整隻生物就失去上下的方向感。
   // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
   const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
-  if(star){
-    /* 主角不長眼睛。
-       這個故事的主詞是「一個正在學習的東西」，而它一直被畫成
-       一顆有兩隻眼睛和四隻腳的球 —— 也就是一隻生物，
-       而且跟村民用同一支函式、長得幾乎一樣。
-
-       改成一條**觀察帶**：凹進去的暗槽裡亮一道冷光。
-       兩隻眼睛讀作「牠活著」，一道光讀作「它在看、它在算」——
-       這是 16px 下最省的區分方式，而且主角從此在畫面上一眼認得出來。
-       冷色是刻意的：全地牢的暖色只給活的東西，主角的光不屬於那一類。 */
-    px(x,PAL[dark], 4, ey, 8, 2);                     // 凹槽
-    px(x,PAL['p'],  5, ey, 6, 1);
-    px(x,PAL['r'],  6, ey, 4, 1);
-    px(x,PAL['+'],  7, ey, 2, 1);                     // 焦點
-  } else {
-    // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
-    // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
-    for(const ex of [ex1, ex2]){
-      px(x,PAL['+'],ex,ey,2,2);
-      px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
-    }
+  // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
+  // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
+  for(const ex of [ex1, ex2]){
+    px(x,PAL['+'],ex,ey,2,2);
+    px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
   }
 
   // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
@@ -2813,17 +2797,11 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
     px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
   }
   if(star){
-    /* 胸口只放一顆核心，不放圖案。
-       第一版在這裡畫了「三個連起來的節點」（想表達 deep learning），
-       結果在 16px 下就是一塊黃色的糊，配上觀察帶整隻變成
-       「戴墨鏡在笑」—— 跟原本的菱形犯同一個錯：
-       **一格 16 像素放不下第二個需要「讀」的東西。**
-       所以胸口不說話，只透出裡面的光，跟觀察帶同一個色系。 */
+    // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
     const sy = 9;
-    px(x,PAL[dark], 6, sy,   4, 3);
-    px(x,PAL['p'],  7, sy,   2, 2);
-    px(x,PAL['r'],  7, sy+1, 2, 1);
-    px(x,PAL['+'],  7, sy+1, 1, 1);                   // 一點高光，讓它是「亮的」不是「藍的」
+    px(x,PAL['+'],7,sy-1,2,1);
+    px(x,PAL['+'],6,sy,4,1);
+    px(x,PAL['+'],7,sy+1,2,1);
   }
   if(hat && HAT_ART[hat]) HAT_ART[hat](x);
   return c;
