@@ -198,8 +198,13 @@ const BOSS = [
   imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
  {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+ /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
+    n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
+    投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
+    到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
  {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
-  rng:9, still:1, telegraph:1, line:'白色的方塊亮起來了 —— 那是射程。'},
+  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5},
+  line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
  {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
   rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
@@ -215,7 +220,8 @@ const BOSS = [
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
   line:'打碎一次，她會再站起來。三次。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
-  rng:12, telegraph:1, line:'光走直線 —— 所以不要站在直線上。'},
+  rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
+  line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
   rng:9, line:'塔頂的歌聲。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
@@ -403,6 +409,12 @@ const jobRank = lv => lv >= JOB_MAX ? TX('ui.master','Master') : ('Lv' + lv);
 
 /* Master（職業 3 級）的永久被動。練滿之後不戴帽子也生效 ——
    那是「這個職業我已經是它了」的意思。 */
+/* 練滿一個職業拿到的永久被動。這張表原本只有中文，而且畫面上寫著
+   `LANG === 'zh' ? ... : ''` —— 也就是說英文與日文的玩家練滿之後，
+   遊戲一個字都不會告訴他拿到了什麼。那不是「省略」，是漏翻。
+   靜態掃描抓不到這一類（中文在變數裡，不在字面值裡），
+   所以 web/i18n.js 現在把這張表也一起逐條驗。 */
+const locPassive = job => TX('mp.' + job, MASTER_PASSIVE[job] || '');
 const MASTER_PASSIVE = {
   war: '防禦力 +3',
   brd: '每回合微量回復魔力',
@@ -525,15 +537,34 @@ const SUMMONS = [
 const SUMMON_COST = 0.30;
 const SUMMON_AT = 4;
 
-const SCH_MAX = 10;          // 每系上限。到 10 會開出該系的兩個奧義
-const SP_FROM_LV = 10;       // 從第 10 級開始，每升一級 +1 魔法點數
+/* ── 五系的格數與取得速度 ──────────────────────────────────────
+   原本是「每系十格、等級 10 之後每升一級 +1 點」。使用者玩到第五章、
+   等級 8 的時候，畫面上是五排各十個空格、手上零點 ——
+   他的原話：「很難拿魔法點數……如果原本是設定不太好升級的遊戲參數，
+   是不是魔法點數各屬性不需要調這麼多格？也許各 3 格就好？」
+
+   他指到的是真的問題，但病灶不在格數，在**第一點來得太晚**：
+   等級 10 之前完全沒有魔法，而戰役前五章的等級只到 8 左右 ——
+   也就是說整套魔法系統在前五章根本不存在。
+
+   兩件事一起改：
+     · 第一點提前到等級 3 —— 第一章就摸得到魔法。
+     · 每系上限 10 → 5 —— 有意義的門檻本來就只有 1（第一個法術）、
+       3（第二個）、4（幻獸）、滿級（奧義）四個，塞進十格只是把
+       每一點稀釋成看不出差別。五格剛好一格一個門檻。
+   威力與魔力上限用 SCH_SCALE 補回來，所以「點滿一系」的強度不變 ——
+   改的是節奏，不是數值。 */
+const SCH_MAX = 5;
+const SCH_SCALE = 10 / SCH_MAX;   // 格數變少，每一格就要更值錢
+const SP_FROM_LV = 3;        // 從第 3 級開始，每升一級 +1 魔法點數
+const POCKET_LV = 10;        // 萬用口袋還是等級 10 的里程碑，跟魔法點數脫鉤
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
-const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
+const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
                               * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
-const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per;
+const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
@@ -844,8 +875,43 @@ s.163|The {pot} hits the ground and shatters.|{pot}は じめんに あたって
 s.164|{n} items spill out across the floor.|なかみ {n}こが ゆかに ちらばった。
 s.165|Everything inside the pot broke.|つぼの なかみは すべて こわれた。
 s.166|The pain jolts you awake!|いたみで めが さめた！
+s.167|You are already at full strength.|たいりょくは もう まんタンだ。
+s.168|The requiem puts {n} enemies to sleep.|レクイエムが てき {n}たいを ねむらせた。
+s.169|They are unmoved.|かれらには きかなかった。
+m.jobpassive| —— {p} (permanent)| —— {p}（えいぞく）
+k.poor|Not enough money.|おかねが たりない。
+ui.starving|STARVING!|くうふく！
+ui.on|On|オン
+ui.off|Off|オフ
+ui.tagsw|Name tags: {v}|なまえふだ：{v}
+ui.sfxsw|Sound: {v}|おと：{v}
+mp.war|Defence +3|ぼうぎょ +3
+mp.brd|Regain a little MP each turn|まいターン MPが すこし かいふく
+mp.red|All skills cost 1 less MP|すべての わざの MPしょうひ -1
+mp.sum|Summons last 50% longer|げんじゅうの じぞくターン +50%
+mp.wht|Natural regeneration doubled|しぜんかいふくが 2ばい
+mp.hnt|Sight +2|しかい +2
+mp.nin|Traps never trigger under you|トラップを ふまなくなる
+mp.oni|Regain a little HP on each kill|てきを たおすと HPが すこし かいふく
+mp.sor|Max MP +20%|さいだいMP +20%
+p.dir2|Choose a direction|ほうこうを えらぶ
+p.dpad|　(D-pad)|　（じゅうじキー）
 m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
 m.hall2|Fall back to the corridor - only one can come at you there.|つうろに さがれば いちどに 1たいしか こない。
+m.pierce|The spear runs through - {nm} is hit too.|やりが つらぬいた —— {nm}にも あたった。
+m.tnohurt|{nm} is unharmed - blades do nothing to this.|{nm}には きずひとつ つかない —— はもので きるものでは ない。
+m.thint|There are gun emplacements in this room. Stand on one and press Confirm.|へやに ほうざが ある。うえに たって「けってい」を おそう。
+m.tcool|This one is still cooling - {n} more turns.|この ほうは まだ ひえていない —— あと {n}ターン。
+m.tnotarget|Nothing to fire at.|ねらう あいてが いない。
+m.tfire|The emplacement roars - {nm} takes {n} damage!|ほうざが ほえた —— {nm}に {n}の ダメージ！
+m.tnext|{n} emplacements are still hot - run.|あと {n}きが まだ あつい —— はしれ。
+m.tallcool|Every emplacement is cooling - stay away from it.|すべての ほうざが ひえている —— いまは にげろ。
+m.wave2|Wave {n} - {c} come through the far door.|だい{n}は —— {c}たいが とびらの むこうから きた。
+m.arenaleft|{n} to go.|あと {n}たい。
+m.arenaclear|★ The door opens - the stairs are unsealed.|★ とびらが ひらいた —— かいだんの ふういんが とけた。
+m.arenago|The stairs are sealed - defeat {n} and the door will open.|かいだんは ふうじられている —— {n}たい たおせば ひらく。
+lg.turret|Emplacement ★|ほうざ ★
+lg.turretcd|Emplacement {n}|ほうざ {n}
 m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
 o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
@@ -1296,6 +1362,7 @@ end.count|Runs completed: {n}|クリアかいすう {n}
 lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
 lg.seen|in sight|しかいない
+lg.wall|wall|かべ
 lg.walked|explored|たんさくずみ
 lg.you|you|きみ
 lg.stairs|stairs|かいだん
@@ -1633,11 +1700,27 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 對齊，整隻生物就失去上下的方向感。
   // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
   const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
-  // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
-  // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
-  for(const ex of [ex1, ex2]){
-    px(x,PAL['+'],ex,ey,2,2);
-    px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
+  if(star){
+    /* 主角不長眼睛。
+       這個故事的主詞是「一個正在學習的東西」，而它一直被畫成
+       一顆有兩隻眼睛和四隻腳的球 —— 也就是一隻生物，
+       而且跟村民用同一支函式、長得幾乎一樣。
+
+       改成一條**觀察帶**：凹進去的暗槽裡亮一道冷光。
+       兩隻眼睛讀作「牠活著」，一道光讀作「它在看、它在算」——
+       這是 16px 下最省的區分方式，而且主角從此在畫面上一眼認得出來。
+       冷色是刻意的：全地牢的暖色只給活的東西，主角的光不屬於那一類。 */
+    px(x,PAL[dark], 4, ey, 8, 2);                     // 凹槽
+    px(x,PAL['p'],  5, ey, 6, 1);
+    px(x,PAL['r'],  6, ey, 4, 1);
+    px(x,PAL['+'],  7, ey, 2, 1);                     // 焦點
+  } else {
+    // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
+    // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
+    for(const ex of [ex1, ex2]){
+      px(x,PAL['+'],ex,ey,2,2);
+      px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
+    }
   }
 
   // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
@@ -1656,11 +1739,17 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
     px(x,PAL[dark],ex1,ey+2,2,1); px(x,PAL[dark],ex2,ey+2,2,1);
   }
   if(star){
-    // 菱形，不是九宮格。九宮格全填在 16px 下就只是一坨白。
+    /* 胸口只放一顆核心，不放圖案。
+       第一版在這裡畫了「三個連起來的節點」（想表達 deep learning），
+       結果在 16px 下就是一塊黃色的糊，配上觀察帶整隻變成
+       「戴墨鏡在笑」—— 跟原本的菱形犯同一個錯：
+       **一格 16 像素放不下第二個需要「讀」的東西。**
+       所以胸口不說話，只透出裡面的光，跟觀察帶同一個色系。 */
     const sy = 9;
-    px(x,PAL['+'],7,sy-1,2,1);
-    px(x,PAL['+'],6,sy,4,1);
-    px(x,PAL['+'],7,sy+1,2,1);
+    px(x,PAL[dark], 6, sy,   4, 3);
+    px(x,PAL['p'],  7, sy,   2, 2);
+    px(x,PAL['r'],  7, sy+1, 2, 1);
+    px(x,PAL['+'],  7, sy+1, 1, 1);                   // 一點高光，讓它是「亮的」不是「藍的」
   }
   if(hat && HAT_ART[hat]) HAT_ART[hat](x);
   return c;
@@ -2109,6 +2198,9 @@ function tilesFor(theme){
     wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
   };
 }
+/* 砲座的四種顏色。刻意用飽和色 —— 這是全遊戲少數
+   「不是活物、卻該被一眼看見」的東西，跟紀錄之環同一個理由。 */
+const TURRET_COL = ['#e8a33c', '#5fa9e8', '#79c97a', '#c98ad8'];
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
