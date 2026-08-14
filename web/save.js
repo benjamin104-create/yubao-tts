@@ -242,5 +242,52 @@ t('踩上紀錄之環會存檔並補滿，而且只有一次', ()=>{
   assert.strictEqual(p.hp, 1, '第二次踩上去不該再補 —— 那會變成無限泉水');
 });
 
+/* ── 餘力煉成 ────────────────────────────────────────────────
+   使用者的原話：「魔法點數也是，點到滿，結果每升一級都還會有點數，
+   感覺一堆點數都不能用，很沒作用」。
+   換到的東西必須跨死亡 —— 不跨的話它就只是「這一趟的加成」，
+   而玩家花的是一個永遠不會再回來的資源。 */
+t('五系沒滿的時候煉不了 —— 點數要先花在魔法上', ()=>{
+  V().act = 0; V().sp = 0; V().sch = {heal:0,bolt:0,fire:0,aqua:0,wind:0};
+  V().hpBonus = 0; V().strBonus = 0; V().defBonus = 0;
+  api.newGame(5150);
+  const p = api.G().p;
+  p.sp = 20;
+  assert(!api.schFull(p), '五系不該是滿的');
+});
+
+t('五系滿了之後，多的點數換得到永久的身體，而且撐得過死亡', ()=>{
+  V().act = 0; V().sp = 0;
+  V().sch = {heal:5,bolt:5,fire:5,aqua:5,wind:5};
+  V().hpBonus = 0; V().strBonus = 0; V().defBonus = 0;
+  api.newGame(5151);
+  const G = api.G(), p = G.p;
+  assert(api.schFull(p), '五系應該是滿的');
+  p.sp = 8;
+  const mhp0 = p.mhp, atk0 = api.pAtk(), def0 = api.pDef();
+  const R = k => api.REFINE.find(r => r.key === k);
+
+  assert(api.refine(p, R('hpBonus')), '體力應該換得到');
+  assert.strictEqual(p.mhp, mhp0 + 10, '體力上限沒有立刻生效');
+  assert(api.refine(p, R('strBonus')), '力量應該換得到');
+  assert(api.pAtk() > atk0, '力量沒有立刻生效');
+  assert(api.refine(p, R('defBonus')), '防禦應該換得到');
+  assert(api.pDef() > def0, '防禦沒有立刻生效');
+  assert.strictEqual(p.sp, 0, '點數應該扣光了：還剩 ' + p.sp);
+  assert(!api.refine(p, R('hpBonus')), '沒點數了還換得到');
+
+  // 死一次再來 —— 換到的東西要還在
+  api.loadVillage();
+  const V2 = api.VILLAGE();
+  assert.strictEqual(V2.hpBonus, 10, '體力沒有存進村莊');
+  assert.strictEqual(V2.strBonus, 1, '力量沒有存進村莊');
+  assert.strictEqual(V2.defBonus, 1, '防禦沒有存進村莊');
+  api.newGame(5152);
+  assert.strictEqual(api.G().p.strb, 1, '下一趟沒有拿到換來的力量');
+  assert(api.G().p.mhp >= mhp0 + 10, '下一趟沒有拿到換來的體力');
+  V().sch = {heal:0,bolt:0,fire:0,aqua:0,wind:0};
+  V().hpBonus = 0; V().strBonus = 0; V().defBonus = 0; api.saveVillage();
+});
+
 console.log('\n通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);

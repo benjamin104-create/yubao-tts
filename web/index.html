@@ -1441,12 +1441,21 @@ const WEAP = [
  /* 天空之劍：攻擊時同時打到所有相鄰的敵人。
     被三隻圍住的時候，一刀掃三個 —— 那才是「最後一把劍」該有的手感。 */
  {id:'sky',  nm:'天空之劍', atk:16, up:8, price:14000, sweep:1},
+ /* 通天之劍：這一趟的終點。基礎攻擊刻意訂得比「秘銀之劍打滿」還高一點 ——
+    換上去的那一秒就要比手上那把強，不然玩家買到的是一段要先變弱的路，
+    而那正是「把最強的武器練到最高之後就沒有成就感」的相反面。
+    它很貴，而且要走到第十一章鐵匠才打得出來。 */
+ {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
  {id:'wood', nm:'木之盾', def:4, up:3, price:800},
  {id:'steel',nm:'鋼之盾', def:7, up:5, price:2400},
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
+ /* 盾牌原本只到鏡之盾（打滿 16），而武器打滿是 30 ——
+    後半段整個防禦端沒有東西可以買，錢只好一直往武器堆。 */
+ {id:'drac', nm:'龍鱗之盾', def:9,  up:6, price:9000},
+ {id:'aegis',nm:'聖域之盾', def:17, up:4, price:18000, reflect:1},
 ];
 
 /* ─── 職業與技能 ─────────────────────────────────────────────
@@ -1640,6 +1649,44 @@ const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
+/* ── 餘力煉成：魔法點數的出路 ─────────────────────────────────
+   使用者的原話：「魔法點數也是，點到滿，結果每升一級都還會有點數，
+   感覺一堆點數都不能用，很沒作用⋯」
+
+   五系各 5 級，總共 25 點就到頂；而點數從第 3 級起每升一級就給一點，
+   走到後半章節手上會躺著十幾點永遠花不掉的東西。
+   一個給了卻不能用的獎勵，比不給還糟 —— 它每一次升級都在提醒玩家
+   「這個系統對你已經結束了」。
+
+   所以滿級之後開一條路：把多的點數煉成永久的身體素質。
+   三件事是刻意的：
+     · 只有五系全滿才開。不然玩家會在前期把點數丟去換數值，
+       而魔法系統才是這一款的招牌。
+     · 換到的東西存在村莊，跟純淨之泉與勇者的頭盔同一格 ——
+       用點數換來的成長不該因為一次失敗蒸發。
+     · 沒有上限（除了存檔夾住的那個很大的值）。錢與點數都要有
+       一個永遠倒得進去的地方，那才是後期的成就感。 */
+const REFINE = [
+  {id:'hp',  sp:2, key:'hpBonus',  n:10, cap:400, nm:'體力上限 +10'},
+  {id:'str', sp:3, key:'strBonus', n:1,  cap:40,  nm:'力量 +1'},
+  {id:'def', sp:3, key:'defBonus', n:1,  cap:40,  nm:'防禦 +1'},
+];
+const schFull = p => SCHOOLS.every(s => (p.sch[s.id]||0) >= SCH_MAX);
+/* 煉成一次。回傳 false 代表點數不夠或已經到頂 —— 呼叫端不必自己再判一次。 */
+function refine(p, r){
+  if(!r || p.sp < r.sp) return false;
+  const cur = VILLAGE[r.key] | 0;
+  if(cur >= r.cap) return false;
+  p.sp -= r.sp;
+  VILLAGE[r.key] = Math.min(r.cap, cur + r.n);
+  VILLAGE.sp = p.sp;
+  saveVillage();
+  // 立刻生效，不必等下一趟。防禦是 pDef() 當場讀村莊的，不用在這裡加。
+  if(r.key === 'hpBonus'){ p.mhp += r.n; p.hp += r.n; }
+  if(r.key === 'strBonus') p.strb += r.n;
+  return true;
+}
+
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
 /* ═══ 多語言 ═══════════════════════════════════════════════════
@@ -1676,6 +1723,7 @@ v.name.cave|Hollowstone|いわむろのさと
 v.name.edo|Lanterntown|ちょうちんまち
 v.forge|+{n}　{g} G|+{n}　{g} G
 v.forgemax|Fully forged|げんかい
+v.more|Smith: "Go deeper. Get far enough down and I can forge better than this."|かじや：「もっと ふかくへ。じゅうぶん もぐれば これより いいものが うてる。」
 v.carry|Gear you can take down|もっていける そうび
 v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
 b.title|Hall of the Fallen|きろくひ
@@ -2053,6 +2101,7 @@ hat.plume|Plumed Hunting Cap|はねかざりのかりぼう
 hat.band|Phantom Headband|げんにんのはちまき
 hat.oni|Demon Faceguard|おにめんかぶと
 hat.cone|Sorcerer's Point|じゅつしのとんがりぼう
+mon.pfx|Awakened |つよくなった
 mon.rat|Cave Rat|どうくつネズミ
 mon.slime|Blue Slime|あおスライム
 mon.goblin|Green Goblin|みどりゴブリン
@@ -2124,10 +2173,13 @@ it.steel|Steel Sword|はがねのけん
 it.mith|Mithril Sword|ミスリルのけん
 it.drgn|Dragonslayer|ドラゴンキラー
 it.sky|Sword of the Sky|てんくうのつるぎ
+it.babel|Blade of Babel|つうてんのつるぎ
 it.leath|Leather Shield|かわのたて
 it.wood|Wooden Shield|きのたて
 it.s_steel|Steel Shield|はがねのたて
 it.mirr|Mirror Shield|かがみのたて
+it.drac|Dragonscale Shield|りゅうりんのたて
+it.aegis|Aegis of the Sanctum|せいいきのたて
 ab.smash|All-Out Strike|こんしんのいちげき
 ab.guard|Hold Fast|けんしゅ
 ab.lull|Requiem|あんこんきょく
@@ -2303,6 +2355,13 @@ p.sp|Magic points|まほうポイント
 p.spleft|{n} magic point(s) left to spend (never lost on death).|まほうポイントが {n} のこっている（しんでも きえない）。
 p.spfrom|From level {n}, every level gives +1 magic point.|レベル {n} から、レベルアップごとに まほうポイント +1。
 p.schmax|Max {n} per school　mastery at full|1けいとう じょうげん {n}　カンストで おうぎ かいほう
+p.refine|Refinement　—　all schools full. Spare points become permanent body, kept through death.|れんせい　—　ぜんけいとう カンスト。あまった ポイントは えいきゅうの からだに なる。しんでも のこる。
+r.hp|Max HP +10|さいだいHP +10
+r.str|Strength +1|ちから +1
+r.def|Defence +1|ぼうぎょ +1
+r.have|now +{n}|いま +{n}
+r.cost|{n} SP|{n} ポイント
+m.refine|{nm} — this growth is never lost on death.|{nm} —— この せいちょうは しんでも きえない。
 p.schup|{nm} raised to level {n}.|{nm}けいとうが レベル {n} に あがった。
 p.learned|Spells learned|おぼえた まほう
 p.nospell|No spells yet - spend a point first.|まだ まほうが ない —— さきに ポイントを ふろう。
@@ -2521,9 +2580,13 @@ function TX(key, zh){
    在詞條裡加前綴，這裡把類別對上去。 */
 const NAME_FIX = {'wand/sleep':'w_sleep', 'pot/ident':'p_ident', 'shld/steel':'s_steel'};
 function locName(cat, d){
-  if(LANG === 'zh') return d.nm;
+  /* 吃到等級補正的怪物要看得出來。玩家憑什麼知道這一隻洞穴鼠
+     跟三層前那一隻不一樣？加在名字上是最不會漏的做法 ——
+     名牌、戰鬥訊息、圖鑑全部走這一支，改一個地方就全部一致。 */
+  const pfx = (cat === 'mon' && d.lvup) ? TX('mon.pfx','強化的') : '';
+  if(LANG === 'zh') return pfx + d.nm;
   if(cat === 'hat')  return TX('hat.' + d.id, d.nm);
-  if(cat === 'mon')  return TX('mon.' + d.id, d.nm);
+  if(cat === 'mon')  return pfx + TX('mon.' + d.id, d.nm);
   const id = NAME_FIX[cat + '/' + d.id] || d.id;
   return TX('it.' + id, d.nm);
 }
@@ -2834,14 +2897,15 @@ atlas.b_mind2 = atlas.b_mind;
    正是這類遊戲唯一的驅動力。 */
 
 function drawHeroWeapon(x, i){
-  const bl = ['9','5','6','6','r','f','v'][i] || '6';
-  const hi = ['8','9','5','t','u','e','u'][i] || '9';
-  // 屠龍刀的刃比別把厚一格 —— 拿在手上就看得出來換了武器
-  const w = i===5 ? 3 : 2;
+  const bl = ['9','5','6','6','r','f','v','r'][i] || '6';
+  const hi = ['8','9','5','t','u','e','u','u'][i] || '9';
+  // 屠龍刀與通天之劍的刃比別把厚一格 —— 拿在手上就看得出來換了武器
+  const w = (i===5 || i===7) ? 3 : 2;
   px(x,PAL['0'],11,0,3+w,11);
-  px(x,PAL[bl],12,1,w,8); px(x,PAL[i===6?'+':'6'],12,1,1,5);   // 刃面高光
+  px(x,PAL[bl],12,1,w,8); px(x,PAL[(i===6||i===7)?'+':'6'],12,1,1,5);   // 刃面高光
   px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
   px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
+  if(i===7) px(x,PAL['v'],12,10,3,1);                    // 通天之劍：護手上的一道金
 }
 /* 盾牌要有盾牌的剪影。第一版是個長方形 —— 那讀起來是門板，不是盾。
    下緣收尖這一個細節，就是「這是盾」跟「這是一塊板子」的差別。 */
@@ -2850,7 +2914,9 @@ const HERO_SHIELD = [
   [10,1,5],[11,1,4],[12,2,3],[13,3,1],
 ];
 function drawHeroShield(x, i){
-  const fa = ['9','a','5','r'][i], rm = ['8','9','4','6'][i];
+  // 索引要跟 SHLD 一樣長。少一格不會報錯 —— PAL[undefined] 只是把
+  // fillStyle 設成無效值，畫布會沿用上一個顏色，於是新盾牌長得像上一面。
+  const fa = ['9','a','5','r','k','d'][i] || '9', rm = ['8','9','4','6','j','u'][i] || '8';
   const m = shapeMask(HERO_SHIELD);
   paintMask(x, m, PAL[rm], PAL['0'], null, 99);
   for(let y=1;y<T-1;y++) for(let j=0;j<T-1;j++)      // 內縮一圈當盾面
@@ -2859,6 +2925,10 @@ function drawHeroShield(x, i){
     }
   px(x,PAL['d'],1,5,1,2);                             // 高光
   if(i===3){ px(x,PAL['6'],1,7,3,3); px(x,PAL['r'],2,8,2,1); }   // 鏡之盾
+  else if(i===4){ px(x,PAL['l'],1,6,2,2); px(x,PAL['l'],2,8,2,2); px(x,PAL['m'],1,6,1,1); }  // 龍鱗
+  // 聖域：主角手上這一面只留中央那顆石。整面塗滿的話，
+  // 16px 下會變成一塊看不出輪廓的金色方塊，盾就不像盾了。
+  else if(i===5){ px(x,PAL['t'],1,6,3,4); px(x,PAL['v'],2,7,2,2); px(x,PAL['+'],2,7,1,1); }
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
 let heroCache = {};
@@ -3065,6 +3135,21 @@ function makeWeapon(v){
     px(x,PAL['v'],7,14,2,1);
     return c;
   }
+  if(v===7){                                   // 通天之劍：整把發亮的白刃＋金環護手
+    /* 它是這一趟的終點，所以剪影要跟前面七把都不一樣：
+       刃更寬、通到畫面最上緣（「放不進格子裡」的東西才像終極武器），
+       護手是一個完整的金環而不是一根橫桿。 */
+    px(x,dark,5,0,6,11);                                 // 描邊：寬刃
+    px(x,PAL['r'],6,0,4,10);                             // 刃身：偏藍的白
+    px(x,PAL['+'],7,0,2,9);                              // 中脊：最亮的一條
+    px(x,PAL['v'],7,9,2,1);                              // 刃根收在金色上
+    px(x,dark,3,10,10,3);                                // 護手的環
+    px(x,PAL['u'],4,11,8,1); px(x,PAL['v'],4,11,3,1);
+    px(x,PAL['t'],3,10,10,1);
+    px(x,dark,7,13,2,3); px(x,PAL['s'],7,13,2,2);        // 握柄
+    px(x,PAL['v'],7,15,2,1);                             // 柄頭：一點金
+    return c;
+  }
   px(x,dark,6,1,4,10);
   px(x,bl,7,2,2,8);
   px(x,PAL['6'],7,2,1,6);
@@ -3075,22 +3160,42 @@ function makeWeapon(v){
 }
 function makeShield(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const faces=['9','a','5','r'], rims=['8','9','4','6'];
-  const fa=PAL[faces[v%4]], rm=PAL[rims[v%4]], dark=PAL['0'];
-  // 四種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）
+  /* 六種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）/
+     龍鱗（寬肩收尖）/ 聖域（雙肩外張的大盾）。
+     每一面盾都要有自己的剪影 —— 只換顏色的話，玩家在背包裡分不出
+     手上這一面是哪一面，而盾是他一整章都盯著的東西。 */
   const SHAPES = [
     [[3,4,8],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,4,8],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
     [[3,6,4],[4,4,8],[5,3,10],[6,2,12],[7,2,12],[8,2,12],[9,2,12],[10,3,10],[11,4,8],[12,6,4]],
     [[2,6,4],[3,5,6],[4,4,8],[5,4,8],[6,4,8],[7,4,8],[8,5,6],[9,5,6],[10,6,4],[11,6,4],[12,7,2],[13,7,2]],
     [[2,4,8],[3,3,10],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,4,8]],
+    [[2,5,6],[3,3,10],[4,2,12],[5,2,12],[6,2,12],[7,3,10],[8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
+    [[1,4,8],[2,2,12],[3,1,14],[4,1,14],[5,1,14],[6,2,12],[7,2,12],[8,3,10],[9,3,10],[10,4,8],[11,5,6],[12,6,4],[13,7,2]],
   ];
-  const m = shapeMask(SHAPES[v%4]);
+  const n = SHAPES.length;
+  const faces=['9','a','5','r','k','d'], rims=['8','9','4','6','j','u'];
+  const fa=PAL[faces[v%n]], rm=PAL[rims[v%n]], dark=PAL['0'];
+  const m = shapeMask(SHAPES[v%n]);
   paintMask(x, m, rm, dark, null, 99);
   // 內面：把遮罩往內縮一圈
   for(let y=1;y<T-1;y++) for(let i=1;i<T-1;i++)
     if(m[y][i] && m[y-1][i] && m[y+1][i] && m[y][i-1] && m[y][i+1]){ x.fillStyle=fa; x.fillRect(i,y,1,1); }
   px(x,PAL['d'],5,4,2,2);                                  // 高光
   if(v===3){ px(x,PAL['6'],6,5,4,4); px(x,PAL['r'],7,6,2,2); }   // 鏡面
+  else if(v===4){                                          // 龍鱗：交錯的鱗片
+    /* 鱗片要用**比盾面暗**的顏色描。同色系亮一階的話，
+       16px 縮下去只會糊成一片綠 —— 花紋等於沒畫。 */
+    for(let r0=0;r0<3;r0++) for(let i0=0;i0<3;i0++){
+      const sx = 5 + i0*2 + (r0%2), sy = 4 + r0*3;
+      px(x,PAL['j'],sx,sy,2,1); px(x,PAL['l'],sx,sy+1,2,1);
+    }
+    px(x,PAL['m'],6,5,1,1);
+  }
+  else if(v===5){                                          // 聖域：中央一顆亮石＋放射
+    px(x,PAL['t'],4,3,8,9);
+    px(x,PAL['u'],7,4,2,7); px(x,PAL['u'],4,6,8,2);        // 十字放射
+    px(x,PAL['v'],6,6,4,3); px(x,PAL['+'],7,7,2,1);        // 中央的石
+  }
   else px(x,PAL['u'],7,6,2,2);                             // 盾徽
   return c;
 }
@@ -4172,7 +4277,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 /* pots = 上一趟收在保存壺裡的東西。它跨的是「章節」不是「死亡」。 */
                 pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
-                act: 0, hpBonus: 0, defBonus: 0, feather: 0, godsword: 0, cleared: 0,
+                act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -4217,6 +4322,7 @@ function loadVillage(){
           act: Math.max(0, Math.min(ACTS.length-1, v.act|0)),
           hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
           defBonus: Math.max(0, Math.min(40, v.defBonus|0)),
+          strBonus: Math.max(0, Math.min(40, v.strBonus|0)),
           feather: v.feather ? 1 : 0,
           godsword: v.godsword ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
@@ -4383,10 +4489,23 @@ function submitScore(how){
 
 /* 村裡賣的東西：不加價（這是家，不是黑店），但只賣中階以上 —— 
    低階的地牢裡撿得到，拿錢買它沒有意義。 */
+/* 貨架跟著進度長。使用者的原話：「我把最強的武器和盾練到最高，
+   錢一直累積，但是變得完全沒成就感」。
+   原因很具體：鐵匠鋪最好的一把是秘銀之劍，而它第五章就買得起、
+   打滿也只要再一章 —— 後面十章的賞金於是變成一個一直往上跳、
+   沒有任何用途的數字，而「沒有用途的數字」就是沒有成就感的定義。
+
+   from = 要解鎖到第幾章鐵匠才打得出來（跟 VILLAGE.act 同一個 0 起算的編號）。
+   分段上架而不是一次全開：一次全開的話，第五章就看得到終點在哪裡。 */
 const VILLAGE_STOCK = [
   {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'}, {cat:'weap', id:'mith'},
+  {cat:'weap', id:'drgn',  from:4}, {cat:'weap', id:'sky', from:7}, {cat:'weap', id:'babel', from:10},
   {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
+  {cat:'shld', id:'drac',  from:6}, {cat:'shld', id:'aegis', from:10},
 ];
+/* 現在買得到的。渲染與走通測試都走這一支 —— 兩邊各寫一份過濾條件的話，
+   遲早會有一份忘記跟上，而那一份會給出一個安心的綠燈。 */
+const stockNow = () => VILLAGE_STOCK.filter(g => (g.from || 0) <= (VILLAGE.act | 0));
 const defOf = (cat,id) => (cat==='weap'?WEAP:SHLD).find(d=>d.id===id);
 const ALL_DEF = () => ({herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,
                         weap:WEAP,shld:SHLD,hat:HAT});
@@ -4468,6 +4587,9 @@ function newGame(seed){
   }
   // 章節獎勵：純淨之泉（體力上限）與勇者的頭盔（防禦）跨死亡保留
   if(VILLAGE.hpBonus){ G.p.mhp += VILLAGE.hpBonus; G.p.hp = G.p.mhp; }
+  // 餘力煉成買來的力量。跟上面兩個一樣存在村莊 ——
+  // 用魔法點數換來的東西，不該因為一次失敗就消失。
+  G.p.strb = VILLAGE.strBonus | 0;
   G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
   checkMastery();
   // 職業技能一樣存在村莊 —— 練過的職業，這一趟開場就會用
@@ -5075,6 +5197,28 @@ function buildFloor(){
   }
   vision();
 }
+/* ── 怪物跟著主角的等級走 ─────────────────────────────────────
+   使用者的原話：「有些怪物我等於都是秒殺？很沒挑戰性」。
+   原因是怪物表只吃深度：練過等級的人走進同一層，面對的是同一批數字。
+
+   但不能寫成「等級 × 係數」—— 那等於升級就變弱，玩家很快會學會
+   刻意不升級，而那是最糟的一種難度設計。
+   所以這裡只補**超前的那一段**：
+     · 等級在該層的預期值上下（含兩級緩衝）→ 完全不動。
+       模擬與走通測試跑的都是這一段，既有的平衡因此原封不動。
+     · 超前越多補越多，但補得比超前的幅度慢，而且有上限。
+   經驗值與掉的錢刻意不跟著加 —— 加了就是「越練越好練」，
+   跑掉的等級會自己追著自己跑。 */
+const overLv = () => {
+  const p = G && G.p;
+  if(!p || !G.depth) return 0;
+  const want = Math.max(1, Math.round(scaleDepth(G.depth) * 0.75));
+  return Math.max(0, p.lv - want - 2);
+};
+// 每超前一級 +6%，最多 +75%。到頂大約是超前十二級 —— 再上去就是
+// 玩家真的練得比遊戲快，那時候該給的是新裝備，不是無止境的血量。
+const lvMul = () => Math.min(1.75, 1 + overLv() * 0.06);
+
 function spawnMon(d,x,y){
   // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
   // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossStats()。
@@ -5088,6 +5232,19 @@ function spawnMon(d,x,y){
       hp:  Math.max(30, Math.round(s.hp  * (mm.hp  || 1))),
       atk: Math.max(3,  Math.round(s.atk * (mm.atk || 1))),
       def: Math.max(0,  Math.round(s.def * (mm.def || 1))),
+    });
+  }
+  /* 一般怪物才吃等級補正。頭目已經是「依深度算出來」的，
+     而且一章只有一隻 —— 再乘一次會讓章末變成撞牆。
+     防禦補得最少：防禦是乘在傷害的減法上的，加太多會直接把
+     低攻擊的打法（法術、投擲）整組廢掉。 */
+  const k = d.boss ? 1 : lvMul();
+  if(k > 1){
+    d = Object.assign({}, d, {
+      hp:  Math.round(d.hp  * k),
+      atk: Math.round(d.atk * (1 + (k - 1) * 0.65)),
+      def: Math.round(d.def * (1 + (k - 1) * 0.45)),
+      lvup: +(k.toFixed(2)),          // 給名牌用：玩家看得到牠變強了
     });
   }
   const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++};
@@ -7261,6 +7418,26 @@ const BGM = (()=>{
     ],
   });
 
+  /* 怪物之間。它跟頭目曲要有明確的分工：
+     頭目曲是「一場仗開始了」，這一首是「還沒開始，但牠們都知道你在哪裡」。
+     所以它刻意不給任何解決 —— 低音四小節踩死同一個 D（踏板音），
+     上面壓一個三全音（D 對 G♯，中世紀被稱為「音樂裡的魔鬼」的那個音程），
+     旋律是同一個三音動機半音往上爬，爬完又掉回原點。
+     沒有進行、沒有到達，只有等待。走出這一層才會停。 */
+  TRACKS.hall = T_({
+    bpm:144, wave:'square', pad:'triangle', cut:1900, lvol:.08, avol:.042,
+    bass:[0,2,4,6,8,10,12,14],                 // 八分踏板音，一路不換
+    hat:[3,7,11,15], kick:[0,4,8,12],
+    root:[50,50,50,50],                        // D 踩到底
+    chord:[[62,68,69],[62,68,70],[62,69,71],[62,68,69]],
+    lead:[
+      [[0,74,2],[2,80,1],[3,79,1],[4,74,2],[8,74,2],[10,80,1],[11,79,1],[12,74,2]],
+      [[0,75,2],[2,81,1],[3,80,1],[4,75,2],[8,75,2],[10,81,1],[11,80,1],[12,75,2]],
+      [[0,76,2],[2,82,1],[3,81,1],[4,76,2],[8,76,2],[10,82,1],[11,81,1],[12,76,2]],
+      [[0,77,4],[4,80,2],[6,79,2],[8,74,4],[12,68,4]],
+    ],
+  });
+
   let forced = null;                          // 村莊之類「不在地貌表裡」的場合
   function wantId(){
     if(forced && TRACKS[forced]) return forced;
@@ -7296,6 +7473,9 @@ const BGM = (()=>{
        這裡刻意不自己 start() —— 音訊必須由使用者手勢啟動，
        而且在無頭測試裡根本沒有 AudioContext。跑著就換，沒跑就等。 */
     force(id){ forced = id; },
+    // 測試要看得到「現在被指定成哪一首」—— track 只有在音訊真的跑起來
+    // 之後才會更新，無頭環境裡永遠停在 stone，驗不到任何東西。
+    get forced(){ return forced; },
     get running(){ return running; },
     get track(){ return curId; },
     TRACKS,
@@ -8577,6 +8757,37 @@ function renderPanel(){
       list.appendChild(row);
     }
 
+    /* 五系全滿之後才出現的那一段。放在五系底下、魔法清單上面 ——
+       它是「加點」這件事的延續，不是另一個系統。 */
+    if(schFull(p)){
+      const rh = document.createElement('div'); rh.className = 'hint';
+      rh.textContent = TX('p.refine','餘力煉成　—　五系已滿。多的點數可以換成永久的身體，死亡也帶不走。');
+      list.appendChild(rh);
+      for(const r of REFINE){
+        const cur = VILLAGE[r.key] | 0;
+        const row = document.createElement('div'); row.className = 'sch';
+        const nm = document.createElement('div'); nm.className = 'nm';
+        nm.textContent = TX('r.' + r.id, r.nm);
+        const st = document.createElement('div'); st.className = 'pips';
+        st.style.flex = '1';
+        st.style.color = 'var(--parch-dim)';
+        st.style.fontSize = '10.5px';
+        st.textContent = M('r.have','目前 +{n}',{n:cur});
+        const b = document.createElement('button');
+        b.textContent = M('r.cost','{n} 點',{n:r.sp});
+        b.disabled = p.sp < r.sp || cur >= r.cap;
+        b.onclick = ()=>{
+          if(!refine(p, r)) return;
+          SFX.play('level');
+          say(M('m.refine','{nm} —— 這一份成長不會因為死亡消失。',
+                {nm:TX('r.' + r.id, r.nm)}),'good');
+          refresh(); renderPanel();
+        };
+        row.appendChild(nm); row.appendChild(st); row.appendChild(b);
+        list.appendChild(row);
+      }
+    }
+
     const known = spellsFor(p);
     const head = document.createElement('div'); head.className='hint';
     head.textContent = known.length ? TX('p.learned','學會的魔法')
@@ -9026,16 +9237,22 @@ function bossWatch(){
   const on = G.f.bossLock && G.mons.some(m => m.d.boss && G.seen[key(m.x,m.y)] === 2);
   if(on && !G.f.bossSeen){
     G.f.bossSeen = 1;
-    BGM.force('boss');
     if(!REDUCED){ G.zoom = 1.85; G.zoomTo = 1.2; }
     SFX.play('level');
     G.shake = Math.max(G.shake, 9);
   } else if(!G.f.bossLock && G.f.bossSeen){
-    // 打完了：音樂交還給章節，鏡頭鬆回去
+    // 打完了：鏡頭鬆回去
     G.f.bossSeen = 0;
-    BGM.force(null);
     G.zoomTo = 1;
   }
+  /* 這一層該放哪一首，由這一行說了算：頭目 > 怪物之間 > 章節主題。
+     怪物之間一踏進去就繃緊，一直到離開這一層為止 ——
+     換層時 buildFloor() 會把 G.f 整個換掉，下一回合這裡就自己鬆開了。
+
+     刻意不記「上次設成什麼」：force() 只是把一個變數指過去，
+     重算沒有代價，而記狀態就會漏掉「打完頭目、人還站在怪物之間那一層」
+     的那一次切換 —— 音樂會停在章節主題，而大廳裡還有二十隻怪。 */
+  BGM.force(G.f.bossSeen ? 'boss' : ((G.f.hall && G.f.hall.seen) ? 'hall' : null));
 }
 
 /* 站在砲座上開火。回傳 true 代表這一回合用掉了。 */
@@ -9807,7 +10024,8 @@ function renderVillage(){
   head.textContent = TX('v.smith','鐵匠鋪　—　買下就是你的，死亡也帶不走。買完可以繼續鍛造。');
   stock.appendChild(head);
 
-  for(const g of VILLAGE_STOCK){
+  const shelf = stockNow();
+  for(const g of shelf){
     const d = defOf(g.cat, g.id);
     const row = document.createElement('div'); row.className = 'vrow';
     const c = document.createElement('canvas'); c.width = T; c.height = T;
@@ -9829,6 +10047,14 @@ function renderVillage(){
     };
     row.appendChild(c); row.appendChild(nm); row.appendChild(st); row.appendChild(b);
     stock.appendChild(row);
+  }
+  /* 還有沒上架的東西時，先講一聲。玩家看不到未來的貨架，
+     所以「錢先攢著」這個決定要有人告訴他 ——
+     不講的話，看到的就只是一個買得完的鐵匠鋪。 */
+  if(shelf.length < VILLAGE_STOCK.length){
+    const more = document.createElement('div'); more.className = 'vhint';
+    more.textContent = TX('v.more','鐵匠：「再往下走。走得夠深，我打得出比這些更好的東西。」');
+    stock.appendChild(more);
   }
 
   const owned = $('vowned'); owned.innerHTML = '';

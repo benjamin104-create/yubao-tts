@@ -358,6 +358,45 @@ t('第一章不會出現怪物之間 —— 那一章還在教怎麼玩', ()=>{
   }
 });
 
+/* ── 怪物跟著等級走 ──────────────────────────────────────────
+   使用者的原話：「有些怪物我等於都是秒殺？很沒挑戰性」。
+   補正只補「超前的那一段」，所以這裡要驗兩邊：
+   等級正常的時候完全不能動（既有的平衡靠這一條保住），
+   練過頭的時候要真的變強，而且玩家看得出來。 */
+t('等級沒有超前時，怪物的數值一個字都不動', ()=>{
+  V.act = 0;
+  api.newGame(777);
+  const G = api.G();
+  G.act = 4; G.floor = 2; api.buildFloor();
+  const rat = api.MONS.find(d => d.id === 'rat');
+  const m = api.spawnMon(rat, G.p.x, G.p.y);
+  assert.strictEqual(m.d.hp, rat.hp, '血量被動了：' + m.d.hp + ' ≠ ' + rat.hp);
+  assert.strictEqual(m.d.atk, rat.atk, '攻擊被動了');
+  assert.strictEqual(m.d, rat, '沒有補正就不該複製資料表');
+});
+
+t('主角練過頭時，同一隻怪會變強，而且名字上看得出來', ()=>{
+  V.act = 0;
+  api.newGame(778);
+  const G = api.G();
+  G.act = 4; G.floor = 2; api.buildFloor();
+  const rat = api.MONS.find(d => d.id === 'rat');
+  const base = api.spawnMon(rat, G.p.x, G.p.y);
+  G.p.lv += 12;                                   // 練到明顯超前
+  const up = api.spawnMon(rat, G.p.x, G.p.y);
+  assert(up.d.hp > base.d.hp, '練了十二級，血量還是 ' + up.d.hp);
+  assert(up.d.atk > base.d.atk, '攻擊沒有跟上');
+  assert(up.mhp === up.d.hp && up.hp === up.d.hp, '補正沒有寫進實際血量');
+  // 補正有天花板 —— 不然練得越久，遊戲越變成看誰的數字大
+  G.p.lv += 60;
+  const cap = api.spawnMon(rat, G.p.x, G.p.y);
+  assert(cap.d.hp <= Math.round(rat.hp * 1.75), '補正沒有上限：' + cap.d.hp);
+  // 玩家要看得出來：名字上有記號，而且原本的表沒有被污染
+  assert(api.i18n.locName('mon', up.d) !== api.i18n.locName('mon', rat),
+         '變強了卻叫同一個名字');
+  assert(!rat.lvup, '補正寫回了資料表 —— 下一場遊戲會繼承這個值');
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，

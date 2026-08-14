@@ -85,5 +85,45 @@ t('每一首的鼓組編排都不一樣（不然只是換了音高的同一首�
   }
 });
 
+/* 怪物之間的音樂：踏進大廳音樂繃緊，離開這一層才鬆開。
+   這是「加了東西但沒有接上」的最典型現場 —— 曲子寫好了、
+   force() 也存在，但沒有人呼叫它，而不呼叫不會報錯。 */
+t('踏進怪物之間，音樂會切成緊張的那一首', ()=>{
+  const BGM = api.BGM;
+  // 找一層真的有怪物之間的樓層。它從第 6 層起、機率 16%，
+  // 所以要掃一陣子 —— 掃不到就是生成那一段壞了，一樣該紅。
+  let found = 0;
+  for(let s = 1; s <= 40 && !found; s++){
+    api.newGame(s);
+    const G = api.G();
+    // 第一章整章不會有大廳，而且每一章的最後一層是頭目層 ——
+    // 所以要真的照章節走，不能把 floor 直接加到 18（那是不存在的樓層）。
+    for(let a = 1; a < api.ACTS.length && !found; a++)
+    for(let fl = 1; fl < api.ACTS[a].floors; fl++){
+      G.act = a; G.floor = fl; api.buildFloor();
+      if(!G.f.hall) continue;
+      found = 1;
+      BGM.force(null);
+      api.bossWatch();
+      assert.strictEqual(BGM.forced, null, '還沒踏進去就先緊張了');
+      // 走進大廳
+      const r = G.f.rooms[G.f.hall.room];
+      G.p.x = r.x; G.p.y = r.y;
+      // 房間雕過形狀，左上角不一定走得到 —— 找一格真的在裡面的
+      for(let y = r.y; y < r.y + r.h; y++) for(let x = r.x; x < r.x + r.w; x++)
+        if(api.walkable(x,y) && api.G().f.roomAt[api.key(x,y)] === G.f.hall.room){ G.p.x = x; G.p.y = y; }
+      api.stepOn();
+      api.bossWatch();
+      assert.strictEqual(BGM.forced, 'hall', '踏進大廳了，音樂沒有變');
+      // 離開這一層就該鬆開
+      G.floor = fl + 1; api.buildFloor(); api.bossWatch();
+      if(!G.f.hall) assert.strictEqual(BGM.forced, null, '下了一層，音樂還卡在緊張');
+      break;
+    }
+  }
+  assert(found, '掃了六十顆種子都生不出怪物之間');
+  BGM.force(null);
+});
+
 console.log('\n通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);

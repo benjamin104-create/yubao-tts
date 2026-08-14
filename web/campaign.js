@@ -109,7 +109,10 @@ function shopTrip(V){
   for(const cat of ['weap', 'shld']){
     const best = V.stock.filter(g => g.cat === cat)
       .reduce((n, g) => Math.max(n, pot(cat, g.id, g.up)), 0);
-    const want = api.VILLAGE_STOCK.filter(g => g.cat === cat)
+    // 貨架跟著章節進度長 —— 這裡一定要走跟畫面同一支 stockNow()，
+    // 直接讀 VILLAGE_STOCK 的話，測試會買到玩家還買不到的東西，
+    // 然後回報一個「後面章節很好過」的假結果。
+    const want = api.stockNow().filter(g => g.cat === cat)
       .map(g => ({g, d: api.defOf(g.cat, g.id)}))
       .filter(o => o.d.price <= V.gold && pot(cat, o.g.id, 0) > best)
       .reduce((a, b) => !a || b.d.price > a.d.price ? b : a, null);

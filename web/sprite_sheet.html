@@ -367,12 +367,21 @@ const WEAP = [
  /* 天空之劍：攻擊時同時打到所有相鄰的敵人。
     被三隻圍住的時候，一刀掃三個 —— 那才是「最後一把劍」該有的手感。 */
  {id:'sky',  nm:'天空之劍', atk:16, up:8, price:14000, sweep:1},
+ /* 通天之劍：這一趟的終點。基礎攻擊刻意訂得比「秘銀之劍打滿」還高一點 ——
+    換上去的那一秒就要比手上那把強，不然玩家買到的是一段要先變弱的路，
+    而那正是「把最強的武器練到最高之後就沒有成就感」的相反面。
+    它很貴，而且要走到第十一章鐵匠才打得出來。 */
+ {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
  {id:'wood', nm:'木之盾', def:4, up:3, price:800},
  {id:'steel',nm:'鋼之盾', def:7, up:5, price:2400},
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
+ /* 盾牌原本只到鏡之盾（打滿 16），而武器打滿是 30 ——
+    後半段整個防禦端沒有東西可以買，錢只好一直往武器堆。 */
+ {id:'drac', nm:'龍鱗之盾', def:9,  up:6, price:9000},
+ {id:'aegis',nm:'聖域之盾', def:17, up:4, price:18000, reflect:1},
 ];
 
 /* ─── 職業與技能 ─────────────────────────────────────────────
@@ -566,6 +575,44 @@ const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
+/* ── 餘力煉成：魔法點數的出路 ─────────────────────────────────
+   使用者的原話：「魔法點數也是，點到滿，結果每升一級都還會有點數，
+   感覺一堆點數都不能用，很沒作用⋯」
+
+   五系各 5 級，總共 25 點就到頂；而點數從第 3 級起每升一級就給一點，
+   走到後半章節手上會躺著十幾點永遠花不掉的東西。
+   一個給了卻不能用的獎勵，比不給還糟 —— 它每一次升級都在提醒玩家
+   「這個系統對你已經結束了」。
+
+   所以滿級之後開一條路：把多的點數煉成永久的身體素質。
+   三件事是刻意的：
+     · 只有五系全滿才開。不然玩家會在前期把點數丟去換數值，
+       而魔法系統才是這一款的招牌。
+     · 換到的東西存在村莊，跟純淨之泉與勇者的頭盔同一格 ——
+       用點數換來的成長不該因為一次失敗蒸發。
+     · 沒有上限（除了存檔夾住的那個很大的值）。錢與點數都要有
+       一個永遠倒得進去的地方，那才是後期的成就感。 */
+const REFINE = [
+  {id:'hp',  sp:2, key:'hpBonus',  n:10, cap:400, nm:'體力上限 +10'},
+  {id:'str', sp:3, key:'strBonus', n:1,  cap:40,  nm:'力量 +1'},
+  {id:'def', sp:3, key:'defBonus', n:1,  cap:40,  nm:'防禦 +1'},
+];
+const schFull = p => SCHOOLS.every(s => (p.sch[s.id]||0) >= SCH_MAX);
+/* 煉成一次。回傳 false 代表點數不夠或已經到頂 —— 呼叫端不必自己再判一次。 */
+function refine(p, r){
+  if(!r || p.sp < r.sp) return false;
+  const cur = VILLAGE[r.key] | 0;
+  if(cur >= r.cap) return false;
+  p.sp -= r.sp;
+  VILLAGE[r.key] = Math.min(r.cap, cur + r.n);
+  VILLAGE.sp = p.sp;
+  saveVillage();
+  // 立刻生效，不必等下一趟。防禦是 pDef() 當場讀村莊的，不用在這裡加。
+  if(r.key === 'hpBonus'){ p.mhp += r.n; p.hp += r.n; }
+  if(r.key === 'strBonus') p.strb += r.n;
+  return true;
+}
+
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
 /* ═══ 多語言 ═══════════════════════════════════════════════════
@@ -602,6 +649,7 @@ v.name.cave|Hollowstone|いわむろのさと
 v.name.edo|Lanterntown|ちょうちんまち
 v.forge|+{n}　{g} G|+{n}　{g} G
 v.forgemax|Fully forged|げんかい
+v.more|Smith: "Go deeper. Get far enough down and I can forge better than this."|かじや：「もっと ふかくへ。じゅうぶん もぐれば これより いいものが うてる。」
 v.carry|Gear you can take down|もっていける そうび
 v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
 b.title|Hall of the Fallen|きろくひ
@@ -979,6 +1027,7 @@ hat.plume|Plumed Hunting Cap|はねかざりのかりぼう
 hat.band|Phantom Headband|げんにんのはちまき
 hat.oni|Demon Faceguard|おにめんかぶと
 hat.cone|Sorcerer's Point|じゅつしのとんがりぼう
+mon.pfx|Awakened |つよくなった
 mon.rat|Cave Rat|どうくつネズミ
 mon.slime|Blue Slime|あおスライム
 mon.goblin|Green Goblin|みどりゴブリン
@@ -1050,10 +1099,13 @@ it.steel|Steel Sword|はがねのけん
 it.mith|Mithril Sword|ミスリルのけん
 it.drgn|Dragonslayer|ドラゴンキラー
 it.sky|Sword of the Sky|てんくうのつるぎ
+it.babel|Blade of Babel|つうてんのつるぎ
 it.leath|Leather Shield|かわのたて
 it.wood|Wooden Shield|きのたて
 it.s_steel|Steel Shield|はがねのたて
 it.mirr|Mirror Shield|かがみのたて
+it.drac|Dragonscale Shield|りゅうりんのたて
+it.aegis|Aegis of the Sanctum|せいいきのたて
 ab.smash|All-Out Strike|こんしんのいちげき
 ab.guard|Hold Fast|けんしゅ
 ab.lull|Requiem|あんこんきょく
@@ -1229,6 +1281,13 @@ p.sp|Magic points|まほうポイント
 p.spleft|{n} magic point(s) left to spend (never lost on death).|まほうポイントが {n} のこっている（しんでも きえない）。
 p.spfrom|From level {n}, every level gives +1 magic point.|レベル {n} から、レベルアップごとに まほうポイント +1。
 p.schmax|Max {n} per school　mastery at full|1けいとう じょうげん {n}　カンストで おうぎ かいほう
+p.refine|Refinement　—　all schools full. Spare points become permanent body, kept through death.|れんせい　—　ぜんけいとう カンスト。あまった ポイントは えいきゅうの からだに なる。しんでも のこる。
+r.hp|Max HP +10|さいだいHP +10
+r.str|Strength +1|ちから +1
+r.def|Defence +1|ぼうぎょ +1
+r.have|now +{n}|いま +{n}
+r.cost|{n} SP|{n} ポイント
+m.refine|{nm} — this growth is never lost on death.|{nm} —— この せいちょうは しんでも きえない。
 p.schup|{nm} raised to level {n}.|{nm}けいとうが レベル {n} に あがった。
 p.learned|Spells learned|おぼえた まほう
 p.nospell|No spells yet - spend a point first.|まだ まほうが ない —— さきに ポイントを ふろう。
@@ -1447,9 +1506,13 @@ function TX(key, zh){
    在詞條裡加前綴，這裡把類別對上去。 */
 const NAME_FIX = {'wand/sleep':'w_sleep', 'pot/ident':'p_ident', 'shld/steel':'s_steel'};
 function locName(cat, d){
-  if(LANG === 'zh') return d.nm;
+  /* 吃到等級補正的怪物要看得出來。玩家憑什麼知道這一隻洞穴鼠
+     跟三層前那一隻不一樣？加在名字上是最不會漏的做法 ——
+     名牌、戰鬥訊息、圖鑑全部走這一支，改一個地方就全部一致。 */
+  const pfx = (cat === 'mon' && d.lvup) ? TX('mon.pfx','強化的') : '';
+  if(LANG === 'zh') return pfx + d.nm;
   if(cat === 'hat')  return TX('hat.' + d.id, d.nm);
-  if(cat === 'mon')  return TX('mon.' + d.id, d.nm);
+  if(cat === 'mon')  return pfx + TX('mon.' + d.id, d.nm);
   const id = NAME_FIX[cat + '/' + d.id] || d.id;
   return TX('it.' + id, d.nm);
 }
@@ -1760,14 +1823,15 @@ atlas.b_mind2 = atlas.b_mind;
    正是這類遊戲唯一的驅動力。 */
 
 function drawHeroWeapon(x, i){
-  const bl = ['9','5','6','6','r','f','v'][i] || '6';
-  const hi = ['8','9','5','t','u','e','u'][i] || '9';
-  // 屠龍刀的刃比別把厚一格 —— 拿在手上就看得出來換了武器
-  const w = i===5 ? 3 : 2;
+  const bl = ['9','5','6','6','r','f','v','r'][i] || '6';
+  const hi = ['8','9','5','t','u','e','u','u'][i] || '9';
+  // 屠龍刀與通天之劍的刃比別把厚一格 —— 拿在手上就看得出來換了武器
+  const w = (i===5 || i===7) ? 3 : 2;
   px(x,PAL['0'],11,0,3+w,11);
-  px(x,PAL[bl],12,1,w,8); px(x,PAL[i===6?'+':'6'],12,1,1,5);   // 刃面高光
+  px(x,PAL[bl],12,1,w,8); px(x,PAL[(i===6||i===7)?'+':'6'],12,1,1,5);   // 刃面高光
   px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
   px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
+  if(i===7) px(x,PAL['v'],12,10,3,1);                    // 通天之劍：護手上的一道金
 }
 /* 盾牌要有盾牌的剪影。第一版是個長方形 —— 那讀起來是門板，不是盾。
    下緣收尖這一個細節，就是「這是盾」跟「這是一塊板子」的差別。 */
@@ -1776,7 +1840,9 @@ const HERO_SHIELD = [
   [10,1,5],[11,1,4],[12,2,3],[13,3,1],
 ];
 function drawHeroShield(x, i){
-  const fa = ['9','a','5','r'][i], rm = ['8','9','4','6'][i];
+  // 索引要跟 SHLD 一樣長。少一格不會報錯 —— PAL[undefined] 只是把
+  // fillStyle 設成無效值，畫布會沿用上一個顏色，於是新盾牌長得像上一面。
+  const fa = ['9','a','5','r','k','d'][i] || '9', rm = ['8','9','4','6','j','u'][i] || '8';
   const m = shapeMask(HERO_SHIELD);
   paintMask(x, m, PAL[rm], PAL['0'], null, 99);
   for(let y=1;y<T-1;y++) for(let j=0;j<T-1;j++)      // 內縮一圈當盾面
@@ -1785,6 +1851,10 @@ function drawHeroShield(x, i){
     }
   px(x,PAL['d'],1,5,1,2);                             // 高光
   if(i===3){ px(x,PAL['6'],1,7,3,3); px(x,PAL['r'],2,8,2,1); }   // 鏡之盾
+  else if(i===4){ px(x,PAL['l'],1,6,2,2); px(x,PAL['l'],2,8,2,2); px(x,PAL['m'],1,6,1,1); }  // 龍鱗
+  // 聖域：主角手上這一面只留中央那顆石。整面塗滿的話，
+  // 16px 下會變成一塊看不出輪廓的金色方塊，盾就不像盾了。
+  else if(i===5){ px(x,PAL['t'],1,6,3,4); px(x,PAL['v'],2,7,2,2); px(x,PAL['+'],2,7,1,1); }
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
 let heroCache = {};
@@ -1991,6 +2061,21 @@ function makeWeapon(v){
     px(x,PAL['v'],7,14,2,1);
     return c;
   }
+  if(v===7){                                   // 通天之劍：整把發亮的白刃＋金環護手
+    /* 它是這一趟的終點，所以剪影要跟前面七把都不一樣：
+       刃更寬、通到畫面最上緣（「放不進格子裡」的東西才像終極武器），
+       護手是一個完整的金環而不是一根橫桿。 */
+    px(x,dark,5,0,6,11);                                 // 描邊：寬刃
+    px(x,PAL['r'],6,0,4,10);                             // 刃身：偏藍的白
+    px(x,PAL['+'],7,0,2,9);                              // 中脊：最亮的一條
+    px(x,PAL['v'],7,9,2,1);                              // 刃根收在金色上
+    px(x,dark,3,10,10,3);                                // 護手的環
+    px(x,PAL['u'],4,11,8,1); px(x,PAL['v'],4,11,3,1);
+    px(x,PAL['t'],3,10,10,1);
+    px(x,dark,7,13,2,3); px(x,PAL['s'],7,13,2,2);        // 握柄
+    px(x,PAL['v'],7,15,2,1);                             // 柄頭：一點金
+    return c;
+  }
   px(x,dark,6,1,4,10);
   px(x,bl,7,2,2,8);
   px(x,PAL['6'],7,2,1,6);
@@ -2001,22 +2086,42 @@ function makeWeapon(v){
 }
 function makeShield(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const faces=['9','a','5','r'], rims=['8','9','4','6'];
-  const fa=PAL[faces[v%4]], rm=PAL[rims[v%4]], dark=PAL['0'];
-  // 四種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）
+  /* 六種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）/
+     龍鱗（寬肩收尖）/ 聖域（雙肩外張的大盾）。
+     每一面盾都要有自己的剪影 —— 只換顏色的話，玩家在背包裡分不出
+     手上這一面是哪一面，而盾是他一整章都盯著的東西。 */
   const SHAPES = [
     [[3,4,8],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,4,8],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
     [[3,6,4],[4,4,8],[5,3,10],[6,2,12],[7,2,12],[8,2,12],[9,2,12],[10,3,10],[11,4,8],[12,6,4]],
     [[2,6,4],[3,5,6],[4,4,8],[5,4,8],[6,4,8],[7,4,8],[8,5,6],[9,5,6],[10,6,4],[11,6,4],[12,7,2],[13,7,2]],
     [[2,4,8],[3,3,10],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,4,8]],
+    [[2,5,6],[3,3,10],[4,2,12],[5,2,12],[6,2,12],[7,3,10],[8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
+    [[1,4,8],[2,2,12],[3,1,14],[4,1,14],[5,1,14],[6,2,12],[7,2,12],[8,3,10],[9,3,10],[10,4,8],[11,5,6],[12,6,4],[13,7,2]],
   ];
-  const m = shapeMask(SHAPES[v%4]);
+  const n = SHAPES.length;
+  const faces=['9','a','5','r','k','d'], rims=['8','9','4','6','j','u'];
+  const fa=PAL[faces[v%n]], rm=PAL[rims[v%n]], dark=PAL['0'];
+  const m = shapeMask(SHAPES[v%n]);
   paintMask(x, m, rm, dark, null, 99);
   // 內面：把遮罩往內縮一圈
   for(let y=1;y<T-1;y++) for(let i=1;i<T-1;i++)
     if(m[y][i] && m[y-1][i] && m[y+1][i] && m[y][i-1] && m[y][i+1]){ x.fillStyle=fa; x.fillRect(i,y,1,1); }
   px(x,PAL['d'],5,4,2,2);                                  // 高光
   if(v===3){ px(x,PAL['6'],6,5,4,4); px(x,PAL['r'],7,6,2,2); }   // 鏡面
+  else if(v===4){                                          // 龍鱗：交錯的鱗片
+    /* 鱗片要用**比盾面暗**的顏色描。同色系亮一階的話，
+       16px 縮下去只會糊成一片綠 —— 花紋等於沒畫。 */
+    for(let r0=0;r0<3;r0++) for(let i0=0;i0<3;i0++){
+      const sx = 5 + i0*2 + (r0%2), sy = 4 + r0*3;
+      px(x,PAL['j'],sx,sy,2,1); px(x,PAL['l'],sx,sy+1,2,1);
+    }
+    px(x,PAL['m'],6,5,1,1);
+  }
+  else if(v===5){                                          // 聖域：中央一顆亮石＋放射
+    px(x,PAL['t'],4,3,8,9);
+    px(x,PAL['u'],7,4,2,7); px(x,PAL['u'],4,6,8,2);        // 十字放射
+    px(x,PAL['v'],6,6,4,3); px(x,PAL['+'],7,7,2,1);        // 中央的石
+  }
   else px(x,PAL['u'],7,6,2,2);                             // 盾徽
   return c;
 }
