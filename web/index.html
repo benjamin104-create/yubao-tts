@@ -2713,6 +2713,19 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    六種都遵守同一組解剖位置：眼睛在 y6、胸口的星在 y9、帽子壓在 y1–5。
    不遵守的話換一個體型帽子就會浮在半空中，職業辨識立刻壞掉。 */
 const BLOB_SKINS = {
+  /* 方塊：主角的預設體型。使用者挑的是「大眼」那一版，
+     但補了一句「Claude 是方塊型的」—— 所以身體是一個立起來的方塊，
+     四個角各削掉一格（純方角在 16px 下讀起來是一塊磚，不是一個角色），
+     底下兩隻方腳讓它站得住。
+     它排在最前面：SKINS 的第一個就是預設，主角一開始就該是這一隻。 */
+  cube: [
+    [1,4,8],
+    [2,3,10],
+    [3,2,12],[4,2,12],[5,2,12],[6,2,12],
+    [7,2,12],[8,2,12],[9,2,12],[10,2,12],[11,2,12],
+    [12,3,10],
+    [13,3,3],[13,10,3],
+  ],
   /* 六種體型的差別必須是**比例**，不是細節。
      第一版只在同一團身體上加耳朵、加喙、加天線 —— 放大到六倍才看得出來，
      在 16px 的遊戲畫面上六隻長得一模一樣。
@@ -2837,9 +2850,20 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 對齊，整隻生物就失去上下的方向感。
   // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
   const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
-  // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
-  // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
-  for(const ex of [ex1, ex2]){
+  /* 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
+     跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
+
+     主角的眼睛比別人大一圈（star 就是「這是主角的剪影」的意思）。
+     使用者從六個版本裡挑的就是大眼那一版：3x3 的眼白、2x2 的瞳、
+     左上角留一點高光。村民與其他人維持 2x2 —— 差別要留給主角，
+     全部放大就等於沒有放大。 */
+  if(star && !child){
+    for(const ex of [3, 10]){
+      px(x,PAL['+'],ex,ey-1,3,3);
+      px(x,PAL[dark],ex + (ex<8?1:0),ey,2,2);
+      px(x,PAL['+'],ex + (ex<8?2:0),ey,1,1);      // 瞳孔上的高光
+    }
+  } else for(const ex of [ex1, ex2]){
     px(x,PAL['+'],ex,ey,2,2);
     px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
   }
@@ -2847,7 +2871,7 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
   const ly = child ? 11 : 12;
   // 腳縫只有「真的有腳」的體型才畫。幽靈與機械畫上去會變成浮在裙襬上的兩條線。
-  const LEG = {blob:[3,6,10,13], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
+  const LEG = {cube:[], blob:[3,6,10,13], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
   for(const lx of (child ? [5,8,11] : (LEG[skin] || LEG.blob))) px(x,PAL[dark],lx,ly,1,2);
 
   // 左上受光：貼著剪影的頂端，不能寫死 y3 —— 矮的體型（史萊姆）
@@ -2936,7 +2960,7 @@ let heroCache = {};
    美術層讀遊戲狀態的話，(1) 產生美術驗收頁時會爆掉，
    (2) 這支在模組初始化時就會跑，那時 VILLAGE 還在 TDZ 裡。 */
 function heroSprite(wi, si, hi, skin, col0){
-  const sk = SKINS.includes(skin) ? skin : 'blob';
+  const sk = SKINS.includes(skin) ? skin : 'cube';
   const col = BLOB_COLS.includes(col0) ? col0 : '#';
   // 快取鍵要含體型與顏色 —— 少了它，換了造型畫面上還是舊的那一隻
   const k = wi + '/' + si + '/' + (hi||'-') + '/' + sk + '/' + col;
@@ -4278,7 +4302,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
                 act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
-                lang: '', skin: 'blob' };
+                lang: '', skin: 'cube' };
 const EXIT_FLOOR = 20;
 
 /* 舊存檔沒有 jobs，或有人手動改壞了 —— 只收得懂的欄位，
@@ -4327,7 +4351,7 @@ function loadVillage(){
           godsword: v.godsword ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
-          skin: SKINS.includes(v.skin) ? v.skin : 'blob',
+          skin: SKINS.includes(v.skin) ? v.skin : 'cube',
           pocket: (v.pocket && typeof v.pocket === 'object')
             ? {open: !!v.pocket.open, item: v.pocket.item || null}
             : {open:false, item:null},
@@ -10133,7 +10157,7 @@ function closeMenu(){ $('menu').classList.remove('show'); }
 /* ─── 紀錄碑 ────────────────────────────────────────────────── */
 const blobCache = {};
 function blobFor(col, skin){
-  const sk = SKINS.includes(skin) ? skin : 'blob';
+  const sk = SKINS.includes(skin) ? skin : 'cube';
   const k = col + '/' + sk;
   if(!blobCache[k]) blobCache[k] = makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk});
   return blobCache[k];

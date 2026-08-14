@@ -173,10 +173,10 @@ t('換造型只影響主角，怪物與村民完全不受影響', ()=>{
     api.refreshHero();
     assert.strictEqual(shot(), before, '換成 ' + sk + ' 之後怪物的圖變了');
   }
-  V().skin = 'blob'; api.refreshHero();
+  V().skin = 'cube'; api.refreshHero();
 });
 
-t('六種造型都畫得出來，而且互不相同', ()=>{
+t('每一種造型都畫得出來，而且互不相同', ()=>{
   const sigs = new Set();
   for(const sk of api.SKINS){
     const spans = api.BLOB_SKINS[sk];
@@ -198,7 +198,7 @@ t('造型存得下來，壞掉的值會退回預設', ()=>{
   api.loadVillage();
   assert.strictEqual(api.VILLAGE().skin, 'cat', '存進去的造型應該讀得回來');
   V().skin = 'zzz'; api.saveVillage(); api.loadVillage();
-  assert.strictEqual(api.VILLAGE().skin, 'blob', '壞掉的造型應該退回預設');
+  assert.strictEqual(api.VILLAGE().skin, 'cube', '壞掉的造型應該退回預設');
 });
 
 // ── 紀錄之環 ────────────────────────────────────────────────
