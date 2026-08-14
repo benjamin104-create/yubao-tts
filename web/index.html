@@ -290,10 +290,33 @@ body{
 .stat{display:flex; align-items:center; gap:6px}
 .stat b{color:var(--parch-dim); font-weight:400; letter-spacing:.1em; font-size:10px}
 .stat span{color:var(--parch)}
-.bar{width:64px; height:7px; background:#000; border:1px solid var(--edge); position:relative}
-.bar i{display:block; height:100%; transition:width .2s ease}
-#hpbar i{background:var(--blood)}
-#fullbar i{background:var(--brass)}
+/* 量表。第一版是「黑底 + 一格純色」—— 資訊完全正確，
+   但它讀起來是除錯面板上的進度條，不是一個角色的體力。
+   差別在三件事，而且三件都是一行 CSS：
+     · 凹槽要有深度（內陰影），不是一塊黑色矩形
+     · 填色要有受光（上緣亮一階的漸層），不是一塊平的紅色
+     · 表面要有刻度（重複漸層的細線），眼睛才會把它當成「儀表」
+   後面再疊一道很淡的外光，滿的時候看得出來它是亮著的。 */
+.bar{
+  width:64px; height:9px; position:relative; overflow:hidden;
+  background:linear-gradient(180deg,#05060a,#0d0f14);
+  border:1px solid var(--edge); border-radius:2px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.04);
+}
+.bar i{
+  display:block; height:100%; transition:width .2s ease;
+  position:relative; border-radius:1px;
+}
+/* 刻度：壓在填色上面，所以只有「有值的那一段」看得到分格 */
+.bar::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(90deg,
+    rgba(0,0,0,.34) 0 1px, rgba(0,0,0,0) 1px 8px);
+}
+#hpbar i{background:linear-gradient(180deg,#e0644e,var(--blood) 55%,#5e1a14);
+         box-shadow:0 0 6px rgba(201,74,58,.45)}
+#mpbar i{box-shadow:0 0 6px rgba(74,134,207,.40)}
+#fullbar i{background:linear-gradient(180deg,#f0cc7a,var(--brass) 55%,#6b4a12)}
 .warn{color:var(--brass)!important}
 .crit{color:var(--blood)!important; animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.45}}
@@ -637,7 +660,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border-style:dashed; color:var(--parch-dim);
 }
 .slot.on{border-style:solid; border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.12)}
-#mpbar i{background:var(--azure)}
+#mpbar i{background:linear-gradient(180deg,#7cb8ea,var(--azure) 55%,#1d3468)}
 
 /* 提示條會被翻譯撐開：英文比中文長快一倍，nowrap 的話兩端都會被切掉。
    改成允許換行、寬度跟著畫布走 —— 讀得完比排成一行重要。 */
