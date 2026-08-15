@@ -1392,65 +1392,6 @@ function bossStats(depth){
   };
 }
 
-/* ── 頭目要看著眼前這個玩家配 ──────────────────────────────
-   使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
-   根本沒有緊張感」。
-
-   查下去原因很具體：上面那三條估算式是從模擬的機器人回歸出來的，
-   而機器人不買裝備、不加點、不施法。實測第十一章的真人攻擊 71、
-   體力 226，估算式給的是攻 34、體 120 —— 整整一半。
-   於是頭目照「攻 34 的人」配血量（八回合打完），真人四回合就砍完；
-   又照「體 120 的人」配攻擊（二十回合打死你），真人站著挨打
-   四十回合都死不了。兩個一半疊起來，就是「一滴血都不用掉」。
-
-   修法不是把估算式再調一次 —— 那只是把同一個錯誤往後推一章。
-   改成**生成當下去看玩家實際的數值**，但刻意只拉七成：
-     · 拉滿的話頭目永遠是八回合，換了通天之劍也一樣 ——
-       那等於把「變強」這件事整個抹掉，比太簡單更糟。
-     · 不拉就是現在這樣：練過的人站著就贏。
-   拉七成的意思是：你變強，仗會變短，但不會變成不用打。
-   另外壓一個 2.6 倍的天花板，免得靠道具堆出來的極端數值把頭目吹爆。 */
-/* 拉的幅度與天花板。第一版是 0.7 / 2.6 倍，實測還是不夠 ——
-   那位玩家的頭目變成「十二刀打完、二十八下才會被打死」，
-   兩倍以上的餘裕，仍然是站著贏。
-
-   而且「被拉的人」要的節奏跟新手不一樣：底線那條式子的目標是
-   八回合打完、二十回合被打死（餘裕 2.5 倍，對第一次打頭目的人剛好）。
-   已經練到超前的人要的是**貼身**，所以往上拉的時候換一組更緊的目標：
-   十一回合打完、十三回合被打死。到不了那組數字沒關係，
-   重點是拉的方向是「兩條線靠近」，不是只把血量加厚。 */
-const BOSS_CAP = 4.0;
-const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 13;
-/* 但這一組緊的目標不能一開始就套上去。實測直接全域改成 11/13 之後，
-   第一章的死亡率從 8% 跳到 23% —— 因為第一章的玩家只要撿到一把像樣的劍
-   就「超出估算」，於是教學章節的第一隻頭目就變成貼身戰。
-   那不是張力，那是把人趕走。
-   所以緊的程度跟著換算深度長：換算深度 10 之前完全不緊（新手照舊），
-   走到最深處才是完整的 11/13。 */
-const bossTense = d => Math.max(0, Math.min(1, (d - 10) / (MON_SPAN - 10)));
-function bossLive(depth){
-  const base = bossStats(depth);
-  const p = (typeof G !== 'undefined' && G) ? G.p : null;
-  if(!p) return base;
-  /* 法師型的玩家不用刀。只看攻擊力的話，五系點滿的人對頭目
-     等於完全沒有被計算 —— 而那正是這次回報的那一位。
-     取「攻擊力」與「一發法術的傷害」裡大的那個當作每回合輸出；
-     法術那一邊乘上魔力夠不夠撐完整場的比例，
-     魔力只夠放兩發的人不該被當成整場都在放。 */
-  const spellDmg = spellsFor(p).length >= 3 ? (30 + p.lv * 4) : 0;
-  const mpRatio  = Math.min(1, p.mmp / (BOSS_KILL_TURNS * 14));
-  const dps = Math.max(pAtk(), spellDmg * mpRatio);
-  const ts = bossTense(depth);
-  const mix = (a, b2) => a + (b2 - a) * ts;
-  const wantHp  = dps * Math.pow(15/16, base.def) * mix(BOSS_KILL_TURNS, BOSS_KILL_LIVE);
-  const wantAtk = (p.mhp / mix(BOSS_SURVIVE_TURNS, BOSS_SURVIVE_LIVE))
-                  / Math.pow(15/16, pDef());
-  const k = 0.60 + 0.25 * ts;
-  const pull = (b, w) =>
-    Math.round(Math.min(b * BOSS_CAP, Math.max(b, b + (w - b) * k)));
-  return { hp: pull(base.hp, wantHp), atk: pull(base.atk, wantAtk), def: base.def };
-}
-
 const HERB = [
  {id:'heal', nm:'回復草', hp:30, price:100},
  {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
@@ -2795,19 +2736,6 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    六種都遵守同一組解剖位置：眼睛在 y6、胸口的星在 y9、帽子壓在 y1–5。
    不遵守的話換一個體型帽子就會浮在半空中，職業辨識立刻壞掉。 */
 const BLOB_SKINS = {
-  /* 方塊：主角的預設體型。使用者挑的是「大眼」那一版，
-     但補了一句「Claude 是方塊型的」—— 所以身體是一個立起來的方塊，
-     四個角各削掉一格（純方角在 16px 下讀起來是一塊磚，不是一個角色），
-     底下兩隻方腳讓它站得住。
-     它排在最前面：SKINS 的第一個就是預設，主角一開始就該是這一隻。 */
-  cube: [
-    [1,4,8],
-    [2,3,10],
-    [3,2,12],[4,2,12],[5,2,12],[6,2,12],
-    [7,2,12],[8,2,12],[9,2,12],[10,2,12],[11,2,12],
-    [12,3,10],
-    [13,3,3],[13,10,3],
-  ],
   /* 六種體型的差別必須是**比例**，不是細節。
      第一版只在同一團身體上加耳朵、加喙、加天線 —— 放大到六倍才看得出來，
      在 16px 的遊戲畫面上六隻長得一模一樣。
@@ -2953,7 +2881,7 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
   const ly = child ? 11 : 12;
   // 腳縫只有「真的有腳」的體型才畫。幽靈與機械畫上去會變成浮在裙襬上的兩條線。
-  const LEG = {cube:[], blob:[3,6,10,13], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
+  const LEG = {blob:[3,6,10,13], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
   for(const lx of (child ? [5,8,11] : (LEG[skin] || LEG.blob))) px(x,PAL[dark],lx,ly,1,2);
 
   // 左上受光：貼著剪影的頂端，不能寫死 y3 —— 矮的體型（史萊姆）
@@ -3042,7 +2970,7 @@ let heroCache = {};
    美術層讀遊戲狀態的話，(1) 產生美術驗收頁時會爆掉，
    (2) 這支在模組初始化時就會跑，那時 VILLAGE 還在 TDZ 裡。 */
 function heroSprite(wi, si, hi, skin, col0){
-  const sk = SKINS.includes(skin) ? skin : 'cube';
+  const sk = SKINS.includes(skin) ? skin : 'blob';
   const col = BLOB_COLS.includes(col0) ? col0 : '#';
   // 快取鍵要含體型與顏色 —— 少了它，換了造型畫面上還是舊的那一隻
   const k = wi + '/' + si + '/' + (hi||'-') + '/' + sk + '/' + col;
@@ -4384,7 +4312,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
                 act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
-                lang: '', skin: 'cube' };
+                lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
 /* 舊存檔沒有 jobs，或有人手動改壞了 —— 只收得懂的欄位，
@@ -4433,7 +4361,7 @@ function loadVillage(){
           godsword: v.godsword ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
-          skin: SKINS.includes(v.skin) ? v.skin : 'cube',
+          skin: SKINS.includes(v.skin) ? v.skin : 'blob',
           pocket: (v.pocket && typeof v.pocket === 'object')
             ? {open: !!v.pocket.open, item: v.pocket.item || null}
             : {open:false, item:null},
@@ -5303,6 +5231,65 @@ function buildFloor(){
   }
   vision();
 }
+/* ── 頭目要看著眼前這個玩家配 ──────────────────────────────
+   使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
+   根本沒有緊張感」。
+
+   查下去原因很具體：上面那三條估算式是從模擬的機器人回歸出來的，
+   而機器人不買裝備、不加點、不施法。實測第十一章的真人攻擊 71、
+   體力 226，估算式給的是攻 34、體 120 —— 整整一半。
+   於是頭目照「攻 34 的人」配血量（八回合打完），真人四回合就砍完；
+   又照「體 120 的人」配攻擊（二十回合打死你），真人站著挨打
+   四十回合都死不了。兩個一半疊起來，就是「一滴血都不用掉」。
+
+   修法不是把估算式再調一次 —— 那只是把同一個錯誤往後推一章。
+   改成**生成當下去看玩家實際的數值**，但刻意只拉七成：
+     · 拉滿的話頭目永遠是八回合，換了通天之劍也一樣 ——
+       那等於把「變強」這件事整個抹掉，比太簡單更糟。
+     · 不拉就是現在這樣：練過的人站著就贏。
+   拉七成的意思是：你變強，仗會變短，但不會變成不用打。
+   另外壓一個 2.6 倍的天花板，免得靠道具堆出來的極端數值把頭目吹爆。 */
+/* 拉的幅度與天花板。第一版是 0.7 / 2.6 倍，實測還是不夠 ——
+   那位玩家的頭目變成「十二刀打完、二十八下才會被打死」，
+   兩倍以上的餘裕，仍然是站著贏。
+
+   而且「被拉的人」要的節奏跟新手不一樣：底線那條式子的目標是
+   八回合打完、二十回合被打死（餘裕 2.5 倍，對第一次打頭目的人剛好）。
+   已經練到超前的人要的是**貼身**，所以往上拉的時候換一組更緊的目標：
+   十一回合打完、十三回合被打死。到不了那組數字沒關係，
+   重點是拉的方向是「兩條線靠近」，不是只把血量加厚。 */
+const BOSS_CAP = 4.0;
+const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 13;
+/* 但這一組緊的目標不能一開始就套上去。實測直接全域改成 11/13 之後，
+   第一章的死亡率從 8% 跳到 23% —— 因為第一章的玩家只要撿到一把像樣的劍
+   就「超出估算」，於是教學章節的第一隻頭目就變成貼身戰。
+   那不是張力，那是把人趕走。
+   所以緊的程度跟著換算深度長：換算深度 10 之前完全不緊（新手照舊），
+   走到最深處才是完整的 11/13。 */
+const bossTense = d => Math.max(0, Math.min(1, (d - 10) / (MON_SPAN - 10)));
+function bossLive(depth){
+  const base = bossStats(depth);
+  const p = (typeof G !== 'undefined' && G) ? G.p : null;
+  if(!p) return base;
+  /* 法師型的玩家不用刀。只看攻擊力的話，五系點滿的人對頭目
+     等於完全沒有被計算 —— 而那正是這次回報的那一位。
+     取「攻擊力」與「一發法術的傷害」裡大的那個當作每回合輸出；
+     法術那一邊乘上魔力夠不夠撐完整場的比例，
+     魔力只夠放兩發的人不該被當成整場都在放。 */
+  const spellDmg = spellsFor(p).length >= 3 ? (30 + p.lv * 4) : 0;
+  const mpRatio  = Math.min(1, p.mmp / (BOSS_KILL_TURNS * 14));
+  const dps = Math.max(pAtk(), spellDmg * mpRatio);
+  const ts = bossTense(depth);
+  const mix = (a, b2) => a + (b2 - a) * ts;
+  const wantHp  = dps * Math.pow(15/16, base.def) * mix(BOSS_KILL_TURNS, BOSS_KILL_LIVE);
+  const wantAtk = (p.mhp / mix(BOSS_SURVIVE_TURNS, BOSS_SURVIVE_LIVE))
+                  / Math.pow(15/16, pDef());
+  const k = 0.60 + 0.25 * ts;
+  const pull = (b, w) =>
+    Math.round(Math.min(b * BOSS_CAP, Math.max(b, b + (w - b) * k)));
+  return { hp: pull(base.hp, wantHp), atk: pull(base.atk, wantAtk), def: base.def };
+}
+
 /* ── 怪物跟著主角的等級走 ─────────────────────────────────────
    使用者的原話：「有些怪物我等於都是秒殺？很沒挑戰性」。
    原因是怪物表只吃深度：練過等級的人走進同一層，面對的是同一批數字。
@@ -10243,7 +10230,7 @@ function closeMenu(){ $('menu').classList.remove('show'); }
 /* ─── 紀錄碑 ────────────────────────────────────────────────── */
 const blobCache = {};
 function blobFor(col, skin){
-  const sk = SKINS.includes(skin) ? skin : 'cube';
+  const sk = SKINS.includes(skin) ? skin : 'blob';
   const k = col + '/' + sk;
   if(!blobCache[k]) blobCache[k] = makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk});
   return blobCache[k];
