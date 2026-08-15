@@ -35,7 +35,9 @@ LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
 # 音樂的合理範圍。下限是「聽得到」，上限是「不會把音效蓋掉」。
 MUSIC_RMS_MIN, MUSIC_RMS_MAX = -30.0, -14.0
 PEAK_CEILING = -1.0          # 貼到 0 dBFS 就是爆音
-SFX_CHECK = ['hit', 'crit', 'level', 'shatter']
+# roar/fell 是頭目登場與倒下的兩記 —— 它們是整套裡最該被聽見的，
+# 而且是新加的，最容易發生「加了但根本沒聲音」而沒有人發現。
+SFX_CHECK = ['hit', 'crit', 'level', 'shatter', 'roar', 'fell']
 
 # 掛一個分析節點在總線上，量一段時間的尖峰與 RMS
 METER = """(ms)=>new Promise(done=>{

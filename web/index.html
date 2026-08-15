@@ -5675,6 +5675,8 @@ const MIND_CHAIN = {b_mind1:'b_mind2', b_mind2:'b_mind'};
 function bossDown(m){
   G.shake = Math.max(G.shake, 16);
   burst(m.x, m.y, 40, '#f5dc7a', 80, 24, 1.2);
+  // 打完一章的頭目值得一段自己的聲音 —— 以前這裡跟打死一隻老鼠同一個 kill
+  if(!MIND_CHAIN[m.d.id]) SFX.play('fell');
   const next = MIND_CHAIN[m.d.id];
   if(next){
     const nd = bossById(next);
@@ -7250,6 +7252,17 @@ const SFX = (()=>{
     ident: ()=>{ [784,1047,1319].forEach((f,i)=>tone(f,0,.13,'triangle',.10,i*.06)); },
     curse: ()=>{ tone(160,120,.5,'sawtooth',.13); tone(84,70,.6,'square',.10,.05); },
     open:  ()=>tone(520,700,.05,'square',.05),
+    /* 頭目登場：下行的低音疊一記悶雷。
+       這一格本來是借用 level（升級的上行大三和弦）—— 那是「恭喜」的聲音，
+       接在頭目走進畫面後面等於在說反話。打擊音全部下行、魔法全部上行，
+       登場屬於前者。 */
+    roar:  ()=>{ tone(160, 58, .55,'sawtooth',.17); tone(80, 42, .75,'square',.11,.05);
+                 hiss(.45,.20, 600, 90, 0, .8); },
+    /* 頭目倒下：先一記碎裂，再一段慢慢爬上去的大三和弦，解決在八度上。
+       跟 level 的差別是「慢」—— 升一級是一瞬間的事，
+       打完一章的頭目值得一段有長度的聲音。 */
+    fell:  ()=>{ hiss(.30,.24, 2200, 200, 0, 1.2);
+                 [392,494,587,784].forEach((f,i)=>tone(f,0,.34,'triangle',.13,.10+i*.13)); },
   };
 
   return {
@@ -9434,7 +9447,7 @@ function bossWatch(){
   if(on && !G.f.bossSeen){
     G.f.bossSeen = 1;
     if(!REDUCED){ G.zoom = 1.85; G.zoomTo = 1.2; }
-    SFX.play('level');
+    SFX.play('roar');
     G.shake = Math.max(G.shake, 9);
   } else if(!G.f.bossLock && G.f.bossSeen){
     // 打完了：鏡頭鬆回去
