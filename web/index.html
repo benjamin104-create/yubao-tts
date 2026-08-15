@@ -358,12 +358,21 @@ body{
   border:1px solid var(--edge);
   width:270px; max-width:100%; height:auto;
 }
+/* 圖例。第一版是七顆方塊排成兩行 —— 資訊正確，但它讀起來是
+   除錯面板上的色票表，而那正是使用者說的「很程式開發的感覺」。
+   兩個修法，都不動內容：
+     · 方塊改成小圓點（方塊＝資料，圓點＝標記）
+     · 前三個是地形，地圖上一眼就分得出來，壓暗一階；
+       後四個是記號（你／樓梯／怪物／道具），那才是真的需要對照的 */
 #legend{
-  display:flex; flex-wrap:wrap; gap:3px 12px; margin-top:8px;
-  font-family:var(--mono); font-size:9.5px; color:var(--parch-dim);
+  display:flex; flex-wrap:wrap; gap:2px 11px; margin-top:9px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.05em;
+  color:var(--parch-dim);
 }
-#legend span{display:flex; align-items:center; gap:4px}
-#legend i{width:7px; height:7px; display:block}
+#legend span{display:flex; align-items:center; gap:5px}
+#legend i{width:6px; height:6px; display:block; border-radius:50%;
+          box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+#legend span:nth-child(-n+3){opacity:.5}
 
 /* ── 裝備後的角色形象 ──
    清單告訴你「身上有什麼」，這張圖告訴你「看起來像什麼」。
@@ -595,8 +604,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:center;
   font-family:var(--mono); font-size:10px; color:var(--parch-dim); max-width:420px;
 }
-.bmlegend span{display:flex; align-items:center; gap:4px}
-.bmlegend i{width:8px; height:8px; display:block}
+.bmlegend span{display:flex; align-items:center; gap:5px}
+.bmlegend i{width:7px; height:7px; display:block; border-radius:50%;
+            box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.bmlegend span:nth-child(-n+3){opacity:.55}
 #bigx{padding:10px 26px; font-size:13px; min-height:44px; touch-action:manipulation}
 
 /* 瞄準層只負責「變暗 + 告訴你要選方向」，本身不吃事件 ——
@@ -3233,6 +3244,30 @@ function makeShield(v){
   else px(x,PAL['u'],7,6,2,2);                             // 盾徽
   return c;
 }
+
+/* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
+   使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
+   分水嶺 —— 沒有它，牆與地板只是兩張並排的貼圖，所以整片地面
+   讀起來是平的；有了它，牆才像是**站在**地板上。
+
+   四個方向各先生成一張，畫的時候直接貼。每一幀替一百多格各做一次
+   漸層是白費的，而且做漸層在低階手機上並不便宜。
+   上方的牆壓得最重：光從左上來，牆的下緣本來就是最暗的地方。 */
+const AO = (()=>{
+  const edge = (dir)=>{
+    const c = document.createElement('canvas'); c.width = T; c.height = T;
+    const x = c.getContext('2d');
+    const g = dir === 'u' ? x.createLinearGradient(0, 0, 0, 8)
+            : dir === 'd' ? x.createLinearGradient(0, T, 0, T - 5)
+            : dir === 'l' ? x.createLinearGradient(0, 0, 6, 0)
+            :               x.createLinearGradient(T, 0, T - 6, 0);
+    g.addColorStop(0, dir === 'u' ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, T, T);
+    return c;
+  };
+  return { u: edge('u'), d: edge('d'), l: edge('l'), r: edge('r') };
+})();
 
 /* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
    牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
@@ -7972,6 +8007,11 @@ function draw(dt){
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
       if(h % 9 === 0) cx.drawImage(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      // 貼著牆的那一圈壓暗 —— 牆才會像是站在地板上，而不是貼在旁邊
+      if(!walkable(x, y-1)) cx.drawImage(AO.u, px_, py);
+      if(!walkable(x, y+1)) cx.drawImage(AO.d, px_, py);
+      if(!walkable(x-1, y)) cx.drawImage(AO.l, px_, py);
+      if(!walkable(x+1, y)) cx.drawImage(AO.r, px_, py);
     }
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——

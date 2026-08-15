@@ -2137,6 +2137,30 @@ function makeShield(v){
   return c;
 }
 
+/* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
+   使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
+   分水嶺 —— 沒有它，牆與地板只是兩張並排的貼圖，所以整片地面
+   讀起來是平的；有了它，牆才像是**站在**地板上。
+
+   四個方向各先生成一張，畫的時候直接貼。每一幀替一百多格各做一次
+   漸層是白費的，而且做漸層在低階手機上並不便宜。
+   上方的牆壓得最重：光從左上來，牆的下緣本來就是最暗的地方。 */
+const AO = (()=>{
+  const edge = (dir)=>{
+    const c = document.createElement('canvas'); c.width = T; c.height = T;
+    const x = c.getContext('2d');
+    const g = dir === 'u' ? x.createLinearGradient(0, 0, 0, 8)
+            : dir === 'd' ? x.createLinearGradient(0, T, 0, T - 5)
+            : dir === 'l' ? x.createLinearGradient(0, 0, 6, 0)
+            :               x.createLinearGradient(T, 0, T - 6, 0);
+    g.addColorStop(0, dir === 'u' ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, T, T);
+    return c;
+  };
+  return { u: edge('u'), d: edge('d'), l: edge('l'), r: edge('r') };
+})();
+
 /* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
    牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
 /* 地形的四階色帶：[最暗, 暗, 中, 亮]。原本寫死 w/x/y/z（冷色石階），
