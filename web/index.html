@@ -323,6 +323,39 @@ body{
 
 /* ── 畫面 ── */
 #screenwrap{position:relative; background:#000; line-height:0; overflow:hidden; touch-action:none}
+/* ── 頭目的血條 ──────────────────────────────────────────────
+   為什麼是 HTML 而不是畫在畫布上：畫布內部只有 224px 寬，
+   桌機上放大將近四倍 —— 6px 的字在螢幕上等於 23px，
+   一條血條就吃掉整個畫面上緣（試過，那看起來像跑錯版）。
+   用 HTML 才拿得到跟狀態列同一套字體與同一個尺寸感。 */
+#bossbar{
+  position:absolute; left:50%; top:10px; transform:translateX(-50%) translateY(-8px);
+  width:min(62%, 340px); padding:5px 9px 6px; line-height:1.2;
+  background:linear-gradient(180deg,rgba(20,17,15,.92),rgba(8,7,6,.92));
+  border:1px solid var(--brass-dim); border-radius:3px;
+  box-shadow:0 2px 10px rgba(0,0,0,.55);
+  opacity:0; pointer-events:none; transition:opacity .28s ease, transform .28s ease;
+}
+#bossbar.show{opacity:1; transform:translateX(-50%) translateY(0)}
+#bossnm{
+  display:block; font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  color:var(--parch); text-align:center; margin-bottom:4px;
+}
+#bosstrack{
+  position:relative; height:7px; background:linear-gradient(180deg,#05060a,#0d0f14);
+  border:1px solid var(--edge); border-radius:2px; overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9);
+}
+#bosstrack i{position:absolute; left:0; top:0; bottom:0; display:block}
+/* 殘影只往下追 —— 那一段白色的差距就是「這一刀有多重」 */
+#bosslag{background:rgba(232,220,192,.5); transition:width .45s ease-out}
+#bosshp{background:linear-gradient(180deg,#e0644e,var(--blood) 55%,#5e1a14);
+        box-shadow:0 0 6px rgba(201,74,58,.5); transition:width .12s linear}
+#bosstrack::after{
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg,
+    rgba(0,0,0,.40) 0 1px, rgba(0,0,0,0) 1px 25%);
+}
 /* 只有主畫面拉滿寬度。這條規則以前是 `canvas{}`，
    結果把小地圖也一起拉寬、糊成非整數倍縮放。 */
 #game{
@@ -1005,6 +1038,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div id="screenwrap">
       <canvas id="game" width="224" height="160"></canvas>
       <div id="tags"></div>
+      <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
+      <div id="bossbar"><b id="bossnm"></b><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
       <div id="vig"></div>
       <div id="panel">
         <h2><span id="ptitle">背包</span><em id="pcount"></em>
@@ -7882,6 +7917,28 @@ function drawBackdrop(kind, ox, oy){
   }
 }
 
+/* ── 頭目的血條 ──────────────────────────────────────────────
+   頭目現在真的會打死人（數值改成看著玩家配），那就要讓玩家看得到
+   自己打掉了多少 —— 一場十五刀的仗，如果進度只能從腳邊那條
+   十二像素的小血條讀，緊張感會變成焦躁。
+
+   殘影條完全交給 CSS：兩條一起設同一個寬度，紅色那條 0.12 秒到位、
+   淡色那條 0.45 秒才追上，中間那段差距就是「這一刀有多重」。
+   用 JS 自己插值也做得到，但那是每一幀都要記狀態，
+   而這裡一行 transition 就夠。 */
+function bossBar(){
+  const el = $('bossbar'); if(!el) return;
+  const bm = (G && G.f && G.f.bossSeen && !G.over)
+    ? G.mons.find(m => m.d.boss && m.hp > 0) : null;
+  if(!bm){ el.classList.remove('show'); return; }
+  el.classList.add('show');
+  const nm = locName('mon', bm.d);
+  if(el.dataset.nm !== nm){ el.dataset.nm = nm; $('bossnm').textContent = nm; }
+  const w = (Math.max(0, Math.min(1, bm.hp / bm.mhp)) * 100).toFixed(1) + '%';
+  $('bosshp').style.width = w;
+  $('bosslag').style.width = w;
+}
+
 function draw(dt){
   if(!G) return;
   // 鏡頭永遠對準玩家，不夾在地圖邊界內。
@@ -8418,6 +8475,8 @@ function draw(dt){
   cx.globalAlpha=1;
 
   if(zoomed) cx.restore();
+
+  bossBar();
 
   lastOx=ox; lastOy=oy; lastZ=Z;
   updateTags();
