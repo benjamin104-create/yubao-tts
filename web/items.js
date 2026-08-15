@@ -390,11 +390,53 @@ t('主角練過頭時，同一隻怪會變強，而且名字上看得出來', ()
   // 補正有天花板 —— 不然練得越久，遊戲越變成看誰的數字大
   G.p.lv += 60;
   const cap = api.spawnMon(rat, G.p.x, G.p.y);
-  assert(cap.d.hp <= Math.round(rat.hp * 1.75), '補正沒有上限：' + cap.d.hp);
+  assert(cap.d.hp <= Math.round(rat.hp * 2.20), '補正沒有上限：' + cap.d.hp);
   // 玩家要看得出來：名字上有記號，而且原本的表沒有被污染
   assert(api.i18n.locName('mon', up.d) !== api.i18n.locName('mon', rat),
          '變強了卻叫同一個名字');
   assert(!rat.lvup, '補正寫回了資料表 —— 下一場遊戲會繼承這個值');
+});
+
+/* ── 頭目看著眼前這個玩家配數值 ──────────────────────────────
+   使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
+   根本沒有緊張感」。原因是頭目的數值來自一條**估算**玩家的式子，
+   而那條式子是從不買裝備、不加點、不施法的機器人回歸出來的。
+   這兩條驗的就是：估算對得上的人不受影響，練過頭的人才會被拉。 */
+t('一般玩家遇到的頭目跟原本一樣強', ()=>{
+  V.act = 0;
+  api.newGame(9090);
+  const G = api.G();
+  G.act = 12; G.floor = 1; api.buildFloor();
+  const base = api.bossStats(G.md), live = api.bossLive(G.md);
+  assert.strictEqual(live.hp, base.hp, '沒有超前卻被拉了血量');
+  assert.strictEqual(live.atk, base.atk, '沒有超前卻被拉了攻擊');
+});
+
+t('練過頭的玩家遇到的頭目會跟著變強，但不會無限膨脹', ()=>{
+  V.act = 0;
+  api.newGame(9091);
+  const G = api.G(), p = G.p;
+  G.act = 12; G.floor = 1; api.buildFloor();
+  const base = api.bossStats(G.md);
+
+  // 一個真的練過的玩家：頂級武器打滿、等級超前、五系全滿
+  p.weap = api.mk('weap', 'babel', {known:1, up:5});
+  p.shld = api.mk('shld', 'aegis', {known:1, up:4});   // 防禦也要給 ——
+  // 頭目的攻擊是照「幾回合打死你」反推的，而那個回合數同時吃體力與防禦。
+  // 只加體力不加防禦的玩家在數學上其實沒有變耐打多少。
+  p.lv += 15; p.mhp += 150; p.hp = p.mhp;
+  p.sch = {heal:5, bolt:5, fire:5, aqua:5, wind:5};
+  p.mmp = 300;
+  const live = api.bossLive(G.md);
+  assert(live.hp  > base.hp  * 1.3, '血量沒有跟上：' + live.hp + ' vs ' + base.hp);
+  assert(live.atk > base.atk * 1.3, '攻擊沒有跟上：' + live.atk + ' vs ' + base.atk);
+  assert(live.hp  <= base.hp  * 4.0 + 1, '血量沒有天花板：' + live.hp);
+  assert(live.atk <= base.atk * 4.0 + 1, '攻擊沒有天花板：' + live.atk);
+
+  // 而且真的用在生出來的那一隻身上 —— 算得對但沒接上是這個專案的老毛病
+  const bd = api.BOSS.find(b => !b.mul && !b.turret) || api.BOSS[0];
+  const mo = api.spawnMon(bd, p.x, p.y);
+  assert(mo.mhp > base.hp * 1.3, '生出來的頭目還是舊數值：' + mo.mhp);
 });
 
 // ── 職業帽 ──────────────────────────────────────────────────

@@ -1392,6 +1392,65 @@ function bossStats(depth){
   };
 }
 
+/* ── 頭目要看著眼前這個玩家配 ──────────────────────────────
+   使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
+   根本沒有緊張感」。
+
+   查下去原因很具體：上面那三條估算式是從模擬的機器人回歸出來的，
+   而機器人不買裝備、不加點、不施法。實測第十一章的真人攻擊 71、
+   體力 226，估算式給的是攻 34、體 120 —— 整整一半。
+   於是頭目照「攻 34 的人」配血量（八回合打完），真人四回合就砍完；
+   又照「體 120 的人」配攻擊（二十回合打死你），真人站著挨打
+   四十回合都死不了。兩個一半疊起來，就是「一滴血都不用掉」。
+
+   修法不是把估算式再調一次 —— 那只是把同一個錯誤往後推一章。
+   改成**生成當下去看玩家實際的數值**，但刻意只拉七成：
+     · 拉滿的話頭目永遠是八回合，換了通天之劍也一樣 ——
+       那等於把「變強」這件事整個抹掉，比太簡單更糟。
+     · 不拉就是現在這樣：練過的人站著就贏。
+   拉七成的意思是：你變強，仗會變短，但不會變成不用打。
+   另外壓一個 2.6 倍的天花板，免得靠道具堆出來的極端數值把頭目吹爆。 */
+/* 拉的幅度與天花板。第一版是 0.7 / 2.6 倍，實測還是不夠 ——
+   那位玩家的頭目變成「十二刀打完、二十八下才會被打死」，
+   兩倍以上的餘裕，仍然是站著贏。
+
+   而且「被拉的人」要的節奏跟新手不一樣：底線那條式子的目標是
+   八回合打完、二十回合被打死（餘裕 2.5 倍，對第一次打頭目的人剛好）。
+   已經練到超前的人要的是**貼身**，所以往上拉的時候換一組更緊的目標：
+   十一回合打完、十三回合被打死。到不了那組數字沒關係，
+   重點是拉的方向是「兩條線靠近」，不是只把血量加厚。 */
+const BOSS_CAP = 4.0;
+const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 13;
+/* 但這一組緊的目標不能一開始就套上去。實測直接全域改成 11/13 之後，
+   第一章的死亡率從 8% 跳到 23% —— 因為第一章的玩家只要撿到一把像樣的劍
+   就「超出估算」，於是教學章節的第一隻頭目就變成貼身戰。
+   那不是張力，那是把人趕走。
+   所以緊的程度跟著換算深度長：換算深度 10 之前完全不緊（新手照舊），
+   走到最深處才是完整的 11/13。 */
+const bossTense = d => Math.max(0, Math.min(1, (d - 10) / (MON_SPAN - 10)));
+function bossLive(depth){
+  const base = bossStats(depth);
+  const p = (typeof G !== 'undefined' && G) ? G.p : null;
+  if(!p) return base;
+  /* 法師型的玩家不用刀。只看攻擊力的話，五系點滿的人對頭目
+     等於完全沒有被計算 —— 而那正是這次回報的那一位。
+     取「攻擊力」與「一發法術的傷害」裡大的那個當作每回合輸出；
+     法術那一邊乘上魔力夠不夠撐完整場的比例，
+     魔力只夠放兩發的人不該被當成整場都在放。 */
+  const spellDmg = spellsFor(p).length >= 3 ? (30 + p.lv * 4) : 0;
+  const mpRatio  = Math.min(1, p.mmp / (BOSS_KILL_TURNS * 14));
+  const dps = Math.max(pAtk(), spellDmg * mpRatio);
+  const ts = bossTense(depth);
+  const mix = (a, b2) => a + (b2 - a) * ts;
+  const wantHp  = dps * Math.pow(15/16, base.def) * mix(BOSS_KILL_TURNS, BOSS_KILL_LIVE);
+  const wantAtk = (p.mhp / mix(BOSS_SURVIVE_TURNS, BOSS_SURVIVE_LIVE))
+                  / Math.pow(15/16, pDef());
+  const k = 0.60 + 0.25 * ts;
+  const pull = (b, w) =>
+    Math.round(Math.min(b * BOSS_CAP, Math.max(b, b + (w - b) * k)));
+  return { hp: pull(base.hp, wantHp), atk: pull(base.atk, wantAtk), def: base.def };
+}
+
 const HERB = [
  {id:'heal', nm:'回復草', hp:30, price:100},
  {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
@@ -5262,15 +5321,19 @@ const overLv = () => {
   const want = Math.max(1, Math.round(scaleDepth(G.depth) * 0.75));
   return Math.max(0, p.lv - want - 2);
 };
-// 每超前一級 +6%，最多 +75%。到頂大約是超前十二級 —— 再上去就是
-// 玩家真的練得比遊戲快，那時候該給的是新裝備，不是無止境的血量。
-const lvMul = () => Math.min(1.75, 1 + overLv() * 0.06);
+/* 每超前一級 +9%，最多 +120%。
+   第一版是 +6%／上限 +75%，實測不夠：超前十級的玩家攻擊 71，
+   而那一層最硬的徘徊石像從 60 血補到 89 —— 還是三刀。
+   使用者的回報是「怪物太弱⋯根本沒有緊張感」，那就是這條係數太客氣。
+   到頂大約是超前十四級 —— 再上去就是玩家真的練得比遊戲快，
+   那時候該補的是頭目（bossLive 會自己看著玩家配），不是雜魚的血量。 */
+const lvMul = () => Math.min(2.20, 1 + overLv() * 0.09);
 
 function spawnMon(d,x,y){
   // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
-  // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossStats()。
+  // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossLive()。
   if(d.boss){
-    const s = bossStats(G.md);
+    const s = bossLive(G.md);
     // 倍率讓同一個深度的頭目也能有不同的手感。
     // 沒有它的話，「意識」的三個型態數值一模一樣 ——
     // 最終戰就變成同一場仗打三次，而不是三道不同的題目。
