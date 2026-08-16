@@ -339,8 +339,19 @@ body{
 #bossbar.show{opacity:1; transform:translateX(-50%) translateY(0)}
 #bossnm{
   display:block; font-family:var(--mono); font-size:10px; letter-spacing:.16em;
-  color:var(--parch); text-align:center; margin-bottom:4px;
+  color:var(--parch); text-align:center; margin-bottom:3px;
 }
+/* 幾條命。使用者：「你畫的是一條跳三次血條魔王才會掛掉，
+   但是不知道的玩家會因為他會自動回復血」—— 完全正確：
+   血條歸零卻又滿回來，在沒有預告的情況下讀起來就是「這東西會回血」，
+   那是最讓人洩氣的一種誤解。所以打之前就把還剩幾條畫出來。 */
+#bosspips{display:flex; justify-content:center; gap:4px; margin-bottom:4px}
+#bosspips i{
+  width:5px; height:5px; display:block; transform:rotate(45deg);
+  background:linear-gradient(180deg,#e0644e,var(--blood));
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);
+}
+#bosspips i.off{background:var(--edge); box-shadow:none; opacity:.55}
 #bosstrack{
   position:relative; height:7px; background:linear-gradient(180deg,#05060a,#0d0f14);
   border:1px solid var(--edge); border-radius:2px; overflow:hidden;
@@ -1039,7 +1050,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <canvas id="game" width="224" height="160"></canvas>
       <div id="tags"></div>
       <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
-      <div id="bossbar"><b id="bossnm"></b><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
+      <div id="bossbar"><b id="bossnm"></b><span id="bosspips"></span><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
       <div id="vig"></div>
       <div id="panel">
         <h2><span id="ptitle">背包</span><em id="pcount"></em>
@@ -5329,7 +5340,10 @@ function buildFloor(){
    十一回合打完、十三回合被打死。到不了那組數字沒關係，
    重點是拉的方向是「兩條線靠近」，不是只把血量加厚。 */
 const BOSS_CAP = 4.0;
-const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 13;
+/* 使用者第二次回報：「還可以，但是我還是覺得我比較強」。
+   所以再縮一次牠打死你的回合數 —— 血量不再往上加，
+   因為長仗會變成無聊，真正缺的是「站著對砍會死」。 */
+const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 9;
 /* 但這一組緊的目標不能一開始就套上去。實測直接全域改成 11/13 之後，
    第一章的死亡率從 8% 跳到 23% —— 因為第一章的玩家只要撿到一把像樣的劍
    就「超出估算」，於是教學章節的第一隻頭目就變成貼身戰。
@@ -5337,7 +5351,8 @@ const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 13;
    所以緊的程度跟著換算深度長：換算深度 10 之前完全不緊（新手照舊），
    走到最深處才是完整的 11/13。 */
 const bossTense = d => Math.max(0, Math.min(1, (d - 10) / (MON_SPAN - 10)));
-function bossLive(depth){
+function bossLive(depth, d0){
+  d0 = d0 || {};
   const base = bossStats(depth);
   const p = (typeof G !== 'undefined' && G) ? G.p : null;
   if(!p) return base;
@@ -5354,10 +5369,16 @@ function bossLive(depth){
   const wantHp  = dps * Math.pow(15/16, base.def) * mix(BOSS_KILL_TURNS, BOSS_KILL_LIVE);
   const wantAtk = (p.mhp / mix(BOSS_SURVIVE_TURNS, BOSS_SURVIVE_LIVE))
                   / Math.pow(15/16, pDef());
-  const k = 0.60 + 0.25 * ts;
+  const k = 0.65 + 0.35 * ts;      // 走到最深處就完全照著玩家配
   const pull = (b, w) =>
     Math.round(Math.min(b * BOSS_CAP, Math.max(b, b + (w - b) * k)));
-  return { hp: pull(base.hp, wantHp), atk: pull(base.atk, wantAtk), def: base.def };
+  /* 會站起來的頭目（鏡之女王三條、不死鳥兩條）每一條要短一點。
+     照單條算的話，三條就是同一場仗打三次 —— 那不是難度，是長度，
+     而長度只會讓人想快轉。總量仍然比單條的多，但每一條掉得快，
+     血條看得出進度，打完一條也真的像一個段落。 */
+  const bars = 1 + (d0.lives | 0) * 0.55;
+  return { hp: Math.round(pull(base.hp, wantHp) / bars),
+           atk: pull(base.atk, wantAtk), def: base.def };
 }
 
 /* ── 怪物跟著主角的等級走 ─────────────────────────────────────
@@ -5390,7 +5411,7 @@ function spawnMon(d,x,y){
   // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
   // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossLive()。
   if(d.boss){
-    const s = bossLive(G.md);
+    const s = bossLive(G.md, d);
     // 倍率讓同一個深度的頭目也能有不同的手感。
     // 沒有它的話，「意識」的三個型態數值一模一樣 ——
     // 最終戰就變成同一場仗打三次，而不是三道不同的題目。
@@ -7947,6 +7968,15 @@ function bossBar(){
   el.classList.add('show');
   const nm = locName('mon', bm.d);
   if(el.dataset.nm !== nm){ el.dataset.nm = nm; $('bossnm').textContent = nm; }
+  /* 還剩幾條。總數＝lives + 1；打掉一條就熄一顆。
+     只有多命的頭目才畫 —— 單命的頭目掛一排「剩 1 條」是雜訊。 */
+  const tot = (bm.d.lives | 0) + 1, left = tot - (bm.lives | 0);
+  const pips = $('bosspips');
+  if(pips.dataset.tot !== String(tot)){
+    pips.dataset.tot = String(tot); pips.innerHTML = '';
+    if(tot > 1) for(let i = 0; i < tot; i++) pips.appendChild(document.createElement('i'));
+  }
+  pips.querySelectorAll('i').forEach((el2, i) => el2.className = i < left ? '' : 'off');
   const w = (Math.max(0, Math.min(1, bm.hp / bm.mhp)) * 100).toFixed(1) + '%';
   $('bosshp').style.width = w;
   $('bosslag').style.width = w;
@@ -8302,20 +8332,30 @@ function draw(dt){
   };
   // 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
   // 同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
-  const shadow=(dx,dy)=>{
+  const shadow=(dx,dy,sc)=>{
+    const s = sc || 1, X = Math.round(ox+dx*T), Y = Math.round(oy+dy*T);
+    const w2 = Math.round(10*s), o2 = Math.round((T - w2)/2);
     cx.fillStyle='rgba(0,0,0,.42)';
-    cx.fillRect(Math.round(ox+dx*T)+3, Math.round(oy+dy*T)+13, 10, 3);
-    cx.fillRect(Math.round(ox+dx*T)+2, Math.round(oy+dy*T)+14, 12, 1);
+    cx.fillRect(X+o2, Y+13, w2, 3);
+    cx.fillRect(X+o2-1, Y+14, w2+2, 1);
   };
-  const drawEnt=(o, img, name, ph)=>{
+  /* sc = 放大倍率。頭目用 2 ——
+     使用者：「我希望魔王本身在畫面上大隻一點，比較有威嚇性，
+     不然頂多是畫面拉近，臨場感還有點不夠」。完全正確：鏡頭推近會把
+     **所有東西**一起放大，所以頭目跟雜魚的相對大小沒有變，
+     威嚇感自然沒有出來。真正有效的是牠比別人大。
+     錨點放在腳底中央：放大之後往上、往左右長，牠還是站在同一格上。 */
+  const drawEnt=(o, img, name, ph, sc)=>{
     const [dx,dy] = entPos(o);
     const [lx2,ly2] = lungeOf(o);
     const X = Math.round(ox+dx*T + lx2), Y = Math.round(oy+dy*T + ly2 + bobOf(o, ph||0));
-    cx.drawImage(img, X, Y);
+    const s = sc || 1, w2 = T*s;
+    const PX = X - Math.round((s-1)*T/2), PY = Y - Math.round((s-1)*T);
+    cx.drawImage(img, PX, PY, w2, w2);
     if(o.flash > 0){                       // 受擊白閃：整個剪影瞬間打亮
       cx.save();
       cx.globalAlpha = Math.min(1, o.flash/0.09) * .85;
-      cx.drawImage(whiteOf(img, name), X, Y);
+      cx.drawImage(whiteOf(img, name), PX, PY, w2, w2);
       cx.restore();
     }
   };
@@ -8342,10 +8382,10 @@ function draw(dt){
     // 「意識・複寫」的本體也長得跟你一樣 —— 分辨它的方法只有「它不跟著你動」
     const img = m.d.mind === 2 ? heroNow() : (atlas[m.d.id] || atlas.rat);
     const [mx,my] = entPos(m);
-    shadow(mx,my);
+    shadow(mx,my, m.d.boss ? 2 : 1);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
-    drawEnt(m, img, m.d.id, m.id*1.7);
+    drawEnt(m, img, m.d.id, m.id*1.7, m.d.boss ? 2 : 1);
     cx.restore();
     if(m.st['睡']){ cx.fillStyle=PAL['r']; cx.fillRect(ox+m.x*T+11, oy+m.y*T+1, 3,1); cx.fillRect(ox+m.x*T+12, oy+m.y*T+2, 1,1); }
     // 血條（只在受傷時出現，不佔用畫面）
