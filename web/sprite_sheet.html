@@ -222,7 +222,7 @@ const BOSS = [
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  rng:10, telegraph:1, cadence:3, blink:[10,15], still:1,
+  rng:10, telegraph:1, cadence:3, blink:[10,15], still:1, unreflect:1,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
@@ -786,6 +786,7 @@ s.014|Something is moving nearby — you cannot rest.|ちかくで なにかが 
 s.015|You are already fully recovered.|もう かんぜんに かいふくしている。
 s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
+s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
 s.018|{v0} has you in its sights — get off this line!|{v0} が きみを ねらった —— この せんから はなれろ！
 s.blink|{v0} steps out of another mirror.|{v0} が べつの かがみから あらわれた。
 s.019|The light sweeps past, blocked by the pillar.|ひかりは はしらの よこを すぎていった。
@@ -2142,6 +2143,16 @@ function makeShield(v){
   else px(x,PAL['u'],7,6,2,2);                             // 盾徽
   return c;
 }
+
+/* 頭目在畫面上放多大。
+   第一版是 2 倍 —— 使用者回報「體積變大，但是主角可以踩在他身上？
+   這個設定很奇怪」。完全正確：兩倍是 32px，往左右各長 8px，
+   剛好蓋滿隔壁那一格，於是站在旁邊的主角看起來是站在她身上。
+   1.6 倍是 25.6px，左右各長 5px —— 還是明顯比雜魚大一號，
+   但不會侵門踏戶到隔壁那一格。
+   （真正的解是讓頭目佔 2x2 格，但那要改碰撞、尋路、攻擊判定與存檔，
+     為了一個視覺問題動整套規則不划算。） */
+const BOSS_SCALE = 1.6;
 
 /* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
    使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
