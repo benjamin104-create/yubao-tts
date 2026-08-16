@@ -1388,13 +1388,13 @@ const BOSS = [
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1,
+  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
-  rng:9, line:'塔頂的歌聲。'},
+  rng:9, mpburn:12, line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'最後一道門。'},
 
@@ -1846,6 +1846,9 @@ m.drop|It dropped "{nm}".|「{nm}」を おとした。
 m.levelup|Level up! Now level {n}.|レベルが {n} に あがった！
 m.mmiss|{nm}'s attack misses.|{nm} の こうげきは はずれた。
 m.mhit|{nm}'s {r}attack lands. You take {n} damage.|{nm} の {r}こうげき。{n} の ダメージ。
+m.heavy|{nm}'s heavy blow hurls you back! {n} damage.|{nm} の おもい いちげきで ふきとばされた！{n} の ダメージ。
+m.charge2|{nm} is winding up — the next blow will be heavy.|{nm} が ちからを ためている —— つぎの いちげきは おもい。
+m.mpburn|{nm} tears the magic out of you — half your MP is gone!|{nm} が まりょくを ひきさいた —— MP が はんぶんに！
 m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
@@ -6000,6 +6003,25 @@ function decide(m){
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
   if(m.d.mind) return mindDecide(m);
+  /* 頭目的特技：把主角的魔力撕掉一半。
+     使用者：「我 MP 這麼多⋯除非魔王有特殊技能（顯示）把主角的 MP 半減」。
+     它刻意有兩個限制：
+       · 只有在主角魔力還夠放幾發的時候才發動 —— 已經沒魔力的人
+         再被撕一次，那不是難度，那是踢一個倒在地上的人。
+       · 有冷卻，而且發動的那一下有訊息與畫面。看得到是誰做的、
+         做了什麼，玩家才知道下一場要留一手，而不是覺得「魔力自己不見了」。 */
+  if(m.d.mpburn && m.st && !m.st['睡'] && !m.st['麻']){
+    m.burnCd = (m.burnCd === undefined) ? m.d.mpburn : m.burnCd - 1;
+    // 「看得到她」就算數。用「同一間房」的話，她閃到走廊或玩家站在門口
+    // 就永遠不會發動 —— 而那正是實測抓到的：四十回合一次都沒撕。
+    const sees2 = G.seen[key(m.x, m.y)] === 2;
+    if(m.burnCd <= 0 && sees2 && p.mp >= Math.max(12, p.mmp * 0.35)){
+      m.burnCd = m.d.mpburn;
+      return {k:'mpburn'};
+    }
+    if(m.burnCd <= 0) m.burnCd = 2;               // 條件不成立就過兩回合再看
+  }
+
   /* 瞬移型頭目（鏡之女王）。她不走路 —— 她換一面鏡子出現。
      倒數只在「沒有預告掛著」的時候走：預告到一半閃走的話，
      玩家剛剛為了躲線做的那一步就白做了，而白做的一步就是被耍。 */
@@ -6212,6 +6234,27 @@ function lineClear(ax,ay,bx,by){
   while(x!==bx||y!==by){ if(!walkable(x,y)) return false; x+=sx; y+=sy; }
   return true;
 }
+/* 把主角沿著一個方向推出去。衝撞與頭目的重擊共用這一支 ——
+   兩個地方各寫一份的話，遲早有一份忘了播動畫，
+   而那正是使用者回報「沒有被撞飛的感覺」的原因。
+   回傳推了幾格、以及有沒有撞到牆（撞牆另外算傷害）。 */
+function knockPlayer(dx, dy, max){
+  const p = G.p, fx0 = p.x, fy0 = p.y;
+  let tiles = 0;
+  for(; tiles < max; tiles++){
+    const nx = p.x + dx, ny = p.y + dy;
+    if(!walkable(nx, ny) || monAt(nx, ny)) break;
+    p.x = nx; p.y = ny;
+  }
+  /* 真的把「飛出去」演出來：從原地滑到落點，越遠滑越久，路上一路揚塵。
+     少了這一段，程式上「被推了六格」在畫面上只是主角換了個位置。 */
+  if(tiles > 0){
+    G.anim.push({o:p, fx:fx0, fy:fy0, t:0, dur:.10 + tiles*.045});
+    trail(fx0, fy0, dx, dy, tiles, '#a99a7e');
+  }
+  return {tiles, slam: !walkable(p.x + dx, p.y + dy)};
+}
+
 function act(m,it){
   const p=G.p;
   if(it.k==='melee'||it.k==='shoot'){
@@ -6252,6 +6295,24 @@ function act(m,it){
        那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
     if(m.d.mimic) dmg = Math.max(dmg, rollDmg(Math.round(pAtk()*m.d.mimic), pDef(), false, mult));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
+    /* 頭目每第三下是重擊。使用者：「魔王可以有每 3～4 次攻擊，
+       產生一次爆擊，然後把主角打飛，這樣比較刺激」。
+       重點不在傷害數字，在**節奏**：兩下普通、一下重的，
+       玩家因此有一個可以數的拍子 —— 數得出來就有得應對，
+       而「有得應對」跟「被隨機打死」是完全不同的兩種難。
+       所以蓄力的那一回合腳下會亮起來（下面 draw() 會畫），
+       這一下是看得到的，不是突然發生的。 */
+    /* 重擊跟緊張度一樣要隨深度長出來。直接全域打開之後，
+       第一章的死亡率從 10% 跳到 23% —— 剛學會走路的玩家
+       被教學關的頭目一拳轟飛三格，那是把人趕走，不是刺激。
+       換算深度 10 以前完全沒有重擊，最深處才是完整的 1.75 倍。 */
+    const ts2 = m.d.boss ? bossTense(G.md) : 0;
+    const heavy = ts2 > 0 && (((m.blows | 0) + 1) % 4 === 0);
+    if(m.d.boss){
+      m.blows = (m.blows | 0) + 1;
+      m.charged = (ts2 > 0 && (((m.blows | 0) + 1) % 4 === 0)) ? 1 : 0;
+    }
+    if(heavy) dmg = Math.round(dmg * (1.30 + 0.30 * ts2));
     if(!ranged) SFX.play('claw', 60);
     SFX.play(ranged?'zap':'hurt', 60);
     /* 遠程／魔法攻擊要看得到那一發飛過來。
@@ -6275,6 +6336,23 @@ function act(m,it){
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     // 邊緣泛紅：一下打掉一成血就已經看得出來，打掉三成就是滿的
     G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
+    if(heavy){
+      SFX.play('trap');
+      G.shake = Math.max(G.shake, 13);
+      G.freeze = Math.max(G.freeze || 0, .09);
+      burst(p.x, p.y, 20, '#f5dc7a', 70, 12, .6);
+      const kx = Math.sign(p.x - m.x) || 1, ky = Math.sign(p.y - m.y) || 0;
+      const k2 = knockPlayer(kx, ky, 3);
+      if(k2.slam){
+        const extra = rollDmg(m.d.atk * 0.5, pDef(), false, 1);
+        p.hp -= extra;
+        float(p.x, p.y, '-' + extra, '#a83c32');
+        burst(p.x + kx, p.y + ky, 14, '#d9b98a', 80, 4, .5);
+      }
+      say(M('m.heavy','{nm} 的重擊把你轟了出去！受到 {n} 點傷害。',
+            {nm:locName('mon',m.d), n:dmg}),'bad');
+      vision();
+    } else
     say(M('m.mhit','{nm} 的{r}攻擊命中，受到 {n} 點傷害。',
       {nm:locName('mon',m.d), n:dmg, r:ranged?TX('m.ranged','遠程'):''}),'bad');
     /* 挨打會醒。沒有這一條的時候，「睡 4 回合」在速度 2 的怪面前
@@ -6296,6 +6374,22 @@ function act(m,it){
         if(t.length){ const v=G.rng.pick(t); v.cursed=true; v.known=1;
           say(M('s.028','「{v0}」被下了詛咒！',{v0:(nameOf(v))}),'bad'); } }
     }
+    return;
+  }
+  if(it.k==='mpburn'){
+    const lost = Math.ceil(p.mp / 2);
+    p.mp = Math.max(0, p.mp - lost);
+    m.lunge = {dx:Math.sign(p.x-m.x)||0, dy:Math.sign(p.y-m.y)||0, t:0};
+    SFX.play('curse');
+    G.shake = Math.max(G.shake, 8);
+    ring(p.x, p.y, '#4a86cf', 26, .40);
+    burst(p.x, p.y, 24, '#4a86cf', 66, 14, .7);
+    // 魔力被抽走：藍色的光從主角流向她
+    trail(p.x, p.y, Math.sign(m.x-p.x)||0, Math.sign(m.y-p.y)||0,
+          Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)), '#7cb8ea');
+    float(p.x, p.y, '-' + lost + ' MP', '#4a86cf');
+    say(M('m.mpburn','{nm} 把你的魔力撕走了一半！',{nm:locName('mon',m.d)}),'bad');
+    refresh();
     return;
   }
   if(it.k==='charge'){
@@ -6327,22 +6421,7 @@ function act(m,it){
       say(M('s.rushmiss','{v0} 從你身邊衝了過去。',{v0:(locName('mon', m.d))}));
       return;
     }
-    // 撞飛：沿著同一個方向推，最多六格
-    const fx0 = p.x, fy0 = p.y;
-    let tiles = 0;
-    for(; tiles < 6; tiles++){
-      const nx = p.x + dx, ny = p.y + dy;
-      if(!walkable(nx, ny) || monAt(nx, ny)) break;
-      p.x = nx; p.y = ny;
-    }
-    const slam = !walkable(p.x + dx, p.y + dy);
-    /* 真的把「飛出去」演出來：從原地滑到落點，越遠滑越久，
-       路上一路揚塵。少了這一段的話，程式上「被推了六格」在畫面上
-       只是主角換了個位置 —— 玩家不會覺得自己被撞飛，只會覺得畫面跳了。 */
-    if(tiles > 0){
-      G.anim.push({o:p, fx:fx0, fy:fy0, t:0, dur:.10 + tiles*.045});
-      trail(fx0, fy0, dx, dy, tiles, '#a99a7e');
-    }
+    const {tiles, slam} = knockPlayer(dx, dy, 6);
     let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
     if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
     p.hp -= dmg;
@@ -6817,6 +6896,18 @@ function fireSpell(dx, dy){
    五系魔法、幻獸的攻擊全都直接呼叫 hurtMon —— 也就是說解謎型頭目
    其實用一把好劍就砍得死，而走通測試「通過」正是因為機器人在
    橫掃裡把它磨掉了。免疫要放在唯一的入口，不然它只是一句文案。 */
+/* 「視野內全體」的法術打在頭目身上只有一半。
+   使用者：「我 MP 這麼多⋯部分的特技使用應該是對魔王無效，這樣才會好玩」。
+
+   理由不只是難度。範圍法術是為了「一次解決一群」而存在的，
+   而頭目的戰場上通常只有一個目標 —— 拿群體技當單體最大輸出，
+   等於把五個法術系統壓成一顆「最強的按鈕」，
+   於是每一場頭目戰的最佳解都是同一個，那才是真正無聊的地方。
+   打對折之後，對一群雜魚它還是最強，對頭目就得換招。 */
+const BOSS_WIDE = 0.5;
+function hurtWide(m, dmg, col, st, dur){
+  hurtMon(m, m.d.boss ? Math.max(1, Math.round(dmg * BOSS_WIDE)) : dmg, col, st, dur);
+}
 function hurtMon(m, dmg, col, st, dur){
   if(m.d.turret){
     float(m.x, m.y, 'NO', '#a99a7e');
@@ -6915,13 +7006,13 @@ function doSpell(sp, dx, dy){
       G.shake = Math.max(G.shake, 9);
       for(const m of list.slice()){
         if(sp.id === 'thund')
-          hurtMon(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
+          hurtWide(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
         else if(sp.id === 'inferno')
-          hurtMon(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
+          hurtWide(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
         else if(sp.id === 'freeze')
-          hurtMon(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
+          hurtWide(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
         else {
-          hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+          hurtWide(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
           if(m.hp > 0) knock(m, Math.sign(m.x-p.x)||1, Math.sign(m.y-p.y)||1, 4);
         }
       }
@@ -6997,7 +7088,7 @@ function doAbil(a, dx, dy){
       G.shake = Math.max(G.shake, 12);
       burst(p.x,p.y,30,'#4a86cf',70,14,.9);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#4a86cf');
+        hurtWide(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#4a86cf');
       say(M('s.079','大洪水淹沒了 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
 
@@ -7063,7 +7154,7 @@ function doAbil(a, dx, dy){
       const hurt = 1 + (1 - p.hp/p.mhp) * 1.6;          // 你越傷，審判越重
       G.shake = Math.max(G.shake, 12);
       for(const m of list.slice())
-        hurtMon(m, rollDmg((26 + p.lv*4) * hurt, m.d.def, true, 1), '#f5dc7a');
+        hurtWide(m, rollDmg((26 + p.lv*4) * hurt, m.d.def, true, 1), '#f5dc7a');
       say(M('s.092','聖光審判降在 {v0} 個敵人身上！',{v0:(list.length)}),'good'); break;
     }
     case 'm_revive':
@@ -7082,7 +7173,7 @@ function doAbil(a, dx, dy){
       const list = visibleMons(); if(!list.length){ say(TX('s.097','視野裡沒有敵人。')); break; }
       G.shake = Math.max(G.shake, 12);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#e87a4a', '痛', 10);
+        hurtWide(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#e87a4a', '痛', 10);
       say(M('s.098','焚天燒過 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
     case 'm_core': p.st['熔'] = 15; say(TX('s.099','身體像熔爐一樣燙了起來。'),'good'); break;
@@ -7090,7 +7181,7 @@ function doAbil(a, dx, dy){
       const list = visibleMons(); if(!list.length){ say(TX('s.100','視野裡沒有敵人。')); break; }
       G.shake = Math.max(G.shake, 10);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(22 + p.lv*3, m.d.def, false, 1), '#4a86cf', '麻', 8);
+        hurtWide(m, rollDmg(22 + p.lv*3, m.d.def, false, 1), '#4a86cf', '麻', 8);
       say(M('s.101','絕對零度凍住了 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
     case 'm_mirror': p.st['鏡'] = 15; say(TX('s.102','身周浮現了一層水膜。'),'good'); break;
@@ -8603,6 +8694,23 @@ function draw(dt){
     // 「意識・複寫」的本體也長得跟你一樣 —— 分辨它的方法只有「它不跟著你動」
     const img = m.d.mind === 2 ? heroNow() : (atlas[m.d.id] || atlas.rat);
     const [mx,my] = entPos(m);
+    /* 蓄力中：腳下一圈會呼吸的金光。這一圈就是「下一下是重擊」的預告 ——
+       看得到才有得應對，而看不到的重擊只會讓人覺得是隨機被打死。 */
+    if(m.charged){
+      const bp = .55 + .45*Math.sin(clock*7);
+      const gx = ox + mx*T + 8, gy = oy + my*T + 12;
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      const gg = cx.createRadialGradient(gx, gy, 1, gx, gy, T*1.1);
+      gg.addColorStop(0, 'rgba(245,220,122,' + (0.42*bp).toFixed(3) + ')');
+      gg.addColorStop(1, 'rgba(245,220,122,0)');
+      cx.fillStyle = gg; cx.fillRect(gx - T*1.2, gy - T*1.2, T*2.4, T*2.4);
+      cx.restore();
+      cx.save();
+      cx.globalAlpha = bp; cx.strokeStyle = '#f5dc7a'; cx.lineWidth = 1;
+      cx.beginPath(); cx.arc(gx, gy, T*0.46, 0, Math.PI*2); cx.stroke();
+      cx.restore();
+    }
     shadow(mx,my, m.d.boss ? BOSS_SCALE : 1);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;

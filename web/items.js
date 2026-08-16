@@ -555,6 +555,81 @@ t('鏡之女王會衝撞，把主角沿著直線推開並造成傷害', ()=>{
   assert(pushed > 0, '三十回合都沒有被撞飛過');
 });
 
+/* ── 頭目的三條特殊規則 ──────────────────────────────────────
+   使用者：「魔王可以有每 3～4 次攻擊，產生一次爆擊，然後把主角打飛」
+   「除非魔王有特殊技能（顯示）把主角的 MP 半減」
+   「部分的特技使用應該是對魔王無效，這樣才會好玩」。
+   三條都會靜默失效（欄位加了但沒人讀），所以三條都要有斷言。 */
+t('頭目每第四下是重擊，會把主角打飛，而且前一回合看得到蓄力', ()=>{
+  V.act = 10;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  const q = G.mons.find(m => m.d.boss);
+  p.hp = p.mhp = 4000;                       // 打不死，才數得完一輪
+  let heavy = 0, charged = 0, flew = 0;
+  for(let t2 = 0; t2 < 24; t2++){
+    const b = G.mons.find(m => m.d.boss && m.hp > 0);
+    if(!b) break;
+    const sp = api.DIRS.map(d => ({x:b.x+d[0], y:b.y+d[1]}))
+                       .find(o => api.walkable(o.x,o.y) && !api.monAt(o.x,o.y)
+                                  && api.cornerOK(o.x,o.y,b.x,b.y));
+    if(sp){ p.x = sp.x; p.y = sp.y; api.vision(); }
+    if(b.charged) charged++;
+    const x0 = p.x, y0 = p.y, h0 = p.hp;
+    api.act(b, {k:'melee'});
+    if(b.blows % 4 === 0 && h0 > p.hp){       // 剛剛那一下是第四下
+      heavy++;
+      if(p.x !== x0 || p.y !== y0) flew++;
+    }
+  }
+  assert(heavy > 0, '二十四下裡一次重擊都沒有');
+  assert(flew > 0, '重擊沒有把主角打飛');
+  assert(charged > 0, '蓄力完全沒有顯示 —— 看不到的重擊只會像被隨機打死');
+});
+
+t('頭目的特技會把主角的魔力撕掉一半', ()=>{
+  V.act = 10;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  const q = G.mons.find(m => m.d.boss);
+  assert(q.d.mpburn, '這一章的頭目應該有撕魔力的特技');
+  p.hp = p.mhp = 4000; p.mmp = 300; p.mp = 300;
+  let burned = 0;
+  for(let t2 = 0; t2 < 40 && !burned; t2++){
+    // 她會瞬移，所以每回合跟著她 —— 看得到她才發動得了
+    const b0 = G.mons.find(m => m.d.boss && m.hp > 0);
+    if(!b0) break;
+    const sp = api.DIRS.map(d => ({x:b0.x+d[0], y:b0.y+d[1]}))
+                       .find(o => api.walkable(o.x,o.y) && !api.monAt(o.x,o.y));
+    if(sp){ p.x = sp.x; p.y = sp.y; }
+    api.vision();
+    const before = p.mp;
+    api.endTurn();
+    if(p.mp < before - 20) burned = before - p.mp;
+    if(p.mp < 60) break;
+  }
+  assert(burned > 0, '四十回合都沒有撕過魔力');
+});
+
+t('「視野內全體」的法術打頭目只有一半', ()=>{
+  V.act = 10;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  const q = G.mons.find(m => m.d.boss);
+  const rat = api.spawnMon(api.MONS.find(m => m.id === 'rat'), p.x, p.y);
+  rat.hp = rat.mhp = 9999; q.hp = q.mhp = 9999;
+  // 同一個傷害值分別打頭目與雜魚：頭目應該只吃一半
+  api.hurtWide(rat, 200, '#fff');
+  api.hurtWide(q,   200, '#fff');
+  const onRat = 9999 - rat.hp, onBoss = 9999 - q.hp;
+  assert.strictEqual(onRat, 200, '雜魚不該被打折：' + onRat);
+  assert(onBoss < onRat * 0.75,
+    '頭目應該只吃一半，實際 ' + onBoss + ' vs ' + onRat);
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，

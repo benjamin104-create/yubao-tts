@@ -222,13 +222,13 @@ const BOSS = [
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1,
+  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
-  rng:9, line:'塔頂的歌聲。'},
+  rng:9, mpburn:12, line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'最後一道門。'},
 
@@ -680,6 +680,9 @@ m.drop|It dropped "{nm}".|「{nm}」を おとした。
 m.levelup|Level up! Now level {n}.|レベルが {n} に あがった！
 m.mmiss|{nm}'s attack misses.|{nm} の こうげきは はずれた。
 m.mhit|{nm}'s {r}attack lands. You take {n} damage.|{nm} の {r}こうげき。{n} の ダメージ。
+m.heavy|{nm}'s heavy blow hurls you back! {n} damage.|{nm} の おもい いちげきで ふきとばされた！{n} の ダメージ。
+m.charge2|{nm} is winding up — the next blow will be heavy.|{nm} が ちからを ためている —— つぎの いちげきは おもい。
+m.mpburn|{nm} tears the magic out of you — half your MP is gone!|{nm} が まりょくを ひきさいた —— MP が はんぶんに！
 m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
