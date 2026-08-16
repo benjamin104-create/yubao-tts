@@ -439,6 +439,36 @@ t('練過頭的玩家遇到的頭目會跟著變強，但不會無限膨脹', ()
   assert(mo.mhp > base.hp * 1.3, '生出來的頭目還是舊數值：' + mo.mhp);
 });
 
+/* ── 鏡之女王：瞬移 ──────────────────────────────────────────
+   她不走路，她換一面鏡子出現。這一條驗的是三件事：
+   真的會閃、閃在同一間房裡走得到的格子、而且不會閃到玩家臉上 ——
+   閃到臉上等於一記無法反應的近戰，那不是機關是偷襲。 */
+t('鏡之女王會瞬移，落點在同一間房，而且不會閃到臉上', ()=>{
+  V.act = 10;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  const q = G.mons.find(m => m.d.boss);
+  assert(q && q.d.blink, '這一層應該有會瞬移的頭目');
+  const room = G.f.roomAt[api.key(q.x, q.y)];
+  // 站在她房間裡不動，看六十回合
+  p.x = q.x + 3; p.y = q.y; api.vision();
+  p.hp = p.mhp = 99999;                      // 打不死，才看得完整個週期
+  let last = q.x + ',' + q.y, blinks = 0;
+  for(let t2 = 0; t2 < 60; t2++){
+    api.endTurn();
+    const now = q.x + ',' + q.y;
+    if(now === last) continue;
+    blinks++;
+    last = now;
+    assert(api.walkable(q.x, q.y), '閃到牆裡了');
+    assert.strictEqual(G.f.roomAt[api.key(q.x, q.y)], room, '閃出房間了');
+    assert(Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) >= 3,
+           '閃到臉上了 —— 那是偷襲不是機關');
+  }
+  assert(blinks >= 2, '六十回合只閃了 ' + blinks + ' 次 —— 停留 10~15 回合應該有三到五次');
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，

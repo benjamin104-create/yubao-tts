@@ -1371,8 +1371,13 @@ const BOSS = [
   counter:.35, line:'牠拔刀的速度比你眨眼快。'},
  {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
- {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  line:'打碎一次，她會再站起來。三次。'},
+ /* 鏡之女王：整章的規則就是「鏡子」—— 她不走路，她換一面鏡子出現。
+    停十到十五回合，然後閃到房間裡的另一個位置；停著的時候固定週期
+    預告一條直線再射出去。玩家因此永遠有兩件事要決定：
+    這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
+ {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
+  rng:10, telegraph:1, cadence:3, blink:[10,15], still:1,
+  line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
@@ -1936,6 +1941,7 @@ s.015|You are already fully recovered.|もう かんぜんに かいふくして
 s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
 s.018|{v0} has you in its sights — get off this line!|{v0} が きみを ねらった —— この せんから はなれろ！
+s.blink|{v0} steps out of another mirror.|{v0} が べつの かがみから あらわれた。
 s.019|The light sweeps past, blocked by the pillar.|ひかりは はしらの よこを すぎていった。
 s.020|That eye is aimed down the whole line you are standing on.|あの めは きみの いる れつ ぜんぶを ねらっている。
 s.021|The three shadows swap places again.|みっつの かげが いれかわった。
@@ -5947,6 +5953,14 @@ function decide(m){
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
   if(m.d.mind) return mindDecide(m);
+  /* 瞬移型頭目（鏡之女王）。她不走路 —— 她換一面鏡子出現。
+     倒數只在「沒有預告掛著」的時候走：預告到一半閃走的話，
+     玩家剛剛為了躲線做的那一步就白做了，而白做的一步就是被耍。 */
+  if(m.d.blink && !m.warn){
+    if(m.blinkT === undefined) m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    else m.blinkT--;
+    if(m.blinkT <= 0) return {k:'blink'};
+  }
   // 預告型頭目：先亮一回合的警告格，下一回合才真的射。
   // 「看得到就躲得掉」是這種頭目唯一該有的難度來源。
   if(m.d.telegraph){
@@ -6179,6 +6193,32 @@ function act(m,it){
         if(t.length){ const v=G.rng.pick(t); v.cursed=true; v.known=1;
           say(M('s.028','「{v0}」被下了詛咒！',{v0:(nameOf(v))}),'bad'); } }
     }
+    return;
+  }
+  if(it.k==='blink'){
+    /* 落點：同一間房、走得到、沒有人站著，而且離玩家至少三格 ——
+       閃到臉上等於一記無法反應的近戰，那不是機關是偷襲。
+       挑不到就原地不動（房間被塞滿的時候），下一回合再試。 */
+    const rk = roomOf(m.x, m.y), spots = [];
+    if(rk >= 0){
+      const r = G.f.rooms[rk];
+      for(let y = r.y; y < r.y + r.h; y++) for(let x = r.x; x < r.x + r.w; x++){
+        if(!walkable(x,y) || monAt(x,y) || (x===p.x && y===p.y)) continue;
+        if(roomOf(x,y) !== rk) continue;
+        if(Math.max(Math.abs(x-p.x), Math.abs(y-p.y)) < 3) continue;
+        spots.push({x,y});
+      }
+    }
+    m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    if(!spots.length) return;
+    const to = G.rng.pick(spots);
+    burst(m.x, m.y, 18, '#7cb8ea', 60, 10, .5);      // 走的地方碎成一片鏡片
+    m.x = to.x; m.y = to.y; m.warn = null; m.cd = 0;
+    burst(m.x, m.y, 18, '#f2efe7', 60, 10, .5);      // 出現的地方炸開一片白
+    ring(m.x, m.y, '#7cb8ea', 30, .45);
+    SFX.play('zap');
+    if(G.seen[key(m.x,m.y)] === 2)
+      say(M('s.blink','{v0} 從另一面鏡子裡走了出來。',{v0:(locName('mon', m.d))}),'bad');
     return;
   }
   if(it.k==='move' && it.d){
