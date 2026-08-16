@@ -380,6 +380,16 @@ body{
      等於把整個房間罩住，玩家會以為遊戲壞了。 */
   box-shadow:inset 0 0 clamp(34px,9vw,90px) clamp(9px,2.4vw,24px) rgba(0,0,0,.82);
 }
+/* ── 挨打的暈影 ──────────────────────────────────────────────
+   數字跳出來、畫面震一下，但「我快死了」這件事一直只能靠讀血條。
+   邊緣泛紅是最不需要解釋的一種提示：它出現在眼角，不佔畫面中央，
+   而且深度直接對應這一下有多重。體力見底的時候會留著不散 ——
+   那一層薄薄的紅就是「下一下就沒了」。 */
+#hurt{
+  position:absolute; inset:0; pointer-events:none; opacity:0;
+  box-shadow:inset 0 0 clamp(30px,8vw,80px) clamp(6px,2vw,20px) rgba(168,60,50,.95);
+  transition:opacity .18s ease-out;
+}
 #shake{position:relative; will-change:transform}
 
 /* ── 名牌：直接把「那是什麼」寫在畫面上 ──
@@ -1052,6 +1062,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
       <div id="bossbar"><b id="bossnm"></b><span id="bosspips"></span><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
       <div id="vig"></div>
+      <!-- 挨打的那一瞬間，畫面邊緣泛紅。傷得越重紅得越深 -->
+      <div id="hurt"></div>
       <div id="panel">
         <h2><span id="ptitle">背包</span><em id="pcount"></em>
           <button id="pclose" aria-label="關閉">✕</button></h2>
@@ -5650,6 +5662,10 @@ function attack(m, mult){
   m.hp -= dmg;
   float(m.x,m.y,String(dmg), crit?'#f5dc7a':'#e8dcc0');
   G.shake = crit?7:3;
+  /* 會心一擊頓一下。七十毫秒的靜止 —— 短到不會覺得卡，
+     長到足夠讓眼睛知道「這一下不一樣」。打擊感有一半來自這個停頓，
+     而不是更大的數字。 */
+  if(crit) G.freeze = Math.max(G.freeze || 0, .07);
   say(M('m.hit','對 {nm} 造成 {n} 點傷害。{c}',{nm:locName('mon',m.d),n:dmg,c:crit?TX('m.crit','（會心一擊！）'):''}), crit?'gold':null);
   if(m.hp<=0){ kill(m); return; }
   /* 分身之術。挨了一刀而沒死的影忍會留下一個假的自己 ——
@@ -6172,6 +6188,8 @@ function act(m,it){
     p.flash = 0.11;
     burst(p.x, p.y, 7, '#a83c32', 34, 6);
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
+    // 邊緣泛紅：一下打掉一成血就已經看得出來，打掉三成就是滿的
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
     say(M('m.mhit','{nm} 的{r}攻擊命中，受到 {n} 點傷害。',
       {nm:locName('mon',m.d), n:dmg, r:ranged?TX('m.ranged','遠程'):''}),'bad');
     /* 挨打會醒。沒有這一條的時候，「睡 4 回合」在速度 2 的怪面前
@@ -8870,9 +8888,18 @@ addEventListener('orientationchange', fitViewport);
 
 let last=0;
 function loop(ts){
-  const dt = Math.min(.05, (ts-last)/1000 || 0); last=ts;
+  let dt = Math.min(.05, (ts-last)/1000 || 0); last=ts;
+  /* 頓格：時間暫停，但畫面照畫。回合是按鍵推動的，不是這個迴圈推動的，
+     所以凍住動畫不會影響任何規則 —— 它只影響「看起來」。 */
+  if(G && G.freeze > 0){ G.freeze -= dt; dt = 0; }
   clock += dt;
   if(G){
+    /* 挨打的暈影。衰減放在這裡而不是交給 CSS 的 transition ——
+       血量見底的時候要留一層底色不散，那是 transition 做不到的。 */
+    const floor0 = G.p && G.p.hp > 0 && G.p.hp / G.p.mhp <= .25 ? .34 : 0;
+    G.hurtFx = Math.max(floor0, (G.hurtFx || 0) - dt * 2.2);
+    const hv = document.getElementById('hurt');
+    if(hv) hv.style.opacity = G.hurtFx.toFixed(3);
     for(const a of G.anim) a.t += dt;
     G.anim = G.anim.filter(a=>a.t<.11);
     for(const f of G.floats) f.t += dt;
