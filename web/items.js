@@ -451,22 +451,34 @@ t('鏡之女王會瞬移，落點在同一間房，而且不會閃到臉上', ()
   const q = G.mons.find(m => m.d.boss);
   assert(q && q.d.blink, '這一層應該有會瞬移的頭目');
   const room = G.f.roomAt[api.key(q.x, q.y)];
-  // 站在她房間裡不動，看六十回合
-  p.x = q.x + 3; p.y = q.y; api.vision();
+  /* 她只有在玩家逼近的時候才閃（站遠了她會留在原地射），
+     所以這一條要真的貼上去 —— 每回合把自己擺回離她兩格的地方。
+     這也正好是玩家在實戰裡會做的事。 */
   p.hp = p.mhp = 99999;                      // 打不死，才看得完整個週期
-  let last = q.x + ',' + q.y, blinks = 0;
+  let lx = q.x, ly = q.y, blinks = 0, lastBlink;
   for(let t2 = 0; t2 < 60; t2++){
+    const b0 = G.mons.find(m => m.d.boss && m.hp > 0);
+    if(!b0) break;
+    for(const dd of [[2,0],[0,2],[-2,0],[0,-2],[1,0],[0,1],[-1,0],[0,-1]]){
+      const tx = b0.x + dd[0], ty = b0.y + dd[1];
+      if(api.walkable(tx, ty) && !api.monAt(tx, ty)){ p.x = tx; p.y = ty; break; }
+    }
+    api.vision();
     api.endTurn();
-    const now = q.x + ',' + q.y;
-    if(now === last) continue;
+    /* 「走一步」「衝撞」「瞬移」要分得開 —— 她三件事都做。
+       只看「位置有沒有變」的話，她走出門的那一步、或是追著玩家
+       衝出房間的那一次，都會被誤判成一次閃出房間的瞬移。
+       所以瞬移的時候直接記下回合數，測試照那個判斷。 */
+    lx = q.x; ly = q.y;
+    if(q.blinked === undefined || q.blinked === lastBlink) continue;
+    lastBlink = q.blinked;
     blinks++;
-    last = now;
     assert(api.walkable(q.x, q.y), '閃到牆裡了');
     assert.strictEqual(G.f.roomAt[api.key(q.x, q.y)], room, '閃出房間了');
-    assert(Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) >= 3,
+    assert(Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) >= 2,
            '閃到臉上了 —— 那是偷襲不是機關');
   }
-  assert(blinks >= 2, '六十回合只閃了 ' + blinks + ' 次 —— 停留 10~15 回合應該有三到五次');
+  assert(blinks >= 3, '六十回合只閃了 ' + blinks + ' 次 —— 貼著她的話應該閃好幾次');
 });
 
 /* ── 站在頭目旁邊不能是安全的 ────────────────────────────────
@@ -506,6 +518,41 @@ t('站在鏡之女王旁邊會挨打，而且鏡之盾擋不住她', ()=>{
   }
   assert(p.hp < start - 20,
     '貼著她站了四十回合只掉了 ' + (start - p.hp) + ' 點 —— 那不是機關，是漏洞');
+});
+
+/* ── 衝撞：撞上就被推著飛 ────────────────────────────────────
+   使用者：「如果規則撞到主角，主角會直線飛出去撞到牆受傷」。
+   這一條驗三件事：有預告、真的會推、而且推的路上不會穿牆。 */
+t('鏡之女王會衝撞，把主角沿著直線推開並造成傷害', ()=>{
+  V.act = 10;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  const q = G.mons.find(m => m.d.boss);
+  assert(q && q.d.charge, '這一層的頭目應該會衝撞');
+  p.hp = p.mhp = 400;
+  let pushed = 0, warned = 0;
+  api.hookSay(txt => { if(/shimmer|晃動/.test(txt)) warned++; });
+  for(let t2 = 0; t2 < 30; t2++){
+    const b = G.mons.find(m => m.d.boss && m.hp > 0);
+    if(!b) break;
+    // 每回合把自己擺回同一排、離她五格 —— 這是她衝得起來的距離
+    for(const dd of [[5,0],[0,5],[-5,0],[0,-5],[4,0],[3,0]]){
+      const tx = b.x + dd[0], ty = b.y + dd[1];
+      if(api.walkable(tx, ty)){ p.x = tx; p.y = ty; break; }
+    }
+    api.vision();
+    const x0 = p.x, y0 = p.y, h0 = p.hp;
+    api.endTurn();
+    if(p.x !== x0 || p.y !== y0){
+      pushed++;
+      assert(api.walkable(p.x, p.y), '被推進牆裡了');
+      assert(p.hp < h0, '被推開了卻沒受傷');
+    }
+  }
+  api.hookSay(null);
+  assert(warned > 0, '衝撞沒有預告 —— 看不到就躲不掉');
+  assert(pushed > 0, '三十回合都沒有被撞飛過');
 });
 
 // ── 職業帽 ──────────────────────────────────────────────────

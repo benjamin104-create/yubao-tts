@@ -222,7 +222,7 @@ const BOSS = [
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  rng:10, telegraph:1, cadence:3, blink:[10,15], still:1, unreflect:1,
+  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
@@ -787,6 +787,10 @@ s.015|You are already fully recovered.|もう かんぜんに かいふくして
 s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
 s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
+s.rush|{v0} starts to shimmer — she is going to charge!|{v0} の すがたが ゆらぐ —— とっしんして くる！
+s.rushmiss|{v0} charges straight past you.|{v0} が よこを かけぬけた。
+s.slam|You are thrown back and slam into the wall — {n} damage.|ふきとばされて かべに たたきつけられた —— {n} ダメージ。
+s.push|You are knocked back {t} tiles — {n} damage.|{t} マス ふきとばされた —— {n} ダメージ。
 s.018|{v0} has you in its sights — get off this line!|{v0} が きみを ねらった —— この せんから はなれろ！
 s.blink|{v0} steps out of another mirror.|{v0} が べつの かがみから あらわれた。
 s.019|The light sweeps past, blocked by the pillar.|ひかりは はしらの よこを すぎていった。

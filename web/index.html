@@ -1388,7 +1388,7 @@ const BOSS = [
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
  {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  rng:10, telegraph:1, cadence:3, blink:[10,15], still:1, unreflect:1,
+  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
   rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
@@ -1953,6 +1953,10 @@ s.015|You are already fully recovered.|もう かんぜんに かいふくして
 s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
 s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
+s.rush|{v0} starts to shimmer — she is going to charge!|{v0} の すがたが ゆらぐ —— とっしんして くる！
+s.rushmiss|{v0} charges straight past you.|{v0} が よこを かけぬけた。
+s.slam|You are thrown back and slam into the wall — {n} damage.|ふきとばされて かべに たたきつけられた —— {n} ダメージ。
+s.push|You are knocked back {t} tiles — {n} damage.|{t} マス ふきとばされた —— {n} ダメージ。
 s.018|{v0} has you in its sights — get off this line!|{v0} が きみを ねらった —— この せんから はなれろ！
 s.blink|{v0} steps out of another mirror.|{v0} が べつの かがみから あらわれた。
 s.019|The light sweeps past, blocked by the pillar.|ひかりは はしらの よこを すぎていった。
@@ -5464,7 +5468,11 @@ function spawnMon(d,x,y){
       lvup: +(k.toFixed(2)),          // 給名牌用：玩家看得到牠變強了
     });
   }
+  /* 瞬移型頭目要記住自己的房間。不記的話，她追著玩家衝出房門之後，
+     「同一間房」就變成走廊 —— 走廊裡挑不到落點，於是她從此再也不閃。
+     這是實測抓到的：機器人把她引出門，後面五十回合她一次都沒有瞬移。 */
   const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++};
+  if(d.blink) mo.home = roomOf(x, y);
   G.mons.push(mo);
   return mo;                     // 分身之術需要拿到剛生出來的那一隻
 }
@@ -5986,7 +5994,15 @@ function decide(m){
   if(m.d.blink && !m.warn){
     if(m.blinkT === undefined) m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
     else m.blinkT--;
-    if(m.blinkT <= 0) return {k:'blink'};
+    /* 只有在玩家靠近的時候才閃。實測不加這一條的下場：
+       她在房間裡到處跳，近戰的玩家一百八十回合連一刀都砍不到 ——
+       那不是難度，那是一場追不完的仗（人魚王后當年就是這樣被改掉的）。
+       改成「你逼近，我就換一面鏡子」之後，規則對玩家是讀得懂的：
+       想砍到她就要預判她會出現在哪，而不是跑得比她快。 */
+    if(m.blinkT <= 0){
+      if(Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) <= 3) return {k:'blink'};
+      m.blinkT = 1;                               // 站遠了就等著，靠近的那一步再閃
+    }
   }
   // 預告型頭目：先亮一回合的警告格，下一回合才真的射。
   // 「看得到就躲得掉」是這種頭目唯一該有的難度來源。
@@ -5995,6 +6011,15 @@ function decide(m){
     m.tick = (m.tick|0) + 1;
     if(m.warn){                                   // 上一回合已經預告 → 這一回合開火
       const aim = m.warn; m.warn = null;
+      /* 衝撞：她自己就是那面鏡子，撞上來的時候主角會被推著走。
+         跟射線用同一個預告（整行整列亮起來）—— 玩家看到的是同一個訊號，
+         要做的判斷也是同一個：離開這條線。差別只在沒躲開的下場。 */
+      if(m.rush){
+        m.rush = 0;
+        if(aim.x === p.x || aim.y === p.y) return {k:'charge'};
+        say(M('s.017','{v0} 的攻擊落空了。',{v0:(locName('mon', m.d))}));
+        return {k:'wait'};
+      }
       if(aim.x === p.x || aim.y === p.y) return {k:'shoot'};
       say(M('s.017','{v0} 的攻擊落空了。',{v0:(locName('mon', m.d))}));
       return {k:'wait'};
@@ -6007,7 +6032,15 @@ function decide(m){
        && cornerOK(m.x,m.y,p.x,p.y)) return {k:'melee'};
     if(m.tick % cad === 0 && aligned(m.x,m.y,p.x,p.y)){
       m.warn = {x:p.x, y:p.y};                    // 畫面上會亮出這一行／這一列
-      say(M('s.018','{v0} 瞄準了你 —— 離開這條線！',{v0:(locName('mon', m.d))}),'bad');
+      // 隔一段距離才衝得起來。貼著臉衝等於原地打一拳，那不叫衝撞。
+      const far = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) >= 3;
+      // 衝撞之間要留冷卻。連著撞的話玩家只會被推來推去，一步都走不了自己的
+      if(m.rushCd > 0) m.rushCd--;
+      m.rush = (m.d.charge && far && !m.rushCd && G.rng.chance(.6)) ? 1 : 0;
+      if(m.rush) m.rushCd = 4;
+      say(m.rush ? M('s.rush','{v0} 的身影開始晃動 —— 她要衝過來了！',
+                     {v0:(locName('mon', m.d))})
+                 : M('s.018','{v0} 瞄準了你 —— 離開這條線！',{v0:(locName('mon', m.d))}),'bad');
       return {k:'wait'};
     }
     if(m.d.still) return {k:'wait'};
@@ -6238,23 +6271,86 @@ function act(m,it){
     }
     return;
   }
+  if(it.k==='charge'){
+    /* 衝撞。她沿著直線衝過來，撞上的人被推著往同一個方向飛，
+       撞到牆才停 —— 飛得越遠、撞得越重。
+       使用者的原話：「如果規則撞到主角，主角會直線飛出去撞到牆受傷」。
+
+       兩件事刻意保留給玩家：
+         · 前一回合有預告，整行整列會亮起來 —— 看得到就躲得掉。
+         · 被推的路上如果有東西擋著，就在那裡停下來，不會穿牆。
+       撞牆的那一下另外算傷害，所以「背後就是牆」是真的比較危險，
+       站位因此變成一個要想的問題，而不是背景。 */
+    const dx = Math.sign(p.x - m.x), dy = Math.sign(p.y - m.y);
+    if(!dx && !dy) return;
+    let cx0 = m.x, cy0 = m.y;
+    for(let i = 0; i < 12; i++){                 // 衝到玩家前一格為止
+      const nx = cx0 + dx, ny = cy0 + dy;
+      if(!walkable(nx, ny) || monAt(nx, ny)) break;
+      if(nx === p.x && ny === p.y) break;
+      cx0 = nx; cy0 = ny;
+    }
+    trail(m.x, m.y, dx, dy, Math.max(Math.abs(cx0-m.x), Math.abs(cy0-m.y)), '#7cb8ea');
+    G.anim.push({o:m, fx:m.x, fy:m.y, t:0});
+    m.x = cx0; m.y = cy0;
+    m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    const hitYou = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y)) <= 1;
+    SFX.play(hitYou ? 'trap' : 'throw');
+    if(!hitYou){
+      say(M('s.rushmiss','{v0} 從你身邊衝了過去。',{v0:(locName('mon', m.d))}));
+      return;
+    }
+    // 撞飛：沿著同一個方向推，最多六格
+    let tiles = 0;
+    for(; tiles < 6; tiles++){
+      const nx = p.x + dx, ny = p.y + dy;
+      if(!walkable(nx, ny) || monAt(nx, ny)) break;
+      p.x = nx; p.y = ny;
+    }
+    const slam = !walkable(p.x + dx, p.y + dy);
+    let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
+    if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
+    p.hp -= dmg;
+    p.flash = 0.14;
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
+    G.shake = Math.max(G.shake, slam ? 14 : 9);
+    G.freeze = Math.max(G.freeze || 0, .09);
+    burst(p.x, p.y, slam ? 22 : 12, '#c8c8d4', 70, 12, .6);
+    float(p.x, p.y, '-' + dmg, '#a83c32');
+    say(slam ? M('s.slam','你被撞飛，重重撞在牆上 —— 受到 {n} 點傷害。',{n:dmg})
+             : M('s.push','你被撞得往後飛了 {t} 格 —— 受到 {n} 點傷害。',{t:tiles, n:dmg}), 'bad');
+    vision();
+    if(p.hp <= 0) death();
+    return;
+  }
   if(it.k==='blink'){
     /* 落點：同一間房、走得到、沒有人站著，而且離玩家至少三格 ——
        閃到臉上等於一記無法反應的近戰，那不是機關是偷襲。
        挑不到就原地不動（房間被塞滿的時候），下一回合再試。 */
-    const rk = roomOf(m.x, m.y), spots = [];
-    if(rk >= 0){
+    const rk = (m.home !== undefined && m.home >= 0) ? m.home : roomOf(m.x, m.y);
+    /* 距離要求分兩段。只收「離玩家三格以上」的話，小房間會一格都收不到 ——
+       而收不到就等於這隻頭目在小房間裡完全不會瞬移，
+       機關有沒有生效完全看地圖抽到什麼，那不叫設計。
+       先找三格以上，找不到再放寬到兩格；兩格也沒有才放棄。 */
+    const pick = (minD)=>{
+      const out = [];
+      if(rk < 0) return out;
       const r = G.f.rooms[rk];
       for(let y = r.y; y < r.y + r.h; y++) for(let x = r.x; x < r.x + r.w; x++){
         if(!walkable(x,y) || monAt(x,y) || (x===p.x && y===p.y)) continue;
         if(roomOf(x,y) !== rk) continue;
-        if(Math.max(Math.abs(x-p.x), Math.abs(y-p.y)) < 3) continue;
-        spots.push({x,y});
+        if(Math.max(Math.abs(x-p.x), Math.abs(y-p.y)) < minD) continue;
+        if(x === m.x && y === m.y) continue;        // 閃到原地等於沒閃
+        out.push({x,y});
       }
-    }
+      return out;
+    };
+    let spots = pick(3);
+    if(!spots.length) spots = pick(2);
     m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
     if(!spots.length) return;
     const to = G.rng.pick(spots);
+    m.blinked = G.turn;                              // 哪一回合閃的（測試要分得出閃與衝）
     burst(m.x, m.y, 18, '#7cb8ea', 60, 10, .5);      // 走的地方碎成一片鏡片
     m.x = to.x; m.y = to.y; m.warn = null; m.cd = 0;
     burst(m.x, m.y, 18, '#f2efe7', 60, 10, .5);      // 出現的地方炸開一片白
