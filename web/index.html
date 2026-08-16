@@ -1361,28 +1361,36 @@ const MONS = [
    不是「一次失誤就重來」。 */
 const BOSS = [
  {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
+  imm:['睡','亂'], adds:{n:1, cd:10},
+  line:'石頭在呼吸。它醒了 —— 而且不只一塊。'},
  {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:8}, rage:.45,
+  line:'霧散開了 —— 那不是樹。而且林子裡不只牠一個。'},
  /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
     n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
     投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
     到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
  {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
-  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5},
+  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5}, rage:.4,
   line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
  {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
-  rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
+  rng:10, cadence:3, telegraph:1, quake:7,
+  line:'三回合一次。柱子後面是唯一的答案 —— 但別站在牠腳邊。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
-  line:'湖面立起來了。'},
+  telegraph:1, cadence:4, charge:1, blink:[9,14],
+  line:'湖面立起來了 —— 水不會繞路，它直接撞過來。'},
  {id:'b_phoenix', lives:1,nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
-  line:'牠燒起來的時候，是在重生。'},
+  rage:.5, quake:8,
+  line:'牠燒起來的時候，是在重生 —— 而且會燒到站得太近的人。'},
  {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
-  line:'「看得見我，就贏得了我。」'},
+  blink:[3,6], rage:.35,
+  line:'「看得見我，就贏得了我。」—— 問題是他不會待在同一個地方。'},
  {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
-  counter:.35, line:'牠拔刀的速度比你眨眼快。'},
+  counter:.35, telegraph:1, cadence:5, charge:1,
+  line:'牠拔刀的速度比你眨眼快 —— 而且牠會連人帶刀衝過來。'},
  {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:9}, rage:.4,
+  line:'鑰匙掛在牠腰上 —— 但牠不是一個人在看守。'},
  /* 鏡之女王：整章的規則就是「鏡子」—— 她不走路，她換一面鏡子出現。
     停十到十五回合，然後閃到房間裡的另一個位置；停著的時候固定週期
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
@@ -1391,12 +1399,14 @@ const BOSS = [
   rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
-  rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
+  rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4,
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
-  rng:9, mpburn:12, line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
+  rng:9, mpburn:12, quake:8, telegraph:1, cadence:3,
+  line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'最後一道門。'},
+  imm:['睡','亂','麻'], quake:6, rage:.35, adds:{n:2, cd:12},
+  line:'最後一道門 —— 它不需要移動，你自己會走過來。'},
 
  /* ── 「意識」：三種型態，一場連續的戰鬥 ──────────────────────
     設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
@@ -1957,6 +1967,11 @@ s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
 s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
 s.rush|{v0} starts to shimmer — she is going to charge!|{v0} の すがたが ゆらぐ —— とっしんして くる！
+s.rage|{v0} roars — it is serious now.|{v0} が ほえた —— ほんきに なった。
+s.adds|{v0} calls in {n} helpers.|{v0} が なかまを {n} たい よんだ。
+s.quakew|The ground under {v0} starts to shake — get away from it!|{v0} の あしもとが ゆれはじめた —— はなれろ！
+s.quake|The ground bursts — you are thrown back for {n} damage.|じめんが はじけた —— ふきとばされて {n} ダメージ。
+s.quakemiss|The ground shakes — you are far enough away.|じめんが ゆれた —— じゅうぶん はなれていた。
 s.rushmiss|{v0} charges straight past you.|{v0} が よこを かけぬけた。
 s.slam|You are thrown back and slam into the wall — {n} damage.|ふきとばされて かべに たたきつけられた —— {n} ダメージ。
 s.push|You are knocked back {t} tiles — {n} damage.|{t} マス ふきとばされた —— {n} ダメージ。
@@ -6027,6 +6042,40 @@ function decide(m){
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
   if(m.d.mind) return mindDecide(m);
+  /* ── 頭目的共同語彙 ──────────────────────────────────────
+     使用者：「每一章頭目一定要多個一兩招不同的啊，不然會覺得很無聊」。
+     十五章各寫一套 AI 是寫不完也養不起的，所以改成三個可以組合的動詞：
+       rage  ：血量低於某個比例就暴走一次（攻擊永久提升）
+       adds  ：定期叫援軍
+       quake ：預告一回合，然後把身邊的人震開
+     每一隻頭目挑一到兩個，配上原本就有的 telegraph / blink / charge /
+     mpburn / counter / lives，十五章就都有自己的手感 ——
+     而且玩家在第二章學到的東西，到第十三章還讀得懂。 */
+  if(m.d.rage && !m.raged && m.hp < m.mhp * m.d.rage){
+    m.raged = 1;
+    m.d = Object.assign({}, m.d, {atk: Math.round(m.d.atk * 1.5)});
+    wave(m.x, m.y, '#c94a3a', .75);
+    burst(m.x, m.y, 26, '#f5a95e', 70, 14, .8);
+    G.shake = Math.max(G.shake, 12);
+    SFX.play('roar');
+    say(M('s.rage','{v0} 咆哮了一聲 —— 牠認真了。',{v0:(locName('mon', m.d))}),'bad');
+  }
+  if(m.d.adds && G.seen[key(m.x,m.y)] === 2){
+    m.addCd = (m.addCd === undefined) ? m.d.adds.cd : m.addCd - 1;
+    if(m.addCd <= 0 && G.mons.length < 12){ m.addCd = m.d.adds.cd; return {k:'adds'}; }
+  }
+  if(m.d.quake && G.seen[key(m.x,m.y)] === 2){
+    if(m.qWarn){ m.qWarn = 0; return {k:'quake'}; }
+    m.qCd = (m.qCd === undefined) ? m.d.quake : m.qCd - 1;
+    if(m.qCd <= 0){
+      m.qCd = m.d.quake; m.qWarn = 1;
+      wave(m.x, m.y, '#a87a1e', .60);
+      say(M('s.quakew','{v0} 腳下的地面開始震動 —— 離開牠身邊！',
+            {v0:(locName('mon', m.d))}),'bad');
+      return {k:'wait'};
+    }
+  }
+
   /* 頭目的特技：把主角的魔力撕掉一半。
      使用者：「我 MP 這麼多⋯除非魔王有特殊技能（顯示）把主角的 MP 半減」。
      它刻意有兩個限制：
@@ -6416,6 +6465,55 @@ function act(m,it){
     }
     return;
   }
+  if(it.k==='adds'){
+    /* 叫援軍。挑的是「這個深度本來就會出現的怪」——
+       頭目自帶一支專屬部隊聽起來很酷，但玩家會分不出哪一隻是頭目的，
+       而分不出來就沒辦法決定先打誰。 */
+    const pool = MONS.filter(d0 => G.md >= d0.fl[0] && G.md <= d0.fl[1] + 6);
+    const src = pool.length ? pool : MONS.slice(0, 3);
+    let born = 0;
+    for(let i = 0; i < (m.d.adds.n || 2); i++){
+      const sp = nearestFree(m.x, m.y);
+      if(!sp) break;
+      const nd = G.rng.pick(src);
+      spawnMon(nd, sp.x, sp.y);
+      burst(sp.x, sp.y, 12, '#79c97a', 60, 10, .5);
+      born++;
+    }
+    if(born){
+      wave(m.x, m.y, '#79c97a', .60);
+      SFX.play('read');
+      say(M('s.adds','{v0} 叫來了 {n} 個幫手。',{v0:(locName('mon', m.d)), n:born}),'bad');
+    }
+    return;
+  }
+  if(it.k==='quake'){
+    /* 震地。它不吃直線 —— 打的是「牠身邊三格」，
+       所以躲的方式是離開，而不是側移。預告了一回合，
+       站在原地不動的人才會吃到，這條規則跟射線是同一個道理。 */
+    wave(m.x, m.y, '#f5a95e', .85);
+    SFX.play('trap');
+    G.shake = Math.max(G.shake, 15);
+    G.freeze = Math.max(G.freeze || 0, .08);
+    for(let r0 = 1; r0 <= 3; r0++)
+      for(const d0 of DIRS) burst(m.x + d0[0]*r0, m.y + d0[1]*r0, 4, '#a87a1e', 50, 8, .5);
+    const far = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y));
+    if(far > 3){
+      say(M('s.quakemiss','地面震了一下 —— 你離得夠遠。',{}),'good');
+      return;
+    }
+    const dmg2 = rollDmg(m.d.atk * 0.9, pDef(), false, 1);
+    p.hp -= dmg2;
+    p.flash = 0.14;
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg2 / Math.max(1, p.mhp * 0.3)));
+    float(p.x, p.y, '-' + dmg2, '#a83c32');
+    const qx = Math.sign(p.x - m.x) || 1, qy = Math.sign(p.y - m.y) || 0;
+    knockPlayer(qx, qy, 2);
+    say(M('s.quake','地面炸開 —— 你被震飛，受到 {n} 點傷害。',{n:dmg2}),'bad');
+    vision();
+    if(p.hp <= 0) death();
+    return;
+  }
   if(it.k==='mpburn'){
     const lost = Math.ceil(p.mp / 2);
     p.mp = Math.max(0, p.mp - lost);
@@ -6455,7 +6553,9 @@ function act(m,it){
     trail(m.x, m.y, dx, dy, Math.max(Math.abs(cx0-m.x), Math.abs(cy0-m.y)), '#7cb8ea');
     G.anim.push({o:m, fx:m.x, fy:m.y, t:0, dur:.20});   // 衝過來要看得到
     m.x = cx0; m.y = cy0;
-    m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    // 衝完之後重算瞬移倒數 —— 但不是每一隻會衝的都會閃（鬼武者只會衝）。
+    // 少了這個判斷，牠衝出去的那一刻就會讀到 undefined[0] 而整場當掉。
+    if(m.d.blink) m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
     const hitYou = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y)) <= 1;
     SFX.play(hitYou ? 'trap' : 'throw');
     if(!hitYou){

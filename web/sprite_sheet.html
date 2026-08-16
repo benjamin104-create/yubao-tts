@@ -195,28 +195,36 @@ const MONS = [
    不是「一次失誤就重來」。 */
 const BOSS = [
  {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
+  imm:['睡','亂'], adds:{n:1, cd:10},
+  line:'石頭在呼吸。它醒了 —— 而且不只一塊。'},
  {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:8}, rage:.45,
+  line:'霧散開了 —— 那不是樹。而且林子裡不只牠一個。'},
  /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
     n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
     投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
     到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
  {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
-  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5},
+  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5}, rage:.4,
   line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
  {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
-  rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
+  rng:10, cadence:3, telegraph:1, quake:7,
+  line:'三回合一次。柱子後面是唯一的答案 —— 但別站在牠腳邊。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
-  line:'湖面立起來了。'},
+  telegraph:1, cadence:4, charge:1, blink:[9,14],
+  line:'湖面立起來了 —— 水不會繞路，它直接撞過來。'},
  {id:'b_phoenix', lives:1,nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
-  line:'牠燒起來的時候，是在重生。'},
+  rage:.5, quake:8,
+  line:'牠燒起來的時候，是在重生 —— 而且會燒到站得太近的人。'},
  {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
-  line:'「看得見我，就贏得了我。」'},
+  blink:[3,6], rage:.35,
+  line:'「看得見我，就贏得了我。」—— 問題是他不會待在同一個地方。'},
  {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
-  counter:.35, line:'牠拔刀的速度比你眨眼快。'},
+  counter:.35, telegraph:1, cadence:5, charge:1,
+  line:'牠拔刀的速度比你眨眼快 —— 而且牠會連人帶刀衝過來。'},
  {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:9}, rage:.4,
+  line:'鑰匙掛在牠腰上 —— 但牠不是一個人在看守。'},
  /* 鏡之女王：整章的規則就是「鏡子」—— 她不走路，她換一面鏡子出現。
     停十到十五回合，然後閃到房間裡的另一個位置；停著的時候固定週期
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
@@ -225,12 +233,14 @@ const BOSS = [
   rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
-  rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
+  rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4,
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
-  rng:9, mpburn:12, line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
+  rng:9, mpburn:12, quake:8, telegraph:1, cadence:3,
+  line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'最後一道門。'},
+  imm:['睡','亂','麻'], quake:6, rage:.35, adds:{n:2, cd:12},
+  line:'最後一道門 —— 它不需要移動，你自己會走過來。'},
 
  /* ── 「意識」：三種型態，一場連續的戰鬥 ──────────────────────
     設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
@@ -791,6 +801,11 @@ s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
 s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
 s.rush|{v0} starts to shimmer — she is going to charge!|{v0} の すがたが ゆらぐ —— とっしんして くる！
+s.rage|{v0} roars — it is serious now.|{v0} が ほえた —— ほんきに なった。
+s.adds|{v0} calls in {n} helpers.|{v0} が なかまを {n} たい よんだ。
+s.quakew|The ground under {v0} starts to shake — get away from it!|{v0} の あしもとが ゆれはじめた —— はなれろ！
+s.quake|The ground bursts — you are thrown back for {n} damage.|じめんが はじけた —— ふきとばされて {n} ダメージ。
+s.quakemiss|The ground shakes — you are far enough away.|じめんが ゆれた —— じゅうぶん はなれていた。
 s.rushmiss|{v0} charges straight past you.|{v0} が よこを かけぬけた。
 s.slam|You are thrown back and slam into the wall — {n} damage.|ふきとばされて かべに たたきつけられた —— {n} ダメージ。
 s.push|You are knocked back {t} tiles — {n} damage.|{t} マス ふきとばされた —— {n} ダメージ。

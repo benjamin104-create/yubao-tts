@@ -656,6 +656,46 @@ t('打倒頭目一定掉一件裝備，而且不會超出這一層的分級', ()
   }
 });
 
+/* ── 每一章的頭目都要有自己的招 ──────────────────────────────
+   使用者：「每一章頭目一定要多個一兩招不同的啊，不然會覺得很無聊」。
+   這一條驗的是「有沒有真的配上」，而不是招式本身 ——
+   資料表上少寫一個欄位不會報錯，只會安靜地變回一隻血比較多的普通怪。
+   順便驗每一隻都跑得起來：鬼武者只會衝不會閃，而衝撞的程式碼曾經
+   無條件去讀 blink[0]，一衝出去就整場當掉（msgs.js 抓到的）。 */
+t('十五章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
+  const VERBS = ['telegraph','blink','charge','mpburn','quake','adds','rage',
+                 'counter','lives','turret','mind'];
+  const plain = [];
+  for(const d of api.BOSS){
+    const has = VERBS.filter(v => d[v]);
+    if(!has.length) plain.push(d.nm);
+  }
+  assert(!plain.length, '這幾隻頭目還是純數值：' + plain.join('、'));
+
+  // 每一隻實際跑三十回合，確認不會爆
+  for(let a = 0; a < api.ACTS.length; a++){
+    const act = api.ACTS[a];
+    if(!act.boss) continue;
+    V.act = a;
+    api.newGame(4242 + a);
+    const G = api.G(), p = G.p;
+    G.act = a; G.floor = act.floors; api.buildFloor();
+    const b = G.mons.find(m => m.d.boss);
+    if(!b) continue;
+    p.hp = p.mhp = 99999;
+    assert.doesNotThrow(()=>{
+      for(let t2 = 0; t2 < 30; t2++){
+        const b2 = G.mons.find(m => m.d.boss && m.hp > 0);
+        if(!b2) break;
+        const sp = api.DIRS.map(d => ({x:b2.x+d[0], y:b2.y+d[1]}))
+                           .find(o => api.walkable(o.x,o.y) && !api.monAt(o.x,o.y));
+        if(sp){ p.x = sp.x; p.y = sp.y; api.vision(); }
+        api.endTurn();
+      }
+    }, act.nm + ' 的頭目跑一跑就爆了');
+  }
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，
