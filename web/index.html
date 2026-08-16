@@ -3322,6 +3322,18 @@ function makeShield(v){
    但不會侵門踏戶到隔壁那一格。
    （真正的解是讓頭目佔 2x2 格，但那要改碰撞、尋路、攻擊判定與存檔，
      為了一個視覺問題動整套規則不划算。） */
+/* 遠程攻擊的顏色，一隻一種。同時有法師與砲台在放的時候，
+   玩家要分得出哪一發是誰的 —— 全部同一色的話，畫面上就只是「有東西在閃」。
+   認不出來源就沒辦法決定先解決誰，而那正是這種戰鬥唯一的選擇。 */
+const BOLT_COL = {
+  imp:      '#c8c8d4',      // 投石妖精：石頭
+  mage:     '#c94a3a',      // 詛咒法師：詛咒的暗紅
+  turret:   '#7cb8ea',      // 水晶砲台：冷藍的光束
+  b_prism:  '#f6efe3',      // 光線人：純白的光
+  b_mermaid:'#4a86cf',      // 人魚王后：深水藍
+  b_queen:  '#7cb8ea',      // 鏡之女王：鏡面的藍
+};
+
 const BOSS_SCALE = 1.6;
 
 /* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
@@ -6242,6 +6254,21 @@ function act(m,it){
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     if(!ranged) SFX.play('claw', 60);
     SFX.play(ranged?'zap':'hurt', 60);
+    /* 遠程／魔法攻擊要看得到那一發飛過來。
+       使用者：「魔王的攻擊（或魔法攻擊）⋯看起來很不明顯」——
+       原本只有一句訊息、一個小火星，等於數字自己跳出來。
+       現在是「腳下亮一圈（誰放的）→ 一串沿線飛過去的光（往哪飛）
+       → 落點炸開（打到了）」，三段合起來才讀得出是一發攻擊。
+       顏色一怪一種：玩家要分得出這一發是誰放的，尤其是同時有兩三隻的時候。 */
+    if(ranged){
+      const bx0 = Math.sign(p.x - m.x), by0 = Math.sign(p.y - m.y);
+      const len = Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y));
+      const col = BOLT_COL[m.d.id] || '#f5a95e';
+      ring(m.x, m.y, col, 15, .26);
+      if(len > 0) trail(m.x, m.y, bx0, by0, len, col);
+      burst(p.x, p.y, 16, col, 70, 10, .55);
+      ring(p.x, p.y, col, 20, .28);
+    }
     m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
     p.flash = 0.11;
     burst(p.x, p.y, 7, '#a83c32', 34, 6);
@@ -6291,7 +6318,7 @@ function act(m,it){
       cx0 = nx; cy0 = ny;
     }
     trail(m.x, m.y, dx, dy, Math.max(Math.abs(cx0-m.x), Math.abs(cy0-m.y)), '#7cb8ea');
-    G.anim.push({o:m, fx:m.x, fy:m.y, t:0});
+    G.anim.push({o:m, fx:m.x, fy:m.y, t:0, dur:.20});   // 衝過來要看得到
     m.x = cx0; m.y = cy0;
     m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
     const hitYou = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y)) <= 1;
@@ -6301,6 +6328,7 @@ function act(m,it){
       return;
     }
     // 撞飛：沿著同一個方向推，最多六格
+    const fx0 = p.x, fy0 = p.y;
     let tiles = 0;
     for(; tiles < 6; tiles++){
       const nx = p.x + dx, ny = p.y + dy;
@@ -6308,6 +6336,13 @@ function act(m,it){
       p.x = nx; p.y = ny;
     }
     const slam = !walkable(p.x + dx, p.y + dy);
+    /* 真的把「飛出去」演出來：從原地滑到落點，越遠滑越久，
+       路上一路揚塵。少了這一段的話，程式上「被推了六格」在畫面上
+       只是主角換了個位置 —— 玩家不會覺得自己被撞飛，只會覺得畫面跳了。 */
+    if(tiles > 0){
+      G.anim.push({o:p, fx:fx0, fy:fy0, t:0, dur:.10 + tiles*.045});
+      trail(fx0, fy0, dx, dy, tiles, '#a99a7e');
+    }
     let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
     if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
     p.hp -= dmg;
@@ -6316,6 +6351,10 @@ function act(m,it){
     G.shake = Math.max(G.shake, slam ? 14 : 9);
     G.freeze = Math.max(G.freeze || 0, .09);
     burst(p.x, p.y, slam ? 22 : 12, '#c8c8d4', 70, 12, .6);
+    if(slam){                                   // 撞上的那面牆也要有反應
+      burst(p.x + dx, p.y + dy, 16, '#d9b98a', 80, 4, .5);
+      ring(p.x + dx, p.y + dy, '#e8dcc0', 22, .30);
+    }
     float(p.x, p.y, '-' + dmg, '#a83c32');
     say(slam ? M('s.slam','你被撞飛，重重撞在牆上 —— 受到 {n} 點傷害。',{n:dmg})
              : M('s.push','你被撞得往後飛了 {t} 格 —— 受到 {n} 點傷害。',{t:tiles, n:dmg}), 'bad');
@@ -8491,10 +8530,13 @@ function draw(dt){
   }
 
   // 實體（含位移插值、待機起伏、攻擊前衝）
+  /* 位移插值。dur 預設 0.11 秒（走一格），但被撞飛是六格 ——
+     用同一個 0.11 秒推完六格，畫面上就是「瞬間換位置」，
+     使用者的原話：「沒有被撞飛的感覺啊？」。長距離要給它時間。 */
   const entPos=(o)=>{
     const a = G.anim.find(v=>v.o===o);
     if(!a) return [o.x, o.y];
-    const k = 1-Math.min(1, a.t/.11);
+    const k = 1-Math.min(1, a.t/(a.dur || .11));
     return [o.x + (a.fx-o.x)*k, o.y + (a.fy-o.y)*k];
   };
   // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
@@ -9022,7 +9064,7 @@ function loop(ts){
     const hv = document.getElementById('hurt');
     if(hv) hv.style.opacity = G.hurtFx.toFixed(3);
     for(const a of G.anim) a.t += dt;
-    G.anim = G.anim.filter(a=>a.t<.11);
+    G.anim = G.anim.filter(a => a.t < (a.dur || .11));
     for(const f of G.floats) f.t += dt;
     G.floats = G.floats.filter(f=>f.t<.85);
 
