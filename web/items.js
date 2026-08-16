@@ -630,6 +630,32 @@ t('「視野內全體」的法術打頭目只有一半', ()=>{
     '頭目應該只吃一半，實際 ' + onBoss + ' vs ' + onRat);
 });
 
+/* ── 頭目一定掉一件裝備，而且不會跳級 ────────────────────────
+   使用者：「打贏小王會掉比較特殊的武器（但是不能是超過主角等級太多的，
+   不然遊戲會變無聊）」。後半句才是要守的那一條：跳級的神兵會讓
+   後面五章的鐵匠鋪與撿到的每一把劍同時失去意義。 */
+t('打倒頭目一定掉一件裝備，而且不會超出這一層的分級', ()=>{
+  for(const act of [2, 6, 9]){
+    V.act = act;
+    api.newGame(4242);
+    const G = api.G();
+    G.act = act; G.floor = api.ACTS[act].floors; api.buildFloor();
+    const b = G.mons.find(m => m.d.boss);
+    if(!b) continue;
+    const cap = (400 + G.md * 280) * 1.35;
+    for(let i = 0; i < 8; i++){
+      G.items = {};
+      b.hp = 1; b.lives = 0; b.d = Object.assign({}, b.d, {lives:0});
+      api.kill(b);
+      const gear = Object.values(G.items).filter(it => it.cat === 'weap' || it.cat === 'shld');
+      assert(gear.length, '第 ' + (act+1) + ' 章的頭目沒有掉裝備');
+      for(const g of gear)
+        assert((g.d.price || 0) <= cap,
+          '掉了超出分級的東西：' + g.d.nm + '（' + g.d.price + ' > ' + Math.round(cap) + '）');
+    }
+  }
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，

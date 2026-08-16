@@ -5800,6 +5800,30 @@ function kill(m){
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
   if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
+  /* 頭目一定掉一件裝備。使用者：「打贏小王會掉比較特殊的武器
+     （但是不能是超過主角等級太多的，不然遊戲會變無聊）」——
+     後半句才是重點，所以這裡刻意**沿用一般掉落的分級上限**，
+     只是把「有沒有掉」從機率變成保證、再加上 +1~+3 的鍛造值。
+     跳級的神兵會讓後面五章的鐵匠鋪與撿到的每一把劍同時失去意義：
+     贏了一場仗換來的是「接下來都不用再選了」，那是最貴的一種獎勵。 */
+  if(m.d.boss && !MIND_CHAIN[m.d.id]){
+    const tbl = G.rng.chance(.6) ? WEAP : SHLD;
+    const cap = (400 + G.md * 280) * 1.35;      // 比平常寬一點，但不是無上限
+    /* 一般掉落是「越貴越少見」，那對地上撿到的東西是對的；
+       但頭目的獎品要真的像獎品，所以這裡反過來：多數時候直接給
+       這個深度買得起的最好一件。上限沒有放寬，變的只是「給不給好的」。 */
+    const pool = tbl.filter(d => (d.price || 0) <= cap);
+    if(!pool.length) pool.push(tbl[0]);
+    const top = pool.reduce((a2, b2) => (b2.price || 0) > (a2.price || 0) ? b2 : a2, pool[0]);
+    // 沒抽到最好那件的時候，也只從「這個深度的上半段」裡挑 ——
+    // 打倒一章的頭目換到一根木棒，那比沒有獎品更傷。
+    const sorted = pool.slice().sort((a2, b2) => (a2.price || 0) - (b2.price || 0));
+    const half = sorted.slice(Math.floor(sorted.length / 2));
+    const d0 = G.rng.chance(.55) ? top : G.rng.pick(half);
+    const prize = mk(tbl === WEAP ? 'weap' : 'shld', d0.id, {known:1});
+    prize.up = G.rng.i(1, Math.min(3, d0.up || 1));
+    loot.push(prize);
+  }
   for(const it of loot){
     const spot = nearestFree(m.x,m.y);
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(M('m.drop','掉落了「{nm}」。',{nm:nameOf(it)})); }
@@ -6072,6 +6096,10 @@ function decide(m){
       if(m.rushCd > 0) m.rushCd--;
       m.rush = (m.d.charge && far && !m.rushCd && G.rng.chance(.6)) ? 1 : 0;
       if(m.rush) m.rushCd = 4;
+      // 詠唱：整圈光擴散出去。顏色照這一隻的攻擊色 ——
+      // 玩家不必讀訊息就知道「是誰在準備、準備的是哪一種」
+      wave(m.x, m.y, m.rush ? '#f5dc7a' : (BOLT_COL[m.d.id] || '#f5a95e'));
+      SFX.play('read');
       say(m.rush ? M('s.rush','{v0} 的身影開始晃動 —— 她要衝過來了！',
                      {v0:(locName('mon', m.d))})
                  : M('s.018','{v0} 瞄準了你 —— 離開這條線！',{v0:(locName('mon', m.d))}),'bad');
@@ -6302,17 +6330,26 @@ function act(m,it){
        而「有得應對」跟「被隨機打死」是完全不同的兩種難。
        所以蓄力的那一回合腳下會亮起來（下面 draw() 會畫），
        這一下是看得到的，不是突然發生的。 */
-    /* 重擊跟緊張度一樣要隨深度長出來。直接全域打開之後，
-       第一章的死亡率從 10% 跳到 23% —— 剛學會走路的玩家
-       被教學關的頭目一拳轟飛三格，那是把人趕走，不是刺激。
-       換算深度 10 以前完全沒有重擊，最深處才是完整的 1.75 倍。 */
+    /* 重擊：每第四下。使用者：「小王都需要至少有『震飛』主角的功力，
+       不然也太好打了吧！」—— 所以**每一隻頭目都會震飛**，
+       這是頭目的共同語彙，不是某一隻的特技。
+
+       但傷害的加成要隨深度長。第一版連加成也全域打開，
+       第一章的死亡率從 10% 跳到 23%：剛學會走路的玩家被教學關的頭目
+       一拳轟飛又扣掉半條血，那是把人趕走，不是刺激。
+       現在淺處的重擊是「被推開」（有震撼、幾乎不多痛），
+       深處才是真的會把人打死的那一下。 */
     const ts2 = m.d.boss ? bossTense(G.md) : 0;
-    const heavy = ts2 > 0 && (((m.blows | 0) + 1) % 4 === 0);
+    /* 第一章的頭目不震飛。實測：光是「被推開」就讓第一章的死亡率
+       從 10% 升到 16% —— 推開本身不痛，但它會把玩家從走廊推進空地，
+       然後被另外兩隻圍住。那一章的頭目是教學的期末考，不是刁難。
+       換算深度 6 起（第二章之後）每一隻頭目都會震飛。 */
+    const heavy = m.d.boss && G.md >= 6 && (((m.blows | 0) + 1) % 4 === 0);
     if(m.d.boss){
       m.blows = (m.blows | 0) + 1;
-      m.charged = (ts2 > 0 && (((m.blows | 0) + 1) % 4 === 0)) ? 1 : 0;
+      m.charged = (G.md >= 6 && (((m.blows | 0) + 1) % 4 === 0)) ? 1 : 0;
     }
-    if(heavy) dmg = Math.round(dmg * (1.30 + 0.30 * ts2));
+    if(heavy) dmg = Math.round(dmg * (1.05 + 0.55 * ts2));
     if(!ranged) SFX.play('claw', 60);
     SFX.play(ranged?'zap':'hurt', 60);
     /* 遠程／魔法攻擊要看得到那一發飛過來。
@@ -6338,11 +6375,14 @@ function act(m,it){
     G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
     if(heavy){
       SFX.play('trap');
+      wave(m.x, m.y, '#f5dc7a', .55);
       G.shake = Math.max(G.shake, 13);
       G.freeze = Math.max(G.freeze || 0, .09);
       burst(p.x, p.y, 20, '#f5dc7a', 70, 12, .6);
       const kx = Math.sign(p.x - m.x) || 1, ky = Math.sign(p.y - m.y) || 0;
-      const k2 = knockPlayer(kx, ky, 3);
+      // 推多遠也隨深度長：淺處是「被推開一步」，深處才是「被轟出去」。
+      // 第一章的頭目一次把人推三格，光是位移就足以把玩家送進另外兩隻怪的懷裡。
+      const k2 = knockPlayer(kx, ky, Math.max(1, Math.round(1 + 2 * ts2)));
       if(k2.slam){
         const extra = rollDmg(m.d.atk * 0.5, pDef(), false, 1);
         p.hp -= extra;
@@ -6382,6 +6422,7 @@ function act(m,it){
     m.lunge = {dx:Math.sign(p.x-m.x)||0, dy:Math.sign(p.y-m.y)||0, t:0};
     SFX.play('curse');
     G.shake = Math.max(G.shake, 8);
+    wave(m.x, m.y, '#4a86cf', .80);
     ring(p.x, p.y, '#4a86cf', 26, .40);
     burst(p.x, p.y, 24, '#4a86cf', 66, 14, .7);
     // 魔力被抽走：藍色的光從主角流向她
@@ -8036,6 +8077,20 @@ function ring(x, y, col, r1, life){
     r0: 3, r1: r1 || T*1.6, t: 0, life: life || .34,
   });
 }
+/* 詠唱的衝擊波：一圈半透明的光從施術者身上擴散出去，一路衝出畫面。
+   使用者：「魔王在詠唱的時候，請用不同的顏色色光加強緊張感，
+   比方說突然放出一圈透明紅光然後擴散延伸到畫面外」。
+
+   它跟 ring() 是同一套資料（G.rings），差別只有三個：半徑大到蓋滿畫面、
+   線更粗、活得更久。分成兩支而不是加參數，是因為它們在畫面上是
+   兩件不同的事：ring 是「這裡發生了什麼」，wave 是「接下來要出事了」。 */
+function wave(x, y, col, life){
+  if(!G) return;
+  (G.rings = G.rings || []).push({
+    px: x*T + 8, py: y*T + 8, col,
+    r0: 4, r1: 420, t: 0, life: life || .70, wide: 1,
+  });
+}
 function trail(x, y, dx, dy, len, col){
   if(!G || !G.parts) return;
   for(let i=1;i<=len;i++){
@@ -8777,8 +8832,9 @@ function draw(dt){
     const rad = r.r0 + (r.r1 - r.r0) * (1 - (1-k)*(1-k));   // 先快後慢地擴出去
     cx.save();
     cx.globalCompositeOperation = 'lighter';
-    cx.globalAlpha = (1 - k) * .75;
-    cx.strokeStyle = r.col; cx.lineWidth = k < .5 ? 2 : 1;
+    cx.globalAlpha = (1 - k) * (r.wide ? .42 : .75);
+    cx.strokeStyle = r.col;
+    cx.lineWidth = r.wide ? (k < .35 ? 4 : (k < .7 ? 3 : 2)) : (k < .5 ? 2 : 1);
     cx.beginPath(); cx.arc(ox + r.px, oy + r.py, rad, 0, Math.PI*2); cx.stroke();
     cx.restore();
   }
