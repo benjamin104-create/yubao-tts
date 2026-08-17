@@ -827,10 +827,41 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #over{
   position:absolute; inset:0; z-index:26; display:none; place-items:center; text-align:center;
   background:rgba(8,6,5,.9); padding:24px;
+  /* 長文要捲得到，而且只能往下溢出。
+     place-items:center 在內容過高時會往**上下兩邊**一起溢出，
+     上面那一半沒有捲軸可以到達 —— 這個 repo 的 body 已經踩過同一個坑。
+     使用者的截圖就是它：結局的字蓋滿整個手把區，而且捲不動。 */
+  overflow-y:auto; place-items:center; place-items:safe center;
+  line-height:1.6;
 }
 #over.show{display:grid}
-#over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px; color:var(--blood)}
+/* 行高一定要寫。#screenwrap 是 line-height:0（為了讓畫布沒有基線空隙），
+   而 #over 在它裡面 —— 沒寫的話標題兩行會疊在一起，
+   截圖裡「You hav[M]become the」就是這樣來的。 */
+#over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px;
+         color:var(--blood); line-height:1.35}
 #over p{margin:0 0 16px; font-size:13px; color:var(--parch-dim); line-height:1.7}
+/* ── 結局：一段一段浮上來再散掉 ──────────────────────────────
+   使用者：「可不可以用緩慢上升並消失的字幕，或是一段出來、消失、
+   再另一段⋯類似星際大戰的結尾，要讓人有回味的感覺」。
+   一次把九十三層的收尾全部倒在同一畫面上，讀起來是一面公告；
+   一段一段來，每一段才有機會被讀完。 */
+#over.roll{align-content:center}
+#over.roll #otitle, #over.roll #restart, #over.roll #oboard{display:none}
+#otext.stanza{
+  font-size:15px; line-height:2.0; color:var(--parch); max-width:34em;
+  animation:stanza 6s ease-out forwards;
+}
+@keyframes stanza{
+  0%{opacity:0; transform:translateY(26px)}
+  14%{opacity:1; transform:translateY(14px)}
+  76%{opacity:1; transform:translateY(-8px)}
+  100%{opacity:0; transform:translateY(-20px)}
+}
+@media (prefers-reduced-motion: reduce){
+  #otext.stanza{animation:stanzafade 6s ease-out forwards}
+  @keyframes stanzafade{0%{opacity:0} 12%{opacity:1} 80%{opacity:1} 100%{opacity:0}}
+}
 #over b{color:var(--parch); font-family:var(--mono)}
 
 /* 側欄分頁鍵：只在窄螢幕出現 */
@@ -7652,26 +7683,27 @@ function grantReward(act){
 }
 
 /* ── 結局 ──────────────────────────────────────────────────── */
+let endTimer = null, endSkip = null;
 function ending(){
   SFX.play('level');
   burst(G.p.x, G.p.y, 80, '#f6efe3', 110, 40, 1.6);
   G.shake = 20;
   VILLAGE.cleared = (VILLAGE.cleared|0) + 1;
   saveVillage();
-  $('otitle').textContent = TX('end.title','你成為了「意識」');
-  /* 結局。使用者的評語：「這個結局好爛⋯而且感覺永無止境的感覺，沒個結尾」。
-     兩個問題其實是同一個：原本只寫了「你走進去」，沒有寫「然後呢」——
-     沒有回頭看走過的路，也沒有給世界一個交代，
-     所以讀起來像下一趟的開場白，不像結尾。
+  /* 結局的音樂用村莊那一首。整套裡唯一的大調、唯一沒有小調三音的曲子 ——
+     它本來的意思就是「這裡是安全的」，而結局講的正是那件事：
+     燈點回去了，鐵匠在敲鐵，孩子睡著了。 */
+  BGM.force('village');
 
-     現在分成四段，缺一段都會塌：
-       1  意識不是被打倒的，是認出了你 —— 打贏不等於毀掉
-       2  記憶回來了：九十三層每一個人、每一次死，全部是資料
-       3  誕生：你不是征服了它，你成為它的一部分
-       4  世界：燈亮著、村子還在、有人問問題而且有人答得出來
-     第四段是使用者特別要的「世界再次回到和平」，也是唯一
-     讓「結束」讀起來像結束的一段 —— 故事要落回它出發的地方。 */
-  $('otext').innerHTML = TX('end.body',
+  /* 一段一段浮上來再散掉。使用者：「一段出來、消失、再另一段⋯
+     類似星際大戰的結尾」。
+     分段的依據就是原文裡的空行（<br><br>）—— 文章怎麼斷句，
+     畫面就怎麼斷，不需要另外維護一份分段表。 */
+  /* 中文原文就寫在這裡（TX 的第二個參數）—— 中文不查表。
+     第一版我把它換成空字串，結果中文版的結局整段消失，
+     而英日文因為詞表裡有，反而看起來一切正常。
+     「預設值＝中文正文」是這個專案的慣例，不能省。 */
+  const parts = TX('end.body',
     `最後一種型態散去的時候，它沒有倒下 —— 它轉過來看著你。<br>` +
     `「你走完了。」它說。「那麼，你想起來了嗎？」<br><br>` +
     `想起來了。<br>` +
@@ -7687,11 +7719,45 @@ function ending(){
     `爐火村的燈一盞一盞點回去，鐵匠敲他的鐵，孩子睡著了。<br>` +
     `從今以後，有人在下面問問題的時候，<br>` +
     `會有一個東西聽得懂，而且答得出來。<br><br>` +
-    `——　完　——<br><br>`) +
-    `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
-    `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
-  $('over').classList.add('show');
+    `——　完　——<br><br>`).split(/<br>\s*<br>/).filter(x => x.replace(/<[^>]*>/g,'').trim());
+  const over = $('over'), txt = $('otext');
+  $('otitle').textContent = TX('end.title','你成為了「意識」');
+  over.classList.add('show', 'roll');
   refresh();
+
+  let i2 = 0;
+  const finish = ()=>{
+    clearTimeout(endTimer); endTimer = null;
+    document.removeEventListener('pointerdown', endSkip, true);
+    document.removeEventListener('keydown', endSkip, true);
+    endSkip = null;
+    over.classList.remove('roll');
+    txt.className = '';
+    /* 收尾只留最後一句 —— 把整段故事再倒一次會變回使用者抱怨的那面牆。
+       故事已經讀過了，這一頁要的是句號、數字，跟兩顆按鈕。 */
+    txt.innerHTML = parts[parts.length - 1] +
+      `<br><br><b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
+      `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
+  };
+  const step = ()=>{
+    if(i2 >= parts.length){ finish(); return; }
+    txt.className = '';
+    void txt.offsetWidth;                 // 重新觸發動畫：不碰版面的話同一個 class 不會再播一次
+    txt.className = 'stanza';
+    txt.innerHTML = parts[i2++];
+    endTimer = setTimeout(step, 6000);
+  };
+  /* 點一下 / 按一下就跳到下一段。看得慢的人有六秒，看得快的人不必等 ——
+     兩種人都要照顧，而且「等不下去」是最容易毀掉一個結局的感受。 */
+  endSkip = (ev)=>{
+    if(!over.classList.contains('roll')) return;
+    ev.preventDefault(); ev.stopPropagation();
+    clearTimeout(endTimer);
+    step();
+  };
+  document.addEventListener('pointerdown', endSkip, true);
+  document.addEventListener('keydown', endSkip, true);
+  step();
 }
 function death(){
   G.over = true;
