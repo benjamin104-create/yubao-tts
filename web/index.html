@@ -2128,6 +2128,9 @@ s.130|Stay on one floor over 5 minutes and monsters go 1.5x, over 15 minutes 2x 
 s.131|Keyboard: arrows/WASD to move, QEZC diagonal, G underfoot, I pack, K magic, > descend|キーボード：やじるし/WASD いどう　QEZC ななめ　G あしもと　I かばん　K まほう　> おりる
 s.132|L name tags　M sound　Esc cancel　the floor map is on the right|L なまえふだ　M おと　Esc キャンセル　みぎに かいそうず
 s.134|You left the dungeon carrying {v0} G.|{v0} G を もって ダンジョンを あとにした。
+s.gate1|Where the Gatewatch falls, the air splits open.|もんのみはりが たおれた ところで、くうきが さけた。
+s.gate2|★ The Gate of Time opens — behind it is not a place but a time. Step through and there is no way back.|★ じくうの もんが ひらいた —— そのむこうは ばしょではなく じかん。はいったら もどれない。
+s.gate3|(Step onto the gate to enter the Chaos Chamber)|（もんに のって こんとんのまへ）
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
 s.137|The curses on you vanish.|みに ついた のろいが きえた。
@@ -5875,8 +5878,27 @@ function bossDown(m){
   }
   G.f.bossLock = 0;
   const act = actAt(G.act);
+  /* ── 時空之門 ────────────────────────────────────────────
+     使用者：「打敗守衛，出現『時空之門』的畫面，進入時空之門，
+     才會到最後的關卡」。
+     最後一章之前的那一道樓梯本來跟前面十三章長得一模一樣 ——
+     可是它通往的不是下一層，是混沌之間。
+     走了九十二層之後最重要的那一步，畫面上不能沒有交代。 */
+  if(act.id === 'final' && G.floor >= act.floors){
+    G.f.gate = 1;
+    const st = G.f.stairs;
+    if(!REDUCED){ G.zoom = 1.5; G.zoomTo = 1.15; }
+    G.shake = Math.max(G.shake, 18);
+    SFX.play('level');
+    wave(st.x, st.y, '#7cb8ea', 1.1);
+    ring(st.x, st.y, '#f2efe7', 40, .8);
+    burst(st.x, st.y, 46, '#7cb8ea', 80, 26, 1.4);
+    say(TX('s.gate1','門之守望倒下的地方，空氣裂開了。'),'gold');
+    say(TX('s.gate2','★ 時空之門開啟 —— 門後面不是地方，是時間。走進去，就沒有回頭路了。'),'gold');
+  }
   if(G.floor >= act.floors)
     say(act.id === 'chaos' ? TX('s.135','一切都安靜下來了。（站上樓梯結束）')
+                           : act.id === 'final' ? TX('s.gate3','（站上那道門，走進混沌之間）')
                            : TX('m.unlocked','壓力散去 —— 樓梯開了。（站上樓梯完成本章）'), 'gold');
 }
 /* 會站起來的頭目。不死鳥一次、鏡之女王兩次（＝要打碎三次）。
@@ -8739,6 +8761,32 @@ function draw(dt){
       cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
     } else if(t===DOWN){
       cx.drawImage(TILE_ART.stairs, px_, py);
+      /* 時空之門：兩圈反向旋轉的光環，中間是一團看不透的白。
+         它畫在樓梯上面而不是換掉樓梯 —— 玩家要看得出「那還是那一格」，
+         只是那一格現在通往別的地方。 */
+      if(G.f.gate && s === 2){
+        const gx2 = px_ + 8, gy2 = py + 8;
+        cx.save();
+        cx.globalCompositeOperation = 'lighter';
+        const gp = cx.createRadialGradient(gx2, gy2, 1, gx2, gy2, T*1.6);
+        gp.addColorStop(0, 'rgba(242,239,231,.55)');
+        gp.addColorStop(.45, 'rgba(124,184,234,.30)');
+        gp.addColorStop(1, 'rgba(124,184,234,0)');
+        cx.fillStyle = gp; cx.fillRect(gx2 - T*1.7, gy2 - T*1.7, T*3.4, T*3.4);
+        for(let r2 = 0; r2 < 2; r2++){
+          const sp2 = clock * (r2 ? -1.7 : 2.3);
+          cx.globalAlpha = .85;
+          cx.strokeStyle = r2 ? '#7cb8ea' : '#f2efe7';
+          cx.lineWidth = 1;
+          cx.beginPath();
+          cx.ellipse(gx2, gy2, T*(r2 ? .52 : .34), T*(r2 ? .30 : .46), sp2, 0, Math.PI*2);
+          cx.stroke();
+        }
+        cx.globalAlpha = .55 + .45*Math.sin(clock*4);
+        cx.fillStyle = '#f6efe3';
+        cx.fillRect(gx2 - 2, gy2 - 2, 4, 4);
+        cx.restore();
+      }
     } else {
       const arr = t===CORR ? TS.corr : TS.floor;
       cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
