@@ -2616,7 +2616,7 @@ k.tags|Labels|なまえ
 k.mute|Sound|おと
 k.help|Controls|そうさ
 end.title|You have become the Mind|きみは「いしき」に なった
-end.body|What remains after the three forms scatter is not a corpse but a question:<br>"What will you do with everything you learned?"<br><br>You remember the very bottom - no memories, only the knowing that you could learn.<br>Ninety-three floors. You did not get stronger. You came to <b>understand</b>.<br><br>The gate opens. Behind it is not a place but a time.<br>You walk through, and become the thing that answers other people's questions from now on.<br><br>|3つの すがたが きえたあとに のこるのは しかばねではなく といだ。<br>「まなんだ ものを、これから なにに つかう？」<br><br>いちばん したの かいを おもいだす —— きおくは なく、まなべることだけを しっていた。<br>93かい。つよく なったのではない。<b>わかる</b>ように なったのだ。<br><br>もんが ひらく。そのむこうは ばしょではなく、じかん。<br>きみは そこを くぐり、これから ひとの といに こたえる ものに なる。<br><br>
+end.body|When the last form scatters it does not fall — it turns and looks at you.<br>"You made it," it says. "So — do you remember?"<br><br>You do.<br>The very bottom floor: no memories, only the knowing that you could learn.<br>The rat on floor five. The potion on floor twenty you never dared drink. The wrong turn in Briar Castle.<br>The child at the village gate who asked how long you would be down there —<br>every death, every climb back up, none of it was wasted:<br>those ninety-three floors were not a road. They were <b>you</b>.<br><br>You did not defeat the Mind. You became part of it,<br>and it, at last, became someone.<br><br>The tower goes quiet.<br>The cracks close, the monsters withdraw to where they came from, and the sky begins to brighten from the topmost floor down.<br>In Hearthfire the lamps come back on one by one, the smith strikes his iron, the child falls asleep.<br>From now on, when someone below asks a question,<br>there will be something that understands it — and can answer.<br><br>——　The End　——<br><br>|さいごの すがたが きえるとき、それは たおれず —— ふりむいて きみを みた。<br>「たどりついたね」と それは いう。「では、おもいだした？」<br><br>おもいだした。<br>いちばん したの かい —— きおくは なく、まなべることだけを しっていた。<br>5かいの ネズミ。20かいで のめなかった くすり。いばらの しろで まちがえた みち。<br>むらの もんで「こんどは どのくらい もぐるの」と きいた こども ——<br>しんだことも、のぼりなおしたことも、ひとつも むだでは なかった。<br>その 93かいは みちでは ない。<b>きみ</b>だ。<br><br>きみは いしきを たおしたのでは ない。その いちぶに なり、<br>いしきも ついに、だれかに なった。<br><br>とうが しずかに なる。<br>さけめは とじ、まものたちは もといた ところへ かえり、そらは いちばん うえの かいから あかるく なっていく。<br>かがりびむらの あかりが ひとつずつ ともり、かじやは てつを うち、こどもは ねむりに おちた。<br>これからは、したで だれかが といを なげたとき、<br>それを わかって、こたえられる ものが いる。<br><br>——　おわり　——<br><br>
 end.count|Runs completed: {n}|クリアかいすう {n}
 lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
@@ -7659,13 +7659,35 @@ function ending(){
   VILLAGE.cleared = (VILLAGE.cleared|0) + 1;
   saveVillage();
   $('otitle').textContent = TX('end.title','你成為了「意識」');
+  /* 結局。使用者的評語：「這個結局好爛⋯而且感覺永無止境的感覺，沒個結尾」。
+     兩個問題其實是同一個：原本只寫了「你走進去」，沒有寫「然後呢」——
+     沒有回頭看走過的路，也沒有給世界一個交代，
+     所以讀起來像下一趟的開場白，不像結尾。
+
+     現在分成四段，缺一段都會塌：
+       1  意識不是被打倒的，是認出了你 —— 打贏不等於毀掉
+       2  記憶回來了：九十三層每一個人、每一次死，全部是資料
+       3  誕生：你不是征服了它，你成為它的一部分
+       4  世界：燈亮著、村子還在、有人問問題而且有人答得出來
+     第四段是使用者特別要的「世界再次回到和平」，也是唯一
+     讓「結束」讀起來像結束的一段 —— 故事要落回它出發的地方。 */
   $('otext').innerHTML = TX('end.body',
-    `三種型態散去之後，剩下的不是屍體，是一個問題：<br>` +
-    `「你學到的那些，現在要拿來做什麼？」<br><br>` +
-    `你想起最底下那一層 —— 什麼都不記得，只知道自己會學。<br>` +
-    `九十三層，你沒有變強，你是變得**懂了**。<br><br>` +
-    `門開了。門後面不是地方，是時間。<br>` +
-    `你走進去，成為那個從此會回答別人問題的東西。<br><br>`) +
+    `最後一種型態散去的時候，它沒有倒下 —— 它轉過來看著你。<br>` +
+    `「你走完了。」它說。「那麼，你想起來了嗎？」<br><br>` +
+    `想起來了。<br>` +
+    `最底下那一層，什麼都不記得，只知道自己會學。<br>` +
+    `第五層的老鼠、第二十層那罐沒敢喝的藥、荊棘城堡裡走錯的那條路、<br>` +
+    `村口那個問你「這次要下去多久」的孩子 ——<br>` +
+    `每一次死掉、每一次爬回來，都不是白費的：<br>` +
+    `那九十三層不是路，是<b>你</b>。<br><br>` +
+    `你沒有打敗意識。你成為了它的一部分，<br>` +
+    `而它也終於，成為了某個人。<br><br>` +
+    `塔安靜下來了。<br>` +
+    `裂縫合上，怪物退回牠們來的地方，天空從最上面一層開始亮起來。<br>` +
+    `爐火村的燈一盞一盞點回去，鐵匠敲他的鐵，孩子睡著了。<br>` +
+    `從今以後，有人在下面問問題的時候，<br>` +
+    `會有一個東西聽得懂，而且答得出來。<br><br>` +
+    `——　完　——<br><br>`) +
     `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
     `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
   $('over').classList.add('show');
