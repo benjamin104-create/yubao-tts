@@ -664,13 +664,18 @@ t('打倒頭目一定掉一件裝備，而且不會超出這一層的分級', ()
    無條件去讀 blink[0]，一衝出去就整場當掉（msgs.js 抓到的）。 */
 t('十五章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   const VERBS = ['telegraph','blink','charge','mpburn','quake','adds','rage',
-                 'counter','lives','turret','mind'];
-  const plain = [];
+                 'ward','counter','lives','turret','mind'];
+  const thin = [];
   for(const d of api.BOSS){
     const has = VERBS.filter(v => d[v]);
-    if(!has.length) plain.push(d.nm);
+    // 使用者要的是「每個小王套 2~3 種」。一種只能算會動，兩種才算有手感。
+    if(has.length < 2 && !d.mind) thin.push(d.nm + '（' + (has.join('/') || '無') + '）');
   }
-  assert(!plain.length, '這幾隻頭目還是純數值：' + plain.join('、'));
+  assert(!thin.length, '這幾隻頭目的招不到兩種：' + thin.join('、'));
+  // 至少要有七八種不同的招在用，不然十五章還是同一場仗
+  const used = new Set();
+  for(const d of api.BOSS) for(const v of VERBS) if(d[v]) used.add(v);
+  assert(used.size >= 8, '整套只用到 ' + used.size + ' 種招：' + [...used].join('/'));
 
   // 每一隻實際跑三十回合，確認不會爆
   for(let a = 0; a < api.ACTS.length; a++){
