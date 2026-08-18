@@ -22,20 +22,49 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = ROOT / 'web' / 'index.html'
+# 驗收頁的產生器也要掃：它一樣在畫精靈，而且犯過一模一樣的錯 ——
+# 畫進 16x16 的畫布卻沒指定尺寸，32px 的圖只會出現左上角四分之一。
+# 掃產生器而不是掃產出的 sprite_sheet.html：產出的檔案是可以重建的，
+# 錯誤的來源永遠在產生器裡。
+SRCS = [ROOT / 'web' / 'index.html', ROOT / 'tools' / 'build_sprite_sheet.py']
 
-# 這些呼叫的來源與目的地是同一個尺寸的畫布，整張複製，不需要指定尺寸。
-# 列成白名單而不是放寬規則 —— 每多一個例外都要在這裡寫下來。
-ALLOW = [
-    'drawImage(im, 0, 0)',     # adoptArt：把載進來的圖原樣拓進畫布
-    'drawImage(src, 0, 0)',    # crownSprite：從來源精靈複製
-    'drawImage(img, 0, 0)',    # whiteOf / footOf：量測用的暫存拷貝
-    'drawImage(tmp, 0, 4)',    # 圖示往下移四格，讓它落在格子中間
-]
+# 豁免清單：來源與目的地是同一尺寸的畫布，整張複製，不需要指定尺寸。
+#
+# 鍵是「哪個檔案裡、長這樣的行，最多幾個」。試過兩種更差的寫法：
+#
+#   只比字面 —— 驗收頁裡新寫的 `x.drawImage(src, 0, 0)` 剛好跟 crownSprite
+#   那行長得一樣，直接被放行，破壞測試沒有變紅。豁免不能是「長這樣的每一行」。
+#
+#   綁行號 —— 在檔案前面插一行，五個豁免全部失效，而且報成「這五行漏了尺寸」，
+#   等於叫人去改五個本來就沒問題的地方。行號對這種檔案太脆。
+#
+# 綁數量剛好：行搬到哪裡都無所謂，但**多出一個**就會被抓到 ——
+# 而「多出一個」正是我們要防的那件事。
+ALLOW = {
+    'web/index.html': {
+        'x.drawImage(src, 0, 0);': 1,   # crownSprite：從來源精靈複製
+        'x.drawImage(im, 0, 0);': 1,    # adoptArt：把載進來的圖原樣拓進畫布
+        'x.drawImage(tmp, 0, 4);': 1,   # 圖示往下移，讓它落在格子中間
+        'x.drawImage(img, 0, 0);': 2,   # whiteOf 與 footOf 的量測用暫存拷貝
+    },
+}
 
-text = SRC.read_text(encoding='utf-8')
+seen = {}
+
+
+def exempt(rel, line):
+    quota = ALLOW.get(rel, {})
+    for want, cap in quota.items():
+        if line.startswith(want):
+            k = (rel, want)
+            seen[k] = seen.get(k, 0) + 1
+            return seen[k] <= cap
+    return False
+
+
 bad = []
-for i, line in enumerate(text.split('\n'), 1):
+for SRC in SRCS:
+  for i, line in enumerate(SRC.read_text(encoding='utf-8').split('\n'), 1):
     for m in re.finditer(r'drawImage\(', line):
         # 從左括號開始配對括號，取出整個呼叫
         depth, j = 0, m.end() - 1
@@ -48,7 +77,7 @@ for i, line in enumerate(text.split('\n'), 1):
                     break
             j += 1
         call = line[m.start():j + 1]
-        if any(a in call for a in ALLOW):
+        if exempt(str(SRC.relative_to(ROOT)), line.strip()):
             continue
         # 只數最外層的逗號 —— 內層的 makeBlob('l',{...}) 不算
         depth, commas = 0, 0
@@ -64,12 +93,12 @@ for i, line in enumerate(text.split('\n'), 1):
         args = commas + 1
         # 3 個參數 = 省略了尺寸；5 或 9 個才是有指定的形式
         if args == 3:
-            bad.append((i, line.strip()[:96]))
+            bad.append((SRC.relative_to(ROOT), i, line.strip()[:96]))
 
 if bad:
     print('有 %d 處 drawImage 省略了目的地尺寸：' % len(bad))
-    for i, line in bad:
-        print('  web/index.html:%d  %s' % (i, line))
+    for f, i, line in bad:
+        print('  %s:%d  %s' % (f, i, line))
     print('\n改成 blit(img, x, y) 或補上尺寸參數。')
     sys.exit(1)
 
