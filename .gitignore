@@ -7,3 +7,7 @@
 
 # Godot import cache
 godot/.godot/
+
+# Python bytecode
+__pycache__/
+*.pyc

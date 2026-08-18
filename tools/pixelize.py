@@ -2,27 +2,28 @@
 """
 把 AI 生成的圖轉成真正可用的像素美術。
 
-為什麼需要這一步：影像模型不會產出 24x24 的圖。你要 24x24 像素風，
-它會給你一張 1024x1024、「看起來像」像素風但每個「像素」其實是 42x42 一團、
+為什麼需要這一步：影像模型不會產出 32x32 的圖。你要 32x32 像素風，
+它會給你一張 1024x1024、「看起來像」像素風但每個「像素」其實是 32x32 一團、
 邊緣還帶抗鋸齒與雜色的圖。直接丟進遊戲會糊掉，而且每張圖的色調都不一樣。
 
-這支工具做三件事：
-  1. 切格     —— 一張大圖切成 N 張獨立小圖（sheet 模式）
-  2. 降取樣   —— 用區域平均縮到目標尺寸，再硬邊重建
-  3. 統一調色 —— 全部量化到同一組固定色盤
+這支工具做四件事：
+  1. 去背     —— 四角取樣，把背景轉成透明
+  2. 找主體   —— 在 sheet 上自動框出每個角色（--auto）
+  3. 降取樣   —— 先量化再取眾數，保住平塗與外框
+  4. 統一調色 —— 全部量化到同一組固定色盤
 
-第 3 步是讓不同批次生成的圖看起來像同一款遊戲的關鍵。
+第 4 步是讓不同批次生成的圖看起來像同一款遊戲的關鍵。
 
 用法：
-    # 單張
-    python3 tools/pixelize.py in.png -o godot/assets/items/herb_00.png
+    # 一張 sheet 自動切成 N 張（推薦，不必是整齊的網格）
+    python3 tools/pixelize.py sheet.png --auto \\
+        --out-dir web/art/mon --prefix m --start 0
 
-    # 一張 4x4 的 sheet 切成 16 張，依序命名
-    python3 tools/pixelize.py sheet.png --grid 4x4 \\
-        --out-dir godot/assets/items --prefix herb_ --start 0
+    # 單張
+    python3 tools/pixelize.py in.png -o web/art/mon/m00.png
 
     # 檢查既有資產是否合規
-    python3 tools/pixelize.py --check godot/assets
+    python3 tools/pixelize.py --check web/art
 """
 
 import argparse
@@ -31,7 +32,7 @@ import sys
 
 from PIL import Image
 
-TILE = 24
+TILE = 32
 
 # 32 色固定色盤。所有資產都量化到這裡 —— 這是把不同批次的生成結果
 # 綁成同一種視覺語言最有效的手段，比在提示詞裡描述顏色可靠得多。
@@ -53,6 +54,62 @@ PALETTE_HEX = [
 
 def hex_to_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+PALETTE_RGB = [hex_to_rgb(h) for h in PALETTE_HEX]
+_NEAR_CACHE = {}
+_LAB_CACHE = {}
+
+
+def to_lab(c):
+    """sRGB → CIELAB。配色一定要在感知空間裡比，不能在 RGB 裡比。
+
+    加權 RGB 距離看起來很合理，但實測會出這種事：
+    橄欖綠的皮膚 (137,170,77) 到色盤裡「亮綠 (74,168,94)」的距離是 8821，
+    到「淺棕 (187,150,104)」是 8787 —— 棕色以 34 之差勝出，
+    於是綠皮膚的哥布林變成棕色的。差 0.4% 的數字，換來的是**換了一個色相**。
+    在 Lab 裡，色相的差距會被算進 a/b 兩軸，這種事就不會發生。
+    """
+    hit = _LAB_CACHE.get(c)
+    if hit is not None:
+        return hit
+    r, g, b = [v / 255.0 for v in c]
+    f = lambda u: u / 12.92 if u <= 0.04045 else ((u + 0.055) / 1.055) ** 2.4
+    r, g, b = f(r), f(g), f(b)
+    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047
+    y = (r * 0.2126 + g * 0.7152 + b * 0.0722)
+    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883
+    t = lambda u: u ** (1 / 3) if u > 0.008856 else (7.787 * u + 16 / 116)
+    fx, fy, fz = t(x), t(y), t(z)
+    lab = (116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz))
+    _LAB_CACHE[c] = lab
+    return lab
+
+
+def nearest(c):
+    """把一個顏色配到色盤裡最近的那一個。
+
+    為什麼要自己寫，不用 PIL 的 quantize(palette=)：**它會配錯**。
+    實測 (137,170,77) 這個綠色被它配成 (156,120,80) 的棕色，
+    而隔壁的 (138,176,82) 卻正確配到綠色 —— 差一階就翻到完全不同的色相。
+    症狀是「綠皮膚的哥布林變成棕色的」，看起來像色盤裡沒有綠色，
+    其實色盤裡有四階綠。PIL 用的是近似查表，不是真的最近鄰。
+
+    距離在 CIELAB 裡用 CIE76 算（理由見 to_lab）。RGB 空間的距離
+    —— 不管有沒有加權 —— 都會在深綠與深棕之間翻車。
+    """
+    hit = _NEAR_CACHE.get(c)
+    if hit is not None:
+        return hit
+    L1, a1, b1 = to_lab(c)
+    best, bd = PALETTE_RGB[0], None
+    for p in PALETTE_RGB:
+        L2, a2, b2 = to_lab(p)
+        d = (L1 - L2) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2
+        if bd is None or d < bd:
+            bd, best = d, p
+    _NEAR_CACHE[c] = best
+    return best
 
 
 def build_palette_image():
@@ -88,19 +145,148 @@ def strip_background(im, tolerance=18):
     return im
 
 
-def pixelize(im, size, palette, keep_bg=False):
+def trim_to_subject(im, margin=1):
+    """裁到主體的外框，再補成正方形。
+
+    為什麼一定要這一步：模型輸出的每一格都有大量留白，主體常常只佔六成。
+    不裁就降取樣的話，24x24 裡真正畫到角色的只剩十三、四格，
+    而且邊緣像素會把白背景平均進來 —— 實測綠皮膚的哥布林量化完是**棕色**的。
+    看起來像「色盤沒有綠色」，其實是主體太小、平均進了背景。
+
+    補成正方形而不是直接拉伸：拉伸會把瘦高的角色壓扁，
+    而剪影是這個尺寸下唯一可靠的辨識依據。
+    """
+    bbox = im.getchannel("A").getbbox()
+    if not bbox:
+        return im
+    x0, y0, x1, y1 = bbox
+    x0 = max(0, x0 - margin); y0 = max(0, y0 - margin)
+    x1 = min(im.width, x1 + margin); y1 = min(im.height, y1 + margin)
+    cut = im.crop((x0, y0, x1, y1))
+    side = max(cut.width, cut.height)
+    sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    sq.paste(cut, ((side - cut.width) // 2, (side - cut.height) // 2))
+    return sq
+
+
+def pixelize(im, size, palette, keep_bg=False, trim=True):
     if not keep_bg:
         im = strip_background(im)
     im = im.convert("RGBA")
+    if trim:
+        im = trim_to_subject(im)
 
-    # BOX（區域平均）而非 LANCZOS：後者會製造出色盤外的中間色與振鈴，
-    # 量化之後變成髒邊
-    small = im.resize((size, size), Image.BOX)
+    """降取樣的順序很重要，這裡是「先量化、再取眾數」而不是「先平均、再量化」。
 
-    alpha = small.getchannel("A").point(lambda a: 255 if a >= 128 else 0)
-    rgb = small.convert("RGB").quantize(palette=palette, dither=Image.NONE)
-    out = rgb.convert("RGBA")
-    out.putalpha(alpha)
+    先平均的話：一格輸出蓋住原圖 26x26 個像素，綠皮膚會跟深色外框、
+    棕色腰布平均在一起，結果是一團濁色 —— 實測綠哥布林量化完是**棕色**的，
+    而色盤裡明明有四階綠。那不是色盤的問題，是平均把顏色吃掉了。
+
+    先量化再取眾數：每一格輸出取「原圖那一塊裡出現最多次的色盤顏色」。
+    平塗區塊因此原封不動地留下來，外框也不會糊掉 ——
+    這才是像素美術該有的降取樣方式。
+    """
+    src = im.convert("RGB").load()
+    a_full = im.getchannel("A").load()
+    W, H = im.size
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    dst = out.load()
+    for oy in range(size):
+        y0, y1 = oy * H // size, max(oy * H // size + 1, (oy + 1) * H // size)
+        for ox in range(size):
+            x0, x1 = ox * W // size, max(ox * W // size + 1, (ox + 1) * W // size)
+            tally, opaque, total = {}, 0, 0
+            for yy in range(y0, y1):
+                for xx in range(x0, x1):
+                    total += 1
+                    if a_full[xx, yy] < 128:
+                        continue
+                    opaque += 1
+                    c = nearest(src[xx, yy])
+                    tally[c] = tally.get(c, 0) + 1
+            # 這一格有一半以上是背景就當透明 —— 不然剪影會被外框撐胖一圈
+            if not tally or opaque * 2 < total:
+                continue
+            best = max(tally.items(), key=lambda kv: kv[1])[0]
+            dst[ox, oy] = (best[0], best[1], best[2], 255)
+    return out
+
+
+def find_subjects(im, min_frac=0.0015, gap=12):
+    """在一張 sheet 上自動找出每個角色，回傳依閱讀順序排好的外框。
+
+    為什麼不用 --grid 硬切：**模型不會照著網格畫**。實測那張 2x2 的圖，
+    史萊姆的下緣壓過水平中線、骷髏的頭蓋骨正好從中線開始 ——
+    硬切的結果是史萊姆下面多一塊不明的白球、骷髏的頭被切掉一半。
+    而且這件事每一批都會重來一次，因為它取決於模型當下怎麼排版。
+
+    做法是對透明遮罩做連通元件標記，再把「靠得夠近」的元件併起來
+    （劍尖、飄起來的布料常常會因為抗鋸齒而斷開成獨立的一塊）。
+    標記在 1/4 縮圖上做 —— 全解析度是 150 萬個像素，純 Python 會慢到不能用，
+    而我們只需要外框，不需要每個像素的歸屬。
+    """
+    S = 4
+    w, h = im.width // S, im.height // S
+    mask = im.getchannel("A").resize((w, h), Image.BOX).load()
+    lab = [[0] * w for _ in range(h)]
+    boxes = []
+    for sy in range(h):
+        for sx in range(w):
+            if mask[sx, sy] < 64 or lab[sy][sx]:
+                continue
+            n = len(boxes) + 1
+            x0 = x1 = sx; y0 = y1 = sy; area = 0
+            stack = [(sx, sy)]
+            lab[sy][sx] = n
+            while stack:
+                cx, cy = stack.pop()
+                area += 1
+                if cx < x0: x0 = cx
+                if cx > x1: x1 = cx
+                if cy < y0: y0 = cy
+                if cy > y1: y1 = cy
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < w and 0 <= ny < h and not lab[ny][nx] \
+                            and mask[nx, ny] >= 64:
+                        lab[ny][nx] = n
+                        stack.append((nx, ny))
+            boxes.append([x0, y0, x1, y1, area])
+
+    # 併掉離得近的碎片（劍尖、耳朵、飄起的布）
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(boxes)):
+            for j in range(i + 1, len(boxes)):
+                a, b = boxes[i], boxes[j]
+                if a[0] - gap <= b[2] and b[0] - gap <= a[2] \
+                        and a[1] - gap <= b[3] and b[1] - gap <= a[3]:
+                    boxes[i] = [min(a[0], b[0]), min(a[1], b[1]),
+                                max(a[2], b[2]), max(a[3], b[3]), a[4] + b[4]]
+                    boxes.pop(j)
+                    merged = True
+                    break
+            if merged:
+                break
+
+    # 濾掉雜點：面積不到整張圖 0.15% 的當作雜訊
+    floor = w * h * min_frac
+    boxes = [b for b in boxes if b[4] >= floor]
+
+    # 閱讀順序：先分列（同一列的縱向中心相差不到半個列高），列內再由左至右
+    boxes.sort(key=lambda b: b[1])
+    rows, cur = [], []
+    for b in boxes:
+        if cur and b[1] > max(c[3] for c in cur):
+            rows.append(cur); cur = []
+        cur.append(b)
+    if cur:
+        rows.append(cur)
+    out = []
+    for r in rows:
+        for b in sorted(r, key=lambda b: b[0]):
+            out.append((b[0] * S, b[1] * S, (b[2] + 1) * S, (b[3] + 1) * S))
     return out
 
 
@@ -153,8 +339,12 @@ def main():
     ap.add_argument("--prefix", default="")
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--grid", help="例如 4x4：把來源切成 4 欄 4 列")
+    ap.add_argument("--auto", action="store_true",
+                    help="自動在 sheet 上找出每個角色（不必是整齊的網格，建議用這個）")
     ap.add_argument("--size", type=int, default=TILE)
     ap.add_argument("--keep-bg", action="store_true")
+    ap.add_argument("--no-trim", action="store_true",
+                    help="不要裁到主體（地形圖塊要用，它本來就該填滿整格）")
     ap.add_argument("--check", help="檢查資產目錄是否合規")
     args = ap.parse_args()
 
@@ -167,20 +357,32 @@ def main():
     palette = build_palette_image()
     im = Image.open(args.src)
 
-    if args.grid:
+    if args.auto:
+        out_dir = args.out_dir or "."
+        os.makedirs(out_dir, exist_ok=True)
+        stripped = strip_background(im)
+        boxes = find_subjects(stripped)
+        print("找到 %d 個角色" % len(boxes))
+        for i, box in enumerate(boxes):
+            path = os.path.join(
+                out_dir, "%s%02d.png" % (args.prefix, args.start + i))
+            pixelize(stripped.crop(box), args.size, palette,
+                     keep_bg=True, trim=not args.no_trim).save(path)
+            print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))
+    elif args.grid:
         cols, rows = (int(x) for x in args.grid.lower().split("x"))
         out_dir = args.out_dir or "."
         os.makedirs(out_dir, exist_ok=True)
         for i, cell in enumerate(split_grid(im, cols, rows)):
             path = os.path.join(
                 out_dir, "%s%02d.png" % (args.prefix, args.start + i))
-            pixelize(cell, args.size, palette, args.keep_bg).save(path)
+            pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim).save(path)
             print("寫出 %s" % path)
     else:
         if not args.out:
             ap.error("單張模式需要 -o")
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-        pixelize(im, args.size, palette, args.keep_bg).save(args.out)
+        pixelize(im, args.size, palette, args.keep_bg, not args.no_trim).save(args.out)
         print("寫出 %s" % args.out)
 
 
