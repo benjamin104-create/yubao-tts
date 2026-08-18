@@ -1356,7 +1356,7 @@ const MONS = [
  {id:'slime',  nm:'藍史萊姆', ai:'W', hp:10,atk:4, def:2, exp:4,  spd:1,   sight:2, ev:0, fl:[1,4],  w:80},
  {id:'goblin', nm:'綠哥布林', ai:'C', hp:14,atk:9, def:3, exp:12, spd:1,   sight:5, ev:0, fl:[2,8],  w:90, steal:1},
  {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:{st:'亂',dur:8,ch:.25}},
- {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5},
+ {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5, fly:1},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
  {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂'], undead:1},
  {id:'wolf',   nm:'疾風狼',   ai:'C', hp:26,atk:16,def:8, exp:90, spd:2,   sight:7, ev:8, fl:[10,18],w:45, pack:1},
@@ -1373,19 +1373,19 @@ const MONS = [
     後段幾隻刻意不是動物，是**概念**：命題、悖論、公理。
     這個故事講的是從學習走到理解，那麼最後擋在路上的
     就不該是更大隻的野獸，而是更難的問題。 */
- {id:'wasp',   nm:'針尾蜂',   ai:'C', hp:12,atk:8, def:2, exp:14, spd:2,   sight:6, ev:12,fl:[2,9],  w:70, zn:['forest','beast'], bd:'bug', col:'u'},
+ {id:'wasp',   nm:'針尾蜂',   ai:'C', hp:12,atk:8, def:2, exp:14, spd:2,   sight:6, ev:12,fl:[2,9],  w:70, zn:['forest','beast'], bd:'bug', col:'u', fly:1},
  {id:'dryad',  nm:'樹靈',     ai:'W', hp:22,atk:9, def:6, exp:26, spd:1,   sight:3, ev:0, fl:[3,12], w:60, zn:['forest','beast'], bd:'spirit', col:'m', imm:['亂']},
  {id:'mossy',  nm:'苔背熊',   ai:'C', hp:34,atk:14,def:8, exp:48, spd:1,   sight:5, ev:0, fl:[5,15], w:55, zn:['forest','beast'], bd:'quad', col:'k'},
- {id:'hawk',   nm:'岩鷹',     ai:'C', hp:20,atk:13,def:4, exp:34, spd:2,   sight:9, ev:16,fl:[4,14], w:65, zn:['mountain'], bd:'bird', col:'b'},
+ {id:'hawk',   nm:'岩鷹',     ai:'C', hp:20,atk:13,def:4, exp:34, spd:2,   sight:9, ev:16,fl:[4,14], w:65, zn:['mountain'], bd:'bird', col:'b', fly:1},
  {id:'ibex',   nm:'角山羊',   ai:'C', hp:30,atk:15,def:9, exp:44, spd:1,   sight:6, ev:4, fl:[5,16], w:60, zn:['mountain'], bd:'quad', col:'c'},
  {id:'scree',  nm:'落石魔',   ai:'W', hp:44,atk:18,def:14,exp:70, spd:.5,  sight:3, ev:0, fl:[8,20], w:45, zn:['mountain'], bd:'construct', col:'5', imm:['睡','亂','麻']},
  {id:'eel',    nm:'淺灘鰻',   ai:'C', hp:26,atk:16,def:6, exp:46, spd:1,   sight:6, ev:10,fl:[6,17], w:60, zn:['lake'], bd:'serpent', col:'q'},
  {id:'crab',   nm:'鎧甲蟹',   ai:'W', hp:38,atk:13,def:16,exp:58, spd:.5,  sight:3, ev:0, fl:[7,19], w:50, zn:['lake'], bd:'bug', col:'r'},
  {id:'salam',  nm:'火蜥',     ai:'C', hp:32,atk:20,def:8, exp:64, spd:1,   sight:6, ev:6, fl:[8,20], w:55, zn:['briar'], bd:'quad', col:'h', onhit:{st:'燒',dur:4,ch:.3}},
- {id:'ash',    nm:'灰燼靈',   ai:'W', hp:26,atk:17,def:5, exp:56, spd:1,   sight:4, ev:14,fl:[8,20], w:50, zn:['briar'], bd:'spirit', col:'i'},
+ {id:'ash',    nm:'灰燼靈',   ai:'W', hp:26,atk:17,def:5, exp:56, spd:1,   sight:4, ev:14,fl:[8,20], w:50, zn:['briar'], bd:'spirit', col:'i', fly:1},
  {id:'tengu',  nm:'鴉天狗',   ai:'C', hp:40,atk:26,def:12,exp:120,spd:2,   sight:8, ev:20,fl:[12,24],w:55, zn:['wood'], bd:'bird', col:'3'},
  {id:'tanuki', nm:'化狸',     ai:'W', hp:36,atk:22,def:10,exp:110,spd:1,   sight:5, ev:8, fl:[11,23],w:50, zn:['wood'], bd:'quad', col:'a', steal:1},
- {id:'prism',  nm:'稜光體',   ai:'R', hp:34,atk:26,def:12,exp:150,spd:1,   sight:11,ev:6, fl:[14,26],w:50, zn:['mirror','crystal'], bd:'construct', col:'r', rng:6},
+ {id:'prism',  nm:'稜光體',   ai:'R', hp:34,atk:26,def:12,exp:150,spd:1,   sight:11,ev:6, fl:[14,26],w:50, zn:['mirror','crystal'], bd:'construct', col:'r', rng:6, fly:1},
  {id:'refr',   nm:'折射獸',   ai:'C', hp:42,atk:28,def:14,exp:170,spd:1,   sight:8, ev:18,fl:[15,27],w:45, zn:['mirror','crystal'], bd:'spirit', col:'6'},
  /* 蜈蚣的 fl 下限是被走通測試逼上來的。第一版寫 fl:[2,10]、spd 2 ——
     第一章的死亡率立刻從 7% 跳到 38%。速度 2 的意思是「每回合打你兩次」，
@@ -1398,11 +1398,11 @@ const MONS = [
     三件事各自都合理，疊起來是處刑：一回合打兩下、你有兩成打不中它、
     中了就白挨八下。牠該給人的感覺是「抓不到、很煩」，不是「會死」。
     所以留下閃避（那是蝴蝶的樣子），把速度與睡眠的長度拿掉。 */
- {id:'moth',   nm:'幻光蝶',   ai:'W', hp:16,atk:6, def:3, exp:30, spd:1,   sight:5, ev:20,fl:[4,14], w:45, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:2,ch:.12}},
- {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}},
+ {id:'moth',   nm:'幻光蝶',   ai:'W', hp:16,atk:6, def:3, exp:30, spd:1,   sight:5, ev:20,fl:[4,14], w:45, zn:['forest'], bd:'moth', col:'r', glow:'v', onhit:{st:'睡',dur:2,ch:.12}, fly:1},
+ {id:'chochin',nm:'提燈鬼',   ai:'C', hp:30,atk:20,def:8, exp:100,spd:1,   sight:7, ev:10,fl:[10,22],w:55, zn:['wood'], bd:'lantern', col:'i', glow:'v', onhit:{st:'盲',dur:5,ch:.3}, fly:1},
  {id:'shinobi',nm:'影忍',     ai:'C', hp:38,atk:28,def:10,exp:160,spd:2,   sight:9, ev:26,fl:[12,26],w:50, zn:['wood'], bd:'human', col:'4', glow:'g', clone:1},
  {id:'shadow', nm:'影法師',   ai:'C', hp:40,atk:16,def:8, exp:180,spd:1,   sight:99,ev:20,fl:[14,28],w:50, zn:['mirror'], bd:'human', col:'0', glow:'f', mimic:.85},
- {id:'seraph', nm:'熾天使',   ai:'C', hp:56,atk:32,def:16,exp:320,spd:1,   sight:9, ev:8, fl:[19,30],w:45, zn:['spire'], bd:'bird', col:'v', glow:'+'},
+ {id:'seraph', nm:'熾天使',   ai:'C', hp:56,atk:32,def:16,exp:320,spd:1,   sight:9, ev:8, fl:[19,30],w:45, zn:['spire'], bd:'bird', col:'v', glow:'+', fly:1},
  {id:'chimera',nm:'奇美拉',   ai:'C', hp:88,atk:38,def:18,exp:460,spd:1,   sight:9, ev:6, fl:[21,30],w:34, zn:['spire'], bd:'chimera', col:'g', glow:'u', onhit:{st:'燒',dur:5,ch:.35}},
  {id:'warden', nm:'守序構裝', ai:'C', hp:70,atk:30,def:20,exp:340,spd:1,   sight:7, ev:0, fl:[20,30],w:40, zn:['spire'], bd:'construct', col:'d', imm:['睡','亂','麻'], glow:'q'},
  /* 虛空的三隻不是生物，是問題。這是整個故事的收束： */
@@ -3580,6 +3580,15 @@ function paintEnd(i, x){
 
 const BOSS_SCALE = 1.6;
 
+/* 會飛的怪離地多高（邏輯單位）。3 是試出來的：再低看不出來跟站著的差別，
+   再高就會蓋掉上一格的東西、也讓「牠在哪一格」變得難判斷 ——
+   而在這款遊戲裡「牠站在哪一格」是玩家每一回合都要讀的資訊，不能為了
+   美觀犧牲。影子留在地上不動，本體浮起來，中間那段距離就是高度。
+
+   一開始寫 3，量出來的間隙只有 1 個邏輯單位 —— 因為影子本身有厚度，
+   浮起來的高度得先扣掉它才是「看得出來的距離」。5 是量到 3 的那個值。 */
+const FLY_H = -5;
+
 /* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
    使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
    分水嶺 —— 沒有它，牆與地板只是兩張並排的貼圖，所以整片地面
@@ -3798,6 +3807,66 @@ function whiteOf(img, name){
   x.globalCompositeOperation = 'source-in';
   x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
   return flashCache[name] = c;
+}
+
+/* ── 腳的位置與寬度 ────────────────────────────────────────────
+   影子要貼在「腳」上，不是畫在格子底下。原本是固定寬 10px、固定畫在
+   y=13 的一條橫槓，對程式畫的舊圖剛好，因為那些圖每一張都填滿整格。
+   換成外部圖之後就不成立了：趴著的洞穴鼠只佔下半格，影子留在原地，
+   於是牠浮在自己的影子上方 —— 使用者的原話是「不希望怪獸是懸浮在空中」。
+
+   而且就算全部靠底對齊，固定寬度還是不對：史萊姆有一整格寬，
+   骷髏只有中間細細一條。同一條橫槓墊在兩者底下，一個像陷進地裡、
+   一個像踩在滑板上。**影子的寬度就是牠著地的寬度**，這是唯一的規則。
+
+   回傳的是 0~1 的比例而不是像素，所以同一套邏輯對 16px 的舊圖與
+   32px 的新圖都成立，也不必知道畫的時候會放大幾倍。
+
+   getImageData 在 file:// 開啟時會因為畫布被外部圖污染而丟例外
+   （見 crownSprite）。量不到就回 null，呼叫端退回「腳在格子底部、
+   寬度 10/16」的假設 —— 轉檔工具已經把主體靠底對齊了，這個假設是對的。 */
+const footCache = {};
+function footOf(img, name){
+  if(name in footCache) return footCache[name];
+  let f = null;
+  try{
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    // 從最下面往上找第一列有東西的，那是著地線
+    let base = -1;
+    for(let y = c.height - 1; y >= 0 && base < 0; y--)
+      for(let px = 0; px < c.width; px++)
+        if(d[(y*c.width + px)*4 + 3] > 40){ base = y; break; }
+    if(base >= 0){
+      /* 寬度只取著地線往上一小段（八分之一高）的範圍。
+         取整張圖的話，張開翅膀的怪會得到一片跟翼展一樣寬的影子；
+         真正碰到地面的只有牠的腳。 */
+      const band = Math.max(1, Math.round(c.height * 0.12));
+      let lo = c.width, hi = -1, wlo = c.width, whi = -1;
+      for(let y = 0; y <= base; y++)
+        for(let px = 0; px < c.width; px++)
+          if(d[(y*c.width + px)*4 + 3] > 40){
+            if(px < wlo) wlo = px;
+            if(px > whi) whi = px;
+            if(y > base - band){
+              if(px < lo) lo = px;
+              if(px > hi) hi = px;
+            }
+          }
+      /* 兩組寬度，因為著地與浮空要的不是同一個東西：
+         站著的看「腳」（著地線往上一小段）—— 張開翅膀的鳥不該有一片
+         跟翼展一樣寬的影子，真正碰到地面的只有牠的腳。
+         飛著的看「整隻」—— 牠沒有一根腳趾碰地，投影的是整個身體，
+         照最低那幾列去算會得到一條只有四像素寬的細線，看起來像髒點。 */
+      if(hi >= lo)
+        f = { y:(base+1)/c.height, x0:lo/c.width, x1:(hi+1)/c.width,
+              wx0:wlo/c.width, wx1:(whi+1)/c.width };
+    }
+  }catch(e){ f = null; }
+  return footCache[name] = f;
 }
 
 /* 火把：三張輪播的火焰。火焰不對稱才會像在燒，
@@ -9228,6 +9297,10 @@ function draw(dt){
     const k = 1-Math.min(1, a.t/(a.dur || .11));
     return [o.x + (a.fx-o.x)*k, o.y + (a.fy-o.y)*k];
   };
+  /* 主角造型的快取鍵。白閃的剪影與影子的著地寬度都照這把鍵存，
+     兩邊一定要用同一把 —— 分開寫的話換一把武器，其中一個會停在舊值，
+     而且不會報錯，只是影子的寬度莫名其妙跟身體對不上。 */
+  const heroKey = ()=> 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-');
   // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
   // 像素風的動畫本來就該是一格一格的，平滑插值反而會糊掉。
   const bobOf = (o, ph)=>{
@@ -9240,14 +9313,45 @@ function draw(dt){
     const k = Math.sin(Math.min(1, o.lunge.t/.19) * Math.PI);
     return [o.lunge.dx*k*5, o.lunge.dy*k*5];
   };
-  // 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
-  // 同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
-  const shadow=(dx,dy,sc)=>{
-    const s = sc || 1, X = Math.round(ox+dx*T), Y = Math.round(oy+dy*T);
-    const w2 = Math.round(10*s), o2 = Math.round((T - w2)/2);
-    cx.fillStyle='rgba(0,0,0,.42)';
-    cx.fillRect(X+o2, Y+13, w2, 3);
-    cx.fillRect(X+o2-1, Y+14, w2+2, 1);
+  /* 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
+     同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
+
+     位置與寬度都跟著精靈實際的腳走（見 footOf），不再是固定的一條橫槓。
+     img/name 可以不給 —— 給不出來的呼叫端就退回舊的固定位置。
+
+     fly 是使用者特別畫出來的例外：「除非真的本來設定就是會飛的怪獸」。
+     會飛的東西影子留在地上不動，本體往上浮，兩者之間拉開的距離就是高度；
+     影子同時縮小、變淡 —— 光源離得越遠，影子越散。
+     這是「浮空」與「圖沒對齊」在畫面上唯一的差別：前者影子小而淡且不接觸，
+     後者影子照常大小卻莫名其妙離腳一段距離。 */
+  const shadow=(dx,dy,sc,img,name,fly)=>{
+    const s = sc || 1, X = ox+dx*T, Y = oy+dy*T, w = T*s;
+    const f = img ? footOf(img, name) : null;
+    // 量不到就假設「腳在格子底部、寬 10/16」—— 轉檔已經把主體靠底對齊
+    const fy  = f ? f.y : 1;
+    const fx0 = f ? (fly ? f.wx0 : f.x0) : 3/16;
+    const fx1 = f ? (fly ? f.wx1 : f.x1) : 13/16;
+    // 精靈的繪製原點：放大時往上、往左右長，腳還是踩在同一格上
+    const PX = X - (s-1)*T/2, PY = Y - (s-1)*T;
+    const k = fly ? .62 : 1;                       // 浮空的影子小一圈
+    const cxm = PX + (fx0+fx1)/2 * w;              // 著地寬度的中心
+    let w2 = Math.max(3, Math.round((fx1-fx0) * w * k));
+    const x0 = Math.round(cxm - w2/2);
+    /* 影子不吃 FLY_H。浮起來的是本體（在 drawEnt 裡），影子留在地面 ——
+       兩者拉開的那段距離就是「高度」。影子也跟著浮的話就沒有高度了，
+       整隻只是往上平移了三格，那不叫飛，那叫位置畫錯。 */
+    /* 影子的上緣壓在著地線上（往上一點，讓它塞進腳底下），不是「上緣在
+       著地線上方三格」。差別看起來很小，但那三格會把飛行怪浮起來的高度
+       整個吃掉 —— 實測 FLY_H 明明是負的，量出來的間隙卻只有 1，
+       因為影子自己先往上長了三格去追上牠。 */
+    const y0 = Math.round(PY + fy*w - 2);
+    /* 浮空的影子淡一級就好，不能淡到看不見。.24 實測在地牢的暗地板上
+       只造成兩成的壓暗，等於沒畫 —— 那樣飛行怪就變成「沒有影子的東西」，
+       而「沒有影子」讀起來是圖沒對齊，不是牠在飛。
+       要讀出高度，地上那一塊必須看得出來，才有東西可以跟本體拉開距離。 */
+    cx.fillStyle = 'rgba(0,0,0,' + (fly ? .32 : .42) + ')';
+    cx.fillRect(x0, y0, w2, 3);
+    cx.fillRect(x0-1, y0+1, w2+2, 1);
   };
   /* sc = 放大倍率。頭目用 2 ——
      使用者：「我希望魔王本身在畫面上大隻一點，比較有威嚇性，
@@ -9255,10 +9359,12 @@ function draw(dt){
      **所有東西**一起放大，所以頭目跟雜魚的相對大小沒有變，
      威嚇感自然沒有出來。真正有效的是牠比別人大。
      錨點放在腳底中央：放大之後往上、往左右長，牠還是站在同一格上。 */
-  const drawEnt=(o, img, name, ph, sc)=>{
+  const drawEnt=(o, img, name, ph, sc, fly)=>{
     const [dx,dy] = entPos(o);
     const [lx2,ly2] = lungeOf(o);
-    const X = Math.round(ox+dx*T + lx2), Y = Math.round(oy+dy*T + ly2 + bobOf(o, ph||0));
+    // 會飛的往上浮 FLY_H —— 影子留在地上，中間那段就是高度
+    const X = Math.round(ox+dx*T + lx2),
+          Y = Math.round(oy+dy*T + ly2 + bobOf(o, ph||0) + (fly ? FLY_H : 0));
     const s = sc || 1, w2 = T*s;
     const PX = X - Math.round((s-1)*T/2), PY = Y - Math.round((s-1)*T);
     cx.drawImage(img, PX, PY, w2, w2);
@@ -9282,7 +9388,7 @@ function draw(dt){
   // 複寫型態的分身：長得跟你一樣，但會完全複製你的移動
   if(G.echoes) for(const e of G.echoes){
     if(G.seen[key(e.x,e.y)]!==2) continue;
-    shadow(e.x, e.y);
+    shadow(e.x, e.y, 1, heroNow(), heroKey());
     cx.save(); cx.globalAlpha = .78;
     cx.drawImage(heroNow(), Math.round(ox+e.x*T), Math.round(oy+e.y*T));
     cx.restore();
@@ -9309,10 +9415,13 @@ function draw(dt){
       cx.beginPath(); cx.arc(gx, gy, T*0.46, 0, Math.PI*2); cx.stroke();
       cx.restore();
     }
-    shadow(mx,my, m.d.boss ? BOSS_SCALE : 1);
+    const msc = m.d.boss ? BOSS_SCALE : 1;
+    // 睡著或被麻痺的飛行生物會落地 —— 昏過去還在半空是說不通的
+    const mfly = !!m.d.fly && !(m.st['睡'] || m.st['麻']);
+    shadow(mx, my, msc, img, m.d.id, mfly);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
-    drawEnt(m, img, m.d.id, m.id*1.7, m.d.boss ? BOSS_SCALE : 1);
+    drawEnt(m, img, m.d.id, m.id*1.7, msc, mfly);
     cx.restore();
     if(m.st['睡']){ cx.fillStyle=PAL['r']; cx.fillRect(ox+m.x*T+11, oy+m.y*T+1, 3,1); cx.fillRect(ox+m.x*T+12, oy+m.y*T+2, 1,1); }
     // 血條（只在受傷時出現，不佔用畫面）
@@ -9339,14 +9448,14 @@ function draw(dt){
   // 店員
   if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
     const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
-    shadow(kx, ky);
+    shadow(kx, ky, 1, KEEPER, 'keeper');
     cx.drawImage(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
   }
 
   // 幻獸：畫在怪物之後、玩家之前，並用自己的元素色打一圈光
   for(const a of G.allies){
     const [ax,ay] = entPos(a);
-    shadow(ax,ay);
+    shadow(ax, ay, 1, SUMMON_ART[a.d.id], 'sum'+a.d.id);
     const bx0 = Math.round(ox+ax*T), by0 = Math.round(oy+ay*T);
     cx.fillStyle = PAL[a.d.col] + '66';
     cx.fillRect(bx0+3, by0+15, 10, 1);
@@ -9362,11 +9471,11 @@ function draw(dt){
   // 所以再亂的房間也能一眼找到自己在哪。
   {
     const [px2,py2] = entPos(G.p);
-    shadow(px2,py2);
+    shadow(px2, py2, 1, heroNow(), heroKey());
     const bx = Math.round(ox+px2*T), by = Math.round(oy+py2*T);
     cx.fillStyle = 'rgba(201,151,63,.55)';
     cx.fillRect(bx+3, by+15, 10, 1); cx.fillRect(bx+2, by+14, 1, 1); cx.fillRect(bx+13, by+14, 1, 1);
-    drawEnt(G.p, heroNow(), 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-'), 0);
+    drawEnt(G.p, heroNow(), heroKey(), 0);
   }
 
   // 施法光環：畫在粒子之前，讓火星疊在光圈上面

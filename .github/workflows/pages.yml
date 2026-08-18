@@ -71,6 +71,10 @@ jobs:
           # 音量：music.js 驗的是曲子的「資料」，驗不到「放出來有多大聲」。
           # 使用者回報「好像沒有音樂」時，音樂其實一直在播 —— 只是 RMS 只有 -40 dBFS。
           python tools/check_audio.py
+          # 站在地上還是浮在半空。使用者回報「怪獸看起來懸浮在空中」——
+          # 那是轉檔把主體置中造成的，而檔案、尺寸、色盤全部合規，
+          # 沒有任何一支既有檢查看得到它。這一支相減兩張截圖來量。
+          python tools/check_ground.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
