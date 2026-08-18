@@ -160,6 +160,37 @@ for what, marker, pat, doc_name, doc_pat in [
     dup = sorted({t for t in got if got.count(t) > 1})
     ok(not dup, "%s的文件裡沒有重複（重複：%s）" % (what, dup or "無"))
 
+print("\n道具圖示的編號與遊戲對得上")
+# 道具跟怪不一樣：檔名是**編號**不是 id，而編號直接對應遊戲裡的索引。
+# 少一個、多一個、或跳號，圖示就會整批對錯道具 —— 而且不會報錯，
+# 只是玩家看到的「赤紅的草」其實是別的東西的圖。
+_look = {}
+_i = _html.index("const LOOK = {")
+for _m in re.finditer(r"(\w+):\[(.*?)\],?\n", _html[_i:_html.index("\n};", _i)] + "\n",
+                      re.S):
+    _look[_m.group(1)] = _m.group(2).count("'") // 2
+_want = dict(_look)
+for _nm, _k in [("FOOD", "food"), ("WEAP", "weap"), ("SHLD", "shld"), ("HAT", "hat")]:
+    _a = re.search(r"const %s\s*=\s*\[" % _nm, _html).start()
+    _want[_k] = len(re.findall(r"\{id:'[a-z_0-9]+',\s*nm:",
+                               _html[_a:_html.index("\n];", _a)]))
+
+_ipath = os.path.join(ROOT, "docs", "art_prompts_item.md")
+if not os.path.exists(_ipath):
+    ok(False, "docs/art_prompts_item.md 存在")
+else:
+    _idoc = open(_ipath, encoding="utf-8").read()
+    _pairs = re.findall(r"`([a-z]+)(\d\d)`", _idoc.split("檔名對照")[1])
+    _got = {}
+    for _c, _n in _pairs:
+        _got.setdefault(_c, []).append(int(_n))
+    for _k in sorted(_want):
+        _nums = sorted(_got.get(_k, []))
+        # 一定要是 0..N-1 連續不重複 —— 只比個數的話，跳號會溜過去
+        ok(_nums == list(range(_want[_k])),
+           "%s 的編號是 0~%d 連續不重複（文件有 %d 個）"
+           % (_k, _want[_k] - 1, len(_nums)))
+
 print("\n轉檔成品")
 if not os.path.isdir(ART):
     ok(False, "web/art/ 存在")

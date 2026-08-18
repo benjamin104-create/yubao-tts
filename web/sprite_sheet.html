@@ -1741,6 +1741,22 @@ for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
    有了專屬造型就不需要，硬加反而會蓋掉本來就畫好的輪廓。 */
 for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
 
+/* 道具圖示。鍵是「類別#編號」，跟 iconOf() 的快取鍵一樣 ——
+   iconOf 只在 atlas 裡沒有東西的時候才去程式畫一張，
+   所以這裡先塞進去就會被優先使用，iconOf 一個字都不用改。
+
+   **編號指的是「外觀」不是「道具」**（草／卷軸／杖／壺這四類）。
+   外觀每一局重新洗牌：同一張「赤紅的草」這局是回復草、下局可能是毒草。
+   所以圖示絕對不能暗示效果，否則識別的玩法直接沒了。
+   食物／武器／盾／帽沒有這個問題，編號就是道具本身的順序。
+
+   ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
+const ART_ITEM = {};      // 例：{herb:14, weap:8} —— 圖到了才填
+for(const cat in ART_ITEM)
+  for(let i = 0; i < ART_ITEM[cat]; i++)
+    adoptArt(cat + '#' + i,
+             ART_DIR + 'item/' + cat + String(i).padStart(2, '0') + '.png');
+
 
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════
    主角與所有村民共用同一個剪影：寬扁的身體、兩側短鰭、四隻小腳、
