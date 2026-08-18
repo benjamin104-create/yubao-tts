@@ -37,9 +37,13 @@ SETUP = """(cfg)=>new Promise(done=>{
 
 MEASURE = """()=>{
   const rect = cv.getBoundingClientRect();
-  const s = rect.width / cv.width;
+  /* 比例是「CSS 像素 / 邏輯像素」，分母是 SW 不是 cv.width。
+     兩者以前一樣大，現在 cv.width 是邏輯尺寸的 RS 倍（算圖解析度）。
+     用 cv.width 的話這裡算出來的期望值會整段偏掉 —— 而且是「測試錯了、
+     程式對的」那種紅燈，最容易讓人反過來去改沒有壞的程式。 */
+  const s = rect.width / SW;
   // 期望值也要吃縮放 —— 推近之後名牌若沒跟著走，這裡就會量出一大段偏移
-  const wx = x => ((lastOx + x*16 + 8 - cv.width/2) * lastZ + cv.width/2) * s;
+  const wx = x => ((lastOx + x*16 + 8 - SW/2) * lastZ + SW/2) * s;
   /* 同名的東西可能同時在場（兩張召喚卷軸、兩隻洞穴鼠）。
      一個名字只記一個 x 的話，量到的會是「另一個同名物件」的座標 ——
      誤差剛好是一格（桌機 61.6px），看起來像名牌錯位，其實是測試自己對錯人。
@@ -59,7 +63,7 @@ MEASURE = """()=>{
        不夾的話一個長名字（「召喚卷軸」）貼在右緣就會被算成 60px 誤差。
 
        重點：這裡**必須**用 rect.width（CSS 像素）去夾。
-       如果程式改回用 cv.width（畫布內部像素，手機上只有 176），
+       如果程式改回用 SW（畫布邏輯像素，手機上只有 176），
        兩邊夾出來的結果就會差一大截，這支測試照樣會紅 ——
        也就是說模擬夾值並沒有把原本要抓的那個 bug 放掉。 */
     const halfW = e.getBoundingClientRect().width / 2 + 2;
@@ -71,7 +75,7 @@ MEASURE = """()=>{
     }
     out.push({txt:t, want, got});
   }
-  return {rectW:rect.width, cvW:cv.width, rows:out};
+  return {rectW:rect.width, cvW:SW, rows:out};
 }"""
 
 HAN = re.compile(r'[\u3400-\u9fff]')

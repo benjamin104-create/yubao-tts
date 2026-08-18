@@ -69,6 +69,14 @@ PROBE = """(sels)=>{
     return {sel, ok:true};
   };
   for(const s of sels) out.push(seen(s));
+  /* 算圖解析度有沒有真的生效。這條看起來多餘，但它抓過一個不會報錯的 bug：
+     fitViewport() 只比對格數，桌機開場時格數本來就等於預設值，於是直接
+     return，畫布一直停在 HTML 屬性寫的尺寸 —— 邏輯尺寸對、外部圖也載進來了，
+     只是全部在半解析度上算圖。畫面看起來只是「有點糊」，很像本來就這樣。 */
+  if(cv.width !== SW*RS || cv.height !== SH*RS)
+    out.push({sel:'算圖解析度', ok:false,
+              why:'畫布 ' + cv.width + 'x' + cv.height +
+                  '　應為 ' + (SW*RS) + 'x' + (SH*RS) + '（邏輯 ' + SW + 'x' + SH + ' × ' + RS + '）'});
   return {
     rows: out,
     overflowX: document.documentElement.scrollWidth - innerWidth,

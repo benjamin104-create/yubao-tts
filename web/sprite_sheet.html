@@ -45,12 +45,30 @@ const PAL = {
      用這四個色，主角永遠是畫面上最好認的那一個。 */
   '+':'#f2efe7','*':'#eaa88c','#':'#d97757','@':'#a8452c'
 };
-const T = 16;               // 一格 16px
+const T = 16;               // 一格 16 邏輯單位
+/* 算圖倍率。畫布的實際像素是邏輯尺寸的 RS 倍，一格因此有 16*RS 個真像素。
+
+   為什麼是「放大畫布」而不是「把 T 改成 32」：整個美術層是照 16 寫死的
+   —— 精靈資料是 16 字元寬的字串、主角身上的武器是固定座標、地磚、光影、
+   名牌位置全部吃這個數字。改 T 等於同時拆掉美術層與版面層，而且中間
+   任何一刻專案都跑不起來。
+
+   改成在每一幀開頭做一次縮放變換，**所有既有的繪圖座標一個字都不用改**
+   —— 它們算的是邏輯座標，乘算交給變換矩陣。32px 的外部圖畫進 16 邏輯
+   單位的格子裡，在 2 倍的畫布上剛好是 1:1 的像素，不會糊。
+
+   倍率取整數 2 而不是 1.5（24px）的理由：遷移期間一定有一半的東西還是
+   程式畫的 16px 舊圖，1.5 倍會把它們重取樣成半個像素、糊得不平均；
+   2 倍是原樣複製。這決定的是「遷移過程中好不好看」，而遷移會持續很久。 */
+const RS = 2;
 // 視窗格數。格數不能貪多：房間本來就只有 4~8 格寬，
 // 視窗開太大只是在看更多黑色。寧可格子大、看得清楚。
 // 橫式 14x10、直式 10x13 —— 手機是直的，遊戲畫面就不該是橫的，
 // 否則畫面只剩薄薄一條，下面全是按鈕。
 let VW = 14, VH = 10;
+/* 邏輯畫面尺寸。畫布的實際像素是這個的 RS 倍 —— 繪圖程式一律用 SW/SH，
+   讀 cv.width 會拿到實際像素，在 2 倍的變換底下等於算出兩倍大的座標。 */
+let SW = VW*T, SH = VH*T;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
@@ -1633,18 +1651,29 @@ const BOSS_BASE = {
 };
 function crownSprite(base){
   const src = atlas[base] || atlas.rat;
-  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  /* 尺寸跟著來源走，不寫死 T —— 換成外部 32px 的圖之後，
+     照 16 描邊會只描到左上角四分之一，而且不會報錯，只是頭目缺一角。 */
+  const S = src.width || T, SY = src.height || T;
+  const c = document.createElement('canvas'); c.width=S; c.height=SY;
   const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
   x.drawImage(src, 0, 0);
-  // getImageData 不是永遠拿得到（畫布被污染、或在無頭環境跑邏輯測試）。
-  // 拿不到就退回原圖 —— 美術效果可以少，遊戲不能因為描邊掛掉。
-  const d = x.getImageData(0,0,T,T);
+  /* getImageData 不是永遠拿得到，而且拿不到的時候是**丟例外**，不是回 null。
+     原本只判斷回傳值，是因為當時只有無頭測試會少這個 API。
+     接進外部圖之後多了一種情況：用 file:// 直接開這個 HTML 的話，
+     載進來的 PNG 會污染畫布，這一行會丟 SecurityError ——
+     於是十五隻頭目連同後面所有美術一起沒了，而且是在玩家的電腦上，
+     不是在我這裡。（架在伺服器上是同源，不會發生；但檔案是單檔 HTML，
+     「載下來雙擊打開」本來就是這款遊戲預期的用法之一。）
+     拿不到就退回沒有金邊的原圖 —— 美術效果可以少，遊戲不能掛。 */
+  let d = null;
+  try { d = x.getImageData(0,0,S,SY); } catch(e){ return c; }
   if(!d || !d.data || !x.createImageData) return c;
   const a = d.data;
-  const solid = (px_,y)=> px_>=0 && y>=0 && px_<T && y<T && a[(y*T+px_)*4+3] > 0;
-  const out = x.createImageData(T,T);
-  for(let y=0;y<T;y++) for(let px_=0;px_<T;px_++){
-    const i=(y*T+px_)*4;
+  const solid = (px_,y)=> px_>=0 && y>=0 && px_<S && y<SY && a[(y*S+px_)*4+3] > 0;
+  const out = x.createImageData(S,SY);
+  for(let y=0;y<SY;y++) for(let px_=0;px_<S;px_++){
+    const i=(y*S+px_)*4;
     if(solid(px_,y)){                        // 本體壓暗，金邊才跳得出來
       out.data[i]   = a[i]*0.72;
       out.data[i+1] = a[i+1]*0.72;
@@ -1658,6 +1687,43 @@ function crownSprite(base){
   return c;
 }
 for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
+
+/* ── 外部精靈：載到就換掉，載不到就用程式畫的 ──────────────────
+   這是整個美術遷移能不能做完的關鍵，所以規則只有一條：
+   **任何一張圖載不到，遊戲都要照樣跑，而且看起來要是完整的。**
+
+   六十張圖不可能一次到位。如果「換美術」是一個要全部換完才能執行的
+   大改動，它就永遠不會完成 —— 中間每一天專案都是壞的，沒有人撐得住。
+   改成一張一張換：這裡列到而且檔案真的存在的就用圖，其餘維持原狀。
+   載入失敗刻意不報錯也不提示，因為那不是錯誤，那是「還沒畫到」。
+
+   圖是非同步載進來的，會比第一幀晚。所以不能在載入時「決定」什麼，
+   只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
+const ART_DIR = 'art/';
+const ART_MON = ['rat', 'slime', 'goblin', 'skeleton'];
+function adoptArt(id, url){
+  if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
+  const im = new Image();
+  im.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = im.width; c.height = im.height;
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;           // 32px 的圖進來要一格是一格
+    x.drawImage(im, 0, 0);
+    atlas[id] = c;
+    /* 兩份衍生資料是照舊圖烘的，一起作廢：
+       受擊白閃的剪影、以及從這隻雜魚長出來的頭目。
+       忘了這一步的話，玩家會看到「被打時閃出一個舊造型」。 */
+    delete flashCache[id];
+    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id){
+      delete flashCache[b];
+      atlas[b] = crownSprite(id);
+    }
+  };
+  im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
+  im.src = url;
+}
+for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
 
 
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════

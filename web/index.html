@@ -1098,7 +1098,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   <div id="main">
   <div id="shake">
     <div id="screenwrap">
-      <canvas id="game" width="224" height="160"></canvas>
+      <canvas id="game" width="448" height="320"></canvas>
       <div id="tags"></div>
       <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
       <div id="bossbar"><b id="bossnm"></b><span id="bosspips"></span><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
@@ -1253,12 +1253,30 @@ const PAL = {
      用這四個色，主角永遠是畫面上最好認的那一個。 */
   '+':'#f2efe7','*':'#eaa88c','#':'#d97757','@':'#a8452c'
 };
-const T = 16;               // 一格 16px
+const T = 16;               // 一格 16 邏輯單位
+/* 算圖倍率。畫布的實際像素是邏輯尺寸的 RS 倍，一格因此有 16*RS 個真像素。
+
+   為什麼是「放大畫布」而不是「把 T 改成 32」：整個美術層是照 16 寫死的
+   —— 精靈資料是 16 字元寬的字串、主角身上的武器是固定座標、地磚、光影、
+   名牌位置全部吃這個數字。改 T 等於同時拆掉美術層與版面層，而且中間
+   任何一刻專案都跑不起來。
+
+   改成在每一幀開頭做一次縮放變換，**所有既有的繪圖座標一個字都不用改**
+   —— 它們算的是邏輯座標，乘算交給變換矩陣。32px 的外部圖畫進 16 邏輯
+   單位的格子裡，在 2 倍的畫布上剛好是 1:1 的像素，不會糊。
+
+   倍率取整數 2 而不是 1.5（24px）的理由：遷移期間一定有一半的東西還是
+   程式畫的 16px 舊圖，1.5 倍會把它們重取樣成半個像素、糊得不平均；
+   2 倍是原樣複製。這決定的是「遷移過程中好不好看」，而遷移會持續很久。 */
+const RS = 2;
 // 視窗格數。格數不能貪多：房間本來就只有 4~8 格寬，
 // 視窗開太大只是在看更多黑色。寧可格子大、看得清楚。
 // 橫式 14x10、直式 10x13 —— 手機是直的，遊戲畫面就不該是橫的，
 // 否則畫面只剩薄薄一條，下面全是按鈕。
 let VW = 14, VH = 10;
+/* 邏輯畫面尺寸。畫布的實際像素是這個的 RS 倍 —— 繪圖程式一律用 SW/SH，
+   讀 cv.width 會拿到實際像素，在 2 倍的變換底下等於算出兩倍大的座標。 */
+let SW = VW*T, SH = VH*T;
 
 /* ─── 精靈：手繪像素資料 ─────────────────────────────────────
    固定左上光源、深色描邊、16x16 剪影優先。 */
@@ -2841,18 +2859,29 @@ const BOSS_BASE = {
 };
 function crownSprite(base){
   const src = atlas[base] || atlas.rat;
-  const c = document.createElement('canvas'); c.width=T; c.height=T;
+  /* 尺寸跟著來源走，不寫死 T —— 換成外部 32px 的圖之後，
+     照 16 描邊會只描到左上角四分之一，而且不會報錯，只是頭目缺一角。 */
+  const S = src.width || T, SY = src.height || T;
+  const c = document.createElement('canvas'); c.width=S; c.height=SY;
   const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
   x.drawImage(src, 0, 0);
-  // getImageData 不是永遠拿得到（畫布被污染、或在無頭環境跑邏輯測試）。
-  // 拿不到就退回原圖 —— 美術效果可以少，遊戲不能因為描邊掛掉。
-  const d = x.getImageData(0,0,T,T);
+  /* getImageData 不是永遠拿得到，而且拿不到的時候是**丟例外**，不是回 null。
+     原本只判斷回傳值，是因為當時只有無頭測試會少這個 API。
+     接進外部圖之後多了一種情況：用 file:// 直接開這個 HTML 的話，
+     載進來的 PNG 會污染畫布，這一行會丟 SecurityError ——
+     於是十五隻頭目連同後面所有美術一起沒了，而且是在玩家的電腦上，
+     不是在我這裡。（架在伺服器上是同源，不會發生；但檔案是單檔 HTML，
+     「載下來雙擊打開」本來就是這款遊戲預期的用法之一。）
+     拿不到就退回沒有金邊的原圖 —— 美術效果可以少，遊戲不能掛。 */
+  let d = null;
+  try { d = x.getImageData(0,0,S,SY); } catch(e){ return c; }
   if(!d || !d.data || !x.createImageData) return c;
   const a = d.data;
-  const solid = (px_,y)=> px_>=0 && y>=0 && px_<T && y<T && a[(y*T+px_)*4+3] > 0;
-  const out = x.createImageData(T,T);
-  for(let y=0;y<T;y++) for(let px_=0;px_<T;px_++){
-    const i=(y*T+px_)*4;
+  const solid = (px_,y)=> px_>=0 && y>=0 && px_<S && y<SY && a[(y*S+px_)*4+3] > 0;
+  const out = x.createImageData(S,SY);
+  for(let y=0;y<SY;y++) for(let px_=0;px_<S;px_++){
+    const i=(y*S+px_)*4;
     if(solid(px_,y)){                        // 本體壓暗，金邊才跳得出來
       out.data[i]   = a[i]*0.72;
       out.data[i+1] = a[i+1]*0.72;
@@ -2866,6 +2895,43 @@ function crownSprite(base){
   return c;
 }
 for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
+
+/* ── 外部精靈：載到就換掉，載不到就用程式畫的 ──────────────────
+   這是整個美術遷移能不能做完的關鍵，所以規則只有一條：
+   **任何一張圖載不到，遊戲都要照樣跑，而且看起來要是完整的。**
+
+   六十張圖不可能一次到位。如果「換美術」是一個要全部換完才能執行的
+   大改動，它就永遠不會完成 —— 中間每一天專案都是壞的，沒有人撐得住。
+   改成一張一張換：這裡列到而且檔案真的存在的就用圖，其餘維持原狀。
+   載入失敗刻意不報錯也不提示，因為那不是錯誤，那是「還沒畫到」。
+
+   圖是非同步載進來的，會比第一幀晚。所以不能在載入時「決定」什麼，
+   只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
+const ART_DIR = 'art/';
+const ART_MON = ['rat', 'slime', 'goblin', 'skeleton'];
+function adoptArt(id, url){
+  if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
+  const im = new Image();
+  im.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = im.width; c.height = im.height;
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;           // 32px 的圖進來要一格是一格
+    x.drawImage(im, 0, 0);
+    atlas[id] = c;
+    /* 兩份衍生資料是照舊圖烘的，一起作廢：
+       受擊白閃的剪影、以及從這隻雜魚長出來的頭目。
+       忘了這一步的話，玩家會看到「被打時閃出一個舊造型」。 */
+    delete flashCache[id];
+    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id){
+      delete flashCache[b];
+      atlas[b] = crownSprite(id);
+    }
+  };
+  im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
+  im.src = url;
+}
+for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
 
 
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════
@@ -8582,8 +8648,8 @@ function panelTiles(){
 let lastOx=0, lastOy=0, lastZ=1, rockPat=null;
 // 世界座標 → 螢幕座標。名牌是 DOM 元素，滑鼠點擊也要反推，
 // 兩邊都必須跟畫布上的縮放走同一條公式，否則推近之後名牌會整排飄掉。
-const zx = v => (v - cv.width /2) * lastZ + cv.width /2;
-const zy = v => (v - cv.height/2) * lastZ + cv.height/2;
+const zx = v => (v - SW /2) * lastZ + SW /2;
+const zy = v => (v - SH/2) * lastZ + SH/2;
 
 /* ═══ 迷宮外側的景色 ═════════════════════════════════════════
    全部即時算，不存狀態：每一片雲、每一道流都是從
@@ -8591,7 +8657,7 @@ const zy = v => (v - cv.height/2) * lastZ + cv.height/2;
    關掉不影響任何規則，而且會隨鏡頭有視差 —— 沒有視差的背景
    會跟著地圖一起走，一眼就看得出是貼在畫面上的圖。 */
 function drawBackdrop(kind, ox, oy){
-  const W = cv.width, H = cv.height;
+  const W = SW, H = SH;
   if(!kind){                                  // 沒指定就維持全黑（岩盤會蓋上來）
     cx.fillStyle = '#07070a'; cx.fillRect(0,0,W,H);
     return;
@@ -8795,6 +8861,10 @@ function bossBar(){
 
 function draw(dt){
   if(!G) return;
+  /* 整幀唯一一次縮放。這一行之後的每一個座標都是邏輯單位（一格 = T = 16），
+     跟改倍率之前寫的完全一樣 —— 這就是不動 T 的用意。
+     用 setTransform 而不是 scale：scale 是疊加的，畫面會一幀比一幀大。 */
+  cx.setTransform(RS, 0, 0, RS, 0, 0);
   // 鏡頭永遠對準玩家，不夾在地圖邊界內。
   // 夾住的話玩家走到邊角時房間會被推到畫面一側，另一半是死黑；
   // 而地圖外和未探索一樣是黑的，不夾反而構圖永遠是平衡的。
@@ -8830,9 +8900,9 @@ function draw(dt){
   const zoomed = Z > 1.001;
   if(zoomed){
     cx.save();
-    cx.translate(cv.width/2, cv.height/2);
+    cx.translate(SW/2, SH/2);
     cx.scale(Z, Z);
-    cx.translate(-cv.width/2, -cv.height/2);
+    cx.translate(-SW/2, -SH/2);
   }
 
   /* 有「外面」的章節就不鋪岩盤。
@@ -8849,7 +8919,7 @@ function draw(dt){
     cx.save();
     cx.translate(ox % 32, oy % 32);
     cx.fillStyle = rockPat;
-    cx.fillRect(-32, -32, cv.width+64, cv.height+64);
+    cx.fillRect(-32, -32, SW+64, SH+64);
     cx.restore();
   }
 
@@ -8988,10 +9058,10 @@ function draw(dt){
      會呼吸的才讀得出「這東西是活的、可以互動」。
      用了幾乎純色的綠：這是整個地牢裡唯一一個「安全」的訊號，
      它值得打破「飽和色只屬於活的東西」那條規則。 */
-  const SH = G.f.shrine;
-  if(SH && G.seen[key(SH.x, SH.y)]){
-    const sx = ox + SH.x*T + T/2, sy = oy + SH.y*T + T/2;
-    const on = !SH.used;
+  const SHR = G.f.shrine;
+  if(SHR && G.seen[key(SHR.x, SHR.y)]){
+    const sx = ox + SHR.x*T + T/2, sy = oy + SHR.y*T + T/2;
+    const on = !SHR.used;
     const pulse = on ? (0.62 + 0.38*Math.sin(clock*2.2)) : 0.18;
     cx.save();
     cx.globalCompositeOperation = 'lighter';
@@ -9058,7 +9128,7 @@ function draw(dt){
      它做的事只有一件：讓畫面看起來是「有空氣的地方」，
      而不是一張靜止的地磚圖。那正是玩家願不願意截圖分享的分界線。 */
   if(AIR && vx1 >= vx0){
-    const W = cv.width, H = cv.height;
+    const W = SW, H = SH;
     cx.save();
     cx.beginPath();
     cx.rect(ox + vx0*T, oy + vy0*T, (vx1-vx0+1)*T, (vy1-vy0+1)*T);
@@ -9325,14 +9395,14 @@ function draw(dt){
 
   // 火把光暈：離玩家越遠越暗，房間也有邊界感
   // 半徑依畫布尺寸換算 —— 直式手機的畫布比桌機小，寫死半徑會整片變黑
-  const R = Math.max(cv.width, cv.height) * 0.46;
+  const R = Math.max(SW, SH) * 0.46;
   const g = cx.createRadialGradient(
     ox+G.p.x*T+8, oy+G.p.y*T+8, R*0.22,
     ox+G.p.x*T+8, oy+G.p.y*T+8, R);
   g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.34)');
   /* 推近的時候整個世界層被放大了，所以「填滿畫布」要用比畫布大的矩形 ——
-     照 cv.width 填的話，畫面四周會露出一圈沒有暈影的亮邊。 */
-  cx.fillStyle=g; cx.fillRect(-cv.width, -cv.height, cv.width*3, cv.height*3);
+     照 SW 的範圍填的話，畫面四周會露出一圈沒有暈影的亮邊。 */
+  cx.fillStyle=g; cx.fillRect(-SW, -SH, SW*3, SH*3);
 
   // 火把本身：玩家周圍一圈暖光。地形是冷色、光是暖色，
   // 兩者一疊才有「這裡有人拿著火把站著」的感覺，而不是一張平的貼圖。
@@ -9344,7 +9414,7 @@ function draw(dt){
   g2.addColorStop(0.55,'rgba(110,64,22,.15)');
   g2.addColorStop(1,   'rgba(0,0,0,0)');
   cx.globalCompositeOperation = 'lighter';
-  cx.fillStyle = g2; cx.fillRect(-cv.width, -cv.height, cv.width*3, cv.height*3);
+  cx.fillStyle = g2; cx.fillRect(-SW, -SH, SW*3, SH*3);
 
   // 牆上火把也要真的照亮周圍，否則就只是一張貼在牆上的圖。
   // 每支的閃爍相位不同 —— 全部同步跳動會像壞掉的日光燈。
@@ -9364,8 +9434,8 @@ function draw(dt){
   for(const m of MOTES){
     const wx = (m.x + clock*0.006*m.sp) % 1;
     const wy = (m.y + Math.sin(clock*m.sp + m.ph)*0.02 + clock*0.004) % 1;
-    const sx2 = (wx - .5) * cv.width / Z + cv.width/2,
-          sy2 = (wy - .5) * cv.height / Z + cv.height/2;
+    const sx2 = (wx - .5) * SW / Z + SW/2,
+          sy2 = (wy - .5) * SH / Z + SH/2;
     const d = Math.hypot(sx2-lx, sy2-ly);
     if(d > R*0.7) continue;
     cx.globalAlpha = m.a * (1 - d/(R*0.7));
@@ -9404,7 +9474,7 @@ function updateTags(){
   let n = 0;
   if(tagsOn && !G.over){
     const rect = cv.getBoundingClientRect();
-    const s = rect.width ? rect.width / cv.width : 0;
+    const s = rect.width ? rect.width / SW : 0;
     if(s){
       // 先收集，再一次解決重疊。一格一格直接貼的話，三隻怪擠在一起時
       // 名牌會疊成一面看不懂的字牆 —— 那比沒有名牌更糟。
@@ -9412,7 +9482,7 @@ function updateTags(){
       const near = (x,y,r)=> Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) <= r;
       const push = (wx, wy, txt, cls, owner)=>{
         const sx = zx(lastOx + wx*T + T/2), sy = zy(lastOy + wy*T);
-        if(sx < -20 || sy < -20 || sx > cv.width+20 || sy > cv.height+20) return;
+        if(sx < -20 || sy < -20 || sx > SW+20 || sy > SH+20) return;
         // 中文約 11px、其他約 6.4px，加上左右內距與框線
         let w = 10;
         for(const ch of txt) w += ch.charCodeAt(0) > 0x2e80 ? 10.5 : 6.2;
@@ -9505,13 +9575,13 @@ function updateTags(){
         /* 夾在畫布內。名牌用 translate(-50%) 置中，所以左右各要留半個寬度；
            不夾的話靠邊的怪會顯示成「eton Soldier」這種讀到一半的名字。
 
-           夾的上界一定要用 rect.width（CSS 像素），不能用 cv.width。
+           夾的上界一定要用 rect.width（CSS 像素），不能用 SW。
            t.x 在 push() 裡已經乘過縮放 s 了，是 CSS 座標；
-           而 cv.width 是畫布的內部像素（11 格 x 16px = 176）。
+           而 SW 是畫布的邏輯像素（11 格 x 16 = 176）。
            手機上畫布被放大到 393px 寬，拿 176 去夾 CSS 座標的結果是
            **每一個名牌都被壓到畫面左半邊** —— 樓梯在最右邊，
            「下樓」卻貼在主角旁邊。使用者截圖回報的就是這個。
-           桌機看不出來：那裡 rect.width 跟 cv.width 剛好接近。 */
+           桌機看不出來：那裡 rect.width 跟 SW 剛好接近。 */
         const halfW = t.w / 2 + 2;
         el.style.left = Math.max(halfW, Math.min(rect.width - halfW, t.x)) + 'px';
         el.style.top  = Math.max(0, Math.min(rect.height - 14, t.y)) + 'px';
@@ -9672,9 +9742,14 @@ function fitViewport(){
       if(cell > 0) nh = Math.max(12, Math.min(16, Math.floor(avail / cell)));
     }
   }
-  if(nw === VW && nh === VH){ fitCanvas(); return; }
+  /* 也要比對畫布的實際像素，不能只比格數。開場時 VW/VH 就已經是桌機的
+     14x10 了，只比格數的話這裡會直接 return，畫布就一直停在 HTML 屬性寫的
+     224x160 —— 邏輯尺寸對、圖也載進來了，只是全部在半解析度上算圖。
+     不會報錯，只會糊，而且糊得很像「本來就這樣」。 */
+  if(nw === VW && nh === VH && cv.width === VW*T*RS){ fitCanvas(); return; }
   VW = nw; VH = nh;
-  cv.width = VW*T; cv.height = VH*T;
+  SW = VW*T; SH = VH*T;
+  cv.width = SW*RS; cv.height = SH*RS;
   // 明寫長寬比。只給 width:100% 時，畫布高度要靠瀏覽器從內在比例推算，
   // 在 iframe 裡（Artifact 就是）不同引擎推算的結果不一致，畫面會被壓扁。
   cv.style.aspectRatio = VW + ' / ' + VH;
@@ -11367,9 +11442,9 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
 
     // 輕點：換算成格座標，朝那一格走一步（點自己 = 開腳下選單）
     const r = cv.getBoundingClientRect(); if(!r.width) return;
-    const s = r.width / cv.width;
-    const gx = Math.floor((((ev.clientX - r.left)/s - cv.width/2)/lastZ + cv.width/2 - lastOx) / T);
-    const gy = Math.floor((((ev.clientY - r.top )/s - cv.height/2)/lastZ + cv.height/2 - lastOy) / T);
+    const s = r.width / SW;
+    const gx = Math.floor((((ev.clientX - r.left)/s - SW/2)/lastZ + SW/2 - lastOx) / T);
+    const gy = Math.floor((((ev.clientY - r.top )/s - SH/2)/lastZ + SH/2 - lastOy) / T);
     if(gx === G.p.x && gy === G.p.y){ SFX.play('open'); openPanel('ground'); return; }
     const dx = Math.sign(gx - G.p.x), dy = Math.sign(gy - G.p.y);
     if(dx || dy) handleDir(dx, dy);
