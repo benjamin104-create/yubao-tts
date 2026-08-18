@@ -1908,6 +1908,12 @@ m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
 m.wall|There is a wall ahead.|まえは かべだ。
+m.lost|(The stairs are to the {d} — about {n} steps.)|（かいだんは {d}のほう —— およそ {n}ぽ。）
+dir.n|north|きた
+dir.s|south|みなみ
+dir.e|east|ひがし
+dir.w|west|にし
+dir.here|right below|まうえ
 m.corner|You cannot cut that corner.|その かどは まがれない。
 m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
 m.pick|Picked up "{nm}".|「{nm}」を ひろった。
@@ -5808,7 +5814,29 @@ function tryMove(dx,dy){
      && roomOf(nx,ny) !== G.shop.room && walkable(nx,ny)){
     SFX.play('open'); openPanel('bill'); return;
   }
-  if(!walkable(nx,ny)){ SFX.play('wall',120); say(TX('m.wall','前面是牆壁。')); return; }   // 撞牆不消耗回合
+  if(!walkable(nx,ny)){
+    /* 連續撞牆五次就報方向。使用者：「故意把主角困在這裡⋯還好我有縮地」。
+       用玩家真正的移動規則（含牆角規則）掃過 372 層，走不到樓梯的是 0 層 ——
+       他不是被封死，是**找不到路**：最後的迷宮那一章沒有地圖，
+       走廊又窄又黑，撞幾次牆就會覺得被關住。
+       「其實走得到」跟「玩家覺得走得到」是兩件事，而只有後者算數。
+       所以不動地圖，改成撞到第五次時給一句方位 ——
+       路還是自己走，但至少知道要往哪邊走。 */
+    SFX.play('wall',120);
+    G.bump = (G.bump|0) + 1;
+    if(G.bump >= 5 && G.f && G.f.stairs){
+      G.bump = 0;
+      const dx0 = G.f.stairs.x - p.x, dy0 = G.f.stairs.y - p.y;
+      const ns = Math.abs(dy0) < 2 ? '' : (dy0 < 0 ? TX('dir.n','北') : TX('dir.s','南'));
+      const ew = Math.abs(dx0) < 2 ? '' : (dx0 < 0 ? TX('dir.w','西') : TX('dir.e','東'));
+      say(M('m.lost','（樓梯在你的{d}方 —— 大約 {n} 步。）',
+            {d: (ns + ew) || TX('dir.here','正下'),
+             n: Math.max(Math.abs(dx0), Math.abs(dy0))}), 'gold');
+    }
+    say(TX('m.wall','前面是牆壁。'));
+    return;
+  }
+  G.bump = 0;                       // 走得動就重新計數
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say(TX('m.corner','沒辦法從這個角度過去。')); return; }
   SFX.play('step');
   echoStep(dx, dy);                       // 複寫型態的分身完全跟著你走

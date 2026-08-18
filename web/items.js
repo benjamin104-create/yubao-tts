@@ -701,6 +701,32 @@ t('十五章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   }
 });
 
+/* ── 撞牆撞到迷路，要有人告訴你樓梯在哪 ──────────────────────
+   使用者：「故意把主角困在這裡⋯還好我有縮地」。
+   實測連通性（用玩家真正的移動規則、含牆角規則、372 層）走不到樓梯是 0 層 ——
+   他不是被封死，是找不到路。「其實走得到」跟「玩家覺得走得到」是兩件事。 */
+t('連續撞牆五次會告訴你樓梯在哪一邊', ()=>{
+  V.act = 13;
+  api.newGame(4242);
+  const G = api.G(), p = G.p;
+  G.act = 13; G.floor = 1; api.buildFloor();
+  let dir = null;
+  outer:
+  for(let y = 1; y < api.MH-1; y++) for(let x = 1; x < api.MW-1; x++){
+    if(!api.walkable(x,y)) continue;
+    for(const d of api.DIRS)
+      if(!api.walkable(x+d[0], y+d[1])){ p.x = x; p.y = y; dir = d; break outer; }
+  }
+  assert(dir, '這張圖上找不到任何一面牆');
+  let hint = 0;
+  api.hookSay(txt => { if(/樓梯在|stairs are|かいだんは/.test(txt)) hint++; });
+  for(let i = 0; i < 4; i++) api.tryMove(dir[0], dir[1]);
+  assert.strictEqual(hint, 0, '才撞四次就提示了 —— 那會變成每撞一次都被唸');
+  api.tryMove(dir[0], dir[1]);
+  api.hookSay(null);
+  assert(hint > 0, '撞了五次還是沒有人告訴你樓梯在哪');
+});
+
 // ── 職業帽 ──────────────────────────────────────────────────
 // 使用者回報：「每一個章節都沒有撿到帽子，所以好像也無法測試職業技能」。
 // 查出來是真的 —— 舊的放置邏輯是照「絕對深度每 20 層」切段，
