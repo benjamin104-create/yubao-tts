@@ -2006,7 +2006,7 @@ function heroSprite(wi, si, hi, skin, col0){
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
 
-  x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', hat:hi, skin:sk}), 0, 0);
+  x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', hat:hi, skin:sk}), 0, 0, T, T);
 
   if(si >= 0) drawHeroShield(x, si);
   if(wi >= 0) drawHeroWeapon(x, wi);
@@ -2312,9 +2312,9 @@ function paintEnd(i, x){
     R(39,20,4,4,'#f5a95e');  R(85,20,4,4,'#f5a95e');
     R(40,19,2,2,'#f5dc7a');  R(86,19,2,2,'#f5dc7a');
     // 三個挑戰者：一個已經進去、一個在門口、一個還在路上
-    x.drawImage(makeBlob('l',{star:true}), 60, 28);
-    x.drawImage(makeBlob('q',{star:true}), 44, 40);
-    x.drawImage(makeBlob('u',{star:true}), 20, 46);
+    x.drawImage(makeBlob('l',{star:true}), 60, 28, T, T);
+    x.drawImage(makeBlob('q',{star:true}), 44, 40, T, T);
+    x.drawImage(makeBlob('u',{star:true}), 20, 46, T, T);
   } else if(i === 1){
     /* 爐火村的空地：大人帶著孩子練劍，旁邊鑄劍師在打鐵。
        火星要往上飛 —— 那一點動感就是「這個村子還活著」。 */
@@ -2328,11 +2328,11 @@ function paintEnd(i, x){
     R(96,26,26,14,'#43301f'); R(94,22,30,5,'#7d5c3c');
     // 鑄劍師：鐵砧＋火星
     R(88,44,16,8,'#3d3d4d'); R(90,40,10,5,'#565668');
-    x.drawImage(makeBlob('b',{age:'old'}), 104, 34);
+    x.drawImage(makeBlob('b',{age:'old'}), 104, 34, T, T);
     for(let k=0;k<9;k++) R(92+rnd.i(0,8), 30+rnd.i(0,10), 1, 1, k%2 ? '#f5dc7a' : '#f5a95e');
     // 大人與小孩，兩把小劍舉起來
-    x.drawImage(makeBlob('#',{star:true}), 34, 34);
-    x.drawImage(makeBlob('m',{age:'child'}), 54, 40);
+    x.drawImage(makeBlob('#',{star:true}), 34, 34, T, T);
+    x.drawImage(makeBlob('m',{age:'child'}), 54, 40, T, T);
     R(48,32,1,10,'#c8c8d4'); R(47,31,3,1,'#dcae35');   // 大人的劍
     R(66,40,1,7,'#c8c8d4');  R(65,39,3,1,'#dcae35');   // 小孩的劍
   } else if(i === 2){
@@ -2349,7 +2349,7 @@ function paintEnd(i, x){
         if(c < full) R(30+c*10, y0, 9, 1, '#f6efe3');
       }
     }
-    x.drawImage(makeBlob('#',{star:true}), 6, 28);
+    x.drawImage(makeBlob('#',{star:true}), 6, 28, T, T);
     for(let k=0;k<14;k++){
       const px2 = 10 + rnd.i(0,10), py2 = 26 - rnd.i(0,22);
       R(px2, py2, 1, 1, k%3 ? '#f5dc7a' : '#f6efe3');
@@ -2381,7 +2381,7 @@ function paintEnd(i, x){
       x.lineTo(cx0 + Math.cos(th)*54, cy0+4 + Math.sin(th)*54);
       x.stroke();
     }
-    x.drawImage(makeBlob('#',{star:true}), cx0-8, cy0-4);
+    x.drawImage(makeBlob('#',{star:true}), cx0-8, cy0-4, T, T);
     if(lit){ R(cx0-9, cy0-5, 18, 18, 'rgba(246,239,227,.22)'); }
   }
 }

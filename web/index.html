@@ -3214,7 +3214,7 @@ function heroSprite(wi, si, hi, skin, col0){
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
 
-  x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', hat:hi, skin:sk}), 0, 0);
+  x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', hat:hi, skin:sk}), 0, 0, T, T);
 
   if(si >= 0) drawHeroShield(x, si);
   if(wi >= 0) drawHeroWeapon(x, wi);
@@ -3520,9 +3520,9 @@ function paintEnd(i, x){
     R(39,20,4,4,'#f5a95e');  R(85,20,4,4,'#f5a95e');
     R(40,19,2,2,'#f5dc7a');  R(86,19,2,2,'#f5dc7a');
     // 三個挑戰者：一個已經進去、一個在門口、一個還在路上
-    x.drawImage(makeBlob('l',{star:true}), 60, 28);
-    x.drawImage(makeBlob('q',{star:true}), 44, 40);
-    x.drawImage(makeBlob('u',{star:true}), 20, 46);
+    x.drawImage(makeBlob('l',{star:true}), 60, 28, T, T);
+    x.drawImage(makeBlob('q',{star:true}), 44, 40, T, T);
+    x.drawImage(makeBlob('u',{star:true}), 20, 46, T, T);
   } else if(i === 1){
     /* 爐火村的空地：大人帶著孩子練劍，旁邊鑄劍師在打鐵。
        火星要往上飛 —— 那一點動感就是「這個村子還活著」。 */
@@ -3536,11 +3536,11 @@ function paintEnd(i, x){
     R(96,26,26,14,'#43301f'); R(94,22,30,5,'#7d5c3c');
     // 鑄劍師：鐵砧＋火星
     R(88,44,16,8,'#3d3d4d'); R(90,40,10,5,'#565668');
-    x.drawImage(makeBlob('b',{age:'old'}), 104, 34);
+    x.drawImage(makeBlob('b',{age:'old'}), 104, 34, T, T);
     for(let k=0;k<9;k++) R(92+rnd.i(0,8), 30+rnd.i(0,10), 1, 1, k%2 ? '#f5dc7a' : '#f5a95e');
     // 大人與小孩，兩把小劍舉起來
-    x.drawImage(makeBlob('#',{star:true}), 34, 34);
-    x.drawImage(makeBlob('m',{age:'child'}), 54, 40);
+    x.drawImage(makeBlob('#',{star:true}), 34, 34, T, T);
+    x.drawImage(makeBlob('m',{age:'child'}), 54, 40, T, T);
     R(48,32,1,10,'#c8c8d4'); R(47,31,3,1,'#dcae35');   // 大人的劍
     R(66,40,1,7,'#c8c8d4');  R(65,39,3,1,'#dcae35');   // 小孩的劍
   } else if(i === 2){
@@ -3557,7 +3557,7 @@ function paintEnd(i, x){
         if(c < full) R(30+c*10, y0, 9, 1, '#f6efe3');
       }
     }
-    x.drawImage(makeBlob('#',{star:true}), 6, 28);
+    x.drawImage(makeBlob('#',{star:true}), 6, 28, T, T);
     for(let k=0;k<14;k++){
       const px2 = 10 + rnd.i(0,10), py2 = 26 - rnd.i(0,22);
       R(px2, py2, 1, 1, k%3 ? '#f5dc7a' : '#f6efe3');
@@ -3589,7 +3589,7 @@ function paintEnd(i, x){
       x.lineTo(cx0 + Math.cos(th)*54, cy0+4 + Math.sin(th)*54);
       x.stroke();
     }
-    x.drawImage(makeBlob('#',{star:true}), cx0-8, cy0-4);
+    x.drawImage(makeBlob('#',{star:true}), cx0-8, cy0-4, T, T);
     if(lit){ R(cx0-9, cy0-5, 18, 18, 'rgba(246,239,227,.22)'); }
   }
 }
@@ -8944,6 +8944,22 @@ function bossBar(){
   $('bosslag').style.width = w;
 }
 
+/* 世界層畫圖一律走這裡：**永遠指定目的地尺寸**。
+
+   為什麼要多一層而不是直接呼叫 drawImage：省略尺寸時，canvas 會照
+   來源圖的像素大小畫。過去所有圖都是程式畫的 16px，跟一格剛好一樣大，
+   所以省略尺寸看起來完全正常 —— 二十處都這樣寫了好幾個月。
+   接上 32px 的外部圖之後，這種寫法會畫成 2x2 格。
+
+   而且它不會報錯：實測殺掉哥布林之後，屍體是一隻兩倍大的哥布林蓋在
+   隔壁三格上，飄 0.4 秒才散掉。怪物本體沒事（drawEnt 有指定尺寸），
+   只有屍體、道具、地磚這些「順手寫的」有事。
+   有了這個函式，之後每一批新圖進來都不必再想這件事一次。 */
+function blit(img, x, y, tiles){
+  const n = (tiles || 1) * T;
+  cx.drawImage(img, x, y, n, n);
+}
+
 function draw(dt){
   if(!G) return;
   /* 整幀唯一一次縮放。這一行之後的每一個座標都是邏輯單位（一格 = T = 16），
@@ -9035,7 +9051,7 @@ function draw(dt){
     for(const [dy, dark] of SKIRT){
       for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
         if(!G.seen[key(x,y)]) continue;
-        cx.drawImage(TS.wall, ox + x*T, oy + y*T + dy);
+        blit(TS.wall, ox + x*T, oy + y*T + dy);
       }
       cx.fillStyle = `rgba(9,12,22,${dark})`;
       for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
@@ -9062,11 +9078,11 @@ function draw(dt){
     // 地標腳下那 2x2 在地圖上是牆（所以擋路），但畫的是地板 ——
     // 畫成牆的話，樹後面會浮出一塊方方正正的石壁，一眼就穿幫。
     if(t===WALL && MK && x>=MK.x && x<MK.x+2 && y>=MK.y && y<MK.y+2){
-      cx.drawImage(TS.floor[(x*7+y*13)%TS.floor.length], px_, py);
+      blit(TS.floor[(x*7+y*13)%TS.floor.length], px_, py);
     } else if(t===WALL){
-      cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
+      blit(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
     } else if(t===DOWN){
-      cx.drawImage(TILE_ART.stairs, px_, py);
+      blit(TILE_ART.stairs, px_, py);
       /* 時空之門：兩圈反向旋轉的光環，中間是一團看不透的白。
          它畫在樓梯上面而不是換掉樓梯 —— 玩家要看得出「那還是那一格」，
          只是那一格現在通往別的地方。 */
@@ -9095,15 +9111,15 @@ function draw(dt){
       }
     } else {
       const arr = t===CORR ? TS.corr : TS.floor;
-      cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
+      blit(arr[(x*7+y*13)%arr.length], px_, py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
-      if(h % 9 === 0) cx.drawImage(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      if(h % 9 === 0) blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
       // 貼著牆的那一圈壓暗 —— 牆才會像是站在地板上，而不是貼在旁邊
-      if(!walkable(x, y-1)) cx.drawImage(AO.u, px_, py);
-      if(!walkable(x, y+1)) cx.drawImage(AO.d, px_, py);
-      if(!walkable(x-1, y)) cx.drawImage(AO.l, px_, py);
-      if(!walkable(x+1, y)) cx.drawImage(AO.r, px_, py);
+      if(!walkable(x, y-1)) blit(AO.u, px_, py);
+      if(!walkable(x, y+1)) blit(AO.d, px_, py);
+      if(!walkable(x-1, y)) blit(AO.l, px_, py);
+      if(!walkable(x+1, y)) blit(AO.r, px_, py);
     }
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
@@ -9187,7 +9203,7 @@ function draw(dt){
       // 記憶中的地標畫淡一點。不能改用「蓋一層黑」——
       // 那會連精靈周圍的透明區一起蓋，變成一個方形的暗塊。
       if(vis === 1) cx.globalAlpha = OUTDOOR ? .62 : .34;
-      cx.drawImage(MKART, ox + MK.x*T, oy + (MK.y-1)*T);
+      blit(MKART, ox + MK.x*T, oy + (MK.y-1)*T);
       cx.globalAlpha = 1;
     }
   }
@@ -9275,7 +9291,7 @@ function draw(dt){
   for(const tc of G.torches){
     const s = G.seen[key(tc.x,tc.y)]; if(s !== 2) continue;
     const f = ((clock*9 + tc.x*2 + tc.y*3) | 0) % 3;      // 每支火把的相位不同才不會同步跳動
-    cx.drawImage(TSET[f], ox+tc.x*T, oy+tc.y*T);
+    blit(TSET[f], ox+tc.x*T, oy+tc.y*T);
     litTorches.push(tc);
   }
 
@@ -9289,17 +9305,17 @@ function draw(dt){
   // 地上的東西會慢慢上下浮動 —— 靜止的圖示會被當成地板花紋，浮動的會被當成「可以撿」
   const bobItem = (x,y)=> Math.sin(clock*2.2 + (x*3+y*5)) > .2 ? -1 : 0;
   for(const k in G.gold){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(goldIcon, ox+x*T, oy+y*T+b); } }
+    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); blit(goldIcon, ox+x*T, oy+y*T+b); } }
   for(const k in G.traps){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2) cx.drawImage(trapIcon, ox+x*T, oy+y*T); }
+    if(G.seen[k]===2) blit(trapIcon, ox+x*T, oy+y*T); }
   for(const k in G.items){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); cx.drawImage(iconOf(G.items[k]), ox+x*T, oy+y*T+b); } }
+    if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); blit(iconOf(G.items[k]), ox+x*T, oy+y*T+b); } }
 
   // 屍體：死掉之後還要留 0.4 秒往上飄散，不然怪物是「消失」不是「被打倒」
   for(const c of G.corpses){
     const k = c.t/0.4;
     cx.save(); cx.globalAlpha = Math.max(0, 1-k);
-    cx.drawImage(c.img, Math.round(ox+c.x*T), Math.round(oy+c.y*T - k*6));
+    blit(c.img, Math.round(ox+c.x*T), Math.round(oy+c.y*T - k*6));
     cx.restore();
   }
 
@@ -9406,7 +9422,7 @@ function draw(dt){
     if(G.seen[key(e.x,e.y)]!==2) continue;
     shadow(e.x, e.y, 1, heroNow(), heroKey());
     cx.save(); cx.globalAlpha = .78;
-    cx.drawImage(heroNow(), Math.round(ox+e.x*T), Math.round(oy+e.y*T));
+    blit(heroNow(), Math.round(ox+e.x*T), Math.round(oy+e.y*T));
     cx.restore();
   }
   for(const m of G.mons){
@@ -9451,7 +9467,7 @@ function draw(dt){
   // 回村的出口：整座地牢唯一往「上」的光
   if(G.f.exit && G.seen[key(G.f.exit.x, G.f.exit.y)]){
     const ex = ox+G.f.exit.x*T, ey = oy+G.f.exit.y*T;
-    cx.drawImage(TILE_ART.exit, ex, ey);
+    blit(TILE_ART.exit, ex, ey);
     const pulse = .5 + Math.sin(clock*3)*.25;
     cx.save(); cx.globalCompositeOperation='lighter';
     const eg = cx.createRadialGradient(ex+8, ey+8, 0, ex+8, ey+8, 34);
@@ -9465,7 +9481,7 @@ function draw(dt){
   if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
     const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
     shadow(kx, ky, 1, KEEPER, 'keeper');
-    cx.drawImage(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
+    blit(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
   }
 
   // 幻獸：畫在怪物之後、玩家之前，並用自己的元素色打一圈光
@@ -9478,7 +9494,7 @@ function draw(dt){
     drawEnt(a, SUMMON_ART[a.d.id], 'sum'+a.d.id, a.id*1.3);
     if(a.ttl <= 5){                       // 快消失了就閃 —— 這是最需要提前知道的資訊
       cx.save(); cx.globalAlpha = .35 + Math.sin(clock*9)*.3;
-      cx.drawImage(whiteOf(SUMMON_ART[a.d.id],'sum'+a.d.id), bx0, by0);
+      blit(whiteOf(SUMMON_ART[a.d.id],'sum'+a.d.id), bx0, by0);
       cx.restore();
     }
   }
@@ -9986,7 +10002,7 @@ function refresh(){
   if(look !== portLook){
     portLook = look;
     const pc = $('portc'), pcx = pc.getContext && pc.getContext('2d');
-    if(pcx){ pcx.clearRect(0,0,T,T); pcx.imageSmoothingEnabled = false; pcx.drawImage(heroNow(), 0, 0); }
+    if(pcx){ pcx.clearRect(0,0,T,T); pcx.imageSmoothingEnabled = false; pcx.drawImage(heroNow(), 0, 0, T, T); }
   }
   $('portjob').textContent = locJob(p.job);
 
@@ -10227,7 +10243,7 @@ function renderPanel(){
     for(const it of bill){
       const row = document.createElement('div'); row.className='row';
       const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(iconOf(it),0,0);
+      c.getContext('2d').drawImage(iconOf(it),0,0,T,T);
       const nm = document.createElement('div'); nm.className='nm'; nm.textContent = nameOf(it);
       const pr = document.createElement('span'); pr.className='eq'; pr.textContent = it.price + ' G';
       row.appendChild(c); row.appendChild(nm); row.appendChild(pr);
@@ -10256,7 +10272,7 @@ function renderPanel(){
     const line = (it, tail, fn) => {
       const row = document.createElement('div'); row.className = 'row';
       const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(iconOf(it),0,0);
+      c.getContext('2d').drawImage(iconOf(it),0,0,T,T);
       const nm = document.createElement('div'); nm.className='nm'; nm.textContent = nameOf(it);
       row.appendChild(c); row.appendChild(nm);
       if(tail){ const e=document.createElement('span'); e.className='eq'; e.textContent=tail; row.appendChild(e); }
@@ -10288,7 +10304,7 @@ function renderPanel(){
       const row = document.createElement('div');
       row.className='row';
       const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(iconOf(it),0,0);
+      c.getContext('2d').drawImage(iconOf(it),0,0,T,T);
       const nm = document.createElement('div'); nm.className='nm'; nm.textContent=nameOf(it);
       row.appendChild(c); row.appendChild(nm);
       if(it===p.weap||it===p.shld){ const e=document.createElement('span'); e.className='eq'; e.textContent=TX('p.equipped','裝備中'); row.appendChild(e); }
@@ -10305,7 +10321,7 @@ function renderPanel(){
     $('phint').textContent = nameOf(it);
     const row=document.createElement('div'); row.className='row';
     const c=document.createElement('canvas'); c.width=T;c.height=T;
-    c.getContext('2d').drawImage(iconOf(it),0,0);
+    c.getContext('2d').drawImage(iconOf(it),0,0,T,T);
     const nm=document.createElement('div'); nm.className='nm'; nm.textContent=nameOf(it);
     row.appendChild(c); row.appendChild(nm); list.appendChild(row);
     buildActions(it, true);
@@ -11329,7 +11345,7 @@ function renderVillage(){
     for(const [col, age] of [['b','old'],['l','adult'],['q','child'],
                              ['u','adult'],['6','old'],['m','child']]){
       const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(makeBlob(col, {age}), 0, 0);
+      c.getContext('2d').drawImage(makeBlob(col, {age}), 0, 0, T, T);
       folk.appendChild(c);
     }
   }
@@ -11346,7 +11362,7 @@ function renderVillage(){
     const row = document.createElement('div'); row.className = 'vrow';
     const c = document.createElement('canvas'); c.width = T; c.height = T;
     const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
-    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
+    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0, T, T);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d);
     const st = document.createElement('div'); st.className='st';
@@ -11384,7 +11400,7 @@ function renderVillage(){
     const row = document.createElement('div'); row.className = 'vrow own';
     const c = document.createElement('canvas'); c.width = T; c.height = T;
     const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
-    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0);
+    c.getContext('2d').drawImage(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx), 0, 0, T, T);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '');
     const st = document.createElement('div'); st.className='st';
@@ -11467,7 +11483,7 @@ function openBoard(){
     row.className = 'brow' + (e === newest ? ' me' : '');
     const rk = document.createElement('div'); rk.className='rk'; rk.textContent = (i+1)+'.';
     const c = document.createElement('canvas'); c.width=T; c.height=T;
-    c.getContext('2d').drawImage(blobFor(BLOB_COLS.includes(e.col)?e.col:'#', e.skin), 0, 0);
+    c.getContext('2d').drawImage(blobFor(BLOB_COLS.includes(e.col)?e.col:'#', e.skin), 0, 0, T, T);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = e.name || TX('b.anon','無名旅人');
     const de = document.createElement('div'); de.className='de';
@@ -11587,7 +11603,7 @@ let coverUp = true;
   // 主角放大 7 倍當主視覺。用的是遊戲裡「同一份」精靈資料 ——
   // 封面畫得比遊戲好看是最廉價的謊，點進來只會失望。
   const ca = $('coverart');
-  if(ca) ca.getContext('2d').drawImage(atlas.player, 0, 0);
+  if(ca) ca.getContext('2d').drawImage(atlas.player, 0, 0, T, T);
 
   // 岩壁用遊戲的岩盤圖樣，封面與地牢是同一種材質
   const rock = $('coverrock');
@@ -11606,7 +11622,7 @@ let coverUp = true;
       const b2 = document.createElement('button');
       b2.title = TX('col.' + col, BLOB_COL_NM[col]);
       const c = document.createElement('canvas'); c.width=T; c.height=T;
-      c.getContext('2d').drawImage(blobFor(col, VILLAGE.skin), 0, 0);
+      c.getContext('2d').drawImage(blobFor(col, VILLAGE.skin), 0, 0, T, T);
       b2.appendChild(c);
       if(col === VILLAGE.col) b2.classList.add('on');
       b2.onclick = ()=>{
@@ -11618,7 +11634,7 @@ let coverUp = true;
     }
     // 封面上那隻大的也跟著換
     const art = $('coverart');
-    if(art) art.getContext('2d').drawImage(blobFor(VILLAGE.col, VILLAGE.skin), 0, 0);
+    if(art) art.getContext('2d').drawImage(blobFor(VILLAGE.col, VILLAGE.skin), 0, 0, T, T);
   }
   paintPickers();
 
