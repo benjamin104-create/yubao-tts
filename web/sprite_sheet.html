@@ -1701,22 +1701,32 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
 const ART_DIR = 'art/';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton'];
-function adoptArt(id, url){
+/* 頭目有自己的圖時就不再從雜魚衍生。ownArt 記的是「這個頭目已經有專屬的圖」，
+   因為兩邊都是非同步載入的，先後順序不保證 —— 雜魚的圖後到的話，
+   它的 onload 會把頭目重新描一次邊，把專屬的圖蓋掉。
+   那種 bug 只在網路慢的時候出現，本機永遠測不到。 */
+const ART_BOSS = [];
+const ownArt = {};
+function adoptArt(id, url, own){
   if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
   const im = new Image();
   im.onload = () => {
+    /* 只有真的載到才記 ownArt。先記的話，頭目的圖還沒畫出來（404）時
+       這個頭目就永遠不會跟著雜魚的新圖更新，卡在程式畫的舊造型上。 */
+    if(own) ownArt[id] = 1;
     const c = document.createElement('canvas');
     c.width = im.width; c.height = im.height;
     const x = c.getContext('2d');
-    x.imageSmoothingEnabled = false;           // 32px 的圖進來要一格是一格
+    x.imageSmoothingEnabled = false;           // 外部圖進來要一格是一格
     x.drawImage(im, 0, 0);
     atlas[id] = c;
-    /* 兩份衍生資料是照舊圖烘的，一起作廢：
-       受擊白閃的剪影、以及從這隻雜魚長出來的頭目。
-       忘了這一步的話，玩家會看到「被打時閃出一個舊造型」。 */
+    /* 三份衍生資料是照舊圖烘的，一起作廢：受擊白閃的剪影、影子的著地寬度、
+       以及從這隻雜魚長出來的頭目。忘了的話，玩家會看到
+       「被打時閃出一個舊造型」或是「影子的寬度跟身體對不上」。 */
     delete flashCache[id];
-    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id){
-      delete flashCache[b];
+    delete footCache[id];
+    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id && !ownArt[b]){
+      delete flashCache[b]; delete footCache[b];
       atlas[b] = crownSprite(id);
     }
   };
@@ -1724,6 +1734,9 @@ function adoptArt(id, url){
   im.src = url;
 }
 for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
+/* 頭目的圖不描金邊 —— 金邊是「這隻跟雜魚不一樣」的替代方案，
+   有了專屬造型就不需要，硬加反而會蓋掉本來就畫好的輪廓。 */
+for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
 
 
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════
@@ -2375,8 +2388,11 @@ const BOSS_SCALE = 1.6;
 /* 會飛的怪離地多高（邏輯單位）。3 是試出來的：再低看不出來跟站著的差別，
    再高就會蓋掉上一格的東西、也讓「牠在哪一格」變得難判斷 ——
    而在這款遊戲裡「牠站在哪一格」是玩家每一回合都要讀的資訊，不能為了
-   美觀犧牲。影子留在地上不動，本體浮起來，中間那段距離就是高度。 */
-const FLY_H = -3;
+   美觀犧牲。影子留在地上不動，本體浮起來，中間那段距離就是高度。
+
+   一開始寫 3，量出來的間隙只有 1 個邏輯單位 —— 因為影子本身有厚度，
+   浮起來的高度得先扣掉它才是「看得出來的距離」。5 是量到 3 的那個值。 */
+const FLY_H = -5;
 
 /* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
    使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
@@ -2634,14 +2650,25 @@ function footOf(img, name){
          取整張圖的話，張開翅膀的怪會得到一片跟翼展一樣寬的影子；
          真正碰到地面的只有牠的腳。 */
       const band = Math.max(1, Math.round(c.height * 0.12));
-      let lo = c.width, hi = -1;
-      for(let y = base; y > base - band && y >= 0; y--)
+      let lo = c.width, hi = -1, wlo = c.width, whi = -1;
+      for(let y = 0; y <= base; y++)
         for(let px = 0; px < c.width; px++)
           if(d[(y*c.width + px)*4 + 3] > 40){
-            if(px < lo) lo = px;
-            if(px > hi) hi = px;
+            if(px < wlo) wlo = px;
+            if(px > whi) whi = px;
+            if(y > base - band){
+              if(px < lo) lo = px;
+              if(px > hi) hi = px;
+            }
           }
-      if(hi >= lo) f = { y:(base+1)/c.height, x0:lo/c.width, x1:(hi+1)/c.width };
+      /* 兩組寬度，因為著地與浮空要的不是同一個東西：
+         站著的看「腳」（著地線往上一小段）—— 張開翅膀的鳥不該有一片
+         跟翼展一樣寬的影子，真正碰到地面的只有牠的腳。
+         飛著的看「整隻」—— 牠沒有一根腳趾碰地，投影的是整個身體，
+         照最低那幾列去算會得到一條只有四像素寬的細線，看起來像髒點。 */
+      if(hi >= lo)
+        f = { y:(base+1)/c.height, x0:lo/c.width, x1:(hi+1)/c.width,
+              wx0:wlo/c.width, wx1:(whi+1)/c.width };
     }
   }catch(e){ f = null; }
   return footCache[name] = f;

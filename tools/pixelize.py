@@ -34,6 +34,10 @@ from PIL import Image
 
 TILE = 32
 
+# 各分類的尺寸。頭目在遊戲裡放大 1.6 倍顯示（16 x 1.6 = 25.6 邏輯單位，
+# 在 2 倍算圖下是 51 個真實像素），所以 48 最接近 1:1；照 32 畫會被拉糊。
+SIZES = {"mon": 32, "boss": 48}
+
 # 32 色固定色盤。所有資產都量化到這裡 —— 這是把不同批次的生成結果
 # 綁成同一種視覺語言最有效的手段，比在提示詞裡描述顏色可靠得多。
 PALETTE_HEX = [
@@ -306,6 +310,16 @@ def split_grid(im, cols, rows):
             yield im.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch))
 
 
+def size_for(rel, default):
+    """這個檔案該是幾像素見方，看它放在哪個資料夾。
+
+    頭目畫得比雜魚大（遊戲裡放大 1.6 倍顯示），照 32 檢查會全部報錯，
+    照「最大的那個尺寸」檢查則等於放掉雜魚。尺寸是分類的屬性，不是全域常數。
+    """
+    top = rel.replace("\\", "/").split("/")[0]
+    return SIZES.get(top, default)
+
+
 def check_assets(root, size):
     palette = {hex_to_rgb(h) for h in PALETTE_HEX}
     problems = 0
@@ -319,10 +333,11 @@ def check_assets(root, size):
             checked += 1
             w, h = im.size
             rel = os.path.relpath(path, root)
+            want = size_for(rel, size)
 
-            if h != size or w % size != 0:
+            if h != want or w % want != 0:
                 print("  [尺寸] %s 是 %dx%d，應為 %d 的倍數 x %d"
-                      % (rel, w, h, size, size))
+                      % (rel, w, h, want, want))
                 problems += 1
 
             off = {c[:3] for c in im.getdata() if c[3] > 0} - palette

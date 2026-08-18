@@ -2909,22 +2909,32 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
 const ART_DIR = 'art/';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton'];
-function adoptArt(id, url){
+/* 頭目有自己的圖時就不再從雜魚衍生。ownArt 記的是「這個頭目已經有專屬的圖」，
+   因為兩邊都是非同步載入的，先後順序不保證 —— 雜魚的圖後到的話，
+   它的 onload 會把頭目重新描一次邊，把專屬的圖蓋掉。
+   那種 bug 只在網路慢的時候出現，本機永遠測不到。 */
+const ART_BOSS = [];
+const ownArt = {};
+function adoptArt(id, url, own){
   if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
   const im = new Image();
   im.onload = () => {
+    /* 只有真的載到才記 ownArt。先記的話，頭目的圖還沒畫出來（404）時
+       這個頭目就永遠不會跟著雜魚的新圖更新，卡在程式畫的舊造型上。 */
+    if(own) ownArt[id] = 1;
     const c = document.createElement('canvas');
     c.width = im.width; c.height = im.height;
     const x = c.getContext('2d');
-    x.imageSmoothingEnabled = false;           // 32px 的圖進來要一格是一格
+    x.imageSmoothingEnabled = false;           // 外部圖進來要一格是一格
     x.drawImage(im, 0, 0);
     atlas[id] = c;
-    /* 兩份衍生資料是照舊圖烘的，一起作廢：
-       受擊白閃的剪影、以及從這隻雜魚長出來的頭目。
-       忘了這一步的話，玩家會看到「被打時閃出一個舊造型」。 */
+    /* 三份衍生資料是照舊圖烘的，一起作廢：受擊白閃的剪影、影子的著地寬度、
+       以及從這隻雜魚長出來的頭目。忘了的話，玩家會看到
+       「被打時閃出一個舊造型」或是「影子的寬度跟身體對不上」。 */
     delete flashCache[id];
-    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id){
-      delete flashCache[b];
+    delete footCache[id];
+    for(const b in BOSS_BASE) if(BOSS_BASE[b] === id && !ownArt[b]){
+      delete flashCache[b]; delete footCache[b];
       atlas[b] = crownSprite(id);
     }
   };
@@ -2932,6 +2942,9 @@ function adoptArt(id, url){
   im.src = url;
 }
 for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
+/* 頭目的圖不描金邊 —— 金邊是「這隻跟雜魚不一樣」的替代方案，
+   有了專屬造型就不需要，硬加反而會蓋掉本來就畫好的輪廓。 */
+for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
 
 
 /* ═══ 通用生物骨架 ═══════════════════════════════════════════

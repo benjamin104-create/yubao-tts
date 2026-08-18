@@ -123,27 +123,37 @@ for name in sheets:
            "%s 第 %d 個主體長寬比沒跑掉（原圖 %.2f → 精靈 %.2f）"
            % (name, i, src_ar, out_ar))
 
-print("\n提示詞清單與怪物表對得上")
+print("\n提示詞清單與怪物／頭目表對得上")
 # 之後加一隻新怪，很容易忘了同步提示詞文件 —— 那隻就會永遠沒有圖，
 # 而且不會有任何東西提醒你：遊戲照跑，牠只是一直用程式畫的舊造型。
 import re
 _html = open(os.path.join(ROOT, "web", "index.html"), encoding="utf-8").read()
-_i = _html.index("const MONS = [")
-_mons = re.findall(r"\{id:'([a-z_]+)',", _html[_i:_html.index("\n];", _i)])
-_doc_path = os.path.join(ROOT, "docs", "art_prompts_mon.md")
-if not os.path.exists(_doc_path):
-    ok(False, "docs/art_prompts_mon.md 存在")
-else:
-    _doc = open(_doc_path, encoding="utf-8").read()
-    _tbl = re.findall(r"`([a-z_]+)`", _doc.split("檔名對照")[1])
-    ok(not (set(_mons) - set(_tbl)),
-       "每隻怪都在提示詞文件裡（漏了：%s）"
-       % (sorted(set(_mons) - set(_tbl)) or "無"))
-    ok(not (set(_tbl) - set(_mons)),
-       "文件沒有列到不存在的怪（多了：%s）"
-       % (sorted(set(_tbl) - set(_mons)) or "無"))
-    _dup = sorted({t for t in _tbl if _tbl.count(t) > 1})
-    ok(not _dup, "文件裡沒有重複（重複：%s）" % (_dup or "無"))
+
+
+def table_ids(marker, pat):
+    i = _html.index(marker)
+    return re.findall(pat, _html[i:_html.index("\n];", i)])
+
+
+for what, marker, pat, doc_name, doc_pat in [
+    ("怪", "const MONS = [", r"\{id:'([a-z_]+)',",
+     "art_prompts_mon.md", r"`([a-z_]+)`"),
+    ("頭目", "const BOSS = [", r"\{id:'([a-z_0-9]+)',",
+     "art_prompts_boss.md", r"`(b_[a-z0-9_]+)`"),
+]:
+    want = set(table_ids(marker, pat))
+    path = os.path.join(ROOT, "docs", doc_name)
+    if not os.path.exists(path):
+        ok(False, "docs/%s 存在" % doc_name)
+        continue
+    doc = open(path, encoding="utf-8").read()
+    got = re.findall(doc_pat, doc.split("檔名對照")[1])
+    ok(not (want - set(got)),
+       "每隻%s都在提示詞文件裡（漏了：%s）" % (what, sorted(want - set(got)) or "無"))
+    ok(not (set(got) - want),
+       "%s的文件沒有列到不存在的（多了：%s）" % (what, sorted(set(got) - want) or "無"))
+    dup = sorted({t for t in got if got.count(t) > 1})
+    ok(not dup, "%s的文件裡沒有重複（重複：%s）" % (what, dup or "無"))
 
 print("\n轉檔成品")
 if not os.path.isdir(ART):
