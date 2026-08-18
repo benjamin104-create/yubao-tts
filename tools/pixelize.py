@@ -266,19 +266,34 @@ def find_subjects(im, min_frac=0.0015, gap=12):
             boxes.append([x0, y0, x1, y1, area])
 
     # 併掉離得近的碎片（劍尖、耳朵、飄起的布）
+    #
+    # **只併小碎片，不併兩個大塊。** 光看距離會出事：第三批那張 sheet 裡，
+    # 苔背熊的蕈菇與幻光蝶的翅尖相距不到 48px，於是兩隻被併成一個 948px 寬的
+    # 「角色」—— 轉出來是一張同時有熊和蝶的圖，而且數量從 6 變成 5，
+    # 後面照順序命名的東西全部錯位。
+    # 「碎片」的定義是面積明顯小於鄰居：劍尖、耳朵、飄起的布都是這樣，
+    # 而兩隻怪不會。距離只是必要條件，大小才是判準。
+    FRAG = 0.25
     merged = True
     while merged:
         merged = False
         for i in range(len(boxes)):
             for j in range(i + 1, len(boxes)):
                 a, b = boxes[i], boxes[j]
-                if a[0] - gap <= b[2] and b[0] - gap <= a[2] \
-                        and a[1] - gap <= b[3] and b[1] - gap <= a[3]:
-                    boxes[i] = [min(a[0], b[0]), min(a[1], b[1]),
-                                max(a[2], b[2]), max(a[3], b[3]), a[4] + b[4]]
-                    boxes.pop(j)
-                    merged = True
-                    break
+                near = (a[0] - gap <= b[2] and b[0] - gap <= a[2]
+                        and a[1] - gap <= b[3] and b[1] - gap <= a[3])
+                if not near:
+                    continue
+                overlap = (a[0] <= b[2] and b[0] <= a[2]
+                           and a[1] <= b[3] and b[1] <= a[3])
+                small = min(a[4], b[4]) <= FRAG * max(a[4], b[4])
+                if not (overlap or small):
+                    continue
+                boxes[i] = [min(a[0], b[0]), min(a[1], b[1]),
+                            max(a[2], b[2]), max(a[3], b[3]), a[4] + b[4]]
+                boxes.pop(j)
+                merged = True
+                break
             if merged:
                 break
 
@@ -364,6 +379,11 @@ def main():
     ap.add_argument("--grid", help="例如 4x4：把來源切成 4 欄 4 列")
     ap.add_argument("--auto", action="store_true",
                     help="自動在 sheet 上找出每個角色（不必是整齊的網格，建議用這個）")
+    ap.add_argument("--expect", type=int,
+                    help="這張 sheet 應該有幾個角色。數量不符就中止 —— "
+                         "少一個會讓後面所有檔名往前錯位，而檔案照樣寫得出來")
+    ap.add_argument("--names",
+                    help="用逗號分隔的檔名，取代 prefix+序號（依閱讀順序）")
     ap.add_argument("--size", type=int, default=TILE)
     ap.add_argument("--keep-bg", action="store_true")
     ap.add_argument("--no-trim", action="store_true",
@@ -386,9 +406,17 @@ def main():
         stripped = strip_background(im)
         boxes = find_subjects(stripped)
         print("找到 %d 個角色" % len(boxes))
+        names = [n.strip() for n in args.names.split(",")] if args.names else None
+        want = args.expect if args.expect else (len(names) if names else None)
+        if want is not None and len(boxes) != want:
+            # 這裡一定要中止而不是繼續。少偵測到一個，後面每個檔名都會往前
+            # 錯一格 —— 熊的圖存成蝶的檔名，而每一步都「成功」。
+            sys.exit("角色數不符：找到 %d 個，應為 %d 個。"
+                     "兩隻被併成一塊或有一隻沒偵測到，先確認原圖。" % (len(boxes), want))
         for i, box in enumerate(boxes):
             path = os.path.join(
-                out_dir, "%s%02d.png" % (args.prefix, args.start + i))
+                out_dir, ("%s.png" % names[i]) if names
+                else ("%s%02d.png" % (args.prefix, args.start + i)))
             pixelize(stripped.crop(box), args.size, palette,
                      keep_bg=True, trim=not args.no_trim).save(path)
             print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))

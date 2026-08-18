@@ -2908,7 +2908,10 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    圖是非同步載進來的，會比第一幀晚。所以不能在載入時「決定」什麼，
    只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
 const ART_DIR = 'art/';
-const ART_MON = ['rat', 'slime', 'goblin', 'skeleton'];
+const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
+                 'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
+                 'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
+                 'hawk', 'ibex', 'scree', 'eel', 'crab', 'salam'];
 /* 頭目有自己的圖時就不再從雜魚衍生。ownArt 記的是「這個頭目已經有專屬的圖」，
    因為兩邊都是非同步載入的，先後順序不保證 —— 雜魚的圖後到的話，
    它的 onload 會把頭目重新描一次邊，把專屬的圖蓋掉。

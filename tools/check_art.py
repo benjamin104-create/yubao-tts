@@ -21,6 +21,11 @@ from pixelize import (PALETTE_HEX, TILE, build_palette_image, check_assets,
                       strip_background)
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+
+# 已知偏暗、等著重畫的精靈。放這裡而不是把門檻調低：
+# 調低門檻等於把問題藏起來，之後每一張太暗的圖都會安靜地通過。
+# 這份名單應該越來越短，空了就把這段拿掉。
+TOO_DARK = {"knight"}   # 深淵騎士：原圖的高光只有 1.8%，32px 裝不下
 ART = os.path.join(ROOT, "web", "art")
 RAW = os.path.join(ROOT, "art_raw")
 
@@ -190,6 +195,26 @@ else:
             ok(bot is not None and bot[3] == im.height,
                "%s 主體貼齊底部（最下緣在第 %s 列，共 %d 列）"
                % (rel, bot[3] if bot else "—", im.height))
+
+            # 每張精靈都要有一個真正被照亮的地方。
+            #
+            # 地牢的地板是暗的，整隻都是暗色的精靈會變成一個洞 ——
+            # 玩家看得到「那裡有東西」，但讀不出是什麼、面向哪邊。
+            # 風格規格寫的是「固定左上光源、右下留暗面」，兩半都要有；
+            # 只有暗面等於只做了一半。
+            #
+            # 這一條抓得到的是**降取樣吃掉高光**：深淵騎士的原圖最亮到 236，
+            # 但亮於 140 的像素只佔 1.8%（盔甲邊緣的細線），
+            # 一個輸出格蓋住原圖 15x17 個像素，取眾數時細線永遠贏不了大片的暗甲，
+            # 於是轉出來最亮只剩 118。那不是轉檔壞掉，是這個尺寸裝不下那種高光 ——
+            # 要修得回頭讓圖有「一整塊」亮面，不是一條線。
+            name0 = os.path.splitext(os.path.basename(rel))[0]
+            lum = [0.2126*p[0] + 0.7152*p[1] + 0.0722*p[2] for p in px if p[3] > 0]
+            top = max(lum) if lum else 0
+            if name0 in TOO_DARK:
+                print("  · %s 已知偏暗（最亮 %.0f），等重畫" % (rel, top))
+            else:
+                ok(top >= 140, "%s 有被照亮的地方（最亮 %.0f，要 >= 140）" % (rel, top))
     ok(n > 0, "web/art/ 裡有檔案（%d 個）" % n)
 
 print("\n%d 項檢查，%d 項失敗" % (total, len(fails)))

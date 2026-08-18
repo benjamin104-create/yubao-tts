@@ -48,9 +48,19 @@ LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
 if not LAUNCH and os.path.exists('/opt/pw-browsers/chromium'):
     LAUNCH = {'executable_path': '/opt/pw-browsers/chromium'}
 
-# 站在地上的（含四隻已經換成外部圖的）與會飛的
-GROUND = ['rat', 'slime', 'goblin', 'skeleton', 'wolf', 'golem']
-FLYING = ['imp', 'wasp', 'hawk', 'moth']
+# 名單從程式裡讀，不手動維護。
+# 手寫清單一定會落後於實際換進去的圖 —— 而「沒被檢查到的那幾隻」
+# 正好就是最可能出問題的那幾隻（新換的）。
+import re as _re
+
+_src = open(ROOT / 'web' / 'index.html', encoding='utf-8').read()
+_i = _src.index('const ART_MON = [')
+_have = _re.findall(r"'([a-z_]+)'", _src[_i:_src.index('];', _i)])
+_j = _src.index('const MONS = [')
+_fly = set(_re.findall(r"\{id:'([a-z_]+)',[^\n]*fly:1", _src[_j:_src.index('\n];', _j)]))
+
+GROUND = [m for m in _have if m not in _fly]
+FLYING = [m for m in _have if m in _fly]
 
 PLACE = """(mid)=>{
   const p = G.p;
@@ -131,7 +141,7 @@ def main():
                     if dv > 45: lit += 1
                     elif dv < -14: dark += 1
                 if lit: body_rows.append(y)
-                elif dark >= 3: dark_rows.append(y)   # 三欄以上才算一道，不是雜點
+                elif dark >= 3: dark_rows.append((y, dark))  # 三欄以上才算一道，不是雜點
 
             # 影子必須是**連續的一整段**，不能是孤零零一兩列。
             #   精靈最下面那一列常常整列都是深色外框，沒有任何一點夠亮，
@@ -140,8 +150,20 @@ def main():
             #   本體外框留下 10.0/10.5 兩列，真正的影子在 14.0 之後。
             #   影子有 3 個邏輯單位厚（6 個畫布列），所以要求連續 4 列，
             #   既濾得掉外框，也還留著一半的餘裕。 
+            # 而且要夠寬。針尾蜂與岩鷹的腳與尾羽是暗色的，
+            # 亮不到 lit 的門檻，於是整排被歸成「影子」、剛好貼在身體下方，
+            # 量出來又是 0.5 —— 但畫面上牠們明明離地。
+            # 真正的影子橫跨幾乎整格（實測暗了 18~24 欄），
+            # 垂下來的腳只有 1~16 欄而且參差不齊。寬度用相對值比，
+            # 不是寫死的欄數：畫面縮放與怪物大小都會變，比例才穩。
+            widest = max([d for _, d in dark_rows] or [0])
+            wide_enough = {y for y, d in dark_rows if d >= widest * 0.6}
             shad_rows, run = [], []
-            for y in dark_rows + [None]:
+            for y in [y for y, _ in dark_rows] + [None]:
+                if y is not None and y not in wide_enough:
+                    if len(run) >= 4: shad_rows.extend(run)
+                    run = []
+                    continue
                 if run and y is not None and y == run[-1] + 1:
                     run.append(y); continue
                 if len(run) >= 4: shad_rows.extend(run)
