@@ -318,5 +318,6 @@
 | 6 | `prism` `refr` `shadow` `ratking` `chimera` `seraph` |
 | 7 | `warden` `axiom` `parad` `unnamed` |
 
-十五隻頭目不用另外畫：頭目是「同族雜魚的剪影 + 一圈金邊 + 壓暗的底色」，
-換了雜魚的圖，對應的頭目會自動跟著換。
+十五隻頭目**已經有專屬的圖了**（見 `art_prompts_boss.md`，48px）。
+沒有專屬圖的頭目才會退回「同族雜魚的剪影 + 一圈金邊」，
+所以換雜魚的圖不再影響頭目。
