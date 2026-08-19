@@ -112,6 +112,34 @@ def main():
             if fails or over > 2:
                 bad += 1
 
+            # 背包圖示的畫布不能比來源的圖小。
+            #
+            # CSS 把那些畫布顯示成 24~34 px，但畫布本身一直是 16x16。
+            # 以前無所謂（來源就是 16px 的程式畫圖），接上 32px 的外部圖之後，
+            # 同一段程式會先把 32 壓成 16、再由 CSS 放大回去 ——
+            # 一來一回丟掉一半的細節。它不會報錯，只是背包裡的圖比地上的糊，
+            # 兩個畫面又不會同時出現，所以幾乎不可能自己發現。
+            if w > 620:
+                ic = pg.evaluate("""()=>{
+                  G.p.inv.length = 0;
+                  const out = [];
+                  for(const d of HERB.slice(0, 6)) G.p.inv.push(mk('herb', d.id, {known:1}));
+                  openPanel('inv');
+                  for(const c of document.querySelectorAll('#panel canvas')){
+                    const src = c.dataset.srcw ? +c.dataset.srcw : null;
+                    out.push(c.width);
+                  }
+                  closePanel();
+                  // 來源有多大：直接問 atlas 裡那幾張草的圖
+                  const srcs = G.p.inv.map(it => iconOf(it).width);
+                  return {canvas: out, src: srcs};
+                }""")
+                small = [(cw, sw) for cw, sw in zip(ic['canvas'], ic['src']) if cw < sw]
+                if small:
+                    bad += 1
+                    print('     背包圖示被壓小了：畫布 %s，來源 %s'
+                          % (small[0][0], small[0][1]))
+
             # 村莊：那顆「前往下一章」的按鈕曾經在手機上掉到摺線外
             pg.evaluate("()=>{ VILLAGE.act=1; VILLAGE.gold=3000; openVillage(); }")
             pg.wait_for_timeout(400)
