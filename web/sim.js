@@ -22,8 +22,20 @@ for(let r=0; r<RUNS; r++){
       // 餓了就吃
       const food = p.inv.find(i=>i.cat==='food');
       if(p.sat < 25000 && food){ api.useItem(food,false); api.endTurn(); stats.used++; t++; continue; }
-      // 低血喝已知回復草
-      if(p.hp*3 < p.mhp){
+      /* 中毒就解毒。機器人不會解毒的話，量到的是「玩家看到狀態列上的『毒』
+         卻裝作沒看到」—— 那不是難度，那是把測試員當笨蛋。
+         平衡要對著**會用道具的玩家**調，不然調出來的難度是給機器人的。 */
+      if(p.st['毒']){
+        const c = p.inv.find(i=>i.cat==='herb' && i.id==='cure' && G.known['herb/cure']);
+        if(c){ api.useItem(c,false); api.endTurn(); stats.used++; t++; continue; }
+        /* 沒有已知的解毒草就喝一株沒鑑定過的 —— 那正是玩家中毒時會做的事，
+           而且是這款遊戲設計的玩法（十四種草每局重洗，喝了才知道是什麼）。
+           不模擬這一步的話，量到的是「玩家中毒之後乾等」。 */
+        const unk2 = p.inv.find(i=>i.cat==='herb' && !G.known['herb/'+i.id]);
+        if(unk2 && p.hp*2 < p.mhp){ api.useItem(unk2,false); api.endTurn(); stats.used++; t++; continue; }
+      }
+      // 低血喝已知回復草。中毒時門檻拉高 —— 毒還在扣，等到三分之一就來不及了
+      if(p.hp * (p.st['毒'] ? 2 : 3) < p.mhp){
         const h = p.inv.find(i=>i.cat==='herb' && i.id==='heal' && G.known['herb/heal']);
         if(h){ api.useItem(h,false); api.endTurn(); stats.used++; t++; continue; }
       }

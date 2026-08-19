@@ -1355,7 +1355,7 @@ const MONS = [
  {id:'rat',    nm:'洞穴鼠',   ai:'C', hp:8, atk:5, def:1, exp:3,  spd:1,   sight:4, ev:0, fl:[1,5],  w:100},
  {id:'slime',  nm:'藍史萊姆', ai:'W', hp:10,atk:4, def:2, exp:4,  spd:1,   sight:2, ev:0, fl:[1,4],  w:80},
  {id:'goblin', nm:'綠哥布林', ai:'C', hp:14,atk:9, def:3, exp:12, spd:1,   sight:5, ev:0, fl:[2,8],  w:90, steal:1},
- {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:{st:'亂',dur:8,ch:.25}},
+ {id:'shroom', nm:'醉步蕈',   ai:'W', hp:16,atk:10,def:4, exp:20, spd:1,   sight:2, ev:0, fl:[3,9],  w:65, onhit:[{st:'亂',dur:8,ch:.20},{st:'毒',dur:14,ch:.30}]},
  {id:'imp',    nm:'投石妖精', ai:'R', hp:12,atk:12,def:3, exp:24, spd:1,   sight:8, ev:4, fl:[4,10], w:55, rng:5, fly:1},
  {id:'grub',   nm:'食腐蟲',   ai:'W', hp:20,atk:8, def:5, exp:28, spd:1,   sight:3, ev:0, fl:[5,12], w:50, onhit:{drain:5000,ch:1}},
  {id:'skeleton',nm:'骷髏兵',  ai:'C', hp:30,atk:20,def:10,exp:60, spd:1,   sight:6, ev:0, fl:[8,16], w:70, imm:['睡','亂'], undead:1},
@@ -1373,13 +1373,13 @@ const MONS = [
     後段幾隻刻意不是動物，是**概念**：命題、悖論、公理。
     這個故事講的是從學習走到理解，那麼最後擋在路上的
     就不該是更大隻的野獸，而是更難的問題。 */
- {id:'wasp',   nm:'針尾蜂',   ai:'C', hp:12,atk:8, def:2, exp:14, spd:2,   sight:6, ev:12,fl:[2,9],  w:70, zn:['forest','beast'], bd:'bug', col:'u', fly:1},
+ {id:'wasp',   nm:'針尾蜂',   ai:'C', hp:12,atk:8, def:2, exp:14, spd:2,   sight:6, ev:12,fl:[2,9],  w:70, zn:['forest','beast'], bd:'bug', col:'u', fly:1, onhit:{st:'毒',dur:10,ch:.28}},
  {id:'dryad',  nm:'樹靈',     ai:'W', hp:22,atk:9, def:6, exp:26, spd:1,   sight:3, ev:0, fl:[3,12], w:60, zn:['forest','beast'], bd:'spirit', col:'m', imm:['亂']},
  {id:'mossy',  nm:'苔背熊',   ai:'C', hp:34,atk:14,def:8, exp:48, spd:1,   sight:5, ev:0, fl:[5,15], w:55, zn:['forest','beast'], bd:'quad', col:'k'},
  {id:'hawk',   nm:'岩鷹',     ai:'C', hp:20,atk:13,def:4, exp:34, spd:2,   sight:9, ev:16,fl:[4,14], w:65, zn:['mountain'], bd:'bird', col:'b', fly:1},
  {id:'ibex',   nm:'角山羊',   ai:'C', hp:30,atk:15,def:9, exp:44, spd:1,   sight:6, ev:4, fl:[5,16], w:60, zn:['mountain'], bd:'quad', col:'c'},
  {id:'scree',  nm:'落石魔',   ai:'W', hp:44,atk:18,def:14,exp:70, spd:.5,  sight:3, ev:0, fl:[8,20], w:45, zn:['mountain'], bd:'construct', col:'5', imm:['睡','亂','麻']},
- {id:'eel',    nm:'淺灘鰻',   ai:'C', hp:26,atk:16,def:6, exp:46, spd:1,   sight:6, ev:10,fl:[6,17], w:60, zn:['lake'], bd:'serpent', col:'q'},
+ {id:'eel',    nm:'淺灘鰻',   ai:'C', hp:26,atk:16,def:6, exp:46, spd:1,   sight:6, ev:10,fl:[6,17], w:60, zn:['lake'], bd:'serpent', col:'q', onhit:{st:'毒',dur:12,ch:.25}},
  {id:'crab',   nm:'鎧甲蟹',   ai:'W', hp:38,atk:13,def:16,exp:58, spd:.5,  sight:3, ev:0, fl:[7,19], w:50, zn:['lake'], bd:'bug', col:'r'},
  {id:'salam',  nm:'火蜥',     ai:'C', hp:32,atk:20,def:8, exp:64, spd:1,   sight:6, ev:6, fl:[8,20], w:55, zn:['briar'], bd:'quad', col:'h', onhit:{st:'燒',dur:4,ch:.3}},
  {id:'ash',    nm:'灰燼靈',   ai:'W', hp:26,atk:17,def:5, exp:56, spd:1,   sight:4, ev:14,fl:[8,20], w:50, zn:['briar'], bd:'spirit', col:'i', fly:1},
@@ -1392,7 +1392,7 @@ const MONS = [
     那在玩家還只有 19 點體力的時候不是難度，是處刑。
     另一半原因更隱蔽：`stone` 一有專屬名單，老鼠與史萊姆的權重就自動砍半 ——
     加一隻怪同時等於「把溫和的怪拿掉一半」。 */
- {id:'centip', nm:'坑道蜈蚣', ai:'C', hp:18,atk:8, def:3, exp:26, spd:2,   sight:5, ev:6, fl:[6,16], w:55, zn:['stone'], bd:'bug', col:'f'},
+ {id:'centip', nm:'坑道蜈蚣', ai:'C', hp:18,atk:8, def:3, exp:26, spd:2,   sight:5, ev:6, fl:[6,16], w:55, zn:['stone'], bd:'bug', col:'f', onhit:{st:'毒',dur:16,ch:.35}},
  {id:'ratking',nm:'鼠王',     ai:'C', hp:30,atk:14,def:6, exp:48, spd:1,   sight:7, ev:4, fl:[7,18], w:45, zn:['stone'], bd:'quad', col:'a', pack:1},
  /* 幻光蝶第一版是 spd 2 / ev 22 / 睡 4 回合 / 22%，出現在第 3 層。
     三件事各自都合理，疊起來是處刑：一回合打兩下、你有兩成打不中它、
@@ -1553,7 +1553,9 @@ const HERB = [
  {id:'conf', nm:'混亂草', self:{st:'亂',dur:10}, bad:1, price:300},
  {id:'slp',  nm:'睡眠草', self:{st:'睡',dur:5}, bad:1, price:800},
  {id:'blind',nm:'失明草', self:{st:'盲',dur:6}, bad:1, price:300},
- {id:'psn',  nm:'毒草',   str:-1, dmg:10, bad:1, price:100},
+ /* 毒草本來只扣血與力量，名字卻叫毒草 —— 有了中毒狀態之後，
+    它當然要真的讓人中毒。這也讓「盲喝未鑑定的草」有了新的風險。 */
+ {id:'psn',  nm:'毒草',   str:-1, dmg:10, bad:1, psn:12, price:100},
  {id:'hst',  nm:'加速草', self:{st:'速',dur:20}, price:800},
  {id:'para', nm:'麻痺草', self:{st:'麻',dur:3}, bad:1, price:800},
 ];
@@ -1641,6 +1643,9 @@ const SHLD = [
    為了讓那個投資值得，職業進度存在村莊裡，死亡不會歸零。
 
    學會的技能會留在池子裡，換職業也不會忘；但同時只能裝 4 個。 */
+/* 哪些狀態是「好的」。一份表兩個地方用：解毒草只解壞的、狀態列把好的畫成綠色。
+   分兩份抄的下場是加了新狀態之後，籌碼是紅的、解毒草卻會把它洗掉。 */
+const ST_GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1,'歌':1,'影':1};
 const HAT = [
   {id:'helm',  nm:'鐵之盔',   job:'war', price:900,  jobnm:'戰士'},
   {id:'beret', nm:'吟遊軟帽', job:'brd', price:900,  jobnm:'吟遊詩人'},
@@ -1925,6 +1930,8 @@ m.mpburn|{nm} tears the magic out of you — half your MP is gone!|{nm} が ま�
 m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
+m.ptrap|A poison-needle trap! The needle is coated — you take {n} damage.|どくばりの わな！ はりに どくが ぬられている —— {n} の ダメージ。
+m.poison|The poison spreads — you take {n} damage.|どくが まわる —— {n} の ダメージ。
 m.wall|There is a wall ahead.|まえは かべだ。
 m.lost|(The stairs are to the {d} — about {n} steps.)|（かいだんは {d}のほう —— およそ {n}ぽ。）
 dir.n|north|きた
@@ -5659,7 +5666,12 @@ function buildFloor(){
   }
   for(let i=0;i<rng.i(3,6)+Math.floor(G.md/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.md); }
   for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.md/2)); }
-  for(let i=0;i<rng.i(1,2)+Math.floor(G.md/5);i++){ const p=free(0); if(p) G.traps[key(p.x,p.y)]=1; }
+  /* 兩種陷阱，毒針佔四成。深度越深毒針越多 —— 前幾層的玩家還沒有解毒草，
+     一開場就被毒到見底不是難度，是趕人走。 */
+  for(let i=0;i<rng.i(1,2)+Math.floor(G.md/5);i++){
+    const p=free(0);
+    if(p) G.traps[key(p.x,p.y)] = rng.chance(Math.min(.45, .15 + G.md*0.03)) ? 2 : 1;
+  }
   /* 休息層：長章節每 N 層一個。沒有休息層的三十層一口氣打完，
      不是難度，是體力測驗 —— 走通測試在通天塔第 7 層就打不下去了。
      這裡不生怪、一定有商店、進來就補滿，玩家可以重新整隊再往下。 */
@@ -6302,10 +6314,23 @@ function stepOn(){
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   // 忍者 Master：踩上去也不會觸發
   if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say(TX('s.004','腳步輕得沒有觸動機關。'),'good'); }
-  else if(G.traps[k]){ delete G.traps[k]; SFX.play('trap');
-    const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
-    p.flash = 0.12; burst(p.x, p.y, 10, '#c94a3a', 40, 10);
-    say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32'); G.shake=6; }
+  else if(G.traps[k]){
+    /* 兩種陷阱。舊的存檔裡值是 1，所以 1 一定要是原本那種傷害陷阱 ——
+       換個意思的話，讀舊檔的人會在同一格踩到不一樣的東西。 */
+    const kind = G.traps[k]; delete G.traps[k]; SFX.play('trap');
+    p.flash = 0.12; G.shake = 6;
+    if(kind === 2){
+      // 毒針：傷害很小，但中毒。痛的是接下來那二十回合，不是這一下
+      const d = Math.max(1, Math.floor(p.mhp/20)); p.hp -= d;
+      burst(p.x, p.y, 10, '#4aa85e', 40, 10);
+      float(p.x,p.y,'-'+d,'#4aa85e');
+      if(poison(20)) say(M('m.ptrap','毒針陷阱！針上有毒，受到 {n} 點傷害。',{n:d}),'bad');
+    } else {
+      const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
+      burst(p.x, p.y, 10, '#c94a3a', 40, 10);
+      say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32');
+    }
+  }
   if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
     G.shopSeen = 1;
     say(TX('k.shop','這是一間店。'),'gold');
@@ -6571,6 +6596,23 @@ function endTurn(){
   if(G.f.turrets) for(const t of G.f.turrets) if(t.cd > 0) t.cd--;
   arenaTick();
   bossWatch();
+  /* 中毒：每回合扣血，而且**會死**。
+
+     為什麼不設「最低留 1 點」的保險：那個保險會讓中毒變成一段可以無視的
+     裝飾。它要有牙齒，才會逼人停下來喝解毒草或往樓梯跑。
+     但每一下都很小（上限的 1/24）、時間也短 —— 從中毒到見底有二十幾回合
+     可以反應。死在毒上的人是「選擇繼續往前走」，不是「被陰」，
+     那兩件事在玩家心裡完全不一樣。
+
+     訊息不是每回合都印。連續二十行「毒發作」會把訊息簿洗掉，
+     而訊息簿是這款遊戲唯一的旁白 —— 每三回合講一次就夠了。 */
+  if(p.st['毒']){
+    const d = Math.max(1, Math.round(p.mhp / 28));
+    p.hp -= d;
+    float(p.x, p.y, '-' + d, '#4aa85e');
+    if(p.st['毒'] % 3 === 0 || p.hp <= p.mhp * 0.25)
+      say(M('m.poison','毒在體內擴散 —— 受到 {n} 點傷害。',{n:d}), 'bad');
+  }
   // 狀態遞減
   for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k];
     say(M('m.stoff','{nm}的狀態解除了。',{nm:TX('st.'+k, k)})); } }
@@ -6635,6 +6677,27 @@ function endTurn(){
   dwellCheck();
   if(p.hp<=0) death();
   refresh();
+}
+
+/* 上毒。長度**跟深度走**，不是照表上的數字直接給。
+
+   表上那個數字是「最深的時候有多久」。在第三層直接照 14 回合給的話，
+   等級 1 的十九點血會被扣掉七成 —— 而那時候玩家連解毒草長什麼樣都還不知道
+   （十四種草每一局重新洗牌，解毒草只是其中一種）。
+   沒有解法的傷害不是難度，是趕人走。
+
+   淺處讓玩家**學會**這個機制（看到狀態列上多了「毒」、血一直掉、
+   下次會記得找解毒草），深處才真的拿它嚇人。 */
+function poison(turns){
+  const p = G.p;
+  if(p.st['界']){ say(TX('s.026','結界擋下了異常狀態。'),'good'); return false; }
+  /* 兩層上限。深度那一層是「淺處要學得會」；12 回合那一層是總量 ——
+     一次中毒最多扣掉四成三的血（12 x 上限/28）。
+     沒有這一層的話，第十三章那種二十層的深度會出現「中一次毒就等於死」——
+     實測就是這樣：走通測試在第 13 章卡死，機器人最深走到第 19 層。
+     一擊必死不是緊張感，是不能玩。 */
+  p.st['毒'] = Math.max(p.st['毒'] || 0, Math.max(3, Math.min(turns, 4 + G.md, 12)));
+  return true;
 }
 
 /* ═══ 原地休息 ═══════════════════════════════════════════════
@@ -7130,20 +7193,27 @@ function act(m,it){
        那不是難度，是看著自己被處決。醒過來還是虧了一回合，
        但至少下一步在你手上。 */
     if(p.st['睡']){ delete p.st['睡']; say(TX('s.166','痛得醒了過來！'),'good'); }
-    const oh = m.d.onhit;
+    /* onhit 可以是一個，也可以是一串 —— 醉步蕈同時放孢子（亂）與毒。
+       寫成陣列而不是「再加一個欄位」：兩個效果各自有自己的機率與時間，
+       塞進同一個物件的話它們就得共用，而那不是同一件事。 */
+    const ohs = !m.d.onhit ? [] : (Array.isArray(m.d.onhit) ? m.d.onhit : [m.d.onhit]);
     if(p.st['雷']){                                          // 雷紋護體：受擊反彈
       const back = rollDmg(20 + p.lv*3, m.d.def, true, 1);
       hurtMon(m, back, '#7cb8ea');
       say(M('s.025','雷紋反彈，{v0} 受到 {v1} 點傷害。',{v0:(locName('mon', m.d)), v1:(back)}),'good');
     }
-    if(oh && p.st['界'] && oh.st){ say(TX('s.026','結界擋下了異常狀態。'),'good'); }
-    else if(oh && G.rng.chance(oh.ch)){
-      if(oh.st){ p.st[oh.st]=oh.dur; say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.'+oh.st, oh.st)}),'bad'); }
+    let warded = false;
+    for(const oh of ohs){
+      if(p.st['界'] && oh.st){ warded = true; continue; }
+      if(!G.rng.chance(oh.ch)) continue;
+      if(oh.st === '毒'){ if(poison(oh.dur)) say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.毒','毒')}),'bad'); }
+      else if(oh.st){ p.st[oh.st]=Math.max(p.st[oh.st]||0, oh.dur); say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.'+oh.st, oh.st)}),'bad'); }
       if(oh.drain){ p.sat=Math.max(0,p.sat-oh.drain); say(M('s.027','{v0} 吸走了你的體力！',{v0:(locName('mon', m.d))}),'bad'); }
       if(oh.curse){ const t=[p.weap,p.shld].filter(i=>i&&!i.cursed);
         if(t.length){ const v=G.rng.pick(t); v.cursed=true; v.known=1;
           say(M('s.028','「{v0}」被下了詛咒！',{v0:(nameOf(v))}),'bad'); } }
     }
+    if(warded) say(TX('s.026','結界擋下了異常狀態。'),'good');
     return;
   }
   if(it.k==='adds'){
@@ -7577,7 +7647,16 @@ function useItem(it, fromGround){
     if(d.mhp){ p.mhp+=d.mhp; p.hp+=d.mhp; say(M('s.037','體力上限 +{v0}。',{v0:(d.mhp)}),'good'); }
     if(d.str){ p.strb+=d.str; say(M('s.038','力量 {v0}{v1}。',{v0:(d.str>0?'+':''), v1:(d.str)}), d.str>0?'good':'bad'); }
     if(d.dmg){ p.hp-=d.dmg; say(M('s.039','受到 {v0} 點傷害。',{v0:(d.dmg)}),'bad'); float(p.x,p.y,'-'+d.dmg,'#a83c32'); }
-    if(d.cure){ const had=Object.keys(p.st).length; p.st={}; say(had ? TX('s.136','異常狀態解除了。') : TX('m.nothing','什麼都沒有發生……'), had?'good':null); if(!had) ok=false; }
+    if(d.psn && poison(d.psn)) say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.毒','毒')}),'bad');
+    /* 只解壞的。原本是 p.st={} 全清 —— 那會把加速、力量、堅守一起洗掉，
+       於是「中毒時喝解毒草」反而讓玩家更弱。有了毒之後這件事天天發生。 */
+    if(d.cure){
+      const bad = Object.keys(p.st).filter(k => !ST_GOOD[k]);
+      for(const k of bad) delete p.st[k];
+      say(bad.length ? TX('s.136','異常狀態解除了。') : TX('m.nothing','什麼都沒有發生……'),
+          bad.length?'good':null);
+      if(!bad.length) ok=false;
+    }
     if(d.self){ p.st[d.self.st]=d.self.dur; say(M('m.ston2','陷入了{nm}的狀態！',{nm:TX('st.'+d.self.st, d.self.st)}), d.self.st==='速'?'good':'bad'); }
     identify(it);
   } else if(it.cat==='scroll'){
@@ -10289,13 +10368,12 @@ function refresh(){
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
-  const GOOD = {'速':1,'力':1,'守':1,'界':1,'怒':1,'熔':1,'雷':1,'鏡':1,'歌':1,'影':1};
   const keys = Object.keys(p.st);
   if(!keys.length){ const s=document.createElement('span'); s.className='none';
     s.textContent=TX('st.none','正常'); sb.appendChild(s); }
   for(const k of keys){
     const b=document.createElement('b');
-    if(GOOD[k]) b.className='ok';
+    if(ST_GOOD[k]) b.className='ok';
     /* 狀態的鍵是中文單字（p.st['速']），改不得 —— 它們散在整份程式裡。
        所以只翻「顯示出來的名字」，鍵留著。 */
     b.textContent = `${TX('st.' + k, k)} ${p.st[k]}`;
