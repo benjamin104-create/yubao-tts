@@ -2961,7 +2961,7 @@ for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
    食物／武器／盾／帽沒有這個問題，編號就是道具本身的順序。
 
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
-const ART_ITEM = {herb: 7};      // 例：{herb:14, weap:8} —— 圖到了才填
+const ART_ITEM = {herb: 14, weap: 8};   // 圖到了才填，沒列到的維持程式畫的
 for(const cat in ART_ITEM)
   for(let i = 0; i < ART_ITEM[cat]; i++)
     adoptArt(cat + '#' + i,
