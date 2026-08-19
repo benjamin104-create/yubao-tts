@@ -56,11 +56,35 @@ PALETTE_HEX = [
 ]
 
 
+# 主角的身體只准用這五個色：描邊、三階陶土、眼白。
+#
+# 為什麼要另外開一組，而不是併進上面那 32 色：主角有十種顏色可選，
+# 而換顏色是**色階置換**（遊戲裡的 BLOB_RAMP）—— 只有這三階陶土會被換掉。
+# 身體上多出來的任何一個顏色都換不到，於是玩家選了苔綠，
+# 身上還是會留幾塊陶土色。多一個色不會報錯，只會讓九種顏色都髒掉。
+#
+# 反過來也要成立：這四個陶土色**不在**通用色盤裡，所以怪物與道具
+# 永遠不會被量化成主角的顏色 —— 整張地牢裡只有主角是這個色調。
+HERO_HEX = ["0d0d12", "a8452c", "d97757", "eaa88c", "f2efe7"]
+# 分類 → 專用色盤。沒列到的用上面那 32 色。
+PALETTES = {"hero": HERO_HEX}
+
+
 def hex_to_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-PALETTE_RGB = [hex_to_rgb(h) for h in PALETTE_HEX]
+def palette_hex_for(rel):
+    """這個檔案該用哪一組色盤，看它放在哪個資料夾。"""
+    return PALETTES.get(rel.replace("\\", "/").split("/")[0], PALETTE_HEX)
+
+
+PALETTE_RGB = tuple(hex_to_rgb(h) for h in PALETTE_HEX)
+
+
+def palette_rgb_for(name):
+    """分類名 → 那一組色盤的 RGB。名字對不上就用通用的。"""
+    return tuple(hex_to_rgb(h) for h in (PALETTES.get(name) or PALETTE_HEX))
 _NEAR_CACHE = {}
 _LAB_CACHE = {}
 
@@ -90,8 +114,12 @@ def to_lab(c):
     return lab
 
 
-def nearest(c):
+def nearest(c, pal=None):
     """把一個顏色配到色盤裡最近的那一個。
+
+    pal：要配到哪一組色盤（RGB 三元組的序列）。主角的身體只准用五個色，
+    所以它走的是另一組 —— 沒有這個參數的話，量化永遠配到通用色盤，
+    而 --palette 這個旗標會變成「設了也沒用」的裝飾。
 
     為什麼要自己寫，不用 PIL 的 quantize(palette=)：**它會配錯**。
     實測 (137,170,77) 這個綠色被它配成 (156,120,80) 的棕色，
@@ -102,28 +130,19 @@ def nearest(c):
     距離在 CIELAB 裡用 CIE76 算（理由見 to_lab）。RGB 空間的距離
     —— 不管有沒有加權 —— 都會在深綠與深棕之間翻車。
     """
-    hit = _NEAR_CACHE.get(c)
+    pal = tuple(pal) if pal else PALETTE_RGB
+    hit = _NEAR_CACHE.get((c, pal))
     if hit is not None:
         return hit
     L1, a1, b1 = to_lab(c)
-    best, bd = PALETTE_RGB[0], None
-    for p in PALETTE_RGB:
+    best, bd = pal[0], None
+    for p in pal:
         L2, a2, b2 = to_lab(p)
         d = (L1 - L2) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2
         if bd is None or d < bd:
             bd, best = d, p
-    _NEAR_CACHE[c] = best
+    _NEAR_CACHE[(c, pal)] = best
     return best
-
-
-def build_palette_image():
-    pal = Image.new("P", (1, 1))
-    flat = []
-    for h in PALETTE_HEX:
-        flat.extend(hex_to_rgb(h))
-    flat.extend([0, 0, 0] * (256 - len(PALETTE_HEX)))
-    pal.putpalette(flat)
-    return pal
 
 
 def strip_background(im, tolerance=18):
@@ -149,7 +168,7 @@ def strip_background(im, tolerance=18):
     return im
 
 
-def trim_to_subject(im, margin=1):
+def trim_to_subject(im, margin=1, headroom=0.0):
     """裁到主體的外框，再補成正方形，**主體靠下對齊**。
 
     為什麼一定要這一步：模型輸出的每一格都有大量留白，主體常常只佔六成。
@@ -167,6 +186,12 @@ def trim_to_subject(im, margin=1):
     「我不希望怪獸是懸浮在空中的感覺」。高瘦的角色看不出來（它們本來就填滿），
     所以這個 bug 只會出現在一部分角色身上，更難察覺。
     靠下對齊之後，「精靈的最後一列」就是「腳踩的那一條線」。
+
+    headroom：頭頂上面要留多少比例的空白（主角用 6/32）。
+    主角的六種體型共用同一組帽子圖，而帽子畫在固定的位置 ——
+    所以六種體型的頭頂必須落在同一列。填滿整格的話頭頂在第 0 列，
+    帽子就會整頂跑到畫面外。留白是這裡唯一能保證的東西：
+    要求模型畫的時候對齊某一條線是做不到的，裁的時候留出來才做得到。
     """
     bbox = im.getchannel("A").getbbox()
     if not bbox:
@@ -176,17 +201,19 @@ def trim_to_subject(im, margin=1):
     x1 = min(im.width, x1 + margin); y1 = min(im.height, y1 + margin)
     cut = im.crop((x0, y0, x1, y1))
     side = max(cut.width, cut.height)
+    if headroom > 0:
+        side = max(side, int(round(cut.height / (1.0 - headroom))))
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.paste(cut, ((side - cut.width) // 2, side - cut.height))
     return sq
 
 
-def pixelize(im, size, palette, keep_bg=False, trim=True):
+def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0):
     if not keep_bg:
         im = strip_background(im)
     im = im.convert("RGBA")
     if trim:
-        im = trim_to_subject(im)
+        im = trim_to_subject(im, headroom=headroom)
 
     """降取樣的順序很重要，這裡是「先量化、再取眾數」而不是「先平均、再量化」。
 
@@ -214,7 +241,7 @@ def pixelize(im, size, palette, keep_bg=False, trim=True):
                     if a_full[xx, yy] < 128:
                         continue
                     opaque += 1
-                    c = nearest(src[xx, yy])
+                    c = nearest(src[xx, yy], palette)
                     tally[c] = tally.get(c, 0) + 1
             # 這一格有一半以上是背景就當透明 —— 不然剪影會被外框撐胖一圈
             if not tally or opaque * 2 < total:
@@ -336,7 +363,6 @@ def size_for(rel, default):
 
 
 def check_assets(root, size):
-    palette = {hex_to_rgb(h) for h in PALETTE_HEX}
     problems = 0
     checked = 0
     for dirpath, _, files in os.walk(root):
@@ -355,6 +381,9 @@ def check_assets(root, size):
                       % (rel, w, h, want, want))
                 problems += 1
 
+            # 色盤也是分類的屬性：主角的身體只准用那五個色，
+            # 因為換顏色是色階置換，換不到的顏色會在九種顏色裡留成髒塊。
+            palette = {hex_to_rgb(h) for h in palette_hex_for(rel)}
             off = {c[:3] for c in im.getdata() if c[3] > 0} - palette
             if off:
                 print("  [色盤] %s 有 %d 個色盤外的顏色（例：%s）"
@@ -388,6 +417,10 @@ def main():
     ap.add_argument("--keep-bg", action="store_true")
     ap.add_argument("--no-trim", action="store_true",
                     help="不要裁到主體（地形圖塊要用，它本來就該填滿整格）")
+    ap.add_argument("--headroom", type=float, default=0.0,
+                    help="頭頂上面留多少比例的空白（主角用 0.1875 = 6/32，帽子要疊在那裡）")
+    ap.add_argument("--palette", choices=sorted(PALETTES),
+                    help="改用某個分類的專用色盤（hero：主角身體的五色）")
     ap.add_argument("--check", help="檢查資產目錄是否合規")
     args = ap.parse_args()
 
@@ -397,7 +430,7 @@ def main():
     if not args.src:
         ap.error("需要來源圖，或用 --check")
 
-    palette = build_palette_image()
+    palette = palette_rgb_for(args.palette)
     im = Image.open(args.src)
 
     if args.auto:
@@ -418,7 +451,8 @@ def main():
                 out_dir, ("%s.png" % names[i]) if names
                 else ("%s%02d.png" % (args.prefix, args.start + i)))
             pixelize(stripped.crop(box), args.size, palette,
-                     keep_bg=True, trim=not args.no_trim).save(path)
+                     keep_bg=True, trim=not args.no_trim,
+                     headroom=args.headroom).save(path)
             print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))
     elif args.grid:
         cols, rows = (int(x) for x in args.grid.lower().split("x"))
@@ -427,13 +461,15 @@ def main():
         for i, cell in enumerate(split_grid(im, cols, rows)):
             path = os.path.join(
                 out_dir, "%s%02d.png" % (args.prefix, args.start + i))
-            pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim).save(path)
+            pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim,
+                     headroom=args.headroom).save(path)
             print("寫出 %s" % path)
     else:
         if not args.out:
             ap.error("單張模式需要 -o")
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-        pixelize(im, args.size, palette, args.keep_bg, not args.no_trim).save(args.out)
+        pixelize(im, args.size, palette, args.keep_bg, not args.no_trim,
+                 headroom=args.headroom).save(args.out)
         print("寫出 %s" % args.out)
 
 

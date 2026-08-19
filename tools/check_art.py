@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PIL import Image
 
-from pixelize import (PALETTE_HEX, TILE, build_palette_image, check_assets,
+from pixelize import (PALETTE_HEX, TILE, check_assets,
                       find_subjects, hex_to_rgb, nearest, pixelize,
                       strip_background)
 
@@ -118,10 +118,9 @@ for name in sheets:
     # 趴著的老鼠原圖是 436x212，硬拉成 32x32 會變成一隻站起來的老鼠，
     # 而在這個尺寸下剪影是唯一可靠的辨識依據。
     # 檔案照樣寫得出來，色盤照樣合規，只有比例錯了。
-    pal = build_palette_image()
     for i, box in enumerate(boxes):
         src_ar = (box[2] - box[0]) / float(box[3] - box[1])
-        spr = pixelize(im.crop(box), TILE, pal, keep_bg=True)
+        spr = pixelize(im.crop(box), TILE, keep_bg=True)
         bb = spr.getchannel("A").getbbox()
         out_ar = (bb[2] - bb[0]) / float(bb[3] - bb[1])
         ok(abs(out_ar - src_ar) / src_ar <= 0.18,
@@ -160,6 +159,46 @@ for what, marker, pat, doc_name, doc_pat in [
     dup = sorted({t for t in got if got.count(t) > 1})
     ok(not dup, "%s的文件裡沒有重複（重複：%s）" % (what, dup or "無"))
 
+# 主角的兩份清單都不是 `const X = [`，所以走不進上面那個迴圈。
+# 分開寫比把迴圈改複雜好 —— 那個迴圈的形狀就是「id 清單對提示詞」，
+# 而主角是「體型清單 + 帽子清單」對同一份提示詞。
+_hi = _html.index("const BLOB_SKINS = {")
+_skins = re.findall(r"^  ([a-z]+): \[", _html[_hi:_html.index("\n};", _hi)], re.M)
+_hats = table_ids("const HAT = [", r"\{id:'([a-z]+)'")
+ok(len(_skins) > 1 and len(_hats) > 1, "讀得到體型與帽子清單（%d 體型、%d 帽子）"
+   % (len(_skins), len(_hats)))
+_hpath = os.path.join(ROOT, "docs", "art_prompts_hero.md")
+if not os.path.exists(_hpath):
+    ok(False, "docs/art_prompts_hero.md 存在")
+else:
+    _hdoc = open(_hpath, encoding="utf-8").read().split("檔名對照")[1]
+    for _what, _want, _pat in [("體型", set(_skins), r"`hero/([a-z]+)`"),
+                               ("帽子", set(_hats), r"`hat/([a-z]+)`")]:
+        _got = re.findall(_pat, _hdoc)
+        ok(not (_want - set(_got)), "每個%s都在主角提示詞文件裡（漏了：%s）"
+           % (_what, sorted(_want - set(_got)) or "無"))
+        ok(not (set(_got) - _want), "主角文件沒有列到不存在的%s（多了：%s）"
+           % (_what, sorted(set(_got) - _want) or "無"))
+        _dup = sorted({t for t in _got if _got.count(t) > 1})
+        ok(not _dup, "主角文件裡的%s沒有重複（重複：%s）" % (_what, _dup or "無"))
+
+# 換顏色的色階表：十種顏色一個都不能少，而且每一階都要在色盤裡。
+# 少一種不會報錯 —— tintHero 回 null，那個顏色悄悄退回程式畫的舊主角。
+_pal = dict(re.findall(r"'(.)':'(#[0-9a-f]{6})'",
+                       _html[_html.index("const PAL = {"):_html.index("\n};", _html.index("const PAL = {"))]))
+_cols = re.findall(r"'(.)'", _html[_html.index("const BLOB_COLS = ["):
+                                   _html.index("];", _html.index("const BLOB_COLS = ["))])
+_ri = _html.index("const BLOB_RAMP = {")
+_ramp = dict((m.group(1), [m.group(2), m.group(3), m.group(4)]) for m in
+             re.finditer(r"'(.)': \['(.)','(.)','(.)'\]", _html[_ri:_html.index("\n};", _ri)]))
+ok(sorted(_ramp) == sorted(_cols),
+   "十種可選顏色都有對應的色階（缺：%s）" % (sorted(set(_cols) - set(_ramp)) or "無"))
+_bad = sorted(c for c in _ramp for s in _ramp[c] if s not in _pal)
+ok(not _bad, "色階裡的每一階都在色盤裡（不在的：%s）" % (_bad or "無"))
+# 十組色階必須互不相同 —— 相同的話，兩個選項在玩家眼裡是同一個顏色
+_mid = [_ramp[c][1] for c in _ramp]
+ok(len(set(_mid)) == len(_mid), "十種顏色的主色互不相同")
+
 print("\n道具圖示的編號與遊戲對得上")
 # 道具跟怪不一樣：檔名是**編號**不是 id，而編號直接對應遊戲裡的索引。
 # 少一個、多一個、或跳號，圖示就會整批對錯道具 —— 而且不會報錯，
@@ -170,7 +209,10 @@ for _m in re.finditer(r"(\w+):\[(.*?)\],?\n", _html[_i:_html.index("\n};", _i)] 
                       re.S):
     _look[_m.group(1)] = _m.group(2).count("'") // 2
 _want = dict(_look)
-for _nm, _k in [("FOOD", "food"), ("WEAP", "weap"), ("SHLD", "shld"), ("HAT", "hat")]:
+# 帽子不在這裡：它跟主角是同一張圖（art/hat/<id>.png，檔名是 id 不是編號），
+# 由上面那段主角的交叉檢查負責。留在這裡的話，這一支會去 art_prompts_item.md
+# 找 hat00~hat08，而那九個檔案已經不存在了。
+for _nm, _k in [("FOOD", "food"), ("WEAP", "weap"), ("SHLD", "shld")]:
     _a = re.search(r"const %s\s*=\s*\[" % _nm, _html).start()
     _want[_k] = len(re.findall(r"\{id:'[a-z_0-9]+',\s*nm:",
                                _html[_a:_html.index("\n];", _a)]))
@@ -203,6 +245,7 @@ else:
                 continue
             n += 1
             rel = os.path.relpath(os.path.join(dirpath, name), ART)
+            cat = rel.replace("\\", "/").split("/")[0]
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -215,7 +258,9 @@ else:
             # 那就是一把槍的樣子。原本的下限把「主體沒框到」跟「這東西本來就細」
             # 混為一談了。
             frac = solid / float(len(px))
-            lo = 0.06 if rel.startswith("item") else 0.15
+            # 帽子跟道具一樣：它本來就只佔畫面上方那一條，
+            # 用怪物的下限去要求，只會逼出一頂佔滿整格、把臉蓋掉的帽子。
+            lo = 0.06 if cat in ("item", "hat") else 0.15
             ok(lo <= frac <= 0.92,
                "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
             # 主體必須碰到方框的最底下那一列。
@@ -229,9 +274,32 @@ else:
             # 兩者永遠貼在一起 —— check_ground 量的是「身體與影子的距離」，
             # 它看不到「這一組整個被抬高了」。一條斷言只看得到它量的東西。
             bot = im.getchannel("A").getbbox()
-            ok(bot is not None and bot[3] == im.height,
-               "%s 主體貼齊底部（最下緣在第 %s 列，共 %d 列）"
-               % (rel, bot[3] if bot else "—", im.height))
+            if cat == "hat":
+                # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
+                # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
+                # 身體畫在下面。所以這裡問的正好相反：它有沒有乖乖待在頭頂那一段。
+                #
+                # 上限 14：眼睛在第 12~17 列（BLOB_SKINS 的解剖約定，
+                # 16 尺度的 y6 乘二）。帽緣壓過 14 就開始遮眼睛 ——
+                # 而「看不到眼睛」在這款遊戲裡等於「這隻東西死了」。
+                ok(bot is not None and bot[3] <= 14,
+                   "%s 只佔頭頂那一段（最下緣在第 %s 列，上限 14）"
+                   % (rel, bot[3] if bot else "—"))
+                ok(bot is not None and (bot[2] - bot[0]) >= 12,
+                   "%s 夠寬，戴得住（寬 %s，下限 12）"
+                   % (rel, (bot[2] - bot[0]) if bot else "—"))
+            else:
+                ok(bot is not None and bot[3] == im.height,
+                   "%s 主體貼齊底部（最下緣在第 %s 列，共 %d 列）"
+                   % (rel, bot[3] if bot else "—", im.height))
+            if cat == "hero":
+                # 頭頂要落在第 4~9 列之間。六種體型共用同一組帽子圖，
+                # 而帽子畫在固定的位置（drawHat 不做量測）——
+                # 頭頂高了帽子會陷進頭裡，低了帽子會浮在半空。
+                # 這是六張圖之間唯一**必須**對齊的一件事。
+                ok(bot is not None and 4 <= bot[1] <= 9,
+                   "%s 頭頂落在帽子接得上的高度（第 %s 列，要 4~9）"
+                   % (rel, bot[1] if bot else "—"))
 
             # 每張精靈都要有一個真正被照亮的地方。
             #
@@ -253,7 +321,7 @@ else:
             name0 = os.path.splitext(os.path.basename(rel))[0]
             lum = [0.2126*p[0] + 0.7152*p[1] + 0.0722*p[2] for p in px if p[3] > 0]
             top = max(lum) if lum else 0
-            need = 110 if rel.startswith("item") else 140
+            need = 110 if cat in ("item", "hat") else 140
             if name0 in TOO_DARK:
                 print("  · %s 已知偏暗（最亮 %.0f），等重畫" % (rel, top))
             else:

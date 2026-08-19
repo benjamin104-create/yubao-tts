@@ -2929,18 +2929,31 @@ const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
                   'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
                   'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind'];
 const ownArt = {};
-function adoptArt(id, url, own){
+/* 載一張外部圖，成功了才呼叫 ok(canvas)。載不到什麼都不做 ——
+   「還沒畫到」不是錯誤，是這條遷移管線的正常狀態。
+
+   為什麼要先畫進 canvas 再交出去：Image 沒辦法關掉平滑取樣，
+   而 atlas 裡的東西會被放大、描邊、量測著地寬度，每一步都要求
+   「一格就是一格」。轉成 canvas 是這條規則唯一的落點。 */
+function artImage(id, url, ok){
   if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
   const im = new Image();
   im.onload = () => {
-    /* 只有真的載到才記 ownArt。先記的話，頭目的圖還沒畫出來（404）時
-       這個頭目就永遠不會跟著雜魚的新圖更新，卡在程式畫的舊造型上。 */
-    if(own) ownArt[id] = 1;
     const c = document.createElement('canvas');
     c.width = im.width; c.height = im.height;
     const x = c.getContext('2d');
     x.imageSmoothingEnabled = false;           // 外部圖進來要一格是一格
-    x.drawImage(im, 0, 0);
+    x.drawImage(im, 0, 0, im.width, im.height);
+    ok(c);
+  };
+  im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
+  im.src = (ART_DATA && ART_DATA[id]) || url;
+}
+function adoptArt(id, url, own){
+  artImage(id, url, c => {
+    /* 只有真的載到才記 ownArt。先記的話，頭目的圖還沒畫出來（404）時
+       這個頭目就永遠不會跟著雜魚的新圖更新，卡在程式畫的舊造型上。 */
+    if(own) ownArt[id] = 1;
     atlas[id] = c;
     /* 三份衍生資料是照舊圖烘的，一起作廢：受擊白閃的剪影、影子的著地寬度、
        以及從這隻雜魚長出來的頭目。忘了的話，玩家會看到
@@ -2951,9 +2964,7 @@ function adoptArt(id, url, own){
       delete flashCache[b]; delete footCache[b];
       atlas[b] = crownSprite(id);
     }
-  };
-  im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
-  im.src = (ART_DATA && ART_DATA[id]) || url;
+  });
 }
 for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
 /* 頭目的圖不描金邊 —— 金邊是「這隻跟雜魚不一樣」的替代方案，
@@ -3228,26 +3239,157 @@ function drawHeroShield(x, i){
   else if(i===5){ px(x,PAL['t'],1,6,3,4); px(x,PAL['v'],2,7,2,2); px(x,PAL['+'],2,7,1,1); }
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
+/* ─── 主角的分層合成 ──────────────────────────────────────────
+   主角不是一張圖，是四層疊出來的：身體 × 帽子 × 盾 × 武器。
+   六種體型 × 十種顏色 × 九頂帽子 × 八把武器 × 六面盾 = 25920 種組合，
+   不可能一張一張畫。所以換成 AI 美術的時候，**分層必須留著** ——
+   合成的是「你的角色」，一張圖只會是「某個角色」。
+
+   於是每一層各自換：`art/hero/<體型>.png` 六張、`art/hat/<帽子>.png` 九張，
+   武器與盾之後同理。哪一層還沒畫到就用程式畫的那一層，跟怪物同一條規則。
+
+   身體的圖只畫陶土色，十種顏色靠色階置換 —— 見 BLOB_RAMP。 */
+const HERO_ART = {};      // 體型 → 32px 圖（陶土色）
+const HAT_ART_IMG = {};   // 帽子 id → 32px 圖
+const HERO_PX = T * 2;    // 主角合成畫布的邊長：32，跟外部圖同一個尺度
+
+/* 身體只准用這五個色：描邊、三階陶土、眼白。
+   換顏色就是把中間三階換掉 —— 描邊與眼白不在表裡，
+   所以十種顏色的輪廓都還是暗的、眼睛都還是亮的。
+   （直接做色相位移的話，眼白與星芒會跟著染色，十種顏色有九種是壞的。） */
+const BLOB_SRC = ['@', '#', '*'];
+const BLOB_RAMP = {
+  '#': ['@','#','*'],                 // 陶土（原色，不用換）
+  'l': ['j','k','l'],                 // 苔綠
+  'q': ['o','p','q'],                 // 湖藍
+  'u': ['s','t','u'],                 // 琥珀
+  'b': ['8','9','b'],                 // 土棕
+  '6': ['4','5','6'],                 // 霜白
+  'm': ['k','l','m'],                 // 薄荷
+  'g': ['e','f','g'],                 // 緋紅
+  'r': ['p','q','r'],                 // 天青
+  'v': ['t','u','v'],                 // 鎏金
+};
+const tintCache = {};
+/* 回傳染好色的身體；染不了就回 null，讓呼叫端退回程式畫的版本。
+   染不了只有一種情形：file:// 底下外部 PNG 汙染畫布，getImageData 會丟
+   SecurityError。那時候退回程式畫的比「十種顏色全是陶土」好得多。
+   （單檔版用 data URI，不會汙染，所以散佈出去的那一份永遠走得到這條路。） */
+function tintHero(sk, col){
+  const src = HERO_ART[sk];
+  if(!src) return null;
+  if(col === '#') return src;
+  const k = sk + '/' + col;
+  if(tintCache[k] !== undefined) return tintCache[k];
+  const ramp = BLOB_RAMP[col];
+  if(!ramp) return tintCache[k] = null;
+  const c = document.createElement('canvas');
+  c.width = src.width; c.height = src.height;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.drawImage(src, 0, 0, src.width, src.height);
+  let d;
+  try { d = x.getImageData(0, 0, c.width, c.height); }
+  catch(e){ return tintCache[k] = null; }
+  const map = {};
+  for(let i = 0; i < BLOB_SRC.length; i++){
+    const from = PAL[BLOB_SRC[i]], to = PAL[ramp[i]];
+    map[from.slice(1).toLowerCase()] = [parseInt(to.slice(1,3),16),
+                                        parseInt(to.slice(3,5),16),
+                                        parseInt(to.slice(5,7),16)];
+  }
+  const p = d.data;
+  for(let i = 0; i < p.length; i += 4){
+    if(p[i+3] < 8) continue;
+    const key = ((p[i]<<16 | p[i+1]<<8 | p[i+2]) + 0x1000000).toString(16).slice(1);
+    const to = map[key];
+    if(to){ p[i] = to[0]; p[i+1] = to[1]; p[i+2] = to[2]; }
+  }
+  x.putImageData(d, 0, 0);
+  return tintCache[k] = c;
+}
+
+/* 帽子畫在固定的位置，不跟著體型上下移動 —— 六種體型的頭頂本來就對齊
+   （BLOB_SKINS 那一段的解剖約定），外部圖也照同一條約定畫。
+   跟著量到的頭頂移動聽起來比較聰明，實際上會讓貓的耳朵把帽子頂到畫面外。 */
+function drawHat(x, id, size){
+  const img = HAT_ART_IMG[id];
+  if(img){ x.drawImage(img, 0, 0, size, size); return; }
+  const art = HAT_ART[id];
+  if(!art) return;
+  const tmp = document.createElement('canvas'); tmp.width = tmp.height = T;
+  art(tmp.getContext('2d'));
+  x.drawImage(tmp, 0, 0, size, size);
+}
+
 let heroCache = {};
+let heroLast = ['blob', '#'];      // 最近一次畫的體型與顏色，圖載進來時要照它重畫
 /* 體型與顏色由呼叫端傳進來，不在這裡讀 VILLAGE ——
    美術層讀遊戲狀態的話，(1) 產生美術驗收頁時會爆掉，
    (2) 這支在模組初始化時就會跑，那時 VILLAGE 還在 TDZ 裡。 */
 function heroSprite(wi, si, hi, skin, col0){
   const sk = SKINS.includes(skin) ? skin : 'blob';
   const col = BLOB_COLS.includes(col0) ? col0 : '#';
+  heroLast = [sk, col];
   // 快取鍵要含體型與顏色 —— 少了它，換了造型畫面上還是舊的那一隻
   const k = wi + '/' + si + '/' + (hi||'-') + '/' + sk + '/' + col;
   if(heroCache[k]) return heroCache[k];
-  const c = document.createElement('canvas'); c.width = T; c.height = T;
+  const c = document.createElement('canvas'); c.width = c.height = HERO_PX;
   const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
 
-  x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', hat:hi, skin:sk}), 0, 0, T, T);
+  const body = tintHero(sk, col);
+  if(body) x.drawImage(body, 0, 0, HERO_PX, HERO_PX);
+  else x.drawImage(makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk}),
+                   0, 0, HERO_PX, HERO_PX);
+  if(hi) drawHat(x, hi, HERO_PX);
 
-  if(si >= 0) drawHeroShield(x, si);
-  if(wi >= 0) drawHeroWeapon(x, wi);
+  /* 盾與武器還是程式畫的 16px，放大兩倍疊上去。
+     倍率是整數，所以是原樣複製、不會糊 —— 跟整個遷移期間的其他 16px 圖一樣。 */
+  if(si >= 0 || wi >= 0){
+    const tmp = document.createElement('canvas'); tmp.width = tmp.height = T;
+    const tx = tmp.getContext('2d');
+    if(si >= 0) drawHeroShield(tx, si);
+    if(wi >= 0) drawHeroWeapon(tx, wi);
+    x.drawImage(tmp, 0, 0, HERO_PX, HERO_PX);
+  }
   return heroCache[k] = c;
 }
 atlas.player = heroSprite(-1, -1, null);
+
+/* 圖載進來之後：快取全作廢，圖鑑那一張照最近用過的造型重畫。
+   忘了作廢的話，畫面上會停在程式畫的舊主角，直到玩家換一次造型 ——
+   而那正是「載入是非同步的」這件事唯一會咬人的地方。
+
+   遊戲層另外還有兩份主角的快取（造型選單、封面），但美術層不該伸手去動
+   遊戲層的變數 —— 所以留一個掛勾，讓那邊自己掛上來。 */
+const heroArtHooks = [];
+function heroArtIn(){
+  heroCache = {};
+  for(const k in tintCache) delete tintCache[k];
+  // 影子寬度與受擊白閃是照舊剪影烘的，一起作廢（跟 adoptArt 對怪物做的一樣）
+  for(const k in footCache) if(k.slice(0,4) === 'hero') delete footCache[k];
+  for(const k in flashCache) if(k.slice(0,4) === 'hero') delete flashCache[k];
+  atlas.player = heroSprite(-1, -1, null, heroLast[0], heroLast[1]);
+  for(const f of heroArtHooks) { try { f(); } catch(e){} }
+}
+for(const sk of SKINS)
+  artImage('hero#' + sk, ART_DIR + 'hero/' + sk + '.png', c => { HERO_ART[sk] = c; heroArtIn(); });
+/* 帽子一張圖兩個用途：戴在頭上，以及掉在地上的圖示。
+   兩者必須是同一頂帽子 —— 撿起來變成另一個東西是最基本的失信。
+   地上那一張往下移，圖示才落在格子中間（跟 makeHat 同一個位移）。 */
+for(let i = 0; i < HAT.length; i++){
+  const id = HAT[i].id, idx = i;
+  artImage('hat#' + id, ART_DIR + 'hat/' + id + '.png', c => {
+    HAT_ART_IMG[id] = c;
+    const g = document.createElement('canvas'); g.width = g.height = HERO_PX;
+    const gx = g.getContext('2d');
+    gx.imageSmoothingEnabled = false;
+    gx.drawImage(c, 0, HERO_PX / 4, HERO_PX, HERO_PX);
+    atlas['hat#' + idx] = g;
+    heroArtIn();
+  });
+}
 
 /* ─── 道具圖示：參數化生成 ────────────────────────────────────
    81 張手繪不現實。改成「輪廓 x 配色」的生成器 —— 而且輪廓一定要變，
@@ -9447,7 +9589,12 @@ function draw(dt){
   /* 主角造型的快取鍵。白閃的剪影與影子的著地寬度都照這把鍵存，
      兩邊一定要用同一把 —— 分開寫的話換一把武器，其中一個會停在舊值，
      而且不會報錯，只是影子的寬度莫名其妙跟身體對不上。 */
-  const heroKey = ()=> 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-');
+  /* 這個鍵是 footOf（影子寬度）與 flashCache（受擊白閃）的快取鍵，
+     所以「凡是會改變主角剪影的東西」都得在裡面。體型、顏色、帽子
+     少了任何一項，換過造型之後影子的寬度就會對不上身體 ——
+     而那種錯位不會報錯，只會讓人覺得畫面哪裡怪怪的。 */
+  const heroKey = ()=> 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-')
+                     + (G.p.hat||'-') + VILLAGE.skin + VILLAGE.col;
   // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
   // 像素風的動畫本來就該是一格一格的，平滑插值反而會糊掉。
   const bobOf = (o, ph)=>{
@@ -11605,12 +11752,17 @@ function closeMenu(){ $('menu').classList.remove('show'); }
 
 /* ─── 紀錄碑 ────────────────────────────────────────────────── */
 const blobCache = {};
+/* 造型選單與封面上的主角。跟遊戲裡是同一份來源 ——
+   選單裡好看、走進地牢變另一隻，是玩家最快發現「這款遊戲在唬人」的地方。 */
 function blobFor(col, skin){
   const sk = SKINS.includes(skin) ? skin : 'blob';
   const k = col + '/' + sk;
-  if(!blobCache[k]) blobCache[k] = makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk});
+  if(!blobCache[k])
+    blobCache[k] = tintHero(sk, col) ||
+                   makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk});
   return blobCache[k];
 }
+heroArtHooks.push(()=>{ for(const k in blobCache) delete blobCache[k]; });
 function openBoard(){
   const list = $('blist'); list.innerHTML = '';
   if(!VILLAGE.board.length){
@@ -11736,14 +11888,27 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
 
 /* ─── 封面 ──────────────────────────────────────────────────── */
 let coverUp = true;
+/* 封面上那隻放大的主角。畫布跟著來源的大小走 —— 寫死 T 的話，
+   主角換成 32px 的圖之後會先被壓成 16 再由 CSS 放大七倍，
+   封面上的主角會比遊戲裡的糊一倍，而封面正是玩家第一眼看到的那一張。 */
+function paintCover(){
+  const ca = $('coverart');
+  if(!ca || !ca.getContext) return;
+  const hp = blobFor(VILLAGE.col, VILLAGE.skin), hn = Math.max(T, hp.width || T);
+  if(ca.width !== hn){ ca.width = ca.height = hn; }
+  const x = ca.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, hn, hn);
+  x.drawImage(hp, 0, 0, hn, hn);
+}
+heroArtHooks.push(paintCover);
 (function buildCover(){
   const cov = $('cover');
   if(!cov) { coverUp = false; return; }
 
   // 主角放大 7 倍當主視覺。用的是遊戲裡「同一份」精靈資料 ——
   // 封面畫得比遊戲好看是最廉價的謊，點進來只會失望。
-  const ca = $('coverart');
-  if(ca) ca.getContext('2d').drawImage(atlas.player, 0, 0, T, T);
+  paintCover();
 
   // 岩壁用遊戲的岩盤圖樣，封面與地牢是同一種材質
   const rock = $('coverrock');
@@ -11771,9 +11936,7 @@ let coverUp = true;
       };
       cols.appendChild(b2);
     }
-    // 封面上那隻大的也跟著換
-    const art = $('coverart');
-    if(art) art.getContext('2d').drawImage(blobFor(VILLAGE.col, VILLAGE.skin), 0, 0, T, T);
+    paintCover();          // 封面上那隻大的也跟著換
   }
   paintPickers();
 

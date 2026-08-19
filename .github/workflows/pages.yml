@@ -86,6 +86,11 @@ jobs:
           # 那是轉檔把主體置中造成的，而檔案、尺寸、色盤全部合規，
           # 沒有任何一支既有檢查看得到它。這一支相減兩張截圖來量。
           python tools/check_ground.py
+          # 主角是四層疊出來的（身體 × 帽子 × 盾 × 武器，25920 種組合）。
+          # 接線接錯最常見的下場不是「畫面壞掉」，是「圖悄悄沒被用到」——
+          # 遊戲照跑、看起來跟以前一樣，因為它退回了程式畫的那一版。
+          # 這一支自己生假圖接進去，逼那條路真的走一遍。
+          python tools/check_hero.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
