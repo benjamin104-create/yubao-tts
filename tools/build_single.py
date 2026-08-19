@@ -11,6 +11,7 @@
 
 **鍵要跟 adoptArt 呼叫時用的一模一樣**，因為那一行是用 id 去查表：
   art/mon/rat.png    → 'rat'
+  art/weapon/club.png→ 'weapon#club'
   art/boss/b_oni.png → 'b_oni'
   art/item/herb00.png→ 'herb#0'
 弄錯的話不會報錯，只是那張圖悄悄退回程式畫的版本 —— 所以最後會驗一次。
@@ -39,7 +40,7 @@ def key_for(rel):
         return name
     # 主角是分層合成的：身體一層、帽子一層。鍵用「類別#名字」，
     # 跟 art/item 的「類別#編號」同一個形狀 —— adoptArt 那邊也是這樣查的。
-    if cat in ('hero', 'hat'):
+    if cat in ('hero', 'hat', 'weapon', 'shield'):
         return '%s#%s' % (cat, name)
     if cat == 'item':
         m = re.fullmatch(r'([a-z]+)(\d+)', name)

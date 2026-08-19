@@ -63,6 +63,8 @@ def table(name, pat):
 
 SKINS = table('const BLOB_SKINS = {', r'^  ([a-z]+): \[')
 HATS = table('const HAT = [', r"\{id:'([a-z]+)'")
+WEAPS = table('const WEAP = [', r"\{id:'([a-z]+)'")
+SHLDS = table('const SHLD = [', r"\{id:'([a-z]+)'")
 COLS = re.findall(r"'(.)'", SRC[SRC.index('const BLOB_COLS = ['):SRC.index('];', SRC.index('const BLOB_COLS = ['))])
 PAL = dict(re.findall(r"'(.)':'(#[0-9a-f]{6})'", SRC[SRC.index('const PAL = {'):SRC.index('};', SRC.index('const PAL = {'))]))
 RAMP = {}
@@ -124,6 +126,26 @@ def body_png(n=0):
     return png(p)
 
 
+def gear_png(n, right):
+    """假的武器／盾：一條窄的色塊，靠右（握在手上）或靠左（立在身前）。
+
+    刻意只佔一側 —— 佔滿整格的話就分不出「疊上去了」跟「把角色蓋掉了」，
+    而後者正是這一層最可能出的錯。每一張的配色錯開一格，
+    「八把互不相同」才驗得到「有沒有被塞進正確的那一格」。"""
+    p = [[CLEAR] * 32 for _ in range(32)]
+    cols = ['0', '5', '6', 'p', 't', 'u']
+    x0, x1 = (22, 30) if right else (2, 10)
+    y0, y1 = (2, 30) if right else (9, 28)
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            p[y][x] = rgb(cols[(x + y + n) % len(cols)]) + (255,)
+    # 每一張留一個獨一無二的記號。只靠上面那個 %6 的配色，
+    # 第 0 把與第 6 把會長得一模一樣 —— 於是「八把互不相同」會紅，
+    # 而那是假圖自己的問題，不是遊戲接錯。記號讓這一條只驗它該驗的事。
+    p[y0][x0 + n] = rgb('+') + (255,)
+    return png(p)
+
+
 def hat_png():
     """假的帽子：只佔 y0~y10，其餘透明。
     佔滿整格的話就分不出「疊上去了」跟「把身體蓋掉了」。"""
@@ -162,6 +184,8 @@ JS = r"""
 
   for(const sk of CFG.skins) ok('身體圖載到了 ' + sk, !!HERO_ART[sk]);
   for(const h of CFG.hats)   ok('帽子圖載到了 ' + h, !!HAT_ART_IMG[h]);
+  for(const w of CFG.weaps)  ok('武器圖載到了 ' + w, !!WEAP_ART[w]);
+  for(const d of CFG.shlds)  ok('盾圖載到了 ' + d, !!SHLD_ART[d]);
 
   // 主角的合成畫布要是 32 —— 還是 16 就代表整個外部圖的路徑沒走到
   ok('主角合成在 32 的畫布上', atlas.player.width === 32, '實際 ' + atlas.player.width);
@@ -213,11 +237,48 @@ JS = r"""
   for(let i = 0; i < CFG.hats.length; i++)
     ok('地上的圖示換到了 ' + CFG.hats[i], atlas['hat#' + i] && atlas['hat#' + i].width === 32);
 
-  // 裝備仍然畫得出來 —— 換了身體的圖之後最容易掉的就是這一層
-  ok('拿了武器看得出來', !same(bare, heroSprite(0, -1, null, 'blob', '#')));
-  ok('拿了盾看得出來',   !same(bare, heroSprite(-1, 0, null, 'blob', '#')));
-  ok('換武器看得出來',   !same(heroSprite(0, -1, null, 'blob', '#'),
-                              heroSprite(7, -1, null, 'blob', '#')));
+  // 裝備仍然畫得出來 —— 換了身體的圖之後最容易掉的就是這一層。
+  // 每一把武器、每一面盾都要驗：只驗第一把的話，接線只接到第一把
+  // 也會全綠，而那正是「用 id 查表」最典型的錯法。
+  for(let i = 0; i < CFG.weaps.length; i++)
+    ok('拿了 ' + CFG.weaps[i] + ' 看得出來', !same(bare, heroSprite(i, -1, null, 'blob', '#')));
+  for(let i = 0; i < CFG.shlds.length; i++)
+    ok('拿了 ' + CFG.shlds[i] + ' 看得出來', !same(bare, heroSprite(-1, i, null, 'blob', '#')));
+  // 每一把都要長得不一樣。全部指到同一張圖的話，上面那一圈照樣全綠
+  const gear = {};
+  for(let i = 0; i < CFG.weaps.length; i++){
+    const c = heroSprite(i, -1, null, 'blob', '#');
+    const g = document.createElement('canvas'); g.width = g.height = 32;
+    const gx = g.getContext('2d'); gx.imageSmoothingEnabled = false;
+    gx.drawImage(c, 0, 0, 32, 32);
+    gear[gx.getImageData(0, 0, 32, 32).data.join(',')] = 1;
+  }
+  ok('八把武器互不相同', Object.keys(gear).length === CFG.weaps.length,
+     '只有 ' + Object.keys(gear).length + ' 種');
+  // 武器與盾疊上去之後，眼睛還要看得見 —— 跟帽子同一條理由：
+  // 兩張圖各自都合規，只有疊起來才知道劍柄正好壓在臉上
+  const eyes = (cv) => {
+    const g = document.createElement('canvas'); g.width = g.height = cv.width;
+    const x2 = g.getContext('2d'); x2.imageSmoothingEnabled = false;
+    x2.drawImage(cv, 0, 0, cv.width, cv.width);
+    const d = x2.getImageData(0, 0, cv.width, cv.width).data;
+    let n = 0;
+    for(let i = 0; i < d.length; i += 4){
+      if(d[i+3] === 0) continue;
+      const y = Math.floor((i / 4) / cv.width);
+      if(y > cv.width / 2 + 4) continue;
+      if('#' + [d[i],d[i+1],d[i+2]].map(v=>v.toString(16).padStart(2,'0')).join('') === CFG.white) n++;
+    }
+    return n;
+  };
+  const bareEyes = eyes(bare);
+  ok('裸體有眼睛', bareEyes >= 8, '眼白 ' + bareEyes + ' 格');
+  for(let i = 0; i < CFG.weaps.length; i++)
+    ok('拿了 ' + CFG.weaps[i] + ' 眼睛還看得見',
+       eyes(heroSprite(i, -1, null, 'blob', '#')) >= 6);
+  for(let i = 0; i < CFG.shlds.length; i++)
+    ok('拿了 ' + CFG.shlds[i] + ' 眼睛還看得見',
+       eyes(heroSprite(-1, i, null, 'blob', '#')) >= 6);
 
   // 造型選單與封面的快取要跟著作廢 —— 沒作廢的話它們會停在程式畫的舊主角
   ok('造型選單用的是同一份', blobFor('#', 'blob').width === 32);
@@ -229,14 +290,45 @@ JS = r"""
 """
 
 
+def static_checks():
+    """不必開瀏覽器就驗得到的：每一層的載入回呼都要作廢快取。
+
+    這一條是刻意用靜態掃的。跑起來驗不到 —— 圖在第一幀之前就載完了，
+    那時候三份快取裡還沒有東西，所以「忘了作廢」在測試裡不會有症狀。
+    它只在**玩家已經在玩、圖才姍姍來遲**的時候咬人（慢網路），
+    而那正是本機永遠測不到的情境。
+
+    回傳 [(通過?, 說明), ...]。"""
+    out = []
+    layers = ('HERO_ART', 'HAT_ART_IMG', 'WEAP_ART', 'SHLD_ART')
+    hits = 0
+    for m in re.finditer(r'artImage\(', SRC):
+        body = SRC[m.start():SRC.index('});', m.start()) + 3]
+        touched = [L for L in layers if L + '[' in body or ('into[' in body)]
+        if not touched:
+            continue
+        hits += 1
+        out.append(('heroArtIn()' in body,
+                    '%s 的載入回呼有作廢快取' % ('/'.join(touched) or '?')))
+    out.append((hits >= 3, '掃到 %d 個會寫進主角某一層的載入點（至少 3 個）' % hits))
+    return out
+
+
 def run(page, url, cfg):
     page.goto(url)
     page.wait_for_function('typeof heroSprite === "function"')
     # 圖是非同步載的。等到全部就位再問 —— 這裡等的是遊戲自己的表，
     # 不是等固定秒數：固定秒數在 CI 上遲早會有一次剛好不夠。
-    page.wait_for_function(
-        'Object.keys(HERO_ART).length === %d && Object.keys(HAT_ART_IMG).length === %d'
-        % (len(SKINS), len(HATS)), timeout=15000)
+    try:
+        page.wait_for_function(
+            'Object.keys(HERO_ART).length === %d && Object.keys(HAT_ART_IMG).length === %d'
+            ' && Object.keys(WEAP_ART).length === %d && Object.keys(SHLD_ART).length === %d'
+            % (len(SKINS), len(HATS), len(WEAPS), len(SHLDS)), timeout=15000)
+    except Exception:
+        # 等不到就繼續往下問，不要在這裡炸掉。
+        # 炸掉的話輸出只剩一段 playwright 的堆疊，看不出「是哪一層沒接上」——
+        # 而下面每一層都有一條斷言，讓它們去講會清楚得多。
+        pass
     return page.evaluate(JS % cfg)
 
 
@@ -250,6 +342,10 @@ def main():
             (tmp / 'web' / 'art' / 'hero' / (sk + '.png')).write_bytes(body_png(n))
         for h in HATS:
             (tmp / 'web' / 'art' / 'hat' / (h + '.png')).write_bytes(hat_png())
+        for d, names, right in (('weapon', WEAPS, True), ('shield', SHLDS, False)):
+            (tmp / 'web' / 'art' / d).mkdir(parents=True, exist_ok=True)
+            for n, nm in enumerate(names):
+                (tmp / 'web' / 'art' / d / (nm + '.png')).write_bytes(gear_png(n, right))
 
         h = functools.partial(http.server.SimpleHTTPRequestHandler,
                               directory=str(tmp / 'web'))
@@ -260,6 +356,7 @@ def main():
         import json
         cfg = json.dumps({
             'skins': SKINS, 'hats': HATS, 'cols': COLS,
+            'weaps': WEAPS, 'shlds': SHLDS,
             'mid': {c: PAL[RAMP[c][1]] for c in COLS},
             'white': PAL['+'], 'dark': PAL['0'], 'hatcol': PAL['v'],
         }, ensure_ascii=False)
@@ -271,6 +368,7 @@ def main():
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
+    res = [(g, n, '') for g, n in static_checks()] + res
     bad = 0
     for good, name, note in res:
         print(('  ✓ ' if good else '  ✗ ') + name + (('　' + note) if note else ''))

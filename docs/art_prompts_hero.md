@@ -287,9 +287,21 @@ python3 tools/pixelize.py art_raw/<檔名>.png --auto \
     --out-dir web/art/hat --expect 9 \
     --names helm,beret,rhat,crown,hood,plume,band,oni,cone
 
-python3 tools/check_art.py        # 尺寸、色盤、頭頂高度、帽緣有沒有遮到眼睛
+# H3：穿在身上的武器與盾。--zone 把物件縮到「握在右手」／「立在左手」那一塊
+python3 tools/pixelize.py art_raw/<檔名>.png --auto \
+    --out-dir web/art/weapon --zone 0.60,0.02,0.40,0.94 --expect 8 \
+    --names club,brnz,spear,steel,mith,drgn,sky,babel
+python3 tools/pixelize.py art_raw/<檔名>.png --auto \
+    --out-dir web/art/shield --zone 0.00,0.24,0.42,0.64 --expect 6 \
+    --names leath,wood,steel,mirr,drac,aegis
+
+python3 tools/check_art.py        # 尺寸、色盤、頭頂高度、疊上去會不會遮到眼睛
 python3 tools/check_hero.py       # 四層疊起來是不是真的接上了
 ```
+
+`--zone` 的四個數字是「左, 上, 寬, 高」（畫面的比例）。
+數字是照程式畫的那一版量出來的：武器握在右邊那一條、盾立在左邊偏下。
+圖真的到了之後我會照實際的長寬比再微調一次 —— **那是只能看著結果調的**。
 
 ---
 
@@ -299,8 +311,8 @@ python3 tools/check_hero.py       # 四層疊起來是不是真的接上了
 |---|---|
 | H1b | `hero/blob` `hero/biped` `hero/cat` `hero/bird` `hero/bot` `hero/ghost` |
 | H2 | `hat/helm` `hat/beret` `hat/rhat` `hat/crown` `hat/hood` `hat/plume` `hat/band` `hat/oni` `hat/cone` |
-| H3-a | `weap/club` `weap/brnz` `weap/spear` `weap/steel` `weap/mith` `weap/drgn` `weap/sky` `weap/babel` |
-| H3-b | `shld/leath` `shld/wood` `shld/steel` `shld/mirr` `shld/drac` `shld/aegis` |
+| H3-a | `weapon/club` `weapon/brnz` `weapon/spear` `weapon/steel` `weapon/mith` `weapon/drgn` `weapon/sky` `weapon/babel` |
+| H3-b | `shield/leath` `shield/wood` `shield/steel` `shield/mirr` `shield/drac` `shield/aegis` |
 
 檔名是 **id 不是編號** —— 帽子的順序在遊戲裡改過就會錯位，用 id 就不會。
 提示詞裡的 01~09 對應上表由左至右的順序。

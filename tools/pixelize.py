@@ -213,7 +213,7 @@ def strip_background(im, tolerance=18):
     return im
 
 
-def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0):
+def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0, zone=None):
     """裁到主體的外框，再補成正方形，**主體靠下對齊**。
 
     為什麼一定要這一步：模型輸出的每一格都有大量留白，主體常常只佔六成。
@@ -242,6 +242,17 @@ def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0):
     帽子不是站在地上的東西，是疊在頭上的一層 —— 它的方框跟身體共用
     同一個座標系，所以它要待在上面那一段，下面留給臉。
     靠下對齊的帽子會整頂蓋住臉，而檔案照樣寫得出來。
+
+    zone=(左, 上, 寬, 高)：把主體縮到方框裡的這一塊，並在那一塊裡置中。
+    穿在身上的武器與盾用這個 —— 武器握在右手（右邊那一條），
+    盾立在左手前面（左邊偏下那一塊）。
+
+    為什麼不是「叫模型畫在正確的位置」：做不到。跟帽子那次的結論一樣，
+    位置只能在裁切的時候決定。模型只要把東西畫正、畫清楚就好。
+
+    zone 與 band 的差別只在垂直對齊：band 是靠上（帽子要頂著頭），
+    zone 是在那一塊裡置中（武器與盾要對準手）。兩條規則都有東西在用，
+    合成一個就會有一邊變成特例。
     """
     bbox = im.getchannel("A").getbbox()
     if not bbox:
@@ -251,6 +262,13 @@ def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0):
     x1 = min(im.width, x1 + margin); y1 = min(im.height, y1 + margin)
     cut = im.crop((x0, y0, x1, y1))
     side = max(cut.width, cut.height)
+    if zone:
+        zl, zt, zw, zh = zone
+        side = max(1, int(round(max(cut.width / zw, cut.height / zh))))
+        sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        sq.paste(cut, (int(round(zl * side + (zw * side - cut.width) / 2)),
+                       int(round(zt * side + (zh * side - cut.height) / 2))))
+        return sq
     if band > 0:
         side = max(cut.width, int(round(cut.height / band)))
         sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
@@ -268,12 +286,13 @@ def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0):
     return sq
 
 
-def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0, band=0.0, pad=0.0):
+def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0,
+             band=0.0, pad=0.0, zone=None):
     if not keep_bg:
         im = strip_background(im)
     im = im.convert("RGBA")
     if trim:
-        im = trim_to_subject(im, headroom=headroom, band=band, pad=pad)
+        im = trim_to_subject(im, headroom=headroom, band=band, pad=pad, zone=zone)
 
     """降取樣的順序很重要，這裡是「先量化、再取眾數」而不是「先平均、再量化」。
 
@@ -479,6 +498,8 @@ def main():
                     help="不要裁到主體（地形圖塊要用，它本來就該填滿整格）")
     ap.add_argument("--headroom", type=float, default=0.0,
                     help="頭頂上面留多少比例的空白（主角用 0.1875 = 6/32，帽子要疊在那裡）")
+    ap.add_argument("--zone",
+                    help="縮到方框裡的某一塊並在其中置中，格式 左,上,寬,高（0~1）。穿在身上的武器與盾用這個")
     ap.add_argument("--pad", type=float, default=0.0,
                     help="左右與上面留一點空隙（下緣不動）。方形的東西會塞滿整格，在格子鋪成的畫面上讀起來像地磚")
     ap.add_argument("--band", type=float, default=0.0,
@@ -495,6 +516,12 @@ def main():
         ap.error("需要來源圖，或用 --check")
 
     palette = palette_rgb_for(args.palette)
+    zone = None
+    if args.zone:
+        zone = tuple(float(v) for v in args.zone.split(","))
+        if len(zone) != 4 or not all(0 < v <= 1 for v in zone[2:]) \
+                or not all(0 <= v < 1 for v in zone[:2]):
+            ap.error("--zone 要四個 0~1 的數字：左,上,寬,高")
     im = Image.open(args.src)
 
     if args.auto:
@@ -516,7 +543,8 @@ def main():
                 else ("%s%02d.png" % (args.prefix, args.start + i)))
             pixelize(stripped.crop(box), args.size, palette,
                      keep_bg=True, trim=not args.no_trim,
-                     headroom=args.headroom, band=args.band, pad=args.pad).save(path)
+                     headroom=args.headroom, band=args.band, pad=args.pad,
+                     zone=zone).save(path)
             print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))
     elif args.grid:
         cols, rows = (int(x) for x in args.grid.lower().split("x"))
@@ -526,14 +554,16 @@ def main():
             path = os.path.join(
                 out_dir, "%s%02d.png" % (args.prefix, args.start + i))
             pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim,
-                     headroom=args.headroom, band=args.band, pad=args.pad).save(path)
+                     headroom=args.headroom, band=args.band, pad=args.pad,
+                     zone=zone).save(path)
             print("寫出 %s" % path)
     else:
         if not args.out:
             ap.error("單張模式需要 -o")
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
         pixelize(im, args.size, palette, args.keep_bg, not args.no_trim,
-                 headroom=args.headroom, band=args.band, pad=args.pad).save(args.out)
+                 headroom=args.headroom, band=args.band, pad=args.pad,
+                 zone=zone).save(args.out)
         print("寫出 %s" % args.out)
 
 

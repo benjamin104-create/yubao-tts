@@ -2057,6 +2057,8 @@ function drawHeroShield(x, i){
    身體的圖只畫陶土色，十種顏色靠色階置換 —— 見 BLOB_RAMP。 */
 const HERO_ART = {};      // 體型 → 32px 圖（陶土色）
 const HAT_ART_IMG = {};   // 帽子 id → 32px 圖
+const WEAP_ART = {};      // 武器 id → 32px 圖（握在右手的那一層）
+const SHLD_ART = {};      // 盾 id → 32px 圖（立在左手的那一層）
 const HERO_PX = T * 2;    // 主角合成畫布的邊長：32，跟外部圖同一個尺度
 
 /* 身體只准用這五個色：描邊、三階陶土、眼白。
@@ -2150,13 +2152,21 @@ function heroSprite(wi, si, hi, skin, col0){
                    0, 0, HERO_PX, HERO_PX);
   if(hi) drawHat(x, hi, HERO_PX);
 
-  /* 盾與武器還是程式畫的 16px，放大兩倍疊上去。
-     倍率是整數，所以是原樣複製、不會糊 —— 跟整個遷移期間的其他 16px 圖一樣。 */
-  if(si >= 0 || wi >= 0){
+  /* 盾在前、武器在後 —— 盾立在身體左前方，武器握在右手，
+     兩者不重疊，但順序固定比較好推理。
+
+     有外部圖就用圖（已經畫成疊在身上的姿態，直接蓋上去）；
+     沒有就退回程式畫的 16px，放大兩倍。倍率是整數，所以是原樣複製、
+     不會糊 —— 跟整個遷移期間的其他 16px 圖一樣。 */
+  const sArt = si >= 0 && SHLD_ART[(SHLD[si] || {}).id];
+  const wArt = wi >= 0 && WEAP_ART[(WEAP[wi] || {}).id];
+  if(sArt) x.drawImage(sArt, 0, 0, HERO_PX, HERO_PX);
+  if(wArt) x.drawImage(wArt, 0, 0, HERO_PX, HERO_PX);
+  if((si >= 0 && !sArt) || (wi >= 0 && !wArt)){
     const tmp = document.createElement('canvas'); tmp.width = tmp.height = T;
     const tx = tmp.getContext('2d');
-    if(si >= 0) drawHeroShield(tx, si);
-    if(wi >= 0) drawHeroWeapon(tx, wi);
+    if(si >= 0 && !sArt) drawHeroShield(tx, si);
+    if(wi >= 0 && !wArt) drawHeroWeapon(tx, wi);
     x.drawImage(tmp, 0, 0, HERO_PX, HERO_PX);
   }
   return heroCache[k] = c;
@@ -2184,6 +2194,14 @@ for(const sk of SKINS)
 /* 帽子一張圖兩個用途：戴在頭上，以及掉在地上的圖示。
    兩者必須是同一頂帽子 —— 撿起來變成另一個東西是最基本的失信。
    地上那一張往下移，圖示才落在格子中間（跟 makeHat 同一個位移）。 */
+/* 武器與盾：穿在身上那一層。跟「掉在地上的圖示」是不同的兩張圖 ——
+   地上那張是整個物件、置中、貼齊格子下緣；這一層是疊在角色身上的姿態，
+   大部分面積是透明的。拿地上那張來疊會把角色整個蓋掉。
+   檔名用 id 不用編號：武器表的順序改過就會整批錯位。 */
+for(const [tab, into, dir] of [[WEAP, WEAP_ART, 'weapon'], [SHLD, SHLD_ART, 'shield']])
+  for(const d of tab)
+    artImage(dir + '#' + d.id, ART_DIR + dir + '/' + d.id + '.png',
+             c => { into[d.id] = c; heroArtIn(); });
 for(let i = 0; i < HAT.length; i++){
   const id = HAT[i].id, idx = i;
   artImage('hat#' + id, ART_DIR + 'hat/' + id + '.png', c => {

@@ -278,7 +278,7 @@ else:
             frac = solid / float(len(px))
             # 帽子跟道具一樣：它本來就只佔畫面上方那一條，
             # 用怪物的下限去要求，只會逼出一頂佔滿整格、把臉蓋掉的帽子。
-            lo = 0.06 if cat in ("item", "hat") else 0.15
+            lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.15
             ok(lo <= frac <= 0.92,
                "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
             # 主體必須碰到方框的最底下那一列。
@@ -306,6 +306,17 @@ else:
                 ok(bot is not None and (bot[2] - bot[0]) >= 12,
                    "%s 夠寬，戴得住（寬 %s，下限 12）"
                    % (rel, (bot[2] - bot[0]) if bot else "—"))
+            elif cat in ("weapon", "shield"):
+                # 武器與盾也是**疊在角色身上的一層**，不是站在地上的東西 ——
+                # 「貼齊底部」對它們沒有意義。它們要驗的是「有沒有待在自己那一側」：
+                # 武器在右、盾在左，中間那一條留給臉。
+                # （會不會遮到眼睛在下面用疊起來實際量的方式驗。）
+                side = "右" if cat == "weapon" else "左"
+                inside = (bot is not None and
+                          (bot[0] >= im.width * 0.42 if cat == "weapon"
+                           else bot[2] <= im.width * 0.58))
+                ok(inside, "%s 待在%s半邊（左緣 %s、右緣 %s，共 %d 欄）"
+                   % (rel, side, bot[0] if bot else "—", bot[2] if bot else "—", im.width))
             else:
                 ok(bot is not None and bot[3] == im.height,
                    "%s 主體貼齊底部（最下緣在第 %s 列，共 %d 列）"
@@ -338,7 +349,7 @@ else:
             # 把兩者用同一個數字要求，等於逼所有深色的東西都要畫成亮的。
             lum = [0.2126*p[0] + 0.7152*p[1] + 0.0722*p[2] for p in px if p[3] > 0]
             top = max(lum) if lum else 0
-            need = 110 if cat in ("item", "hat") else 140
+            need = 110 if cat in ("item", "hat", "weapon", "shield") else 140
             ok(top >= need,
                "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
     ok(n > 0, "web/art/ 裡有檔案（%d 個）" % n)
@@ -354,12 +365,18 @@ else:
     # 頭只有 12 格寬、眼睛又長在頭頂附近，九頂帽子有七頂把眼睛整個蓋掉。
     # 那張圖因此先不進遊戲，維持程式畫的版本 —— 跟怪物同一條規則。
     EYE = hex_to_rgb(HERO_HEX[-1])
-    hero_dir, hat_dir = os.path.join(ART, "hero"), os.path.join(ART, "hat")
-    if os.path.isdir(hero_dir) and os.path.isdir(hat_dir):
+    hero_dir = os.path.join(ART, "hero")
+    if os.path.isdir(hero_dir):
+        # 三層都要疊起來量：帽子、武器、盾。
+        # 每一層自己都合規，只有疊起來才知道它正好落在眼睛上。
         hats = {}
-        for f in sorted(os.listdir(hat_dir)):
-            if f.endswith(".png"):
-                hats[f[:-4]] = Image.open(os.path.join(hat_dir, f)).convert("RGBA")
+        for d in ("hat", "weapon", "shield"):
+            dd = os.path.join(ART, d)
+            if not os.path.isdir(dd):
+                continue
+            for f in sorted(os.listdir(dd)):
+                if f.endswith(".png"):
+                    hats[d + "/" + f[:-4]] = Image.open(os.path.join(dd, f)).convert("RGBA")
         for f in sorted(os.listdir(hero_dir)):
             if not f.endswith(".png"):
                 continue
@@ -373,7 +390,7 @@ else:
                 c = body.copy()
                 c.alpha_composite(hats[hn])
                 left = eyes(c)
-                ok(left >= 6, "hero/%s 戴上 %s 之後眼睛還看得見（剩 %d 格，下限 6）"
+                ok(left >= 6, "hero/%s 疊上 %s 之後眼睛還看得見（剩 %d 格，下限 6）"
                    % (f[:-4], hn, left))
 
 print("\n%d 項檢查，%d 項失敗" % (total, len(fails)))
