@@ -30,7 +30,7 @@ import argparse
 import os
 import sys
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 TILE = 32
 
@@ -146,10 +146,21 @@ def nearest(c, pal=None):
 
 
 def strip_background(im, tolerance=18):
-    """把四角的共同顏色視為背景並轉成透明。
+    """把背景轉成透明。四角取樣決定背景色，但**只挖從外面連得進來的**。
 
-    生成圖多半是不透明的方形。用四角取樣而非固定色鍵，才不會在
-    背景色換了一批之後整個失效。
+    用四角取樣而非固定色鍵，才不會在背景色換了一批之後整個失效。
+
+    「只挖從外面連得進來的」這一條是踩過才加的：主角的眼白是 #f2efe7，
+    離純白只有 13 —— 在容差之內。於是六種體型的眼睛全部被挖成洞，
+    轉出來的主角沒有眼睛。而檔案照樣寫得出來、尺寸色盤全部合規。
+    同樣的事會發生在任何有白色斑塊的東西上（骨頭、牙齒、雲、雪）。
+
+    只看顏色是分不出「背景」與「主體上剛好同色的一塊」的 ——
+    分得出來的只有**連通性**：背景一定接到畫面邊緣，眼白一定不會。
+
+    連通元件在 1/4 縮圖上做（跟 find_subjects 同一個理由：全解析度是
+    一百多萬個像素，純 Python 會慢到不能用）。精度不足只會讓「洞」
+    的還原範圍多蓋到幾格主體 —— 而主體本來就是不透明的，蓋到也沒事。
     """
     im = im.convert("RGBA")
     w, h = im.size
@@ -165,10 +176,44 @@ def strip_background(im, tolerance=18):
             if abs(cr - r) <= tolerance and abs(cg - g) <= tolerance \
                     and abs(cb - b) <= tolerance:
                 px[x, y] = (cr, cg, cb, 0)
+
+    # 把「挖出來卻連不到畫面邊緣」的區塊還原 —— 那些不是背景，是主體的一部分
+    S = 4
+    sw, sh = max(1, w // S), max(1, h // S)
+    small = im.getchannel("A").resize((sw, sh), Image.BOX).load()
+    seen = [[False] * sw for _ in range(sh)]
+    holes = Image.new("L", (sw, sh), 0)
+    hp = holes.load()
+    found = False
+    for sy in range(sh):
+        for sx in range(sw):
+            if seen[sy][sx] or small[sx, sy] >= 64:
+                continue
+            cells, stack, edge = [], [(sx, sy)], False
+            seen[sy][sx] = True
+            while stack:
+                cx, cy = stack.pop()
+                cells.append((cx, cy))
+                if cx == 0 or cy == 0 or cx == sw - 1 or cy == sh - 1:
+                    edge = True
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < sw and 0 <= ny < sh and not seen[ny][nx] \
+                            and small[nx, ny] < 64:
+                        seen[ny][nx] = True
+                        stack.append((nx, ny))
+            if edge:
+                continue                      # 連到邊緣 —— 這才是真的背景
+            found = True
+            for cx, cy in cells:
+                hp[cx, cy] = 255
+    if found:
+        im.putalpha(ImageChops.lighter(im.getchannel("A"),
+                                       holes.resize(im.size, Image.NEAREST)))
     return im
 
 
-def trim_to_subject(im, margin=1, headroom=0.0):
+def trim_to_subject(im, margin=1, headroom=0.0, band=0.0):
     """裁到主體的外框，再補成正方形，**主體靠下對齊**。
 
     為什麼一定要這一步：模型輸出的每一格都有大量留白，主體常常只佔六成。
@@ -192,6 +237,11 @@ def trim_to_subject(im, margin=1, headroom=0.0):
     所以六種體型的頭頂必須落在同一列。填滿整格的話頭頂在第 0 列，
     帽子就會整頂跑到畫面外。留白是這裡唯一能保證的東西：
     要求模型畫的時候對齊某一條線是做不到的，裁的時候留出來才做得到。
+
+    band：**改成靠上對齊**，而且主體最多只佔這個比例的高度（帽子用）。
+    帽子不是站在地上的東西，是疊在頭上的一層 —— 它的方框跟身體共用
+    同一個座標系，所以它要待在上面那一段，下面留給臉。
+    靠下對齊的帽子會整頂蓋住臉，而檔案照樣寫得出來。
     """
     bbox = im.getchannel("A").getbbox()
     if not bbox:
@@ -201,6 +251,11 @@ def trim_to_subject(im, margin=1, headroom=0.0):
     x1 = min(im.width, x1 + margin); y1 = min(im.height, y1 + margin)
     cut = im.crop((x0, y0, x1, y1))
     side = max(cut.width, cut.height)
+    if band > 0:
+        side = max(cut.width, int(round(cut.height / band)))
+        sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        sq.paste(cut, ((side - cut.width) // 2, 0))
+        return sq
     if headroom > 0:
         side = max(side, int(round(cut.height / (1.0 - headroom))))
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
@@ -208,12 +263,12 @@ def trim_to_subject(im, margin=1, headroom=0.0):
     return sq
 
 
-def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0):
+def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0, band=0.0):
     if not keep_bg:
         im = strip_background(im)
     im = im.convert("RGBA")
     if trim:
-        im = trim_to_subject(im, headroom=headroom)
+        im = trim_to_subject(im, headroom=headroom, band=band)
 
     """降取樣的順序很重要，這裡是「先量化、再取眾數」而不是「先平均、再量化」。
 
@@ -419,6 +474,8 @@ def main():
                     help="不要裁到主體（地形圖塊要用，它本來就該填滿整格）")
     ap.add_argument("--headroom", type=float, default=0.0,
                     help="頭頂上面留多少比例的空白（主角用 0.1875 = 6/32，帽子要疊在那裡）")
+    ap.add_argument("--band", type=float, default=0.0,
+                    help="改成靠上對齊，主體最多佔這個比例的高度（帽子用 0.5）")
     ap.add_argument("--palette", choices=sorted(PALETTES),
                     help="改用某個分類的專用色盤（hero：主角身體的五色）")
     ap.add_argument("--check", help="檢查資產目錄是否合規")
@@ -452,7 +509,7 @@ def main():
                 else ("%s%02d.png" % (args.prefix, args.start + i)))
             pixelize(stripped.crop(box), args.size, palette,
                      keep_bg=True, trim=not args.no_trim,
-                     headroom=args.headroom).save(path)
+                     headroom=args.headroom, band=args.band).save(path)
             print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))
     elif args.grid:
         cols, rows = (int(x) for x in args.grid.lower().split("x"))
@@ -462,14 +519,14 @@ def main():
             path = os.path.join(
                 out_dir, "%s%02d.png" % (args.prefix, args.start + i))
             pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim,
-                     headroom=args.headroom).save(path)
+                     headroom=args.headroom, band=args.band).save(path)
             print("寫出 %s" % path)
     else:
         if not args.out:
             ap.error("單張模式需要 -o")
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
         pixelize(im, args.size, palette, args.keep_bg, not args.no_trim,
-                 headroom=args.headroom).save(args.out)
+                 headroom=args.headroom, band=args.band).save(args.out)
         print("寫出 %s" % args.out)
 
 

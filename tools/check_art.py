@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PIL import Image
 
-from pixelize import (PALETTE_HEX, TILE, check_assets,
+from pixelize import (HERO_HEX, PALETTE_HEX, TILE, check_assets,
                       find_subjects, hex_to_rgb, nearest, pixelize,
                       strip_background)
 
@@ -251,7 +251,18 @@ else:
             cols = {p[:3] for p in px if p[3] > 0}
             solid = sum(1 for p in px if p[3] > 0)
             # 只有兩三色的精靈代表降取樣把東西吃掉了 —— 檔案照樣寫得出來
-            ok(len(cols) >= 5, "%s 至少五色（實際 %d）" % (rel, len(cols)))
+            if cat == "hero":
+                # 主角的色盤只有五個色，其中亮面是一小塊高光，不是每種體型都有。
+                # 拿「至少五色」去要求它，等於要求每一隻都畫出高光 ——
+                # 那是把通用門檻套到一個色數本來就少的分類上。
+                # 換成問真正要成立的三件事：外框在、主色在、至少有一階陰影。
+                want = {"外框": hex_to_rgb(HERO_HEX[0]), "主色": hex_to_rgb(HERO_HEX[2])}
+                for wn, wc in want.items():
+                    ok(wc in cols, "%s 有%s（%s）" % (rel, wn, HERO_HEX[list(want).index(wn) * 2]))
+                shade = {hex_to_rgb(HERO_HEX[1]), hex_to_rgb(HERO_HEX[3])} & cols
+                ok(bool(shade), "%s 有明暗（暗面或亮面至少一階）" % rel)
+            else:
+                ok(len(cols) >= 5, "%s 至少五色（實際 %d）" % (rel, len(cols)))
             # 剪影佔比：太少代表主體沒框到，太多代表背景沒去掉。
             # 下限分類別：怪物與頭目一定是一團有體積的東西，佔不到 15% 就是
             # 沒框好；但**道具本來就有細長的**——長槍只佔 11%，那不是缺陷，
@@ -279,11 +290,11 @@ else:
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
                 # 身體畫在下面。所以這裡問的正好相反：它有沒有乖乖待在頭頂那一段。
                 #
-                # 上限 14：眼睛在第 12~17 列（BLOB_SKINS 的解剖約定，
-                # 16 尺度的 y6 乘二）。帽緣壓過 14 就開始遮眼睛 ——
-                # 而「看不到眼睛」在這款遊戲裡等於「這隻東西死了」。
-                ok(bot is not None and bot[3] <= 14,
-                   "%s 只佔頭頂那一段（最下緣在第 %s 列，上限 14）"
+                # 上限 16 是「上半格」，不是「不遮到眼睛」——
+                # 後者沒辦法用一頂帽子自己的方框判斷，因為六種體型的眼睛
+                # 高度各不相同。那一條在下面用**疊起來實際量**的方式驗。
+                ok(bot is not None and bot[3] <= 16,
+                   "%s 只佔上半格（最下緣在第 %s 列，上限 16）"
                    % (rel, bot[3] if bot else "—"))
                 ok(bot is not None and (bot[2] - bot[0]) >= 12,
                    "%s 夠寬，戴得住（寬 %s，下限 12）"
@@ -328,6 +339,39 @@ else:
                 ok(top >= need,
                    "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
     ok(n > 0, "web/art/ 裡有檔案（%d 個）" % n)
+
+    # 戴上帽子之後，眼睛還看得見嗎。
+    #
+    # 這一條非要**把兩張圖疊起來實際量**不可：帽子那張圖自己完全合規
+    # （尺寸對、色盤對、待在上半格），身體那張也完全合規，
+    # 只有疊起來才知道帽緣正好落在眼睛上。而眼睛是這個角色最重要的特徵 ——
+    # 「看不到眼睛」在這款遊戲裡等於「這隻東西死了」。
+    #
+    # 實測就抓到一隻：旅人（biped）畫得比另外五種瘦一截，
+    # 頭只有 12 格寬、眼睛又長在頭頂附近，九頂帽子有七頂把眼睛整個蓋掉。
+    # 那張圖因此先不進遊戲，維持程式畫的版本 —— 跟怪物同一條規則。
+    EYE = hex_to_rgb(HERO_HEX[-1])
+    hero_dir, hat_dir = os.path.join(ART, "hero"), os.path.join(ART, "hat")
+    if os.path.isdir(hero_dir) and os.path.isdir(hat_dir):
+        hats = {}
+        for f in sorted(os.listdir(hat_dir)):
+            if f.endswith(".png"):
+                hats[f[:-4]] = Image.open(os.path.join(hat_dir, f)).convert("RGBA")
+        for f in sorted(os.listdir(hero_dir)):
+            if not f.endswith(".png"):
+                continue
+            body = Image.open(os.path.join(hero_dir, f)).convert("RGBA")
+            eyes = lambda im: sum(
+                1 for y in range(im.height // 2 + 4) for x in range(im.width)
+                if im.getpixel((x, y))[3] > 0 and im.getpixel((x, y))[:3] == EYE)
+            bare = eyes(body)
+            ok(bare >= 8, "hero/%s 有眼睛（眼白 %d 格，下限 8）" % (f[:-4], bare))
+            for hn in sorted(hats):
+                c = body.copy()
+                c.alpha_composite(hats[hn])
+                left = eyes(c)
+                ok(left >= 6, "hero/%s 戴上 %s 之後眼睛還看得見（剩 %d 格，下限 6）"
+                   % (f[:-4], hn, left))
 
 print("\n%d 項檢查，%d 項失敗" % (total, len(fails)))
 sys.exit(1 if fails else 0)
