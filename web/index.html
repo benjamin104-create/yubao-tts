@@ -2908,6 +2908,15 @@ for(const id in BOSS_BASE) atlas[id] = crownSprite(BOSS_BASE[id]);
    圖是非同步載進來的，會比第一幀晚。所以不能在載入時「決定」什麼，
    只能替換 atlas 裡的那一格 —— 繪圖每一幀都重讀 atlas，換了就會生效。 */
 const ART_DIR = 'art/';
+/* 單檔版用的內嵌圖。平常是 null，adoptArt 就照 URL 去載；
+   tools/build_single.py 會在前面塞一份 {鍵: data URI} 的表，
+   於是同一份程式碼變成完全不需要網路的單一 HTML。
+
+   為什麼值得為此在遊戲裡留一行：這款遊戲的賣點就是「一個檔案打開就能玩」。
+   接上外部圖之後，那個性質其實已經破了 —— 圖是分開的 44 個檔案。
+   留這個鉤子，就能同時擁有兩種形態：
+   網站上一張一張載（方便一批一批換），要散佈時打包成一個檔。 */
+let ART_DATA = null;
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -2944,7 +2953,7 @@ function adoptArt(id, url, own){
     }
   };
   im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
-  im.src = url;
+  im.src = (ART_DATA && ART_DATA[id]) || url;
 }
 for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
 /* 頭目的圖不描金邊 —— 金邊是「這隻跟雜魚不一樣」的替代方案，

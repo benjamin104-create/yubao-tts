@@ -11,3 +11,6 @@ godot/.godot/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# 單檔打包產物（可重建，不入版控）
+dist/
