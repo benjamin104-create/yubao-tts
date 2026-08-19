@@ -2985,6 +2985,14 @@ for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
 // 圖到了才填，沒列到的維持程式畫的（卷軸 11 張還沒畫）
 const ART_ITEM = {herb: 14, weap: 8, wand: 9, pot: 6, shld: 6, food: 3};
+/* 這一類的每一個外觀共用**同一張**圖。
+   卷軸就是這樣：十一個名字、一張圖 —— 識別靠的是名字，不是圖示
+   （NetHack 也是這樣）。十一張不同的卷軸圖只會讓背包變得很亂。 */
+const ART_ONE = {scroll: 11};
+for(const cat in ART_ONE)
+  artImage(cat + '#0', ART_DIR + 'item/' + cat + '00.png', c => {
+    for(let i = 0; i < ART_ONE[cat]; i++) atlas[cat + '#' + i] = c;
+  });
 for(const cat in ART_ITEM)
   for(let i = 0; i < ART_ITEM[cat]; i++)
     adoptArt(cat + '#' + i,
@@ -3470,44 +3478,38 @@ function makePot(v){
 /* 五種卷軸形制 —— 直筒 / 攤開 / 綁緞帶 / 折疊信 / 卷軸盒。
    同一條規則：外觀必須換輪廓。只換封蠟顏色的話，玩家會覺得
    十一種卷軸長得一模一樣，「盲讀哪一張」的判斷就變成純猜。 */
-function makeScroll(v){
-  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const seals=['g','p','l','u','q','f','m','r','h','5','t'];
-  const seal=PAL[seals[v%seals.length]], paper=PAL['d'], shade=PAL['c'], dark=PAL['0'];
-  const ink=PAL['9'];
-  const shape=v%5;
+/* 卷軸只有**一種**外觀。
 
-  if(shape===0){                                    // 直筒：捲好的細長卷
-    px(x,dark,5,1,6,14);
-    px(x,paper,6,2,4,12); px(x,shade,6,2,1,12);
-    px(x,seal,5,1,6,2);  px(x,dark,5,1,6,1);
-    px(x,seal,5,13,6,2); px(x,dark,5,14,6,1);
-    px(x,ink,7,5,2,1); px(x,ink,7,8,2,1); px(x,ink,7,11,2,1);
-  } else if(shape===1){                             // 攤開：寬扁的一張紙
-    px(x,dark,1,4,14,8);
-    px(x,paper,2,5,12,6); px(x,shade,2,10,12,1);
-    for(let i=0;i<3;i++) px(x,ink,4,6+i*2,8-i*2,1);
-    px(x,seal,11,8,3,3); px(x,dark,11,8,3,1);
-  } else if(shape===2){                             // 綁緞帶：中間橫一條帶子
-    px(x,dark,4,1,8,14);
-    px(x,paper,5,2,6,12); px(x,shade,5,2,1,12);
-    px(x,ink,7,4,2,1); px(x,ink,7,11,2,1);
-    px(x,dark,1,6,14,4); px(x,seal,1,7,14,2); px(x,PAL['d'],2,7,2,1);
-  } else if(shape===3){                             // 折疊信：上緣一個三角封口
-    px(x,dark,2,4,12,10);
-    px(x,paper,3,5,10,8); px(x,shade,3,12,10,1);
-    for(let i=0;i<4;i++){ px(x,shade,3+i,5+i,1,1); px(x,shade,12-i,5+i,1,1); }
-    px(x,dark,7,7,3,3); px(x,seal,7,8,3,2);
-  } else {                                          // 卷軸盒：橫躺的圓筒，兩端有蓋
-    px(x,dark,1,4,14,8);
-    px(x,paper,2,6,12,4); px(x,shade,2,9,12,1); px(x,PAL['6'],3,6,10,1);
-    px(x,dark,1,4,3,8);  px(x,seal,2,5,2,6);
-    px(x,dark,12,4,3,8); px(x,seal,12,5,2,6);
+   十一個名字（「寫著『茲拉薩』的卷軸」…）都還在 —— 識別玩法靠的是那個名字，
+   不是圖示。這也是 NetHack 的做法：所有卷軸長得一模一樣，靠標籤上的字分辨。
+
+   原本是十一種顏色 x 五種形狀。結果背包裡五種輪廓輪流出現，很亂；
+   而且沒有一種讀得出來是卷軸 —— 有信封、有盒子、有直立的沙漏。
+   使用者的原話是「只要一種就好了，不然感覺很亂」「好醜」。
+
+   一種形狀反而畫得好：上下各捲起一圈、中間攤開露出字。
+   捲起的那兩圈就是「這是卷軸」，少了它只是一張長方形的紙。 */
+function makeScroll(){
+  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
+  const paper=PAL['d'], shade=PAL['c'], dark=PAL['0'], ink=PAL['9'],
+        wood=PAL['9'], lit=PAL['b'], seal=PAL['f'];
+  // 中間攤開的紙
+  px(x,dark,3,3,10,11);
+  px(x,paper,4,4,8,9);
+  px(x,shade,4,12,8,1);
+  px(x,ink,5,6,6,1); px(x,ink,5,8,5,1); px(x,ink,5,10,6,1);
+  // 兩端的木軸。**這兩根就是「這是卷軸」**——
+  // 少了它，中間那張紙讀起來只是一塊長方形的板子。
+  // 畫在紙的上面，軸才在前面。
+  for(const bx of [1, 12]){
+    px(x,dark,bx,2,3,13);
+    px(x,wood,bx,3,3,11);
+    px(x,lit,bx,3,1,11);
+    px(x,shade,bx,2,3,1); px(x,shade,bx,14,3,1);   // 軸的兩頭是切面，亮一階
   }
+  px(x,seal,7,9,3,3); px(x,dark,7,9,3,1);          // 一枚赤色的封蠟
   return c;
 }
-/* 三種杖身 x 三種杖頭 = 九種外觀，每一種的輪廓都不一樣。
-   只換杖頭顏色的話遠看還是同一根棍子。 */
 function makeWand(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   // 杖身用暖色與淺色，不用冷灰 —— 冷灰是地形的色溫，握在手上的木頭不該撞色
@@ -7355,7 +7357,7 @@ function iconOf(it){
   const idx = LOOK[it.cat] ? G.look[lookKey(it)] : {food:FOOD,weap:WEAP,shld:SHLD,hat:HAT}[it.cat].findIndex(d=>d.id===it.id);
   const cacheK = it.cat+'#'+idx;
   if(!atlas[cacheK]){
-    atlas[cacheK] = it.cat==='herb'?makeHerb(idx) : it.cat==='scroll'?makeScroll(idx)
+    atlas[cacheK] = it.cat==='herb'?makeHerb(idx) : it.cat==='scroll'?makeScroll()
       : it.cat==='wand'?makeWand(idx) : it.cat==='pot'?makePot(idx)
       : it.cat==='food'?makeFood(idx) : it.cat==='weap'?makeWeapon(idx)
       : it.cat==='hat'?makeHat(idx) : makeShield(idx);

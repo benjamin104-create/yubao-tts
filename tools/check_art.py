@@ -205,6 +205,17 @@ for _m in re.finditer(r"(\w+):\[(.*?)\],?\n", _html[_i:_html.index("\n};", _i)] 
                       re.S):
     _look[_m.group(1)] = _m.group(2).count("'") // 2
 _want = dict(_look)
+# 有些類別「所有外觀共用同一張圖」（卷軸：十一個名字、一張圖）——
+# 那種只會有 00 一個檔案，照 LOOK 的個數去要求會逼出十一張一模一樣的圖。
+_one = dict(re.findall(r"(\w+): (\d+)",
+                       _html[_html.index("const ART_ONE = {"):
+                             _html.index("};", _html.index("const ART_ONE = {"))]))
+_ii = _html.index("const ART_ITEM = {")
+_item = dict(re.findall(r"(\w+): (\d+)", _html[_ii:_html.index("};", _ii)]))
+ok(not (set(_one) & set(_item)),
+   "ART_ONE 與 ART_ITEM 沒有重疊（重疊的：%s）" % (sorted(set(_one) & set(_item)) or "無"))
+for _k in _one:
+    _want[_k] = 1
 # 帽子不在這裡：它跟主角是同一張圖（art/hat/<id>.png，檔名是 id 不是編號），
 # 由上面那段主角的交叉檢查負責。留在這裡的話，這一支會去 art_prompts_item.md
 # 找 hat00~hat08，而那九個檔案已經不存在了。
