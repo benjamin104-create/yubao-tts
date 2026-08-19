@@ -64,6 +64,12 @@ jobs:
         run: |
           pip install --quiet pillow
           python tools/check_art.py
+          # 單檔打包也要跑得起來。這款遊戲的識別就是「一個檔案打開就能玩」，
+          # 而打包靠 index.html 裡一個叫 ART_DATA 的鉤子 ——
+          # 那個變數被改名或拿掉，打包會壞掉而網站版完全正常，
+          # 沒有人會發現，直到要散佈的那一天。
+          # 工具本身會驗每一個鍵都寫進去了，所以跑得過就代表打包是好的。
+          python tools/build_single.py /tmp/single.html
       - name: 版面與多語言測試（需要真的瀏覽器）
         run: |
           pip install --quiet playwright
