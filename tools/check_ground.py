@@ -62,10 +62,15 @@ _fly = set(_re.findall(r"\{id:'([a-z_]+)',[^\n]*fly:1", _src[_j:_src.index('\n];
 GROUND = [m for m in _have if m not in _fly]
 FLYING = [m for m in _have if m in _fly]
 
+# 頭目也要驗。牠們用 48px 的圖、在遊戲裡放大 1.6 倍畫 ——
+# 兩個跟雜魚都不一樣的數字，正是「以為沒問題」最容易出事的地方。
+_b = _src.index('const ART_BOSS = [')
+BOSSES = _re.findall(r"'(b_[a-z0-9_]+)'", _src[_b:_src.index('];', _b)])
+
 PLACE = """(mid)=>{
   const p = G.p;
   G.mons.length = 0;
-  const d = MONS.find(m => m.id === mid);
+  const d = MONS.find(m => m.id === mid) || BOSS.find(m => m.id === mid);
   if(!d) return null;
   let sp = null;
   for(let r=2; r<=9 && !sp; r++)
@@ -105,7 +110,7 @@ def main():
         RS = pg.evaluate("()=>RS")
         T = pg.evaluate("()=>T")
 
-        for mid in GROUND + FLYING:
+        for mid in GROUND + FLYING + BOSSES:
             spot = pg.evaluate(PLACE, mid)
             if spot is None:
                 print('  ? %-9s 找不到空地，跳過' % mid)
@@ -205,7 +210,7 @@ def main():
         b.close()
     srv.shutdown()
 
-    print('\n%d 隻，%d 隻不合格' % (len(GROUND) + len(FLYING), len(fails)))
+    print('\n%d 隻，%d 隻不合格' % (len(GROUND) + len(FLYING) + len(BOSSES), len(fails)))
     sys.exit(1 if fails else 0)
 
 

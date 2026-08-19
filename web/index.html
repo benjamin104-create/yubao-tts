@@ -2916,7 +2916,9 @@ const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
    因為兩邊都是非同步載入的，先後順序不保證 —— 雜魚的圖後到的話，
    它的 onload 會把頭目重新描一次邊，把專屬的圖蓋掉。
    那種 bug 只在網路慢的時候出現，本機永遠測不到。 */
-const ART_BOSS = [];
+const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
+                  'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
+                  'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind'];
 const ownArt = {};
 function adoptArt(id, url, own){
   if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
@@ -2959,7 +2961,7 @@ for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
    食物／武器／盾／帽沒有這個問題，編號就是道具本身的順序。
 
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
-const ART_ITEM = {};      // 例：{herb:14, weap:8} —— 圖到了才填
+const ART_ITEM = {herb: 7};      // 例：{herb:14, weap:8} —— 圖到了才填
 for(const cat in ART_ITEM)
   for(let i = 0; i < ART_ITEM[cat]; i++)
     adoptArt(cat + '#' + i,
