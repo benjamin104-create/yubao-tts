@@ -1737,7 +1737,18 @@ const MASTER = [
 ];
 const ALL_ABIL = () => ABIL.concat(MASTER);
 const abilById = id => ALL_ABIL().find(a => a.id === id);
-const SLOTS = 4;
+/* 帶得上身的數量。使用者：「魔法技能只能選取 2 個在身上……技能則可以有 3 個」。
+
+   為什麼要有上限：沒有上限的時候，玩家學會的每一個法術都排在同一張清單上，
+   而戰鬥中要在十幾個選項裡找那一個 —— 選項多不等於選擇多，
+   它只是把「決定要帶什麼」這個真正的選擇，換成「每回合翻一次目錄」。
+   上限把決定往前挪到出發之前，那才是有意思的那一步。
+
+   選的動作放在另外一張表（魔法技能表／職業技能表），
+   冒險中看到的就只有帶在身上的那幾個 —— 使用者：「不要造成冒險魔法、
+   技能視窗複雜化」。 */
+const SPELL_SLOTS = 2;
+const SLOTS = 3;             // 職業技能（含五系奧義）
 
 /* 發動需要的魔力。被動不需要；抽乾型要求至少半條，
    否則「剩 1 MP 也能瞬移逃走」會讓逃跑技能完全沒有代價。 */
@@ -1819,10 +1830,36 @@ const POCKET_LV = 10;        // 萬用口袋還是等級 10 的里程碑，跟�
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
 const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
-const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
+/* 魔力上限。系級那一項本來是 *5*SCH_SCALE（等於 *10）——
+   五系點滿就是 250，佔了上限 345 的四分之三。
+   代價現在會跟著系級長了，上限如果還照原本的速度長，
+   兩邊拉開的距離跟以前一樣：投資魔法還是等於「發數變多」。
+   減半之後兩邊同步 —— 投資換到的是**每一發更強**，不是更多發。 */
+const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
                               * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
+
+/* 施法的代價**也**跟著系級走。
+
+   使用者：「MP 會增加，但是隨著學會強力的魔法（比方說回復魔法），
+   理論上 MP 消耗量也要增加」。完全正確，而且量得出來：
+   魔力上限是 8 + (等級-1)*3 + 總系級*10，等級 30、五系點滿時是 345；
+   最貴的法術固定 14 —— 二十四發。魔法在後期等於不用錢。
+
+   表上的 mp 是「這一系 0 級時的價格」，每點一級加三成五。
+   點滿的那一系是 2.75 倍，跟威力一起長。
+
+   為什麼是乘不是加：這樣「投資一系」永遠是同一句話 ——
+   **同樣的發數，每一發更強**，而不是「發數變多」。
+   後者才是讓魔法蓋過物理的原因。 */
+const SPELL_COST_PER_LV = 0.35;
+function spellCost(p, sp){
+  if(sp.mpAll) return Math.max(1, p.mp);
+  const lv = (p && p.sch && p.sch[sp.sc]) || 0;
+  const off = (typeof hasMaster === 'function' && hasMaster('red')) ? 1 : 0;
+  return Math.max(1, Math.round(sp.mp * (1 + lv * SPELL_COST_PER_LV)) - off);
+}
 
 /* ── 餘力煉成：魔法點數的出路 ─────────────────────────────────
    使用者的原話：「魔法點數也是，點到滿，結果每升一級都還會有點數，
@@ -2578,6 +2615,14 @@ p.jobmax|　(next: Master)|　（つぎ：マスター）
 p.jobdone|Jobs trained|そだてた しょくぎょう
 p.noabil|No job skills yet - wear a hat and fight to raise the job.|まだ しょくぎょうスキルが ない —— ぼうしを かぶって たたかおう。
 p.unloaded|not loaded|みそうび
+p.equipped|Spells carried ({n} slots)|もちだす まほう（{n}スロット）
+p.pickspell|Open the spell list below and pick one|したの「まほうリスト」で ひとつ えらぼう
+p.spelltable|Spell list|まほうリスト
+p.abiltable|Skill list|スキルリスト
+p.pickhint|Tap one to carry it; tap a carried one to drop it. Up to {n}.|タップで もちだす／もう いちど タップで はずす。さいだい {n}こ。
+p.onbody|carried|もちだしちゅう
+p.autoload|"{nm}" is now carried.|「{nm}」を もちだした。
+b.back2|Back|もどる
 p.slotfull|Only {n} skill slots - unload one above first.|スキルは {n}スロットまで —— さきに ひとつ はずそう。
 p.passon|{nm} is active - passive skills need no casting.|{nm} は はつどうちゅう —— パッシブは つかう ひつようが ない。
 p.passnow|{nm} is already active.|{nm} は すでに はつどうちゅう。
@@ -5145,7 +5190,7 @@ function saveRun(){
         str:p.str, strb:p.strb, sat:p.sat, msat:p.msat, gold:p.gold,
         sp:p.sp, sch:p.sch, mregen:p.mregen, regen:p.regen,
         hat:p.hat, job:p.job, learned:p.learned, mastered:p.mastered,
-        slots:p.slots, st:p.st,
+        slots:p.slots, spells:p.spells, st:p.st,
         inv:p.inv.map(packItem),
         // 裝備用背包裡的索引指回去，讀檔時才不會變成兩個不同的物件
         weap:p.weap ? p.inv.indexOf(p.weap) : -1,
@@ -5200,7 +5245,13 @@ function resumeRun(q){
   if(r.st)       p.st = Object.assign({}, r.st);
   if(r.learned)  p.learned = Object.assign({}, r.learned);
   if(r.mastered) p.mastered = Object.assign({}, r.mastered);
-  if(Array.isArray(r.slots)) p.slots = r.slots.slice(0,4);
+  /* 舊存檔是四格共用的，而且沒有 spells。切成 3 + 2 之後：
+     技能欄多的那一格直接丟掉（帶不上就是帶不上），魔法欄補成空的。
+     不補的話 p.spells 會是 undefined，一開魔法面板就爆。 */
+  if(Array.isArray(r.slots)) p.slots = r.slots.slice(0, SLOTS);
+  while(p.slots.length < SLOTS) p.slots.push(null);
+  p.spells = Array.isArray(r.spells) ? r.spells.slice(0, SPELL_SLOTS) : [];
+  while(p.spells.length < SPELL_SLOTS) p.spells.push(null);
   if(typeof r.hat === 'string') p.hat = r.hat;
   p.inv = r.inv.map(unpackItem).filter(Boolean).slice(0, 20);
   p.weap = p.inv[r.weap] || null;
@@ -5305,7 +5356,7 @@ function newGame(seed){
     look, known, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
         mp:8, mmp:8, sp:0, sch:{heal:0,bolt:0,fire:0,aqua:0,wind:0}, mregen:0, face:[1,0],
-        hat:null, job:'none', learned:{}, slots:[null,null,null,null], mastered:{},
+        hat:null, job:'none', learned:{}, slots:[null,null,null], spells:[null,null], mastered:{},
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
@@ -5347,6 +5398,14 @@ function newGame(seed){
   // 用魔法點數換來的東西，不該因為一次失敗就消失。
   G.p.strb = VILLAGE.strBonus | 0;
   G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
+  /* 出發時把已經開出來的法術補進空的魔法欄。村莊裡加過點的玩家，
+     下一趟不該從「一格都沒有」開始。 */
+  for(const sp2 of spellsFor(G.p)){
+    if(G.p.spells.includes(sp2.id)) continue;
+    const e3 = G.p.spells.indexOf(null);
+    if(e3 < 0) break;
+    G.p.spells[e3] = sp2.id;
+  }
   checkMastery();
   // 職業技能一樣存在村莊 —— 練過的職業，這一趟開場就會用
   syncJobSkills(true);
@@ -7799,9 +7858,10 @@ function spellById(id){ return SPELLS.find(s => s.id === id); }
 
 function castSpell(sp){
   const p = G.p;
-  if(p.mp < sp.mp){ say(TX('s.060','魔力不足。'),'bad'); return false; }
+  const cost = spellCost(p, sp);
+  if(p.mp < cost){ say(TX('s.060','魔力不足。'),'bad'); return false; }
   // room 打的是「視野內全體」，方向無關 —— 還要玩家選方向只是白按一次
-  if(sp.k === 'self' || sp.k === 'room'){ p.mp -= sp.mp; doSpell(sp, 0, 0); endTurn(); return true; }
+  if(sp.k === 'self' || sp.k === 'room'){ p.mp -= cost; doSpell(sp, 0, 0); endTurn(); return true; }
   pendSpell = sp;
   say(M('s.061','{v0} —— {v1}',{v0:(locSpell(sp)), v1:(TX('p.dir','方向'))}),'gold');
   refresh();
@@ -7810,7 +7870,7 @@ function castSpell(sp){
 function fireSpell(dx, dy){
   const sp = pendSpell; pendSpell = null;
   if(!sp) return;
-  G.p.mp -= sp.mp;
+  G.p.mp -= spellCost(G.p, sp);
   doSpell(sp, dx, dy);
   endTurn();
 }
@@ -10478,6 +10538,17 @@ function renderPanel(){
         p.mmp = maxMp(p); p.mp = Math.min(p.mmp, p.mp + 5);
         SFX.play('ident');
         say(M('p.schup','{nm}系提升到 {n} 級。',{nm:TX('sch.'+sc.id,sc.nm),n:lv+1}),'good');
+        /* 剛開出來的法術如果魔法欄還有空位，就自動帶上。
+           不自動帶的話，玩家加完點會看到「學會了 X」然後回到一張空的魔法欄，
+           而他不知道還要去另一張表按一下 —— 那讀起來就是「魔法壞了」。
+           欄位滿了就不動：那時候「要換掉哪一個」是玩家的決定，不是系統的。 */
+        for(const sp2 of spellsFor(p)){
+          if(p.spells.includes(sp2.id)) continue;
+          const e3 = p.spells.indexOf(null);
+          if(e3 < 0) break;
+          p.spells[e3] = sp2.id;
+          say(M('p.autoload','「{nm}」已經帶在身上了。',{nm:locSpell(sp2)}),'gold');
+        }
         checkMastery();
         refresh();
       };
@@ -10516,24 +10587,43 @@ function renderPanel(){
       }
     }
 
+    /* 冒險中看到的只有**帶在身上的兩個**。學會的全部排在另一張表裡，
+       按「魔法技能表」才打開 —— 戰鬥中要的是「放哪一個」，
+       不是「我學過哪些」。 */
     const known = spellsFor(p);
     const head = document.createElement('div'); head.className='hint';
-    head.textContent = known.length ? TX('p.learned','學會的魔法')
-                                    : TX('p.nospell','目前還沒有學會任何魔法 —— 先加點。');
+    head.textContent = known.length
+      ? M('p.equipped','帶在身上的魔法（{n} 格）',{n:SPELL_SLOTS})
+      : TX('p.nospell','目前還沒有學會任何魔法 —— 先加點。');
     list.appendChild(head);
-    for(const sp of known){
+    for(let i = 0; i < SPELL_SLOTS; i++){
+      const sp = p.spells[i] && spellById(p.spells[i]);
       const row = document.createElement('div');
-      const ok = p.mp >= sp.mp;
+      if(!sp){
+        row.className = 'spell off';
+        row.innerHTML = `<span class="nm">${TX('ui.empty','空')}</span>` +
+          `<span class="ds">${TX('p.pickspell','按下面的「魔法技能表」挑一個帶上')}</span>`;
+        list.appendChild(row); continue;
+      }
+      const ok = p.mp >= spellCost(p, sp);
       row.className = 'spell' + (ok ? '' : ' off');
       row.innerHTML =
         `<span class="nm" style="color:${SCHOOLS.find(x=>x.id===sp.sc).col}">${locSpell(sp)}</span>` +
-        `<span class="ds">${locSpellD(sp)}</span><span class="mp">${sp.mp} MP</span>`;
+        `<span class="ds">${locSpellD(sp)}</span><span class="mp">${spellCost(p, sp)} MP</span>`;
       if(ok) row.onclick = ()=>{
         const r = castSpell(sp);
         if(r === null){ closePanel(); openAim(TX('p.castdir','施法方向')); return; }
         if(r) closePanel(); else refresh();
       };
       list.appendChild(row);
+    }
+    if(known.length){
+      const pick = document.createElement('div'); pick.className='hint';
+      const b3 = document.createElement('button');
+      b3.textContent = TX('p.spelltable','魔法技能表');
+      b3.onclick = ()=>{ panelMode='spellpick'; SFX.play('open'); renderPanel(); };
+      pick.appendChild(b3);
+      list.appendChild(pick);
     }
 
     // ── 職業與技能欄 ──
@@ -10572,39 +10662,38 @@ function renderPanel(){
     }
     list.appendChild(slotRow);
 
-    // 職業技能與五系奧義共用同一個池子與同樣的 4 個格子 ——
+    // 職業技能與五系奧義共用同一個池子與同樣的格子 ——
     // 只過濾 ABIL 的話，練到滿級開出來的奧義會學會了卻永遠看不到。
     const known2 = ALL_ABIL().filter(a => p.learned[a.id]);
     if(!known2.length){
       const e = document.createElement('div'); e.className='hint';
       e.textContent = TX('p.noabil','還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。');
       list.appendChild(e);
-    }
-    for(const a2 of known2){
-      const on = p.slots.includes(a2.id);
-      const row = document.createElement('div');
-      // 被動只要裝上就算「生效中」，不必也不能看魔力
-      const ok = on && (a2.t === 'pass' || p.mp >= abilCost(a2, p));
-      row.className = 'spell' + (ok ? '' : ' off');
-      row.innerHTML =
-        `<span class="nm">${locAbil(a2)}</span>` +
-        `<span class="ds">［${TX('ui.t.'+a2.t, ABIL_T[a2.t] || '技')}］${TX('d.'+a2.id, a2.desc)}</span>` +
-        `<span class="mp">${on ? costLabel(a2, p) : TX('p.unloaded','未裝載')}</span>`;
-      row.onclick = ()=>{
-        if(!on){                                   // 沒裝載 → 裝進第一個空格
-          const e2 = p.slots.indexOf(null);
-          if(e2 < 0){ say(M('p.slotfull','技能欄只有 {n} 格 —— 先點上面的技能卸下一個。',{n:SLOTS}),'bad'); refresh(); return; }
-          p.slots[e2] = a2.id; SFX.play('ident');
-          if(a2.t === 'pass') say(M('p.passon','{nm} 已生效 —— 被動技能不需要發動。',{nm:locAbil(a2)}),'good');
-          refresh(); return;
-        }
-        if(a2.t === 'pass'){ say(M('p.passnow','{nm} 正在生效中。',{nm:locAbil(a2)})); refresh(); return; }
-        if(p.mp < abilCost(a2, p)){ say(TX('m.nomp','魔力不足。'),'bad'); refresh(); return; }
-        const r = useAbil(a2);
-        if(r === null){ closePanel(); openAim(locAbil(a2) + ' ' + TX('p.dir','方向')); return; }
-        if(r) closePanel(); else refresh();
-      };
-      list.appendChild(row);
+    } else {
+      for(const a2 of known2.filter(a => p.slots.includes(a.id))){
+        const row = document.createElement('div');
+        // 被動只要裝上就算「生效中」，不必也不能看魔力
+        const ok = a2.t === 'pass' || p.mp >= abilCost(a2, p);
+        row.className = 'spell' + (ok ? '' : ' off');
+        row.innerHTML =
+          `<span class="nm">${locAbil(a2)}</span>` +
+          `<span class="ds">［${TX('ui.t.'+a2.t, ABIL_T[a2.t] || '技')}］${TX('d.'+a2.id, a2.desc)}</span>` +
+          `<span class="mp">${costLabel(a2, p)}</span>`;
+        row.onclick = ()=>{
+          if(a2.t === 'pass'){ say(M('p.passnow','{nm} 正在生效中。',{nm:locAbil(a2)})); refresh(); return; }
+          if(p.mp < abilCost(a2, p)){ say(TX('m.nomp','魔力不足。'),'bad'); refresh(); return; }
+          const r = useAbil(a2);
+          if(r === null){ closePanel(); openAim(locAbil(a2) + ' ' + TX('p.dir','方向')); return; }
+          if(r) closePanel(); else refresh();
+        };
+        list.appendChild(row);
+      }
+      const pick2 = document.createElement('div'); pick2.className='hint';
+      const b4 = document.createElement('button');
+      b4.textContent = TX('p.abiltable','職業技能表');
+      b4.onclick = ()=>{ panelMode='abilpick'; SFX.play('open'); renderPanel(); };
+      pick2.appendChild(b4);
+      list.appendChild(pick2);
     }
 
     const av = summonsFor(p);
@@ -10629,6 +10718,48 @@ function renderPanel(){
   }
   /* 結帳單。走出店門前唯一會擋住玩家的東西 ——
      「確定 / 取消」要在落雷之前出現，而不是之後才解釋。 */
+  /* ── 魔法技能表／職業技能表 ────────────────────────────────
+     只做一件事：挑一個帶上，然後回去。使用者：「選完即退出」。
+     所以點下去就換格、關表 —— 不做拖曳、不做排序、不做多選。
+     格子滿了就替換最早的那一格（先進先出），不用先卸再裝。 */
+  if(panelMode==='spellpick' || panelMode==='abilpick'){
+    const isSp = panelMode === 'spellpick';
+    const cap  = isSp ? SPELL_SLOTS : SLOTS;
+    const arr  = isSp ? p.spells : p.slots;
+    $('ptitle').textContent = isSp ? TX('p.spelltable','魔法技能表')
+                                   : TX('p.abiltable','職業技能表');
+    $('pcount').textContent = `${arr.filter(Boolean).length} / ${cap}`;
+    $('phint').textContent = M('p.pickhint','點一個帶上身；已經帶著的再點一次就卸下。最多 {n} 個。',{n:cap});
+    const pool = isSp ? spellsFor(p) : ALL_ABIL().filter(a => p.learned[a.id]);
+    for(const it2 of pool){
+      const on = arr.includes(it2.id);
+      const row = document.createElement('div');
+      row.className = 'spell' + (on ? '' : ' off');
+      const nm = isSp ? locSpell(it2) : locAbil(it2);
+      const ds = isSp ? locSpellD(it2)
+                      : `［${TX('ui.t.'+it2.t, ABIL_T[it2.t] || '技')}］${TX('d.'+it2.id, it2.desc)}`;
+      const col = isSp ? SCHOOLS.find(x=>x.id===it2.sc).col : 'var(--parch)';
+      row.innerHTML =
+        `<span class="nm" style="color:${col}">${nm}</span>` +
+        `<span class="ds">${ds}</span>` +
+        `<span class="mp">${on ? TX('p.onbody','帶著') : (isSp ? spellCost(p,it2)+' MP' : costLabel(it2, p))}</span>`;
+      row.onclick = ()=>{
+        const at = arr.indexOf(it2.id);
+        if(at >= 0){ arr[at] = null; SFX.play('open'); renderPanel(); return; }
+        const e2 = arr.indexOf(null);
+        if(e2 >= 0) arr[e2] = it2.id;
+        else { arr.shift(); arr.push(it2.id); }     // 滿了就擠掉最早的那一個
+        SFX.play('ident');
+        if(!isSp && it2.t === 'pass')
+          say(M('p.passon','{nm} 已生效 —— 被動技能不需要發動。',{nm:nm}),'good');
+        panelMode = 'magic'; renderPanel(); refresh();   // 選完即退出
+      };
+      list.appendChild(row);
+    }
+    btn(TX('b.back2','返回'), ()=>{ panelMode='magic'; renderPanel(); });
+    return;
+  }
+
   if(panelMode==='bill'){
     const bill = unpaid(), total = billTotal();
     $('ptitle').textContent = TX('p.bill','結帳');

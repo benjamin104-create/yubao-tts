@@ -91,6 +91,10 @@ jobs:
           # 遊戲照跑、看起來跟以前一樣，因為它退回了程式畫的那一版。
           # 這一支自己生假圖接進去，逼那條路真的走一遍。
           python tools/check_hero.py
+          # 魔法欄與技能欄的上限。整組改動都在 UI 裡 —— node 測不到面板列了幾列，
+          # 而「面板變回一張長清單」這種退化不會報錯，只會把使用者要求改掉的
+          # 那件事默默改回去。
+          python tools/check_slots.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
