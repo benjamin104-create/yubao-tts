@@ -109,18 +109,49 @@ def main():
         pg.wait_for_timeout(1400)
         RS = pg.evaluate("()=>RS")
         T = pg.evaluate("()=>T")
+        # 這支檢查靠兩個開關：關掉頭目的背光（它把整片地板打亮，
+        # 每一列都會算成「身體」，影子永遠找不到），以及開關影子本身
+        # （拍三張相減，見下面）。
+        # 兩個都要確認真的動得了 —— 哪天被改成 const 或改名，
+        # 這裡要立刻講清楚，不能默默地又量回一片什麼都沒驗到的綠燈。
+        for knob in ('AURA', 'SHADOW'):
+            r = pg.evaluate("""(k)=>{ try{
+                    const was = eval(k); eval(k + ' = 0');
+                    const now = eval(k); eval(k + ' = ' + was);
+                    return now === 0 ? 'ok' : ('改不動，還是 ' + now);
+                  }catch(e){ return '例外：' + e.message; } }""", knob)
+            if r != 'ok':
+                sys.exit('%s 這個開關失效了（%s）—— 量出來的結果不能信' % (knob, r))
+        pg.evaluate("()=>{ AURA = 0; }")
 
         for mid in GROUND + FLYING + BOSSES:
             spot = pg.evaluate(PLACE, mid)
             if spot is None:
                 print('  ? %-9s 找不到空地，跳過' % mid)
                 continue
-            # 停掉待機起伏，不然兩張圖的相位不同，相減會多出一圈殘影
-            pg.evaluate("()=>{ clock = 0; }")
-            pg.wait_for_timeout(260)
+            """拍三張，相減 —— 不再猜哪些像素是影子。
+
+               沒有怪 → 有怪但關掉影子 → 有怪也有影子。
+               第二張減第一張＝身體，第三張減第二張＝影子，兩者都是精確的，
+               沒有任何門檻可以調錯。
+
+               為什麼放棄用亮度差判斷：試了三個版本，被騙了三次。
+                 v1「變亮是身體、變暗是影子」→ 精靈的深色外框也讓地板變暗。
+                 v2 改成整列分類 + 影子要夠寬夠連續 → 針尾蜂垂下來的腳過關了，
+                    但全藏（一身黑忍裝、蹲成大字）的靴子照樣夠寬夠連續，
+                    量出「站著的人離地 4.0」，而畫面上他明明踩在影子上。
+                 v3 改成驗「影子＝地板 x (1-alpha)」的乘法關係 —— 想法對，
+                    但火把的暖光是**畫在實體之後**再疊上去的，
+                    三個通道的比例因此各不相同（實測 0.82 / 0.69 / 0.57）。
+               每一版都更接近，但每一版都還是在猜。關掉再拍就沒得猜了。 """
+            pg.evaluate("()=>{ clock = 0; SHADOW = 0; }")
+            pg.wait_for_timeout(240)
+            no_shadow = shot(pg)
+            pg.evaluate("()=>{ clock = 0; SHADOW = 1; }")
+            pg.wait_for_timeout(240)
             with_m = shot(pg)
             pg.evaluate("()=>{ G.mons.length = 0; clock = 0; }")
-            pg.wait_for_timeout(260)
+            pg.wait_for_timeout(240)
             without = shot(pg)
 
             info = pg.evaluate("()=>({ox:lastOx, oy:lastOy})")
@@ -130,49 +161,27 @@ def main():
             x0, x1 = sx - 2 * RS, sx + (T + 2) * RS
             y0, y1 = sy - 2 * T * RS, sy + (T + 4) * RS
 
-            """分類每一列，而不是分類每一個像素。
+            # 不能用「完全相等」比：火把的閃爍是照 performance.now() 算的，
+            # 三張截圖之間一定不一樣。但那個雜訊很小 ——
+            # 實測整片區域裡，關/開影子之間的差要嘛是 1（閃爍），
+            # 要嘛是 16 以上（影子），中間**一個像素都沒有**。
+            # 8 就落在那個空隙的正中間：對雜訊有 8 倍餘裕，對訊號有 2 倍。
+            # 這是雜訊底線，不是拿來分辨「身體」與「影子」的門檻 ——
+            # 那件事已經由「拍三張」處理掉了。
+            NOISE = 8
+            def moved(p, q):
+                return max(abs(p[i] - q[i]) for i in range(3)) >= NOISE
 
-               第一版是「變亮的算身體、變暗的算影子」，量出來全是負的 ——
-               因為精靈自己的深色外框也會讓那一格變暗，於是「影子的上緣」
-               永遠落在身體裡面。判準要能分開的是「這一列屬於誰」：
-                 有任何一點變亮  → 這一列是身體（外框跟亮面混在一起）
-                 只有變暗、沒變亮 → 這一列是落在地板上的影子
-               身體與影子因此互斥，量出來的距離才是真的距離。 """
-            body_rows, dark_rows = [], []
+            body_rows, shad_rows = [], []
             for y in range(max(0, y0), min(with_m.height, y1)):
-                lit = dark = 0
+                body = shad = 0
                 for x in range(max(0, x0), min(with_m.width, x1)):
-                    dv = sum(with_m.getpixel((x, y))) - sum(without.getpixel((x, y)))
-                    if dv > 45: lit += 1
-                    elif dv < -14: dark += 1
-                if lit: body_rows.append(y)
-                elif dark >= 3: dark_rows.append((y, dark))  # 三欄以上才算一道，不是雜點
-
-            # 影子必須是**連續的一整段**，不能是孤零零一兩列。
-            #   精靈最下面那一列常常整列都是深色外框，沒有任何一點夠亮，
-            #   於是被歸成「影子」—— 位置剛好貼在身體下緣，量出來永遠是 0.5，
-            #   連飛在半空的都一樣。實測投石妖精：身體到 9.5，
-            #   本體外框留下 10.0/10.5 兩列，真正的影子在 14.0 之後。
-            #   影子有 3 個邏輯單位厚（6 個畫布列），所以要求連續 4 列，
-            #   既濾得掉外框，也還留著一半的餘裕。 
-            # 而且要夠寬。針尾蜂與岩鷹的腳與尾羽是暗色的，
-            # 亮不到 lit 的門檻，於是整排被歸成「影子」、剛好貼在身體下方，
-            # 量出來又是 0.5 —— 但畫面上牠們明明離地。
-            # 真正的影子橫跨幾乎整格（實測暗了 18~24 欄），
-            # 垂下來的腳只有 1~16 欄而且參差不齊。寬度用相對值比，
-            # 不是寫死的欄數：畫面縮放與怪物大小都會變，比例才穩。
-            widest = max([d for _, d in dark_rows] or [0])
-            wide_enough = {y for y, d in dark_rows if d >= widest * 0.6}
-            shad_rows, run = [], []
-            for y in [y for y, _ in dark_rows] + [None]:
-                if y is not None and y not in wide_enough:
-                    if len(run) >= 4: shad_rows.extend(run)
-                    run = []
-                    continue
-                if run and y is not None and y == run[-1] + 1:
-                    run.append(y); continue
-                if len(run) >= 4: shad_rows.extend(run)
-                run = [] if y is None else [y]
+                    if moved(no_shadow.getpixel((x, y)), without.getpixel((x, y))):
+                        body += 1
+                    elif moved(with_m.getpixel((x, y)), no_shadow.getpixel((x, y))):
+                        shad += 1
+                if body >= 3: body_rows.append(y)
+                if shad >= 3: shad_rows.append(y)
 
             body_lo = body_rows[-1] if body_rows else None
             # 影子要找身體下方的第一道 —— 上方的變暗是精靈擋住的光，不是影子

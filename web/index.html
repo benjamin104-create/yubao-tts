@@ -3859,6 +3859,74 @@ function whiteOf(img, name){
    getImageData 在 file:// 開啟時會因為畫布被外部圖污染而丟例外
    （見 crownSprite）。量不到就回 null，呼叫端退回「腳在格子底部、
    寬度 10/16」的假設 —— 轉檔工具已經把主體靠底對齊了，這個假設是對的。 */
+/* ── 頭目的背光 ────────────────────────────────────────────────
+   使用者：「頭目如果太暗，周圍可以讓它發光嗎？這樣就比較看得到」。
+
+   量過之後確定這是真的問題：十五隻頭目的平均亮度從 31（全藏，一身黑忍裝）
+   到 129（湖水之主，半透明的水），差四倍。地牢的地板本來就暗，
+   最暗的那幾隻放上去就是一團看不出形狀的黑。
+
+   兩個一開始就要避開的坑：
+
+   一、**不能用金色、不能跳動。** 腳下那圈會呼吸的金光已經有意思了 ——
+   「蓄力中，下一下是重擊」。那是玩家每回合要讀的戰術訊號。
+   再加一圈金色的脈動上去，等於把一個明確的預告變成裝飾。
+   所以背光取冷色、而且是穩定的（只有極慢的呼吸，週期比蓄力慢五倍）。
+
+   二、**每隻都套同一圈光會像貼紙。** 顏色從精靈自己身上取 ——
+   取最亮那一成像素的平均色（也就是牠的「受光面」是什麼顏色），
+   不死鳥就發橘紅、鏡之女王就發冰藍。光看起來才像是從牠身上散出來的。
+
+   強度跟暗度成反比：全藏需要一大圈，湖水之主幾乎不需要。
+   照亮度線性換算，不寫死每一隻 —— 之後換圖不必回來調表。 */
+/* 影子的濃度。跟 AURA 一樣是可調的強度，也讓 check_ground 能把它關掉。
+   關掉之後量測就不再是「猜哪些像素是影子」——
+   拍三張（沒有怪／有怪沒影子／有怪有影子），相減出來的就**剛好**是
+   身體與影子本身，沒有任何門檻可以調錯。
+   之前用亮度差猜了三個版本，被騙了三次：精靈的深色外框、
+   針尾蜂垂下來的腳、全藏的黑靴子，每一次都長得像影子。 */
+let SHADOW = 1;
+
+/* 背光的總強度。留成變數有兩個用途：
+   一是之後想調亮調暗只改這裡；二是 check_ground 會把它設成 0 再量 ——
+   那支檢查問的是「精靈的腳跟影子貼不貼」，背光把整片地板打亮之後，
+   每一列都算「身體」，影子永遠找不到，於是十五隻頭目**全部以
+   「影子被身體完全遮住」通過** —— 一個什麼都沒驗到的綠燈。
+   加了效果卻讓既有的檢查失效，是最容易忽略的一種退步。 */
+let AURA = 1;
+const auraCache = {};
+function auraOf(img, name){
+  if(name in auraCache) return auraCache[name];
+  let a = null;
+  try{
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    const px = [];
+    for(let i = 0; i < d.length; i += 4)
+      if(d[i+3] > 40) px.push([d[i], d[i+1], d[i+2],
+                               0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2]]);
+    if(px.length){
+      const mean = px.reduce((s,p)=>s+p[3], 0) / px.length;
+      px.sort((p,q)=>q[3]-p[3]);
+      const top = px.slice(0, Math.max(1, Math.round(px.length * 0.10)));
+      let r = 0, g = 0, b = 0;
+      for(const p of top){ r += p[0]; g += p[1]; b += p[2]; }
+      r = Math.round(r/top.length); g = Math.round(g/top.length); b = Math.round(b/top.length);
+      /* 亮度 30 → 0.42，亮度 130 → 0.12，中間線性。
+         上下都夾住：太強會變成一顆燈泡、看不見剪影；
+         太弱等於沒做，而「幾乎看不出來的效果」是最糟的一種 ——
+         它有成本卻沒有好處。 */
+      const k = Math.max(0.12, Math.min(0.42, 0.42 - (mean - 30) * 0.003));
+      a = { a: k, c: r + ',' + g + ',' + b };
+    }
+  }catch(e){ a = null; }
+  // 讀不到像素（file:// 會污染畫布）就退回一圈中性的冷光 —— 有總比沒有好
+  return auraCache[name] = a || { a: 0.26, c: '150,170,210' };
+}
+
 const footCache = {};
 function footOf(img, name){
   if(name in footCache) return footCache[name];
@@ -9399,7 +9467,8 @@ function draw(dt){
        只造成兩成的壓暗，等於沒畫 —— 那樣飛行怪就變成「沒有影子的東西」，
        而「沒有影子」讀起來是圖沒對齊，不是牠在飛。
        要讀出高度，地上那一塊必須看得出來，才有東西可以跟本體拉開距離。 */
-    cx.fillStyle = 'rgba(0,0,0,' + (fly ? .32 : .42) + ')';
+    if(SHADOW <= 0) return;
+    cx.fillStyle = 'rgba(0,0,0,' + (SHADOW * (fly ? .32 : .42)).toFixed(3) + ')';
     cx.fillRect(x0, y0, w2, 3);
     cx.fillRect(x0-1, y0+1, w2+2, 1);
   };
@@ -9469,6 +9538,27 @@ function draw(dt){
     // 睡著或被麻痺的飛行生物會落地 —— 昏過去還在半空是說不通的
     const mfly = !!m.d.fly && !(m.st['睡'] || m.st['麻']);
     shadow(mx, my, msc, img, m.d.id, mfly);
+    /* 頭目的背光。畫在影子之後、本體之前 —— 順序不能換：
+       畫在本體後面會蓋掉剪影，那正是要保住的東西。
+       睡著或被麻痺時關掉：那兩個狀態的意思是「牠現在沒有威脅」，
+       還在發光會說反話。 */
+    if(AURA > 0 && m.d.boss && !(m.st['睡'] || m.st['麻'])){
+      const au = auraOf(img, m.d.id);
+      // 呼吸得很慢（蓄力那圈是 clock*7，這裡是 clock*1.3），
+      // 讀起來是「牠在那裡」，不是「牠要出手了」
+      const br = AURA * (0.88 + 0.12 * Math.sin(clock * 1.3 + m.id));
+      const gx = ox + mx*T + T/2, gy = oy + my*T + T/2 - (msc-1)*T/2;
+      const rad = T * msc * 1.15;
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      const ag = cx.createRadialGradient(gx, gy, T*msc*0.22, gx, gy, rad);
+      ag.addColorStop(0,   'rgba(' + au.c + ',' + (au.a * br).toFixed(3) + ')');
+      ag.addColorStop(0.55,'rgba(' + au.c + ',' + (au.a * br * 0.42).toFixed(3) + ')');
+      ag.addColorStop(1,   'rgba(' + au.c + ',0)');
+      cx.fillStyle = ag;
+      cx.fillRect(gx - rad, gy - rad, rad*2, rad*2);
+      cx.restore();
+    }
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
     drawEnt(m, img, m.d.id, m.id*1.7, msc, mfly);

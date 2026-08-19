@@ -45,7 +45,7 @@ ALLOW = {
         'x.drawImage(src, 0, 0);': 1,   # crownSprite：從來源精靈複製
         'x.drawImage(im, 0, 0);': 1,    # adoptArt：把載進來的圖原樣拓進畫布
         'x.drawImage(tmp, 0, 4);': 1,   # 圖示往下移，讓它落在格子中間
-        'x.drawImage(img, 0, 0);': 2,   # whiteOf 與 footOf 的量測用暫存拷貝
+        'x.drawImage(img, 0, 0);': 3,   # whiteOf / footOf / auraOf 的量測用暫存拷貝
     },
 }
 
