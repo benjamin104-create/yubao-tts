@@ -2920,7 +2920,9 @@ let ART_DATA = null;
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
-                 'hawk', 'ibex', 'scree', 'eel', 'crab', 'salam'];
+                 'hawk', 'ibex', 'scree', 'eel', 'crab', 'salam',
+                 'ash', 'tengu', 'tanuki', 'chochin', 'shinobi', 'centip',
+                 'prism', 'refr', 'shadow', 'ratking', 'chimera', 'seraph'];
 /* 頭目有自己的圖時就不再從雜魚衍生。ownArt 記的是「這個頭目已經有專屬的圖」，
    因為兩邊都是非同步載入的，先後順序不保證 —— 雜魚的圖後到的話，
    它的 onload 會把頭目重新描一次邊，把專屬的圖蓋掉。
@@ -2981,7 +2983,8 @@ for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
    食物／武器／盾／帽沒有這個問題，編號就是道具本身的順序。
 
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
-const ART_ITEM = {herb: 14, weap: 8};   // 圖到了才填，沒列到的維持程式畫的
+// 圖到了才填，沒列到的維持程式畫的（卷軸 11 張還沒畫）
+const ART_ITEM = {herb: 14, weap: 8, wand: 9, pot: 6, shld: 6, food: 3};
 for(const cat in ART_ITEM)
   for(let i = 0; i < ART_ITEM[cat]; i++)
     adoptArt(cat + '#' + i,

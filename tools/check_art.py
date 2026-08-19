@@ -22,10 +22,6 @@ from pixelize import (HERO_HEX, PALETTE_HEX, TILE, check_assets,
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
-# 已知偏暗、等著重畫的精靈。放這裡而不是把門檻調低：
-# 調低門檻等於把問題藏起來，之後每一張太暗的圖都會安靜地通過。
-# 這份名單應該越來越短，空了就把這段拿掉。
-TOO_DARK = {"knight"}   # 深淵騎士：原圖的高光只有 1.8%，32px 裝不下
 ART = os.path.join(ROOT, "web", "art")
 RAW = os.path.join(ROOT, "art_raw")
 
@@ -329,15 +325,11 @@ else:
             # 道具站在遊戲畫的**金色光帶**上、旁邊還有名牌，而且不會動 ——
             # 條件寬得多。實測泛紫的草最亮只有 127，放到地上照樣讀得清楚。
             # 把兩者用同一個數字要求，等於逼所有深色的東西都要畫成亮的。
-            name0 = os.path.splitext(os.path.basename(rel))[0]
             lum = [0.2126*p[0] + 0.7152*p[1] + 0.0722*p[2] for p in px if p[3] > 0]
             top = max(lum) if lum else 0
             need = 110 if cat in ("item", "hat") else 140
-            if name0 in TOO_DARK:
-                print("  · %s 已知偏暗（最亮 %.0f），等重畫" % (rel, top))
-            else:
-                ok(top >= need,
-                   "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
+            ok(top >= need,
+               "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
     ok(n > 0, "web/art/ 裡有檔案（%d 個）" % n)
 
     # 戴上帽子之後，眼睛還看得見嗎。

@@ -213,7 +213,7 @@ def strip_background(im, tolerance=18):
     return im
 
 
-def trim_to_subject(im, margin=1, headroom=0.0, band=0.0):
+def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0):
     """裁到主體的外框，再補成正方形，**主體靠下對齊**。
 
     為什麼一定要這一步：模型輸出的每一格都有大量留白，主體常常只佔六成。
@@ -258,17 +258,22 @@ def trim_to_subject(im, margin=1, headroom=0.0, band=0.0):
         return sq
     if headroom > 0:
         side = max(side, int(round(cut.height / (1.0 - headroom))))
+    # pad：左右與上面留一點空隙，下緣不動（下緣是腳踩的那一條線）。
+    # 方形的東西（木之盾）裁完會剛好塞滿整格 —— 在格子鋪成的畫面上，
+    # 塞滿整格的東西讀起來是「一塊地磚」，不是「一個掉在地上的道具」。
+    if pad > 0:
+        side = int(round(side * (1.0 + pad)))
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.paste(cut, ((side - cut.width) // 2, side - cut.height))
     return sq
 
 
-def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0, band=0.0):
+def pixelize(im, size, palette=None, keep_bg=False, trim=True, headroom=0.0, band=0.0, pad=0.0):
     if not keep_bg:
         im = strip_background(im)
     im = im.convert("RGBA")
     if trim:
-        im = trim_to_subject(im, headroom=headroom, band=band)
+        im = trim_to_subject(im, headroom=headroom, band=band, pad=pad)
 
     """降取樣的順序很重要，這裡是「先量化、再取眾數」而不是「先平均、再量化」。
 
@@ -474,6 +479,8 @@ def main():
                     help="不要裁到主體（地形圖塊要用，它本來就該填滿整格）")
     ap.add_argument("--headroom", type=float, default=0.0,
                     help="頭頂上面留多少比例的空白（主角用 0.1875 = 6/32，帽子要疊在那裡）")
+    ap.add_argument("--pad", type=float, default=0.0,
+                    help="左右與上面留一點空隙（下緣不動）。方形的東西會塞滿整格，在格子鋪成的畫面上讀起來像地磚")
     ap.add_argument("--band", type=float, default=0.0,
                     help="改成靠上對齊，主體最多佔這個比例的高度（帽子用 0.5）")
     ap.add_argument("--palette", choices=sorted(PALETTES),
@@ -509,7 +516,7 @@ def main():
                 else ("%s%02d.png" % (args.prefix, args.start + i)))
             pixelize(stripped.crop(box), args.size, palette,
                      keep_bg=True, trim=not args.no_trim,
-                     headroom=args.headroom, band=args.band).save(path)
+                     headroom=args.headroom, band=args.band, pad=args.pad).save(path)
             print("寫出 %s（來源 %dx%d）" % (path, box[2] - box[0], box[3] - box[1]))
     elif args.grid:
         cols, rows = (int(x) for x in args.grid.lower().split("x"))
@@ -519,14 +526,14 @@ def main():
             path = os.path.join(
                 out_dir, "%s%02d.png" % (args.prefix, args.start + i))
             pixelize(cell, args.size, palette, args.keep_bg, not args.no_trim,
-                     headroom=args.headroom, band=args.band).save(path)
+                     headroom=args.headroom, band=args.band, pad=args.pad).save(path)
             print("寫出 %s" % path)
     else:
         if not args.out:
             ap.error("單張模式需要 -o")
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
         pixelize(im, args.size, palette, args.keep_bg, not args.no_trim,
-                 headroom=args.headroom, band=args.band).save(args.out)
+                 headroom=args.headroom, band=args.band, pad=args.pad).save(args.out)
         print("寫出 %s" % args.out)
 
 
