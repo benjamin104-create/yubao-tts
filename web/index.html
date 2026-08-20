@@ -277,6 +277,9 @@ body{
   color:var(--brass); letter-spacing:.02em; font-variant-numeric:tabular-nums;
 }
 #depth b::before{content:'B'; font-size:13px; opacity:.65; margin-right:1px}
+/* 往上走的章節不加 B。用 data 屬性而不是改 textContent —— 那個數字
+   在九種視窗尺寸的版面測試裡都被量過位置，換成字串會連帶動到寬度。 */
+#depth[data-up] b::before{content:''; margin-right:0}
 #depth b::after{content:'F'; font-size:13px; opacity:.65; margin-left:1px}
 #depth em{font-style:normal; font-size:11.5px; letter-spacing:.14em; color:var(--parch-dim)}
 
@@ -764,6 +767,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 }
 #vfolk{display:flex; gap:6px; justify-content:center; position:relative}
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
+#towerwrap{display:flex; flex-direction:column; align-items:center; gap:5px; margin:2px 0 4px}
+#towermap{
+  width:min(150px,42vw); height:auto; image-rendering:pixelated;
+  image-rendering:crisp-edges; display:block;
+}
+#towerlbl{
+  margin:0; font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
+  color:var(--parch-dim); text-align:center; max-width:26ch; line-height:1.5;
+}
 #vfolk canvas:nth-child(odd){animation:bob 3.1s ease-in-out infinite}
 #vfolk canvas:nth-child(even){animation:bob 2.6s ease-in-out infinite .4s}
 .vhead em{
@@ -1055,6 +1067,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <h3 id="vname">爐火村</h3>
       <p id="vsub">你活著走出來了。</p>
       <p id="vtalk"></p>
+    </div>
+    <!-- 旅程全圖：地底往下十二章，然後轉頭往上爬到塔頂。
+         玩家非知道不可的一件事是「我在哪、還要走多遠」——
+         沒有這張圖的話，前十二章一直往下，而遊戲叫通天之塔。 -->
+    <div id="towerwrap">
+      <canvas id="towermap" width="150" height="230" aria-hidden="true"></canvas>
+      <p id="towerlbl"></p>
     </div>
     <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
     <div id="vstock"></div>
@@ -1948,7 +1967,7 @@ how.act|Act {n}|だい{n}しょう
 how.out|escaped|だっしゅつ
 o.dead|You have fallen|きみは たおれた
 o.rank|　·　#{n} on this device|　・この きたいで {n}い
-o.where|Fell on <b>B{d}F</b>　·　Level <b>{lv}</b>|<b>B{d}F</b> で たおれた　・レベル <b>{lv}</b>
+o.where|Fell on <b>{d}</b>　·　Level <b>{lv}</b>|<b>{d}</b> で たおれた　・レベル <b>{lv}</b>
 o.skills|　·　<b>{n}</b> skill points|　・スキル <b>{n}</b>てん
 o.lost|Levels reset, items lost, skills forgotten — only what <b>you</b> learned remains.|レベルも どうぐも スキルも きえる —— のこるのは <b>きみ</b>が まなんだ ことだけ。
 o.smite|Divine Punishment|てんばつ
@@ -1978,6 +1997,7 @@ dir.w|west|にし
 dir.here|right below|まうえ
 m.corner|You cannot cut that corner.|その かどは まがれない。
 m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
+m.stairsup|Stairs leading up. (Ascend)|うえへの かいだん。（のぼる）
 m.pick|Picked up "{nm}".|「{nm}」を ひろった。
 m.eat|You eat "{nm}".|「{nm}」を たべた。
 m.drink|You drink "{nm}".|「{nm}」を のんだ。
@@ -2058,7 +2078,7 @@ ui.nostore|This browser blocks saving — progress from this run will not be kep
 m.shrine|★ Ring of Record — progress saved, health and magic full.|★ きろくの わ —— しんちょくを ほぞん、たいりょくと まりょくが ぜんかい。
 m.shrine2|The next floor is the boss. Get ready before you go down.|つぎの かいは ボスだ。したくを してから おりよう。
 lg.shrine|save point|きろくてん
-m.resumed|Resuming from your save point — Act {n} {nm} B{d}F|きろくてんから さいかい —— だい{n}しょう {nm} B{d}F
+m.resumed|Resuming from your save point — Act {n} {nm} {d}|きろくてんから さいかい —— だい{n}しょう {nm} {d}
 s.001|The all-purpose pocket saved "{v0}".|まんのうポケットが「{v0}」を まもった。
 s.002|Your body will not move...|からだが うごかない……
 s.003|{v0} is standing in the way.|{v0} が みちを ふさいでいる。
@@ -2728,6 +2748,23 @@ sm.syl|Sylph|シルフ
 k.ground|Underfoot|あしもと
 k.bag|Bag|もちもの
 k.down|Descend|おりる
+k.up|Ascend|のぼる
+v.towerlbl|Act {n} / {all} — {dir}|だい{n} / {all}しょう —— {dir}
+v.towerup|climbing the spire|とうを のぼっている
+v.towerdown|still below ground, heading down|まだ ちか、したへ
+k.npc|Lost villager|まいごの むらびと
+m.npcmet|"Thank goodness... someone came." The lost villager follows you.|「よかった…… だれか きた」まいごの むらびとが ついてくる。
+m.npcask|Take them back to the village - they will get hurt on the way, so heal them with a herb.|むらまで つれて かえろう —— みちで きずつくから、くさで てあてを。
+m.npcok|The villager still looks steady.|むらびとは まだ だいじょうぶそうだ。
+m.npchit|The villager swings - {v0} takes {v1} damage.|むらびとが なぐった —— {v0} に {v1} の ダメージ。
+m.npchurt|{v0} strikes the villager! ({a}/{b})|{v0} が むらびとを うった！（{a}/{b}）
+m.npclow|The villager is barely holding on - heal them with a herb.|むらびとは もう もたない —— くさで てあてを。
+m.npcdead|The villager has fallen... you could not bring them home.|むらびとが たおれた…… つれて かえれなかった。
+m.npcheal|You used "{nm}" on the villager - {n} restored. ({a}/{b})|むらびとに「{nm}」を つかった —— {n} かいふく。（{a}/{b}）
+m.npcnoherb|You have no herb to treat them with.|てあてに つかえる くさが ない。
+m.npcsaved|* You brought the lost villager home.|★ まいごの むらびとを むらまで つれて かえった。
+m.vaultget|They hand you their family's "Token Vault" - from now on, none of your gold is lost when you fall.|かでんの「トークンきんこ」を わたされた —— これからは たおれても おかねは へらない。
+o.vault|The Token Vault sent every one of your <b>{n} G</b> home.|トークンきんこが <b>{n} G</b> を そのまま むらへ おくった。
 k.leave|Back to Village|むらへ もどる
 k.wait|Wait|まつ
 k.magic|Magic|まほう
@@ -5013,17 +5050,30 @@ const ACTS = [
      是二十九層的消耗讓人到不了終點。
      改成二十層、每五層一個休息層。長度仍然是全戰役之最，
      井型迴圈的感覺留著，但它現在真的走得完。 */
-  {id:'tower',  nm:'通天塔',     sub:'THE SPIRE',           floors:20, rest:5,
+  /* ★ 整趟旅程的轉折點：從這一章開始**往上**。
+
+     使用者：「遊戲名稱叫通天之塔，但是樓梯是一直往下？？」—— 完全正確。
+     故事本來就寫著「往上二十層」（下面那句 intro 從第一版就在），
+     但畫面上永遠是 B1F、B2F、向下的樓梯，於是那句話讀起來像寫錯了。
+
+     up:1 只改三件事：樓層標示不加 B、樓梯的字改成「向上」、
+     塔的側面圖把你畫在地面以上。地圖生成、難度、深度計算全部不動 ——
+     「第幾層」在機制上仍然是同一個數字，改的是它指向哪個方向。 */
+  {id:'tower',  nm:'通天塔',     sub:'THE SPIRE',           floors:20, rest:5, up:1,
    boss:'b_mermaid', reward:'諸神之劍（攻擊 +18）',
    intro:'往上二十層。塔頂有一道門，門後面不是地方，是時間。'},
-  {id:'final',  nm:'最後的迷宮', sub:'THE LAST LABYRINTH',  floors:5,
+  {id:'final',  nm:'最後的迷宮', sub:'THE LAST LABYRINTH',  floors:5, up:1,
    boss:'b_gate', reward:'通往混沌之間的門',
    intro:'沒有地圖，沒有商店。你已經不需要它們了。'},
-  {id:'chaos',  nm:'混沌之間',   sub:'THE CHAOS CHAMBER',   floors:1,
+  {id:'chaos',  nm:'混沌之間',   sub:'THE CHAOS CHAMBER',   floors:1, up:1,
    boss:'b_mind1', reward:null,        // 從第一型態開始，bossDown() 會接到二、三型態
    intro:'這裡沒有牆，也沒有天花板。只有「意識」—— 以及即將成為它的你。'},
 ];
 const actAt = i => ACTS[Math.max(0, Math.min(ACTS.length-1, i|0))];
+/* 這一章是往上走的嗎。往上的章節不加 B ——「B3F」是地下三樓的意思，
+   在塔上寫 B3F 等於告訴玩家他還在地底。 */
+const actUp = i => !!actAt(i).up;
+const floorLabel = (actIdx, floor) => (actAt(actIdx).up ? '' : 'B') + floor + 'F';
 /* 章節第 f 層對應到的「絕對深度」—— 既有的難度系統全部吃這個值 */
 function absDepth(actIdx, floor){
   let d = 0;
@@ -5184,7 +5234,7 @@ function saveRun(){
   try{
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: RUN_VER, seed: G.seed, act: G.act, floor: G.floor, turn: G.turn,
-      known: G.known, look: G.look, notes: G.notes,
+      known: G.known, look: G.look, notes: G.notes, npc: G.npc,
       p: {
         lv:p.lv, exp:p.exp, hp:p.hp, mhp:p.mhp, mp:p.mp, mmp:p.mmp,
         str:p.str, strb:p.strb, sat:p.sat, msat:p.msat, gold:p.gold,
@@ -5243,6 +5293,9 @@ function resumeRun(q){
     if(typeof r[k] === 'number' || typeof r[k] === 'string') p[k] = r[k];
   if(r.sch)      p.sch = Object.assign({}, p.sch, r.sch);
   if(r.st)       p.st = Object.assign({}, r.st);
+  /* 護送中的村民要跟著存檔走。不存的話，玩家在第四層存檔離開、
+     回來村民就不見了 —— 而他前面已經花了十幾株草在那個人身上。 */
+  G.npc = (q && q.npc && q.npc.hp > 0) ? q.npc : null;
   if(r.learned)  p.learned = Object.assign({}, r.learned);
   if(r.mastered) p.mastered = Object.assign({}, r.mastered);
   /* 舊存檔是四格共用的，而且沒有 spells。切成 3 + 2 之後：
@@ -5263,8 +5316,8 @@ function resumeRun(q){
   G.floor = q.floor;
   buildFloor();
   G.p.hp = Math.max(1, Math.min(p.mhp, r.hp | 0));
-  say(M('m.resumed','從上次的紀錄點繼續 —— 第 {n} 章　{nm}　B{d}F',
-        {n:G.act+1, nm:locAct(actAt(G.act)), d:G.depth}), 'gold');
+  say(M('m.resumed','從上次的紀錄點繼續 —— 第 {n} 章　{nm}　{d}',
+        {n:G.act+1, nm:locAct(actAt(G.act)), d:floorLabel(G.act, G.floor)}), 'gold');
   refresh();
 }
 
@@ -5664,7 +5717,11 @@ function buildFloor(){
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
   G.f = genFloor(rng, G.depth, themeNow());
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
+  /* 村民只有在「跟著你」的時候才會過樓層。留在原地的那一個就留在那一層 ——
+     他本來就沒要走，是玩家決定要不要帶他。 */
+  const keepNpc = G.npc && G.npc.hp > 0 && G.npc.follow ? G.npc : null;
   G.items = {}; G.gold = {}; G.traps = {}; G.mons = []; G.allies = []; G.shop = null; G.shopSeen = 0;
+  G.npc = keepNpc;
   G.seen = new Uint8Array(MW*MH);   // 0 未探索 1 已探索 2 可見
   const occ = new Set([key(G.p.x,G.p.y), key(G.f.stairs.x,G.f.stairs.y)]);
   const free = (minD)=>{
@@ -5731,6 +5788,7 @@ function buildFloor(){
     const p=free(0);
     if(p) G.traps[key(p.x,p.y)] = rng.chance(Math.min(.45, .15 + G.md*0.03)) ? 2 : 1;
   }
+  spawnNpc(rng, free);
   /* 休息層：長章節每 N 層一個。沒有休息層的三十層一口氣打完，
      不是難度，是體力測驗 —— 走通測試在通天塔第 7 層就打不下去了。
      這裡不生怪、一定有商店、進來就補滿，玩家可以重新整隊再往下。 */
@@ -6283,6 +6341,31 @@ function tryMove(dx,dy){
   const m = monAt(nx,ny);
   if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
   if(allyAt(nx,ny)){ say(M('s.003','{v0} 擋在前面。',{v0:(allyAt(nx,ny).d.nm)})); return; }
+  const npcHit = npcAt(nx,ny);
+  if(npcHit){
+    if(!npcHit.follow){
+      npcHit.follow = 1;
+      SFX.play('ident');
+      say(TX('m.npcmet','「太好了……有人來了。」迷路的村民跟在你身後。'),'gold');
+      say(TX('m.npcask','把他帶回村莊 —— 路上他會受傷，用回復草替他治療。'),'gold');
+      return;                       // 這一下只是「打招呼」，人不動
+    } else if(npcHit.hp < npcHit.mhp && p.inv.some(i => i.cat === 'herb' && i.d.hp > 0)){
+      healNpc(); return;
+    } else {
+      /* 走進他 = 交換位置。**這一條非有不可**：他會跟在你身後，
+         而走廊只有一格寬 —— 沒有交換的話，他會把你堵在死路裡走不出去。
+         實測就是這樣：機器人帶著他的時候，四十趟只有八趟走得完第一章，
+         其餘全部卡在轉角。那不是難度，那是玩家會關掉遊戲的那種 bug。 */
+      const ox2 = p.x, oy2 = p.y;
+      G.anim.push({o:npcHit, fx:npcHit.x, fy:npcHit.y, t:0});
+      npcHit.x = ox2; npcHit.y = oy2;
+      p.x = nx; p.y = ny;
+      G.anim.push({o:p, fx:ox2, fy:oy2, t:0});
+      stepOn();
+      endTurn();
+      return;
+    }
+  }
   // 店員只擋「欠錢的人」。無條件擋路的話，只有一個出口的店會把
   // 沒偷東西的玩家永久關在裡面 —— 那不是難度，那是 bug。
   if(keeperAt(nx,ny)){
@@ -6403,7 +6486,9 @@ function stepOn(){
       if(p.gold < it.price) keeperSay(M('s.142','{a} G。你身上只有 {b} G。',{a:it.price, b:p.gold}));
     } else say(M('s.006','踩在了「{v0}」上。（腳下）',{v0:(nameOf(it))}));
   }
-  if(tileAt(p.x,p.y)===DOWN) say(TX('m.stairs','這裡有向下的樓梯。（下樓）'),'gold');
+  if(tileAt(p.x,p.y)===DOWN) say(actUp(G.act)
+    ? TX('m.stairsup','這裡有向上的樓梯。（上樓）')
+    : TX('m.stairs','這裡有向下的樓梯。（下樓）'),'gold');
   if(G.f.exit && p.x===G.f.exit.x && p.y===G.f.exit.y)
     say(TX('s.007','回村的出口就在腳下。按 A 帶著戰利品離開迷宮。'),'gold');
 }
@@ -6678,6 +6763,7 @@ function endTurn(){
   for(const m of G.mons){ for(const k in m.st) if(--m.st[k]<=0) delete m.st[k]; }
 
   allyTurn();                       // 幻獸先動 —— 它是玩家花代價換來的先手
+  npcTurn();
 
   // 怪物行動（速度用行動點累積器；倍速怪拆成前後半，玩家才算得清逃跑距離）
   const snap = {px:p.x, py:p.y};
@@ -7137,6 +7223,21 @@ function knockPlayer(dx, dy, max){
 
 function act(m,it){
   const p=G.p;
+  /* 怪會打村民，而且**優先**打他。護送的壓力全部從這一段來：
+     他打不過、跑得慢，而怪知道誰比較好殺。
+     兩邊都貼著的時候各一半 —— 全打他的話玩家只能眼睜睜看他死，
+     全打你的話他就只是一個跟在後面的裝飾。 */
+  const npc = G.npc;
+  if(npc && npc.hp > 0 && npc.follow && (it.k === 'melee' || it.k === 'move')){
+    const dn = Math.max(Math.abs(m.x-npc.x), Math.abs(m.y-npc.y));
+    const dp = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
+    if(dn <= 1 && (dp > 1 || G.rng.chance(NPC_AGGRO)) && cornerOK(m.x,m.y,npc.x,npc.y)){
+      m.lunge = {dx:Math.sign(npc.x-m.x), dy:Math.sign(npc.y-m.y), t:0};
+      SFX.play('hit', 40);
+      hurtNpc(rollDmg(m.d.atk, 2, false, 1), locName('mon', m.d));
+      return;
+    }
+  }
   if(it.k==='melee'||it.k==='shoot'){
     const ranged = it.k==='shoot';
     const mult = (!ranged && m.d.rng) ? .5 : 1;   // 遠程怪貼身時打折 → 貼上去是正解
@@ -8343,6 +8444,114 @@ function allyTurn(){
   G.allies = G.allies.filter(a => a.hp > 0);
 }
 
+/* ═══ 迷路的村民（第一章第三層） ═══════════════════════════════
+   使用者：「我希望加入一個故事角色 —— 迷路的村民，然後村民會被攻擊受傷、
+   也會幫忙攻擊怪獸，主角要幫他回血，然後一路護送他回到第一個村莊，
+   會得到『Token 金庫』…… 主角不救也可以，就是之後冒險存錢比較辛苦而已」。
+
+   三件事讓它是一個**選擇**而不是一段強制劇情：
+     · 不理他就走，不會有任何懲罰，也不會擋路
+     · 帶著他走會變難 —— 怪會打他，而他死了就沒有獎勵
+     · 獎勵是長期的（錢），不是這一趟的戰力
+
+   為什麼放在第三層而不是第一層：前兩層是教走路與打架。
+   在玩家還不知道「血會掉」之前給他一個要保護的人，
+   他學到的只會是「這遊戲有個東西一直在死」。 */
+let npcSprite = null;
+/* 村民的樣子：跟村莊裡站的那幾個同一個骨架（土棕、成年）。
+   共用剪影是刻意的 —— 玩家在村莊看過他們，所以不用解釋「這是誰」。 */
+function npcArt(){
+  if(!npcSprite) npcSprite = makeBlob('b', {age:'adult'});
+  return npcSprite;
+}
+const NPC_ACT = 0, NPC_FLOOR = 3;
+/* 血量與被打的比例是量出來的。第一版是 24 點、兩邊各一半 ——
+   機器人在會治療的前提下二十七趟只帶回五趟（19%）。
+   那個數字對「順手救一個人」來說太兇：多數玩家會失敗，
+   而失敗的獎勵是零，於是這段劇情變成一段挫折。
+   40 點 + 三成五的仇恨之後，帶得回來的比例才像「有努力就做得到」。 */
+const NPC_HP = 40;
+const NPC_AGGRO = .35;
+
+function spawnNpc(rng, free){
+  if(G.act !== NPC_ACT || G.floor !== NPC_FLOOR) return;
+  if(VILLAGE.vault || VILLAGE.npcDone) return;      // 救過了就不再出現
+  const spot = free(6);                             // 離玩家遠一點才叫「找到他」
+  if(!spot) return;
+  G.npc = {x:spot.x, y:spot.y, hp:NPC_HP, mhp:NPC_HP, follow:0, hurt:0};
+}
+const npcAt = (x,y) => (G.npc && G.npc.hp > 0 && G.npc.x === x && G.npc.y === y) ? G.npc : null;
+
+/* 村民的一回合：跟著走、順手打一下擋路的怪。
+   攻擊力刻意很低（打得動但打不死）—— 他是要被保護的人，
+   不是一隻免費的幻獸。使用者要的是「也會幫忙攻擊怪獸」，那是氣氛不是輸出。 */
+function npcTurn(){
+  const n = G.npc, p = G.p;
+  if(!n || n.hp <= 0 || !n.follow) return;
+  let best = null, bd = 1e9;
+  for(const m of G.mons){
+    const d = Math.max(Math.abs(m.x-n.x), Math.abs(m.y-n.y));
+    if(d < bd){ bd = d; best = m; }
+  }
+  if(best && bd <= 1 && cornerOK(n.x,n.y,best.x,best.y)){
+    const dmg = rollDmg(4, best.d.def, false, 1);
+    hurtMon(best, dmg, '#79c97a');
+    say(M('m.npchit','村民揮了一下 —— {v0} 受到 {v1} 點傷害。',
+          {v0:locName('mon', best.d), v1:dmg}),'good');
+    return;
+  }
+  // 跟著玩家。距離兩格以內就停下來，不然他會一直踩在你要走的那一格上
+  /* 視野裡沒有怪的時候慢慢回一點。打完一場能喘口氣，
+     但速度只有每十回合一點 —— 靠拖時間回滿要一百回合，
+     那比走完一層還久，所以它不會取代「用草治療」。 */
+  if(!visibleMons().length && n.hp < n.mhp && G.turn % 10 === 0) n.hp++;
+  const far = Math.max(Math.abs(p.x-n.x), Math.abs(p.y-n.y));
+  if(far <= 1) return;
+  let bs = -1e9, bdir = null;
+  for(const d of DIRS){
+    const nx = n.x+d[0], ny = n.y+d[1];
+    if(!walkable(nx,ny) || monAt(nx,ny) || allyAt(nx,ny)) continue;
+    if(nx===p.x && ny===p.y) continue;
+    if(!cornerOK(n.x,n.y,nx,ny)) continue;
+    const sc = -Math.max(Math.abs(nx-p.x), Math.abs(ny-p.y));
+    if(sc > bs){ bs = sc; bdir = d; }
+  }
+  if(bdir){ G.anim.push({o:n, fx:n.x, fy:n.y, t:0}); n.x += bdir[0]; n.y += bdir[1]; }
+}
+
+function hurtNpc(dmg, who){
+  const n = G.npc;
+  if(!n || n.hp <= 0) return;
+  n.hp -= dmg; n.hurt = 0.12;
+  float(n.x, n.y, '-'+dmg, '#a83c32');
+  if(n.hp > 0){
+    say(M('m.npchurt','{v0} 打中了村民！（{a}/{b}）',{v0:who, a:Math.max(0,n.hp), b:n.mhp}),'bad');
+    if(n.hp <= n.mhp/3) say(TX('m.npclow','村民快撐不住了 —— 用回復草替他治療。'),'bad');
+  } else {
+    say(TX('m.npcdead','村民倒下了……你沒能把他帶回去。'),'bad');
+    burst(n.x, n.y, 20, '#a83c32', 40, 14, .8);
+    G.npc = null;
+  }
+}
+
+/* 治療村民：花掉一株回復草。做成「要付出東西」而不是自動回血 ——
+   護送的難處就在於你得把本來要留給自己的資源分給別人。 */
+function healNpc(){
+  const n = G.npc, p = G.p;
+  if(!n || n.hp <= 0) return false;
+  const h = p.inv.find(i => i.cat === 'herb' && i.d.hp > 0);
+  if(!h){ say(TX('m.npcnoherb','身上沒有可以替他治療的草。'),'bad'); return false; }
+  removeItem(h); h.known = 1; G.known[lookKey(h)] = 1;
+  const g = Math.min(n.mhp - n.hp, h.d.hp);
+  n.hp += g;
+  SFX.play('ident');
+  burst(n.x, n.y, 14, '#79c97a', 34, 12, .7);
+  say(M('m.npcheal','替村民用了「{nm}」—— 回復 {n} 點。（{a}/{b}）',
+        {nm:nameOf(h), n:g, a:n.hp, b:n.mhp}),'good');
+  endTurn();
+  return true;
+}
+
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say(TX('s.110','這裡沒有樓梯。')); return; }
@@ -8374,6 +8583,15 @@ function clearAct(){
     say(M('m.reward','獲得：{nm}',{nm:TX('actr.' + act.id, act.reward)}),'gold');
     grantReward(act);
   }
+  /* 護送成功。要「還活著而且跟著你」—— 丟在第三層的那一個不算，
+     那是玩家自己的決定，不是失敗。 */
+  if(G.npc && G.npc.hp > 0 && G.npc.follow && !VILLAGE.vault){
+    VILLAGE.vault = 1; VILLAGE.npcDone = 1;
+    SFX.play('ident');
+    say(TX('m.npcsaved','★ 你把迷路的村民帶回了村莊。'),'gold');
+    say(TX('m.vaultget','他把家傳的「Token 金庫」交給你 —— 從今以後，倒下時身上的錢一分都不會少。'),'gold');
+    G.npc = null;
+  } else if(G.npc && G.npc.follow){ G.npc = null; }
   const last = G.act >= ACTS.length - 1;
   if(!last && (VILLAGE.act|0) <= G.act){ VILLAGE.act = G.act + 1; }
   /* 通關賞金。從「進下一章不再白送裝備」開始，村莊的鐵匠鋪就是取得裝備的
@@ -8529,7 +8747,11 @@ function death(){
 
      一半，不是全部。這一趟的等級、道具、技能仍然全部歸零 ——
      倒下依然很痛，但每一次倒下都讓下一次更有機會。 */
-  const relic = Math.floor(G.p.gold * 0.5);
+  /* Token 金庫：把「一半」變成「全部」。護送迷路的村民換來的長期報酬 ——
+     它不讓你這一趟變強，它讓每一次失敗都不那麼傷。
+     使用者：「主角不救也可以，就是之後冒險存錢比較辛苦而已」。 */
+  const keepAll = !!VILLAGE.vault;
+  const relic = keepAll ? G.p.gold : Math.floor(G.p.gold * 0.5);
   if(relic > 0){ VILLAGE.gold += relic; saveVillage(); }
   const sc = submitScore('fall');
   const rank = VILLAGE.board.indexOf(sc) + 1;
@@ -8538,10 +8760,12 @@ function death(){
   document.getElementById('otext').innerHTML =
     `<span class="score">${TX('ui.score','積分')} <b>${sc.score}</b>` +
     (rank && rank<=20 ? M('o.rank','　·　本機第 {n} 名',{n:rank}) : '') + `</span><br>` +
-    M('o.where','在 <b>B{d}F</b> 倒下　·　等級 <b>{lv}</b>',{d:G.depth, lv:G.p.lv}) +
+    M('o.where','在 <b>{d}</b> 倒下　·　等級 <b>{lv}</b>',{d:floorLabel(G.act, G.floor), lv:G.p.lv}) +
     (sp ? M('o.skills','　·　技能 <b>{n}</b> 點',{n:sp}) : '') + `<br>` +
     TX('o.lost','等級歸零、道具全失、技能遺忘 —— 只有<b>你</b>學到的東西留下。') +
-    (relic ? '<br>' + M('o.relic','搜救隊把身上的 <b>{n} G</b> 送回了村莊。',{n:relic}) : '');
+    (relic ? '<br>' + (keepAll
+      ? M('o.vault','Token 金庫把身上的 <b>{n} G</b> 原封不動送回了村莊。',{n:relic})
+      : M('o.relic','搜救隊把身上的 <b>{n} G</b> 送回了村莊。',{n:relic})) : '');
   document.getElementById('over').classList.add('show');
 }
 
@@ -9930,6 +10154,24 @@ function draw(dt){
     blit(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
   }
 
+  /* 迷路的村民。用的是村莊裡那幾個村民同一個骨架 ——
+     玩家在村莊看過他們，所以不用解釋「這是誰」。
+     頭上一條血條：他是玩家要保護的東西，而看不見的血量沒辦法保護。 */
+  if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x, G.npc.y)] === 2){
+    const n2 = G.npc, art = npcArt();
+    const [nx2, ny2] = entPos(n2);
+    shadow(nx2, ny2, 1, art, 'npc');
+    drawEnt(n2, art, 'npc', 7);
+    const bx1 = Math.round(ox+nx2*T), by1 = Math.round(oy+ny2*T);
+    cx.fillStyle = 'rgba(6,8,9,.8)'; cx.fillRect(bx1+2, by1-4, 12, 3);
+    cx.fillStyle = n2.hp*3 <= n2.mhp ? '#a83c32' : '#6a8f4a';
+    cx.fillRect(bx1+3, by1-3, Math.max(1, Math.round(10*n2.hp/n2.mhp)), 1);
+    if(!n2.follow){                       // 還沒被發現：頭上一個問號般的呼吸光
+      cx.save(); cx.globalAlpha = .3 + Math.sin(clock*4)*.22;
+      cx.fillStyle = '#f5dc7a'; cx.fillRect(bx1+7, by1-8, 2, 3);
+      cx.restore();
+    }
+  }
   // 幻獸：畫在怪物之後、玩家之前，並用自己的元素色打一圈光
   for(const a of G.allies){
     const [ax,ay] = entPos(a);
@@ -10108,7 +10350,10 @@ function updateTags(){
       if(G.shop && G.seen[key(G.shop.keeper.x,G.shop.keeper.y)]===2)
         push(G.shop.keeper.x, G.shop.keeper.y, TX('k.who','店員'), 'shop', 'keeper');
       const stt = G.f.stairs;
-      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y, TX('k.down','下樓'), 'stair');
+      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y,
+        actUp(G.act) ? TX('k.up','上樓') : TX('k.down','下樓'), 'stair');
+      if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x,G.npc.y)] === 2)
+        push(G.npc.x, G.npc.y, TX('k.npc','迷路的村民'), 'shop');
       const shr = G.f.shrine;
       if(shr && !shr.used && G.seen[key(shr.x, shr.y)])
         push(shr.x, shr.y, TX('lg.shrine','紀錄點'), 'stair');
@@ -10226,6 +10471,7 @@ function paintMap(mcx, mini, MMS){
   for(const k in G.gold)  if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#f5dc7a',3);
   for(const m of G.mons)  if(G.seen[key(m.x,m.y)]===2) dot(m.x,m.y,'#a83c32',5);
   for(const a of G.allies) dot(a.x,a.y,PAL[a.d.col],5);
+  if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x,G.npc.y)]) dot(G.npc.x,G.npc.y,'#79c97a',5);
   // 玩家：白點加一圈黑框，壓在所有東西上面
   mcx.fillStyle='#14110f'; mcx.fillRect(G.p.x*MMS, G.p.y*MMS, MMS, MMS);
   mcx.fillStyle='#e8dcc0'; mcx.fillRect(G.p.x*MMS+1, G.p.y*MMS+1, MMS-2, MMS-2);
@@ -10404,6 +10650,11 @@ function refresh(){
   if(!G) return;
   const p=G.p;
   $('fnum').textContent = G.floor;
+  // 無頭環境（邏輯測試）的 $ 只回一個假的物件，沒有這兩支
+  const dp = $('depth');
+  if(dp && dp.setAttribute){
+    if(actUp(G.act)) dp.setAttribute('data-up',''); else dp.removeAttribute('data-up');
+  }
   $('lv').textContent = p.lv;
   $('hp').textContent = `${Math.max(0,p.hp)}/${p.mhp}`;
   $('hpbar').firstElementChild.style.width = Math.max(0,100*p.hp/p.mhp)+'%';
@@ -11837,6 +12088,98 @@ function paintVillageScene(){
   x.fillStyle = fade; x.fillRect(0, H-10, W, 10);
 }
 
+/* ═══ 旅程全圖（塔的側面） ═══════════════════════════════════
+   使用者：「遊戲名稱叫通天之塔，但是樓梯是一直往下？？（感覺應該反過來？）
+   或是應該有個遊戲的介紹圖面（通天塔與周邊側面圖，和標註主角位置）……
+   然後每一章節前都標註主角最新位置，讓玩家有概念這個遊戲的玩法」。
+
+   兩件事一起解決：ACTS 裡的 up:1 讓後三章真的往上走，
+   這張圖則把整趟路一次攤開 —— 地平線以下十二章一路往下，
+   走到最深處之後轉頭，沿著塔往上爬到頂。
+
+   為什麼畫成側面而不是清單：玩家問的是「還要走多遠」，
+   那是一個**空間**的問題。十五行文字答不了，一張側面圖一眼就答完。
+
+   畫在村莊而不是每一層的進場卡：村莊是「出發之前」，
+   那正是會想「我現在在哪」的時刻；進場卡只有一秒半，塞不下。 */
+const TOWER_W = 150, TOWER_H = 230;
+function paintTower(actIdx){
+  const c = $('towermap');
+  if(!c || !c.getContext) return;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, TOWER_W, TOWER_H);
+  const R = (a,b,w,h,col)=>{ x.fillStyle=col; x.fillRect(a,b,w,h); };
+
+  /* 每一章佔的高度跟它的層數走，不是每章一格。
+     這樣這張圖同時回答兩件事：「我在哪」與「哪一段最長」——
+     通天塔二十層，畫出來就真的是最高的那一段（每章一格的話它
+     跟只有一層的混沌之間一樣高，那張圖就只是一份目錄）。
+     最少三格：一層的章節不能在圖上消失。 */
+  const SEG = ACTS.map(a => Math.max(3, Math.round(a.floors * 2.1)));
+  const upH   = ACTS.reduce((n,a,i2) => n + (a.up ? SEG[i2] : 0), 0);
+  const downH = ACTS.reduce((n,a,i2) => n + (a.up ? 0 : SEG[i2]), 0);
+  const TOP = 14;                                   // 塔頂的光留的位置
+  const GROUND = TOP + upH + 6;
+
+  // 天空與地底
+  R(0, 0, TOWER_W, GROUND, '#1d3468');
+  R(0, 0, TOWER_W, Math.floor(GROUND*0.5), '#101c3a');
+  for(let i=0;i<30;i++){
+    const sx = (i*37+11) % TOWER_W, sy = (i*53+7) % Math.max(1, GROUND-6);
+    R(sx, sy, 1, 1, i%3 ? '#4a86cf' : '#c8c8d4');
+  }
+  R(0, GROUND, TOWER_W, TOWER_H-GROUND, '#2a1d14');
+  R(0, GROUND, TOWER_W, 2, '#5e442c');
+  for(let i=0;i<46;i++){
+    const sx=(i*61+5)%TOWER_W, sy=GROUND+5+((i*29)%Math.max(1,TOWER_H-GROUND-7));
+    R(sx, sy, 1, 1, '#43301f');
+  }
+
+  const MID = TOWER_W>>1;
+  /* 每一章畫成一段，並記下它的中心 —— 標記與「你在這裡」都用這個位置。
+     兩段在地平線接起來，那個轉折就是這款遊戲的形狀。 */
+  const spots = [];
+  let yUp = GROUND - 4, yDn = GROUND + 4;
+  for(let i=0;i<ACTS.length;i++){
+    const h = SEG[i];
+    if(ACTS[i].up){
+      const y = yUp - h;
+      // 越高越窄
+      const w = Math.max(14, 34 - Math.round((GROUND - y) / 6));
+      R(MID-(w>>1), y, w, h, '#3d3d4d');
+      R(MID-(w>>1), y, w, 1, '#565668');
+      R(MID-(w>>1), y+h-1, w, 1, '#1a1a24');
+      for(let k=y+2;k<y+h-2;k+=4) R(MID-2, k, 4, 2, '#101c3a');   // 窗
+      spots.push({x:MID, y:y + (h>>1), w});
+      yUp = y;
+    } else {
+      R(MID-12, yDn, 24, h, '#161d21');
+      R(MID-12, yDn, 24, 1, '#232c32');
+      for(let k=yDn+3;k<yDn+h-1;k+=5) R(MID-9, k, 18, 1, '#232c32');  // 層線
+      spots.push({x:MID, y:yDn + (h>>1), w:24});
+      yDn += h;
+    }
+  }
+  // 塔頂：一道往上的光
+  R(MID-5, yUp-6, 10, 6, '#565668');
+  R(MID-3, yUp-11, 6, 6, '#dcae35');
+  R(MID-1, yUp-14, 2, 4, '#f5dc7a');
+
+  // 走過的章壓一層金，還沒去的維持灰
+  for(let i=0;i<spots.length;i++){
+    if(i >= actIdx) continue;
+    const s2 = spots[i];
+    R(s2.x-(s2.w>>1)+1, s2.y-1, s2.w-2, 2, 'rgba(168,122,30,.55)');
+  }
+  // 你在這裡：一個箭頭 + 主角本人。放在右邊，不擋住塔身
+  const me = spots[Math.max(0, Math.min(ACTS.length-1, actIdx))];
+  const ax = me.x + (me.w>>1) + 3;
+  R(ax, me.y-1, 5, 2, '#f5dc7a');
+  R(ax, me.y-3, 2, 2, '#f5dc7a'); R(ax, me.y+1, 2, 2, '#f5dc7a');
+  x.drawImage(blobFor(VILLAGE.col, VILLAGE.skin), ax+7, me.y-8, 16, 16);
+}
+
 /* 村民會講下一章。村莊如果只有買賣，它就只是一個商店介面 ——
    有人在這裡對你說「接下來要去哪、那裡有什麼」，主線才接得起來。
    講的是**下一章**而不是這一章：村莊的作用是把人推出門。 */
@@ -11861,6 +12204,14 @@ function renderVillage(){
   $('vtalk').innerHTML = M('v.talkfmt','<b>{who}</b>：「{body}」<br>—— 下一章：<b>{nx}</b>',
     {who:t.who, body:t.body, nx:locAct(t.act)});
   $('vgo').textContent = M('ui.dive','前往　{nm}', {nm: locAct(t.act)});
+
+  // 旅程全圖：標的是**下一章**，跟村民講的是同一件事
+  const nx2 = Math.min(VILLAGE.act | 0, ACTS.length - 1);
+  paintTower(nx2);
+  const tl = $('towerlbl');
+  if(tl) tl.textContent = M('v.towerlbl','第 {n} / {all} 章　{dir}',
+    {n:nx2+1, all:ACTS.length,
+     dir: ACTS[nx2].up ? TX('v.towerup','沿著塔往上') : TX('v.towerdown','還在地底，繼續往下')});
 
   // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
   const folk = $('vfolk');

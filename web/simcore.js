@@ -71,7 +71,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'G:()=>G, VILLAGE:()=>VILLAGE, newGame, tryMove, endTurn, descend, useItem,' +
   'DIRS, key, walkable, monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN,' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
-  'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, hatHere, restStep, dwellCheck,' +
+  'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
   'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
