@@ -33,6 +33,11 @@ OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'dist' / 'index
 def key_for(rel):
     """檔案路徑 → adoptArt 用的鍵。對不上就回 None，讓呼叫端報錯。"""
     parts = rel.replace('\\', '/').split('/')
+    if len(parts) == 3 and parts[0] == 'anim':
+        cat, filename = parts[1], parts[2]
+        if cat in ('hero', 'hat', 'weapon', 'shield', 'mon', 'boss') and filename.endswith('.png'):
+            return 'anim:%s#%s' % (cat, filename[:-4])
+        return None
     if len(parts) != 2:
         return None
     cat, name = parts[0], parts[1][:-4]

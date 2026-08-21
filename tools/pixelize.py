@@ -76,7 +76,10 @@ def hex_to_rgb(h):
 
 def palette_hex_for(rel):
     """這個檔案該用哪一組色盤，看它放在哪個資料夾。"""
-    return PALETTES.get(rel.replace("\\", "/").split("/")[0], PALETTE_HEX)
+    parts = rel.replace("\\", "/").split("/")
+    # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
+    cat = parts[1] if len(parts) > 1 and parts[0] == "anim" else parts[0]
+    return PALETTES.get(cat, PALETTE_HEX)
 
 
 PALETTE_RGB = tuple(hex_to_rgb(h) for h in PALETTE_HEX)
@@ -454,10 +457,23 @@ def check_assets(root, size):
             w, h = im.size
             rel = os.path.relpath(path, root)
             want = size_for(rel, size)
+            is_anim = rel.replace("\\", "/").startswith("anim/")
 
-            if h != want or w % want != 0:
+            is_boss_anim = rel.replace("\\", "/").startswith("anim/boss/")
+            anim_size = (480, 144) if is_boss_anim else (320, 96)
+            if is_anim and (w, h) != anim_size:
+                print("  [動畫尺寸] %s 是 %dx%d，應為 %dx%d（10 欄 x 3 列）"
+                      % (rel, w, h, anim_size[0], anim_size[1]))
+                problems += 1
+            elif not is_anim and (h != want or w % want != 0):
                 print("  [尺寸] %s 是 %dx%d，應為 %d 的倍數 x %d"
                       % (rel, w, h, want, want))
+                problems += 1
+
+            anim_budget = (64 if is_boss_anim else 32) * 1024
+            if is_anim and os.path.getsize(path) > anim_budget:
+                print("  [動畫容量] %s 是 %.1f KB，單張上限 %d KB"
+                      % (rel, os.path.getsize(path) / 1024.0, anim_budget // 1024))
                 problems += 1
 
             # 色盤也是分類的屬性：主角的身體只准用那五個色，
