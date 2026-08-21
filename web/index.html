@@ -6824,6 +6824,17 @@ const interiorBlockerAt=(x,y)=> tileAt(x,y)===WALL && roomRectAt(x,y)>=0 && !mar
 const blockerVariantAt=(x,y)=> ((x*73856093 ^ y*19349663 ^ (G.depth||0)*83492791)>>>0)&1;
 // 這一章的地貌。放在遊戲層 —— 美術層不能引用 G，那是切點的分界。
 const themeNow = () => ACT_THEME[actAt(G.act).id] || 'stone';
+/* 洞窟火把分成兩種尺度：
+   - 走道只看見角色所在格與周圍八格，維持 3×3 的探索壓力。
+   - 房間稍微放寬，讓玩家看得出自己進入了一個空間，但仍看不到整間大廳。
+   獵人 Master 仍保留職業優勢，不過不再把半張地圖一次照亮。 */
+const caveVisionSpec=()=>{
+  const inRoom = roomOf(G.p.x,G.p.y)>=0;
+  const hunter = hasMaster('hnt');
+  return inRoom
+    ? {room:true, tiles:hunter ? 4.05 : 3.25, light:hunter ? 4.35 : 3.55}
+    : {room:false, tiles:hunter ? 2 : 1, light:hunter ? 2.85 : 2.05};
+};
 const monAt=(x,y)=> G.mons.find(m=>m.hp>0 && m.x===x && m.y===y);
 const isDoor=(x,y)=>{ const k=x+','+y; for(const i in G.f.rooms) if(G.f.rooms[i].doors.includes(k)) return true; return false; };
 
@@ -6844,9 +6855,9 @@ function vision(){
   const mark=(x,y)=>{ if(x>=0&&y>=0&&x<MW&&y<MH) G.seen[key(x,y)]=2; };
   const cave = !!(THEMES[themeNow()] || {}).cave;
   if(cave){
-    /* 洞窟不用「進房間就整間全亮」。火把是一個跟著玩家移動的圓，
-       而且牆會擋光；這同時約束精靈與名牌，所以黑暗裡不會只浮著文字。 */
-    const rr = hasMaster('hnt') ? 6 : 5, rr2=(rr+.25)*(rr+.25);
+    /* 走道是精確的九宮格；房間才使用較大的圓。兩者都會被牆擋住，
+       這同時約束精靈與名牌，所以黑暗裡不會只浮著文字。 */
+    const spec=caveVisionSpec(), rr=Math.ceil(spec.tiles), rr2=spec.tiles*spec.tiles;
     const clear=(tx,ty)=>{
       let x0=G.p.x,y0=G.p.y,x1=tx,y1=ty;
       const dx=Math.abs(x1-x0), sx=x0<x1?1:-1, dy=-Math.abs(y1-y0), sy=y0<y1?1:-1;
@@ -6859,7 +6870,7 @@ function vision(){
       return true;
     };
     for(let dy=-rr;dy<=rr;dy++) for(let dx=-rr;dx<=rr;dx++){
-      if(dx*dx+dy*dy>rr2) continue;
+      if(spec.room ? dx*dx+dy*dy>rr2 : Math.max(Math.abs(dx),Math.abs(dy))>spec.tiles) continue;
       const x=G.p.x+dx,y=G.p.y+dy; if(clear(x,y)) mark(x,y);
     }
     return;
@@ -10486,12 +10497,21 @@ function draw(dt){
     } else if(t===WALL){
       const face = walkable(x,y+1);
       blit(face ? TS.wallFace : TS.wall, px_, py);
-      // 牆永遠比房間地面暗一整段；下方接地時保留一條明亮石唇與深牆腳。
-      cx.fillStyle = face ? 'rgba(2,3,5,.20)' : 'rgba(2,3,5,.34)';
+      // 洞窟牆再壓深一階；下方接地時仍保留一條明亮石唇，輪廓才不會糊掉。
+      cx.fillStyle = CAVE
+        ? (face ? 'rgba(1,2,4,.32)' : 'rgba(1,2,4,.48)')
+        : (face ? 'rgba(2,3,5,.20)' : 'rgba(2,3,5,.34)');
       cx.fillRect(px_,py,T,T);
       if(face){
         cx.save(); cx.globalAlpha=.64; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_,py+8,T,1);
-        cx.globalAlpha=.72; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+15,T,1); cx.restore();
+        cx.globalAlpha=CAVE ? .90 : .72; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+14,T,2); cx.restore();
+      }
+      if(CAVE){
+        // 轉角的垂直暗面：直牆只有牆腳，L 型牆角則多一塊厚陰影。
+        // 這幾塊都是整數像素硬邊，不會破壞 16-bit 的讀法。
+        cx.fillStyle='rgba(1,2,4,.58)';
+        if(walkable(x-1,y)){ cx.fillRect(px_,py+5,3,11); cx.fillRect(px_+3,py+10,1,6); }
+        if(walkable(x+1,y)){ cx.fillRect(px_+13,py+5,3,11); cx.fillRect(px_+12,py+10,1,6); }
       }
     } else if(t===DOWN){
       blit(TILE_ART.stairs, px_, py);
@@ -10546,6 +10566,17 @@ function draw(dt){
       if(!walkable(x, y+1)) blit(AO.d, px_, py);
       if(!walkable(x-1, y)) blit(AO.l, px_, py);
       if(!walkable(x+1, y)) blit(AO.r, px_, py);
+      if(CAVE){
+        // 兩面牆交會的地板角落再疊一個階梯形暗楔。
+        // 牆角因此比直牆腳更深，玩家不用靠花紋猜哪裡能走。
+        const wu=!walkable(x,y-1), wd=!walkable(x,y+1),
+              wl=!walkable(x-1,y), wr=!walkable(x+1,y);
+        cx.fillStyle='rgba(1,2,4,.46)';
+        if(wu&&wl){ cx.fillRect(px_,py,4,4); cx.fillRect(px_+4,py,2,2); cx.fillRect(px_,py+4,2,2); }
+        if(wu&&wr){ cx.fillRect(px_+12,py,4,4); cx.fillRect(px_+10,py,2,2); cx.fillRect(px_+14,py+4,2,2); }
+        if(wd&&wl){ cx.fillRect(px_,py+12,4,4); cx.fillRect(px_+4,py+14,2,2); cx.fillRect(px_,py+10,2,2); }
+        if(wd&&wr){ cx.fillRect(px_+12,py+12,4,4); cx.fillRect(px_+10,py+14,2,2); cx.fillRect(px_+14,py+10,2,2); }
+      }
     }
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
@@ -11151,9 +11182,10 @@ function draw(dt){
   }
   cx.globalAlpha = 1;
 
-  // 火把光暈：洞窟固定為約五格半徑的圓，真的跟著玩家走；戶外才沿用寬視野。
-  // 上一版按畫布尺寸算半徑，手機上半徑大到超出整個房間，等於只有暗角、沒有火把。
-  const R = CAVE ? T * (hasMaster('hnt') ? 6.25 : 5.25) : Math.max(SW, SH) * 0.46;
+  // 火把光暈：走道約九宮格，房間稍微擴張；戶外才沿用寬視野。
+  // 視覺半徑和上面的判定共用同一份規格，怪物不會站在黑暗裡卻已被判定看見。
+  const CAVE_SPEC = CAVE ? caveVisionSpec() : null;
+  const R = CAVE ? T * CAVE_SPEC.light : Math.max(SW, SH) * 0.46;
   const g = cx.createRadialGradient(
     ox+G.p.x*T+8, oy+G.p.y*T+8, CAVE ? R*0.16 : R*0.22,
     ox+G.p.x*T+8, oy+G.p.y*T+8, R);
