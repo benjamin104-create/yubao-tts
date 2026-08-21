@@ -4014,13 +4014,17 @@ const AO = (()=>{
   const edge = (dir)=>{
     const c = document.createElement('canvas'); c.width = T; c.height = T;
     const x = c.getContext('2d');
-    const g = dir === 'u' ? x.createLinearGradient(0, 0, 0, 8)
-            : dir === 'd' ? x.createLinearGradient(0, T, 0, T - 5)
-            : dir === 'l' ? x.createLinearGradient(0, 0, 6, 0)
-            :               x.createLinearGradient(T, 0, T - 6, 0);
-    g.addColorStop(0, dir === 'u' ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    x.fillStyle = g; x.fillRect(0, 0, T, T);
+    /* 像素地形不能靠平滑漸層假裝有深度。改成 1px 一階的接觸陰影：
+       靠牆最暗，離牆越遠越淡；左上光源固定，所以上牆投下的陰影最重。 */
+    const bands = dir === 'u' ? [[0,1,.52],[1,1,.34],[2,1,.20],[3,2,.09]]
+                : dir === 'd' ? [[15,1,.32],[14,1,.19],[13,1,.09]]
+                : dir === 'l' ? [[0,1,.38],[1,1,.23],[2,2,.10]]
+                :               [[15,1,.27],[14,1,.16],[13,2,.07]];
+    for(const [at,w,a] of bands){
+      x.fillStyle = `rgba(5,7,10,${a})`;
+      if(dir === 'u' || dir === 'd') x.fillRect(0,at,T,w);
+      else x.fillRect(at,0,w,T);
+    }
     return c;
   };
   return { u: edge('u'), d: edge('d'), l: edge('l'), r: edge('r') };
@@ -4032,7 +4036,7 @@ const AO = (()=>{
    結果十五個章節長得一模一樣 —— 迷霧森林跟礦坑洞穴同一塊地板。
    章節的差別不能只有名字，那是玩家第一眼就會發現的事。 */
 const RAMP = ['w','x','y','z'];
-function makeFloor(seed, corridor, ramp, soft){
+function makeFloor(seed, corridor, ramp, soft, quiet){
   const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
   const r = RNG(seed*2654435761);
@@ -4042,7 +4046,13 @@ function makeFloor(seed, corridor, ramp, soft){
     /* 戶外的地面沒有磚縫。留著磚縫的話，換再多顏色都還是「鋪過的路」——
        綠色的石板路不是森林。改成成叢的雜點：疏密不均、邊緣不對齊，
        眼睛就會把它讀成土與草而不是磚。 */
-    for(let i=0;i<6;i++){
+    // 小土塊也遵守左上亮、右下暗；沒有這一對，草地只是平面的噪點。
+    for(let i=0;i<(quiet?1:3);i++){
+      const bx=r.i(1,12), by=r.i(1,13);
+      x.fillStyle=PAL[mortar]; x.fillRect(bx+1,by+1,3,2);
+      x.fillStyle=PAL[lit]; x.fillRect(bx,by,3,1); x.fillRect(bx,by,1,2);
+    }
+    for(let i=0;i<(quiet?3:6);i++){
       const cx0=r.i(0,15), cy0=r.i(0,15), n=r.i(2,4);
       for(let k=0;k<n;k++){
         const px_=Math.min(15,Math.max(0,cx0+r.i(-2,2))), py=Math.min(15,Math.max(0,cy0+r.i(-2,2)));
@@ -4050,13 +4060,21 @@ function makeFloor(seed, corridor, ramp, soft){
         x.fillRect(px_,py,1,1);
       }
     }
-    for(let i=0;i<4;i++) { x.fillStyle=PAL[lit]; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
+    for(let i=0;i<(quiet?2:4);i++) { x.fillStyle=PAL[lit]; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
     return c;
   }
   // 磚縫
   x.fillStyle=PAL[mortar];
   x.fillRect(0,0,T,1); x.fillRect(0,8,T,1);
   x.fillRect(0,0,1,8); x.fillRect(8,8,1,8);
+  // 四塊石板各自做一圈 1px 的倒角，左上受光、右下壓暗。
+  // 仍然只用同一組色帶，因此比角色安靜，但地面不再像一張平貼的棋盤紙。
+  x.fillStyle=PAL[lit];
+  x.fillRect(1,1,7,1); x.fillRect(1,1,1,7);
+  x.fillRect(9,9,7,1); x.fillRect(9,9,1,7);
+  x.fillStyle=PAL[mortar];
+  x.fillRect(1,7,7,1); x.fillRect(7,1,1,7);
+  x.fillRect(9,15,7,1); x.fillRect(15,9,1,7);
   // 顆粒
   for(let i=0;i<26;i++){
     const px_=r.i(1,15), py=r.i(1,15);
@@ -4077,11 +4095,14 @@ function makeWall(face, ramp){
   x.fillRect(1,1,6,1); x.fillRect(9,1,6,1); x.fillRect(1,9,6,1); x.fillRect(9,9,6,1);
   for(let i=0;i<18;i++){ x.fillStyle = r.chance(.5)?PAL[R4[1]]:PAL['0']; x.fillRect(r.i(0,15),r.i(0,15),1,1); }
   if(face){
-    // 立面：下方有地板時畫出厚度，深度感就出來了
-    x.fillStyle=PAL[R4[3]]; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL[R4[2]]; x.fillRect(0,11,T,2);
+    // 立面加深到半格：上緣是一條亮的石唇，右下則整片退進暗面。
+    x.fillStyle=PAL[R4[3]]; x.fillRect(0,8,T,1);
+    x.fillStyle=PAL[R4[2]]; x.fillRect(0,9,T,2);
+    x.fillStyle=PAL[R4[1]]; x.fillRect(0,11,T,2);
     x.fillStyle=PAL[R4[0]]; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+    x.fillStyle=PAL[R4[3]]; x.fillRect(1,9,5,1);
+    x.fillStyle=PAL['0']; x.fillRect(15,10,1,5);
     for(let i=0;i<5;i++) x.fillRect(r.i(0,15),r.i(11,14),1,1);
   }
   return c;
@@ -4151,7 +4172,7 @@ function makeHat(i){
    `lightAll` = 這一章是戶外，不靠火把照明（山頂、湖畔、塔頂），
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
-  stone:    {ramp:['w','x','y','z'], mark:'cart'},                       // 礦坑、牢獄：原本的冷色石階
+  stone:    {ramp:['w','x','y','z'], prop:'damp', propRate:10, surface:'drip', mark:'cart'}, // 礦坑、牢獄：潮濕石階與滴水
   forest:   {ramp:['7','j','k','l'], torch:'#79c97a', soft:1, wall:'tree',   prop:'grass',  air:'mist',  mark:'tree'},      // 苔綠，光是螢火不是火把
   mountain: {ramp:['1','3','4','6'], lightAll:1, soft:1, wall:'cliff',  prop:'rock',   air:'wind',  mark:'stele', back:'sky'},           // 灰藍岩階，天是亮的
   briar:    {ramp:['0','e','8','f'], torch:'#e87a4a', wall:'brick', prop:'rock',  air:'ember', mark:'statue'},      // 暗紅磚與藤蔓
@@ -4159,7 +4180,7 @@ const THEMES = {
   beast:    {ramp:['7','8','a','c'], torch:'#f5a95e', soft:1, wall:'tree', prop:'grass', air:'mist', mark:'bones'},      // 獸巢：暖土色
   wood:     {ramp:['7','8','9','b'], torch:'#dcae35', wall:'plank', prop:'rock', mark:'torii'},      // 木紋地板：忍者之里、平安京
   mirror:   {ramp:['1','2','4','6'], lightAll:1, wall:'shard', prop:'glint', air:'shimmer', mark:'mirror', back:'pale'},           // 鏡像：冷白無影
-  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, wall:'shard', prop:'glint', air:'shimmer', mark:'geode'},           // 水晶礦坑
+  crystal:  {ramp:['n','o','q','r'], lightAll:1, soft:1, quiet:1, wall:'shard', prop:'glint', propRate:15, air:'shimmer', surface:'ice', mark:'geode'}, // 水晶礦坑：地面結晶會緩慢生長
   spire:    {ramp:['4','5','6','d'], lightAll:1, wall:'column', prop:'inlay', air:'rise', mark:'statue', back:'high'},           // 通天塔：白石與金線
   void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
@@ -4174,10 +4195,10 @@ const TILE_SETS = {};
 function tilesFor(theme){
   if(TILE_SETS[theme]) return TILE_SETS[theme];
   const th = THEMES[theme] || THEMES.stone;
-  const r = th.ramp, sf = !!th.soft;
+  const r = th.ramp, sf = !!th.soft, q = !!th.quiet;
   return TILE_SETS[theme] = {
-    floor:[makeFloor(1,0,r,sf),makeFloor(2,0,r,sf),makeFloor(3,0,r,sf),makeFloor(4,0,r,sf)],
-    corr:[makeFloor(11,1,r,sf),makeFloor(12,1,r,sf),makeFloor(13,1,r,sf)],
+    floor:[makeFloor(1,0,r,sf,q),makeFloor(2,0,r,sf,q),makeFloor(3,0,r,sf,q),makeFloor(4,0,r,sf,q)],
+    corr:[makeFloor(11,1,r,sf,q),makeFloor(12,1,r,sf,q),makeFloor(13,1,r,sf,q)],
     wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
   };
 }
@@ -4195,12 +4216,36 @@ const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   px(x,PAL['0'],4,8,8,5); px(x,PAL['t'],5,9,6,3); px(x,PAL['u'],5,9,6,1); px(x,PAL['v'],6,9,2,1);
   px(x,PAL['0'],3,5,6,4); px(x,PAL['t'],4,6,4,2); px(x,PAL['v'],4,6,2,1);
   return c; })();
-const trapIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
-  const x=c.getContext('2d');
-  px(x,PAL['0'],3,5,10,9); px(x,PAL['e'],4,6,8,7);
-  for(let i=0;i<4;i++){ px(x,PAL['6'],5+i*2,6,1,3); px(x,PAL['6'],5+i*2,10,1,3); }
-  px(x,PAL['g'],4,6,8,1);
-  return c; })();
+/* 陷阱是「嵌進地板的機關」，不是一個放在地上的紅色盒子。
+   普通陷阱用內縮壓板＋四向尖齒；毒針陷阱用圓形針孔座。
+   外圈沿用章節色帶，金屬與危險色才跨章節固定，既融入環境又能辨識。 */
+const TRAP_SETS = {};
+function makeTrap(kind, ramp){
+  const R = ramp || RAMP;
+  const c=document.createElement('canvas'); c.width=T;c.height=T; const x=c.getContext('2d');
+  if(kind === 2){
+    // 八角針孔座：暗凹槽、冷金屬針、紅色藥芯。
+    px(x,PAL['0'],5,5,6,1); px(x,PAL['0'],4,6,8,4); px(x,PAL['0'],5,10,6,1);
+    px(x,PAL[R[1]],5,6,6,4); px(x,PAL[R[2]],5,6,5,1); px(x,PAL[R[0]],10,7,1,3);
+    px(x,PAL['6'],7,4,2,4); px(x,PAL['6'],7,9,2,3);
+    px(x,PAL['6'],3,7,4,2); px(x,PAL['6'],9,7,4,2);
+    px(x,PAL['f'],7,7,2,2); px(x,PAL['h'],7,7,1,1);
+  } else {
+    // 壓板：右下沉入地面，四枚齒尖朝向中央。
+    px(x,PAL['0'],4,5,8,1); px(x,PAL['0'],3,6,10,7); px(x,PAL['0'],4,13,8,1);
+    px(x,PAL[R[1]],4,6,8,7); px(x,PAL[R[2]],4,6,7,1); px(x,PAL[R[2]],4,6,1,6);
+    px(x,PAL[R[0]],5,12,7,1); px(x,PAL[R[0]],11,7,1,5);
+    px(x,PAL['6'],7,6,2,3); px(x,PAL['6'],7,10,2,3);
+    px(x,PAL['6'],4,8,3,2); px(x,PAL['6'],9,8,3,2);
+    px(x,PAL['e'],7,8,2,2); px(x,PAL['g'],7,8,1,1);
+  }
+  return c;
+}
+function trapsFor(theme){
+  if(TRAP_SETS[theme]) return TRAP_SETS[theme];
+  const R = (THEMES[theme] || THEMES.stone).ramp;
+  return TRAP_SETS[theme] = [makeTrap(1,R), makeTrap(2,R)];
+}
 
 /* ═══ 動態美術層 ═════════════════════════════════════════════
    一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
@@ -4672,10 +4717,16 @@ function themeWall(kind, face, ramp){
     return makeWall(face, R);                // 石造：沿用原本的磚牆
   }
   if(face){                                  // 立面：下方是地板時畫出厚度
-    x.fillStyle=PAL[R[3]]; x.fillRect(0,10,T,1);
-    x.fillStyle=PAL[R[2]]; x.fillRect(0,11,T,2);
+    /* 頂面縮成上半格，讓下半格真的成為「面」。左上石唇吃光，
+       右下側邊與底縫最暗；這比整格只換深淺更像站起來的牆。 */
+    x.fillStyle=PAL[R[3]]; x.fillRect(0,8,T,1);
+    x.fillStyle=PAL[R[2]]; x.fillRect(0,9,T,2);
+    x.fillStyle=PAL[R[1]]; x.fillRect(0,11,T,2);
     x.fillStyle=PAL[R[0]]; x.fillRect(0,13,T,3);
     x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+    x.fillStyle=PAL[R[3]]; x.fillRect(1,9,5,1);
+    x.fillStyle=PAL['0']; x.fillRect(15,10,1,5);
+    x.fillRect(4,12,4,1); x.fillRect(10,14,3,1);
   }
   return c;
 }
@@ -4714,6 +4765,19 @@ function themeProp(kind, i, ramp){
                     px(x,PAL['0'],10,11,2,3); px(x,PAL[R[3]],10,11,1,2); }
     else if(i===2){ for(let k=0;k<5;k++) px(x,PAL[R[3]],r.i(3,12),r.i(9,14),1,1); }
     else { px(x,PAL['0'],7,9,3,5); px(x,PAL[R[3]],7,9,2,4); px(x,PAL['6'],7,9,1,2); }
+  } else if(kind === 'damp'){                 // 礦坑／牢獄：積水、滲水縫、濕亮石屑
+    if(i===0){
+      px(x,PAL['n'],3,12,10,2); px(x,PAL['o'],4,11,7,2); px(x,PAL['q'],4,11,4,1);
+    } else if(i===1){
+      px(x,PAL[R[0]],3,9,1,3); px(x,PAL[R[0]],4,11,4,1);
+      px(x,PAL[R[0]],7,11,1,3); px(x,PAL[R[2]],4,10,1,1);
+    } else if(i===2){
+      px(x,PAL['0'],5,12,6,2); px(x,PAL[R[2]],5,12,5,1);
+      px(x,PAL['q'],7,11,2,1);
+    } else {
+      px(x,PAL['o'],2,13,5,1); px(x,PAL['q'],3,12,2,1);
+      px(x,PAL['o'],9,11,4,1); px(x,PAL['r'],10,10,1,1);
+    }
   } else {
     return PROPS[i % PROPS.length];
   }
@@ -4900,6 +4964,64 @@ function propsFor(theme){
   const th = THEMES[theme] || THEMES.stone;
   if(!th.prop) return THEME_PROPS[theme] = PROPS;
   return THEME_PROPS[theme] = [0,1,2,3].map(i => themeProp(th.prop, i, th.ramp));
+}
+
+/* ─── 與地形黏在一起的環境動畫 ────────────────────────────────
+   霧、風、火星可以在螢幕空間飄；滴水與冰柱不行。它們必須從某一面牆落下、
+   從某一格地板長出來，玩家才會相信那是環境，不是蓋在畫面上的濾鏡。
+   所有位置都由座標雜湊決定，不存粒子、不改規則，也不增加圖片下載量。 */
+const terrainFxHash = (x,y,s=0)=> (x*73856093 ^ y*19349663 ^ s*83492791) >>> 0;
+function terrainFxBlocked(x,y){
+  const k = y*MW+x;
+  if(G.items[k] || G.gold[k] || G.traps[k]) return true;
+  if(G.p.x===x && G.p.y===y) return true;
+  if(G.mons.some(m=>m.x===x&&m.y===y)) return true;
+  if((G.allies||[]).some(a=>a.x===x&&a.y===y)) return true;
+  return !!(G.npc && G.npc.x===x && G.npc.y===y);
+}
+function drawTerrainFx(kind, x, y, px0, py0, tile){
+  if(!kind) return;
+  const h = terrainFxHash(x,y,G.depth||0);
+  if(kind === 'drip'){
+    // 只從下方接著可走地板的牆面滴落；約每九面牆一處，不會滿屏下雨。
+    if(tile!==WALL || !walkable(x,y+1) || h%9!==0) return;
+    const dx = 4 + ((h>>>8)%9), ph = (clock*.36 + (h%997)/997) % 1;
+    cx.save();
+    // 永久的濕痕很暗，移動的水珠才用亮藍，避免搶過角色與道具。
+    cx.globalAlpha=.34; cx.fillStyle=PAL['o']; cx.fillRect(px0+dx,py0+4,1,7);
+    if(ph < .78){
+      const dy = 7 + Math.floor(ph/.78*18);
+      cx.globalAlpha=.82; cx.fillStyle=PAL['r']; cx.fillRect(px0+dx,py0+dy,1,2);
+      cx.fillStyle=PAL['q']; cx.fillRect(px0+dx+1,py0+dy+1,1,1);
+    } else if(ph < .94){
+      const w = 1 + Math.floor((ph-.78)/.16*4), sy = py0+T+12;
+      cx.globalAlpha=.62; cx.fillStyle=PAL['q'];
+      cx.fillRect(px0+dx-w,sy,w,1); cx.fillRect(px0+dx+2,sy,Math.max(1,w-1),1);
+      cx.fillStyle=PAL['r']; cx.fillRect(px0+dx,sy-1,1,1);
+    }
+    cx.restore();
+  } else if(kind === 'ice'){
+    if(tile===WALL || tile===DOWN || h%11!==0 || terrainFxBlocked(x,y)) return;
+    const ph = (clock*.16 + (h%991)/991) % 1;
+    const grow = ph<.22 ? ph/.22 : ph<.70 ? 1 : ph<.92 ? 1-(ph-.70)/.22 : 0;
+    const ht = Math.round(grow*(4 + ((h>>>9)%3)));
+    if(ht<1) return;
+    const bx = px0 + 4 + ((h>>>5)%7), base = py0+14;
+    cx.save(); cx.globalAlpha=.48 + grow*.34;
+    // 三角冰脊：深色右面、淡藍左面與一格白亮點，整體仍壓在角色後方。
+    cx.fillStyle=PAL['n']; cx.fillRect(bx-2,base,6,1);
+    for(let j=0;j<ht;j++){
+      const w = Math.max(1,Math.ceil((j+1)*3/ht));
+      cx.fillStyle=PAL['o']; cx.fillRect(bx-w+1,base-j-1,w+1,1);
+      cx.fillStyle=PAL['q']; cx.fillRect(bx-w+1,base-j-1,1,1);
+    }
+    cx.fillStyle=PAL['r']; cx.fillRect(bx,base-ht,1,Math.max(1,Math.floor(ht/2)));
+    if(ht>4){
+      cx.fillStyle=PAL['o']; cx.fillRect(bx+3,base-2,2,2);
+      cx.fillStyle=PAL['q']; cx.fillRect(bx+3,base-3,1,2);
+    }
+    cx.restore();
+  }
 }
 
 /* ─── 地圖生成 ────────────────────────────────────────────────
@@ -9928,7 +10050,10 @@ function draw(dt){
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
   const OUTDOOR = !!(THEMES[THEME_ID] || {}).lightAll;
   const TPROPS = propsFor(THEME_ID);
+  const PROP_RATE = (THEMES[THEME_ID] || {}).propRate || 9;
   const AIR = (THEMES[THEME_ID] || {}).air;
+  const SURFACE = (THEMES[THEME_ID] || {}).surface;
+  const TRAPS = trapsFor(THEME_ID);
   const MK = G.f.mark, MKART = MK ? markFor(THEME_ID) : null;
 
   /* ── 外牆 ──────────────────────────────────────────────────
@@ -10011,7 +10136,7 @@ function draw(dt){
       blit(arr[(x*7+y*13)%arr.length], px_, py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
-      if(h % 9 === 0) blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      if(h % PROP_RATE === 0) blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
       // 貼著牆的那一圈壓暗 —— 牆才會像是站在地板上，而不是貼在旁邊
       if(!walkable(x, y-1)) blit(AO.u, px_, py);
       if(!walkable(x, y+1)) blit(AO.d, px_, py);
@@ -10023,6 +10148,15 @@ function draw(dt){
     // 在戶外把視野外畫成純黑，那還是地牢。
     if(s===1){ cx.fillStyle = OUTDOOR ? 'rgba(0,0,0,.34)' : 'rgba(0,0,0,.62)';
                cx.fillRect(px_,py,T,T); }
+  }
+
+  // 貼著地形的動畫要在地板與 AO 之後、道具與角色之前。
+  // 只畫目前視野，記憶裡的牆不應該還在滴水，否則那不是「記憶」。
+  if(SURFACE){
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      if(G.seen[key(x,y)]!==2) continue;
+      drawTerrainFx(SURFACE, x, y, ox+x*T, oy+y*T, tileAt(x,y));
+    }
   }
 
   /* 砲座。地磚換色 + 上面一具裝置，冷卻時整個暗下來。
@@ -10204,7 +10338,7 @@ function draw(dt){
   for(const k in G.gold){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); blit(goldIcon, ox+x*T, oy+y*T+b); } }
   for(const k in G.traps){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2) blit(trapIcon, ox+x*T, oy+y*T); }
+    if(G.seen[k]===2) blit(TRAPS[Math.max(0,Math.min(1,(G.traps[k]|0)-1))], ox+x*T, oy+y*T); }
   for(const k in G.items){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); blit(iconOf(G.items[k]), ox+x*T, oy+y*T+b); } }
 
@@ -10802,6 +10936,14 @@ function paintMap(mcx, mini, MMS){
     else              col = s===2 ? '#9fb4c0' : '#63757f';   // 房間：最亮
     mcx.fillStyle = col;
     mcx.fillRect(x*MMS, y*MMS, MMS, MMS);
+    if(t===WALL && s===2){
+      // 小地圖也保留「牆站在地板上」的讀法：上緣亮、臨地板的下緣厚暗。
+      mcx.fillStyle='rgba(255,255,255,.10)'; mcx.fillRect(x*MMS,y*MMS,MMS,1);
+      const below = y+1<MH ? G.f.t[(y+1)*MW+x] : WALL;
+      if(below!==WALL){
+        mcx.fillStyle='rgba(4,6,8,.72)'; mcx.fillRect(x*MMS,(y+1)*MMS-2,MMS,2);
+      }
+    }
   }
   // 樓梯：看過就永遠記得，這是玩家最需要的一格
   const st = G.f.stairs;
@@ -10818,6 +10960,14 @@ function paintMap(mcx, mini, MMS){
   };
   for(const k in G.items) if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#dcae35',4);
   for(const k in G.gold)  if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#f5dc7a',3);
+  // 已看見的陷阱畫成橙紅菱形，不再跟怪物共用一顆紅點。
+  for(const k in G.traps) if(G.seen[k]===2){
+    const x=k%MW, y=(k/MW)|0, cx0=x*MMS+(MMS>>1), cy0=y*MMS+(MMS>>1);
+    mcx.fillStyle='#0d0d12'; mcx.fillRect(cx0-2,cy0-2,5,5);
+    mcx.fillStyle='#e87a4a';
+    mcx.fillRect(cx0,cy0-2,1,1); mcx.fillRect(cx0-1,cy0-1,3,3); mcx.fillRect(cx0,cy0+2,1,1);
+    mcx.fillStyle='#f5a95e'; mcx.fillRect(cx0,cy0,1,1);
+  }
   for(const m of G.mons)  if(G.seen[key(m.x,m.y)]===2) dot(m.x,m.y,'#a83c32',5);
   for(const a of G.allies) dot(a.x,a.y,PAL[a.d.col],5);
   if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x,G.npc.y)]) dot(G.npc.x,G.npc.y,'#79c97a',5);
