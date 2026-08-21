@@ -4,6 +4,11 @@
 風格規格與完整需求清單見 `roguelike_art_guide.md`（那份是為 Godot 版寫的，
 規格通用；這份只講網頁版的接法與遷移順序）。
 
+> **動畫 v2：** 角色現在支援走路換腳、三段攻擊與受擊後仰。正式逐格圖集契約見
+> [`art_animation_spec.md`](art_animation_spec.md)，可直接使用的生成提示詞見
+> [`art_prompts_hero.md`](art_prompts_hero.md)、[`art_prompts_mon.md`](art_prompts_mon.md)
+> 與 [`art_prompts_boss.md`](art_prompts_boss.md)。舊 32/48px 靜態圖保留作 fallback。
+
 ---
 
 ## 0. 先決定的三件事（已經替你決定好，理由在後面）
@@ -52,6 +57,9 @@
 按網格硬切的結果是史萊姆下面多一塊白球、骷髏差點被切到頭。
 `--auto` 改成用連通元件自己找角色，排得多亂都無所謂。
 
+上面這段只適用於「一張圖裡有多隻不同角色」的舊靜態母稿。動畫圖集必須嚴格使用
+10x3 固定格位，且一次只做同一名角色；否則遊戲無法知道哪格是腳步、攻擊或受擊。
+
 ---
 
 ## 2. 生成什麼（第一批只做四隻）
@@ -72,6 +80,9 @@
 | 存放 | `art_raw/<批次名>.png`，例如 `art_raw/mon_batch1.png` |
 | 轉檔後 | 由 `pixelize.py` 產出 32×32 PNG，自動放進 `web/art/` |
 | 單張成品 | 32×32，32 色以內，通常 1～2 KB |
+
+動畫成品另計：一般角色為 `320x96`、目標不超過 32 KB；頭目為 `480x144`、
+目標不超過 64 KB。禁止把 1024px 生成原圖直接放進 `web/art/anim/`。
 
 ---
 

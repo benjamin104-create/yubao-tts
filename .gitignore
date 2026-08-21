@@ -14,3 +14,7 @@ __pycache__/
 
 # 單檔打包產物（可重建，不入版控）
 dist/
+
+# ImageGen 高解析製作母圖與本機驗收預覽；網站只發布 web/art 透明成品
+art_raw/
+work/
