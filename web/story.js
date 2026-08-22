@@ -218,6 +218,32 @@ console.log('\n=== 神殿的佈景（石灰岩、柱面、陽光） ===');
      '每一道光柱都是靠窗那頭最亮（' + headBright + '/' + rays2 + ' 道）');
 }
 
+/* 列柱、石獅與界碑不能只是畫面上偶爾碰巧出現。序章的視覺敘事靠它們，
+   所以固定掃多顆種子：兩排列柱必須對齊、石獅與黑石碑必須成對，
+   右下投影只能落在可走地面，否則玩家會把陰影誤認成牆。 */
+{
+  const V4=api.VILLAGE(), N=40;
+  let colOK=0, relicOK=0, shadowOK=0, shadowMaps=0;
+  for(let seed=301;seed<301+N;seed++){
+    V4.act=0; api.newGame(seed);
+    const g=api.G(); g.act=0; g.floor=1; api.buildFloor();
+    const f=g.f, cols=f.pillars||[], relics=f.relics||[], sh=f.shadowAt;
+    const xs=new Set(cols.map(p=>p.x));
+    if(cols.length>=4 && xs.size===2 && [...xs].every(x=>Math.abs(x-(api.MW>>1))===5)) colOK++;
+    const lions=relics.filter(r=>r.kind==='lion'), stones=relics.filter(r=>r.kind==='kudurru');
+    if(lions.length===2 && stones.length===2 && lions[0].dir===-lions[1].dir) relicOK++;
+    if(sh && sh.size){
+      shadowMaps++;
+      let bad=0; for(const k of sh.keys()) if(f.t[k]===api.WALL) bad++;
+      if(!bad) shadowOK++;
+    }
+  }
+  ok(colOK===N,'前庭兩排列柱固定對齊（'+colOK+'/'+N+' 張）');
+  ok(relicOK===N,'每層都有成對石獅與黑石碑（'+relicOK+'/'+N+' 張）');
+  ok(shadowMaps===N && shadowOK===N,
+     '柱像投影存在而且只落在可走地面（'+shadowOK+'/'+shadowMaps+' 張）');
+}
+
 /* 別的章節沒有陽光。神殿是地面上的建築，那是它跟後面十六章最大的分野；
    到處都有陽光的話，那個分野就消失了 —— 而且每一格會多跑一次查表。 */
 {
