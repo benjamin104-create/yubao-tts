@@ -1,0 +1,104 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;--cream:#F1E9D9;--dim:#8E9790;--brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;--sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);padding:100px 92px;display:flex;flex-direction:column}
+.slide::before{content:"處";position:absolute;right:-80px;bottom:-150px;
+  font-family:var(--serif);font-weight:900;font-size:600px;line-height:1;
+  color:rgba(241,233,217,.035);pointer-events:none}
+.slide > *{position:relative;z-index:1}
+
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+.lead{font-family:var(--serif);font-size:72px;font-weight:700;line-height:1.5;letter-spacing:.02em}
+.lead .hl{color:var(--brick)}
+.lead .dim{color:var(--dim)}
+.para{font-size:37px;line-height:2.02;color:var(--cream);opacity:.88;margin-top:50px;font-weight:300;letter-spacing:.04em}
+.para em{font-style:normal;color:var(--brick);font-weight:400}
+.cite{margin-top:44px;border-left:3px solid var(--brick);padding:6px 0 6px 28px;
+  font-family:var(--serif);font-size:36px;line-height:1.78;color:var(--dim)}
+.cite b{display:block;font-size:25px;letter-spacing:.12em;color:var(--brick);
+  font-family:var(--sans);font-weight:500;margin-top:14px}
+
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:60px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:96px;line-height:1.4;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.92;color:var(--dim);margin-top:48px;font-weight:300}
+.cover .ask{margin-top:auto;border-top:1px solid var(--rule);padding-top:38px;
+  font-family:var(--serif);font-size:44px;line-height:1.66;color:var(--cream)}
+.swipe{margin-top:32px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+.end .q{font-family:var(--serif);font-weight:700;font-size:74px;line-height:1.58;letter-spacing:.02em}
+.end .q .hl{color:var(--brick)}
+.end .q .dim{color:var(--dim)}
+.end .sign{margin-top:52px;font-size:33px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:28px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:29px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:23px;letter-spacing:.14em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">處暑 · 08.23</div>
+  <h1>處暑的「處」，<br><span class="dim">不是地方，</span><br>是<span class="hl">「停止」</span>。</h1>
+  <div class="sub">今天開始，夏天正式退場。</div>
+  <div class="ask">但古人沒有說「暑去」。<br>他們說的是「暑<b>止</b>」。</div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">其 一</div><div class="n">01 / 03</div></div>
+  <div class="body">
+    <div class="lead">「處」這個字，<br>古義是<span class="hl">止、退</span>。</div>
+    <div class="cite">「處，止也。<br>暑氣至此而止矣。」<b>《月令七十二候集解》</b></div>
+    <div class="para">所以處暑不是「熱去了」，<br>是<em>熱不再往前逼了</em>。</div>
+  </div>
+  <div class="foot"><span>處暑 · 08.23</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">其 二</div><div class="n">02 / 03</div></div>
+  <div class="body">
+    <div class="lead">這個差別<br><span class="hl">很重要</span>。</div>
+    <div class="para">古人大可以寫「暑去」，<br>但他們寫「暑止」。<br><br>因為他們知道——<br><em>有些東西不會消失，<br>只是不再燒你了</em>。</div>
+  </div>
+  <div class="foot"><span>處暑 · 08.23</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="head"><div class="k">其 三</div><div class="n">03 / 03</div></div>
+  <div class="body">
+    <div class="lead">你今年最難的<br>那一件，<br><span class="dim">大概也是這樣。</span></div>
+    <div class="para">它沒有被解決。<br>錢還是不夠、人還是難溝通、<br>小孩還是半夜會醒。<br><br>但它<em>已經不是每天在燒你</em>了。<br><br>那不叫沒進展。<br>那叫<em>處暑</em>。</div>
+  </div>
+  <div class="foot"><span>處暑 · 08.23</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 5 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">今 天</div><div class="n">08.23</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">夏天不是<br>被誰打敗的。</span><br><br>它是<span class="hl">自己停下來的</span>。</div>
+    <div class="sign">你今年有哪一件事，<br>已經不燒你了？<br><br>那件事你撐過來了，記得算給自己。</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>留言：哪一件已經不燒你了？</span></div>
+</div>
+
+</body></html>
