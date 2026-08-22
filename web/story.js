@@ -74,6 +74,17 @@ ok(api.ACT_THEME.hall !== api.ACT_THEME.crystal, '大廣間跟水晶礦坑不是
 ok(api.ACT_THEME.hall !== 'hall',
    '大廣間的地貌沒有叫 hall（那個名字已經被「怪物之間」那首曲子佔走了）');
 
+/* 四個最容易退回「同一張地磚換色」的區域，必須真的使用不同鋪面結構。
+   這裡驗的是材質 id 而非顏色：木板染成灰色仍然是木板，鏡面染成棕色
+   仍然是鏡面；玩家辨識章節靠結構，不是只靠色相。 */
+const signatureFloors = ['stone','wood','mirror','void'].map(id=>api.THEMES[id].floor);
+ok(new Set(signatureFloors).size === signatureFloors.length,
+   '礦坑、木造、鏡界、虛空各有不同鋪面（' + signatureFloors.join('／') + '）');
+ok(api.THEMES.stone.floor === 'dungeon', '礦坑／牢獄使用錯縫大石板');
+ok(api.THEMES.wood.floor === 'woodfloor', '忍者之里／平安京使用斜向木板');
+ok(api.THEMES.mirror.floor === 'mirrorfloor', '鏡界使用菱形鏡板');
+ok(api.THEMES.void.floor === 'voidfloor', '終章使用幾何核心地板');
+
 /* ═══ 神殿的平面 ═══════════════════════════════════════════════
    使用者：「我需要一個立體神殿的類似像『入口迷宮』的設定場景」，
    而「立體」選的是「俯視＋看得出高低」。
