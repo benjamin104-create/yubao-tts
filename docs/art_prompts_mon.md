@@ -397,15 +397,6 @@
 - 原始生成母圖保存在 `art_raw/`，不由網頁載入；目前三十八張怪物動畫圖集合計 224.4 KiB。
 - 顯示時保留深色外框，受光面會做輕微亮度與對比提升，避免深色地牢吃掉角色。
 
-| 批 | 檔名 |
-|---|---|
-| 2 | `shroom` `imp` `grub` `wolf` `mage` `golem` |
-| 3 | `turret` `knight` `wasp` `dryad` `mossy` `moth` |
-| 4 | `hawk` `ibex` `scree` `eel` `crab` `salam` |
-| 5 | `ash` `tengu` `tanuki` `chochin` `shinobi` `centip` |
-| 6 | `prism` `refr` `shadow` `ratking` `chimera` `seraph` |
-| 7 | `warden` `axiom` `parad` `unnamed` |
-
 十五隻頭目**已經有專屬的圖了**（見 `art_prompts_boss.md`，48px）。
 沒有專屬圖的頭目才會退回「同族雜魚的剪影 + 一圈金邊」，
 所以換雜魚的圖不再影響頭目。
