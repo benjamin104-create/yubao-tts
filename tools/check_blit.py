@@ -45,7 +45,15 @@ ALLOW = {
         'x.drawImage(src, 0, 0);': 1,   # crownSprite：從來源精靈複製
         'x.drawImage(im, 0, 0);': 1,    # adoptArt：把載進來的圖原樣拓進畫布
         'x.drawImage(tmp, 0, 4);': 1,   # 圖示往下移，讓它落在格子中間
-        'x.drawImage(img, 0, 0);': 3,   # whiteOf / footOf / auraOf 的量測用暫存拷貝
+        'x.drawImage(img, 0, 0);': 4,   # whiteOf / footOf / auraOf / groundOf 的量測用暫存拷貝
+        # 動作分鏡：來源與目的地都是 ANIM_CELL 見方的格子，整格複製。
+        # 這四行是主角四層（身體／帽子／盾／武器）疊在同一格上，
+        # 疊完才縮到畫面上的一格 —— 縮放發生在 drawEnt，不在這裡。
+        'x.drawImage(frame,0,0);': 1,                       # tintHeroAnimFrame：換色前的拷貝
+        'x.drawImage(tintHeroAnimFrame(': 1,                # 身體
+        'if(hatFrame) x.drawImage(hatFrame.img,0,0);': 1,   # 帽子
+        'if(shldFrame) x.drawImage(shldFrame.img,0,0);': 1, # 盾
+        'if(weapFrame) x.drawImage(weapFrame.img,0,0);': 1, # 武器
     },
 }
 

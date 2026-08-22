@@ -8,6 +8,15 @@ const { api } = require('./simcore.js');
 const assert = require('assert');
 
 const V = api.VILLAGE();
+/* 章節一律用 id 找，不寫索引。這一支裡本來有一整排 `G.act = 10`，
+   而序章（巴比倫神殿）插到第 0 章之後，那個 10 指到的是別的章 ——
+   斷言不會消失，它會變成「在錯的章節檢查對的事」，然後綠燈。
+   用 id 的話，下一次再插一章，這裡一個字都不用改。 */
+const AI = id => {
+  const i = api.ACTS.findIndex(a => a.id === id);
+  if(i < 0) throw new Error('找不到章節 ' + id);
+  return i;
+};
 let pass = 0, fail = 0;
 function t(name, fn){
   try { fn(); console.log('✓ ' + name); pass++; }
@@ -367,7 +376,7 @@ t('等級沒有超前時，怪物的數值一個字都不動', ()=>{
   V.act = 0;
   api.newGame(777);
   const G = api.G();
-  G.act = 4; G.floor = 2; api.buildFloor();
+  G.act = AI('briar'); G.floor = 2; api.buildFloor();
   const rat = api.MONS.find(d => d.id === 'rat');
   const m = api.spawnMon(rat, G.p.x, G.p.y);
   assert.strictEqual(m.d.hp, rat.hp, '血量被動了：' + m.d.hp + ' ≠ ' + rat.hp);
@@ -379,7 +388,7 @@ t('主角練過頭時，同一隻怪會變強，而且名字上看得出來', ()
   V.act = 0;
   api.newGame(778);
   const G = api.G();
-  G.act = 4; G.floor = 2; api.buildFloor();
+  G.act = AI('briar'); G.floor = 2; api.buildFloor();
   const rat = api.MONS.find(d => d.id === 'rat');
   const base = api.spawnMon(rat, G.p.x, G.p.y);
   G.p.lv += 12;                                   // 練到明顯超前
@@ -406,7 +415,7 @@ t('一般玩家遇到的頭目跟原本一樣強', ()=>{
   V.act = 0;
   api.newGame(9090);
   const G = api.G();
-  G.act = 12; G.floor = 1; api.buildFloor();
+  G.act = AI('tower'); G.floor = 1; api.buildFloor();
   const base = api.bossStats(G.md), live = api.bossLive(G.md);
   assert.strictEqual(live.hp, base.hp, '沒有超前卻被拉了血量');
   assert.strictEqual(live.atk, base.atk, '沒有超前卻被拉了攻擊');
@@ -416,7 +425,7 @@ t('練過頭的玩家遇到的頭目會跟著變強，但不會無限膨脹', ()
   V.act = 0;
   api.newGame(9091);
   const G = api.G(), p = G.p;
-  G.act = 12; G.floor = 1; api.buildFloor();
+  G.act = AI('tower'); G.floor = 1; api.buildFloor();
   const base = api.bossStats(G.md);
 
   // 一個真的練過的玩家：頂級武器打滿、等級超前、五系全滿
@@ -444,10 +453,10 @@ t('練過頭的玩家遇到的頭目會跟著變強，但不會無限膨脹', ()
    真的會閃、閃在同一間房裡走得到的格子、而且不會閃到玩家臉上 ——
    閃到臉上等於一記無法反應的近戰，那不是機關是偷襲。 */
 t('鏡之女王會瞬移，落點在同一間房，而且不會閃到臉上', ()=>{
-  V.act = 10;
+  V.act = AI('mirror');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
   const q = G.mons.find(m => m.d.boss);
   assert(q && q.d.blink, '這一層應該有會瞬移的頭目');
   const room = G.f.roomAt[api.key(q.x, q.y)];
@@ -490,10 +499,10 @@ t('鏡之女王會瞬移，落點在同一間房，而且不會閃到臉上', ()
        她不但打不到人，還會被自己的攻擊打死。
    兩個都不報錯，而且單看程式碼都很合理。這一條把它們一起釘住。 */
 t('站在鏡之女王旁邊會挨打，而且鏡之盾擋不住她', ()=>{
-  V.act = 10;
+  V.act = AI('mirror');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
   const q = G.mons.find(m => m.d.boss);
   assert(q, '這一層應該有頭目');
   p.shld = api.mk('shld', 'mirr', {known:1, up:5});    // 反射盾
@@ -523,36 +532,45 @@ t('站在鏡之女王旁邊會挨打，而且鏡之盾擋不住她', ()=>{
 /* ── 衝撞：撞上就被推著飛 ────────────────────────────────────
    使用者：「如果規則撞到主角，主角會直線飛出去撞到牆受傷」。
    這一條驗三件事：有預告、真的會推、而且推的路上不會穿牆。 */
+/* 跑五顆種子而不是一顆。衝撞成不成立跟那一層的地形有關（她要衝得起來
+   就得有一條沒有東西擋的直線），所以單一種子的綠燈其實是運氣 ——
+   加了序章之後這一章的深度變了、地圖跟著變，原本寫死的 4242 就再也
+   撞不到人，而遊戲一行都沒改。要驗的是「這個機關存在」，
+   那就該問「有沒有任何一張圖撞得到」，不是「這一張撞不撞得到」。 */
 t('鏡之女王會衝撞，把主角沿著直線推開並造成傷害', ()=>{
-  V.act = 10;
-  api.newGame(4242);
-  const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
-  const q = G.mons.find(m => m.d.boss);
-  assert(q && q.d.charge, '這一層的頭目應該會衝撞');
-  p.hp = p.mhp = 400;
-  let pushed = 0, warned = 0;
-  api.hookSay(txt => { if(/shimmer|晃動/.test(txt)) warned++; });
-  for(let t2 = 0; t2 < 30; t2++){
-    const b = G.mons.find(m => m.d.boss && m.hp > 0);
-    if(!b) break;
-    // 每回合把自己擺回同一排、離她五格 —— 這是她衝得起來的距離
-    for(const dd of [[5,0],[0,5],[-5,0],[0,-5],[4,0],[3,0]]){
-      const tx = b.x + dd[0], ty = b.y + dd[1];
-      if(api.walkable(tx, ty)){ p.x = tx; p.y = ty; break; }
+  let pushed = 0, warned = 0, tried = 0;
+  for(const seed of [4242, 101, 777, 5150, 9090]){
+    V.act = AI('mirror');
+    api.newGame(seed);
+    const G = api.G(), p = G.p;
+    G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
+    const q = G.mons.find(m => m.d.boss);
+    assert(q && q.d.charge, '這一層的頭目應該會衝撞');
+    tried++;
+    p.hp = p.mhp = 400;
+    api.hookSay(txt => { if(/shimmer|晃動/.test(txt)) warned++; });
+    for(let t2 = 0; t2 < 30; t2++){
+      const b = G.mons.find(m => m.d.boss && m.hp > 0);
+      if(!b) break;
+      // 每回合把自己擺回同一排、離她五格 —— 這是她衝得起來的距離
+      for(const dd of [[5,0],[0,5],[-5,0],[0,-5],[4,0],[3,0]]){
+        const tx = b.x + dd[0], ty = b.y + dd[1];
+        if(api.walkable(tx, ty)){ p.x = tx; p.y = ty; break; }
+      }
+      api.vision();
+      const x0 = p.x, y0 = p.y, h0 = p.hp;
+      api.endTurn();
+      if(p.x !== x0 || p.y !== y0){
+        pushed++;
+        assert(api.walkable(p.x, p.y), '被推進牆裡了');
+        assert(p.hp < h0, '被推開了卻沒受傷');
+      }
     }
-    api.vision();
-    const x0 = p.x, y0 = p.y, h0 = p.hp;
-    api.endTurn();
-    if(p.x !== x0 || p.y !== y0){
-      pushed++;
-      assert(api.walkable(p.x, p.y), '被推進牆裡了');
-      assert(p.hp < h0, '被推開了卻沒受傷');
-    }
+    api.hookSay(null);
   }
-  api.hookSay(null);
+  assert(tried === 5, '五張圖沒有全部跑到');
   assert(warned > 0, '衝撞沒有預告 —— 看不到就躲不掉');
-  assert(pushed > 0, '三十回合都沒有被撞飛過');
+  assert(pushed > 0, '五張圖、各三十回合，一次都沒有被撞飛過');
 });
 
 /* ── 頭目的三條特殊規則 ──────────────────────────────────────
@@ -561,10 +579,10 @@ t('鏡之女王會衝撞，把主角沿著直線推開並造成傷害', ()=>{
    「部分的特技使用應該是對魔王無效，這樣才會好玩」。
    三條都會靜默失效（欄位加了但沒人讀），所以三條都要有斷言。 */
 t('頭目每第四下是重擊，會把主角打飛，而且前一回合看得到蓄力', ()=>{
-  V.act = 10;
+  V.act = AI('mirror');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
   const q = G.mons.find(m => m.d.boss);
   p.hp = p.mhp = 4000;                       // 打不死，才數得完一輪
   let heavy = 0, charged = 0, flew = 0;
@@ -589,10 +607,10 @@ t('頭目每第四下是重擊，會把主角打飛，而且前一回合看得�
 });
 
 t('頭目的特技會把主角的魔力撕掉一半', ()=>{
-  V.act = 10;
+  V.act = AI('mirror');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
   const q = G.mons.find(m => m.d.boss);
   assert(q.d.mpburn, '這一章的頭目應該有撕魔力的特技');
   p.hp = p.mhp = 4000; p.mmp = 300; p.mp = 300;
@@ -614,10 +632,10 @@ t('頭目的特技會把主角的魔力撕掉一半', ()=>{
 });
 
 t('「視野內全體」的法術打頭目只有一半', ()=>{
-  V.act = 10;
+  V.act = AI('mirror');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 10; G.floor = api.ACTS[10].floors; api.buildFloor();
+  G.act = AI('mirror'); G.floor = api.ACTS[AI('mirror')].floors; api.buildFloor();
   const q = G.mons.find(m => m.d.boss);
   const rat = api.spawnMon(api.MONS.find(m => m.id === 'rat'), p.x, p.y);
   rat.hp = rat.mhp = 9999; q.hp = q.mhp = 9999;
@@ -662,7 +680,7 @@ t('打倒頭目一定掉一件裝備，而且不會超出這一層的分級', ()
    資料表上少寫一個欄位不會報錯，只會安靜地變回一隻血比較多的普通怪。
    順便驗每一隻都跑得起來：鬼武者只會衝不會閃，而衝撞的程式碼曾經
    無條件去讀 blink[0]，一衝出去就整場當掉（msgs.js 抓到的）。 */
-t('十五章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
+t('每一章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   const VERBS = ['telegraph','blink','charge','mpburn','quake','adds','rage',
                  'ward','counter','lives','turret','mind'];
   const thin = [];
@@ -706,10 +724,10 @@ t('十五章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
    實測連通性（用玩家真正的移動規則、含牆角規則、372 層）走不到樓梯是 0 層 ——
    他不是被封死，是找不到路。「其實走得到」跟「玩家覺得走得到」是兩件事。 */
 t('連續撞牆五次會告訴你樓梯在哪一邊', ()=>{
-  V.act = 13;
+  V.act = AI('final');
   api.newGame(4242);
   const G = api.G(), p = G.p;
-  G.act = 13; G.floor = 1; api.buildFloor();
+  G.act = AI('final'); G.floor = 1; api.buildFloor();
   let dir = null;
   outer:
   for(let y = 1; y < api.MH-1; y++) for(let x = 1; x < api.MW-1; x++){
@@ -780,8 +798,8 @@ t('解謎型頭目刀砍不動，只有砲座打得動', ()=>{
     G.floor = api.ACTS[act].floors; api.buildFloor();
     return {G, boss: G.mons.find(m => m.d.boss)};
   };
-  // 第 3 章（投石小魔王）與第 12 章（光線人）都是解謎型
-  for(const act of [2, 11]){
+  // 投石小魔王（試煉的山道）與光線人（水晶礦坑）都是解謎型
+  for(const act of [AI('trial'), AI('crystal')]){
     const {G, boss} = setup(act);
     assert(boss && boss.d.turret, '第 ' + (act+1) + ' 章的頭目應該是解謎型');
     assert(G.f.turrets && G.f.turrets.length === boss.d.turret.n,
@@ -826,7 +844,7 @@ t('解謎型頭目刀砍不動，只有砲座打得動', ()=>{
 
 t('砲座彼此要隔開 —— 擠在一起就退化成連按同一顆鍵', ()=>{
   let checked = 0;
-  for(const act of [2, 11]){
+  for(const act of [AI('trial'), AI('crystal')]){
     for(let s = 0; s < 10; s++){
       V.act = act; V.stock = []; V.pots = [];
       api.newGame(6000 + s * 97);

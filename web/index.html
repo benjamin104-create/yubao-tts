@@ -1439,6 +1439,17 @@ const MONS = [
    高血低攻是刻意的 —— 頭目該是「一場需要打完的仗」，
    不是「一次失誤就重來」。 */
 const BOSS = [
+ /* 序章的門番。它守的是通往地底的那道門，所以它不追人 —— 站在門前面。
+    數值刻意比礦坑守衛再低一階：這是玩家這輩子第一場頭目戰，
+    它的工作是「教會頭目戰是什麼」（樓梯鎖著、血條在上面、要打完），
+    不是篩人。走得慢（spd .5）讓「打一下、退一步」這個基本節奏學得起來。 */
+ /* 它只有一招，而那一招是整個遊戲的**教材**：每四回合舉起手臂，
+    前一回合就看得到（telegraph）。後面十六隻頭目全部建立在
+    「看預告、決定這一回合要不要站在那裡」上面 ——
+    在一隻打不死人的門番身上先教會它，比在第十章教便宜太多。 */
+ {id:'b_keeper', nm:'神殿門番',   ai:'C', hp:44,atk:4,def:2,exp:120, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
+  imm:['睡'], telegraph:1, cadence:4, ward:{cd:12, dur:2},
+  line:'門上的浮雕動了 —— 它不追你，但它擋在唯一的路上。'},
  {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂'], adds:{n:1, cd:10}, ward:{cd:14, dur:3},
   line:'石頭在呼吸。它醒了 —— 而且不只一塊。'},
@@ -1483,6 +1494,13 @@ const BOSS = [
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1, fly:1,
   rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
+ /* 大廣間的小王。使用者的剖面圖寫的是「橫向打敗小王，找到向上前往
+    通天塔入口」—— 所以這一場是**橫著打**的：它會助跑撞過來（charge），
+    而大廣間有的是橫向的空間可以閃。它是整趟往下的最後一戰，
+    數值排在光線人（第 13 章）與人魚王后（第 15 章）之間。 */
+ {id:'b_hallking',nm:'廣間之王',  ai:'C', hp:450,atk:37,def:21,exp:3500,spd:1,  sight:11,ev:4, fl:[0,0], w:0, boss:1,
+  imm:['睡','麻'], charge:1, telegraph:1, cadence:4, quake:8, rage:.4, adds:{n:2, cd:11},
+  line:'牠坐在廣間的正中央 —— 背後那道光，就是你要去的地方。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
   rng:9, mpburn:12, quake:8, telegraph:1, cadence:3, ward:{cd:13, dur:4}, adds:{n:2, cd:12},
   line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
@@ -1954,6 +1972,7 @@ v.smith|The Smithy　—　what you buy is yours to keep, even through death. Fo
 v.name.euro|Hearthfire|かがりびむら
 v.name.cave|Hollowstone|いわむろのさと
 v.name.edo|Lanterntown|ちょうちんまち
+v.name.spire|The Waystation|ちゅうけいの むら
 v.forge|+{n}　{g} G|+{n}　{g} G
 v.forgemax|Fully forged|げんかい
 v.more|Smith: "Go deeper. Get far enough down and I can forge better than this."|かじや：「もっと ふかくへ。じゅうぶん もぐれば これより いいものが うてる。」
@@ -2077,7 +2096,7 @@ ui.board|Hall of the Fallen|いしぶみ
 ui.dive|Head for {nm}|{nm} へ むかう
 ui.retry|Into the dungeon again|もういちどダンジョンへ
 ui.score|Score|スコア
-ui.resume|Continue　Act {n}　B{d}F|つづきから　だい{n}しょう　B{d}F
+ui.resume|Continue　Act {n}　{f}|つづきから　だい{n}しょう　{f}
 ui.fresh|Start a fresh run|さいしょから はじめる
 ui.nostore|This browser blocks saving — progress from this run will not be kept.|このブラウザは セーブを ブロックしている —— この たびの しんちょくは のこらない。
 m.shrine|★ Ring of Record — progress saved, health and magic full.|★ きろくの わ —— しんちょくを ほぞん、たいりょくと まりょくが ぜんかい。
@@ -2236,6 +2255,8 @@ s.gate1|Where the Gatewatch falls, the air splits open.|もんのみはりが �
 s.gate2|★ The Gate of Time opens — behind it is not a place but a time. Step through and there is no way back.|★ じくうの もんが ひらいた —— そのむこうは ばしょではなく じかん。はいったら もどれない。
 s.gate3|(Step onto the gate to enter the Chaos Chamber)|（もんに のって こんとんのまへ）
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
+s.temple|The doorkeeper crumbles, and the floor behind the door splits open - a stair going down, too deep to see the bottom. You still do not remember who you are. But you know the answer is down there.|もんばんが くだけ、とびらの おくの ゆかも われた —— したへ つづく かいだん、そこは みえない。じぶんが だれかは まだ わからない。だが こたえは したに ある。
+s.hall|The door at the end of the hall opens onto the foot of a spire. Twelve chapters of walking, all of it downward - from here, every step goes up.|ひろまの おくの とびらの さきは、とうの ねもとだった。ここまで 12しょう、ずっと したへ きた —— ここからは いっぽ ごとに うえへ。
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
 s.137|The curses on you vanish.|みに ついた のろいが きえた。
 s.138|Every ailment is cleared.|じょうたいいじょうが すべて なおった。
@@ -2379,6 +2400,7 @@ mon.golem|Wandering Statue|さまようせきぞう
 mon.turret|Crystal Turret|すいしょうほうだい
 mon.knight|Abyss Knight|しんえんのきし
 mon.b_warden|Mine Warden|こうざんのばんにん
+mon.b_keeper|Temple Doorkeeper|しんでんのもんばん
 mon.b_treant|Lord of the Wood|もりのぬし
 mon.b_ballista|Ballista Fiend|とうせきのまおう
 mon.b_pyro|Flame Sorcerer|ほのおのじゅつし
@@ -2389,6 +2411,7 @@ mon.b_oni|Oni Warrior|おにむしゃ
 mon.b_gaoler|Warden of the Gaol|ろうごくちょう
 mon.b_queen|Mirror Queen|かがみのじょおう
 mon.b_prism|Prism Walker|こうせんじん
+mon.b_hallking|Lord of the Great Hall|ひろまのおう
 mon.b_mermaid|Mermaid Queen|にんぎょのおうひ
 mon.b_gate|Gatewatcher|もんのしゅぼう
 mon.b_mind1|The Mind - Gaze|いしき・ぎょうし
@@ -2474,6 +2497,7 @@ ab.m_mirror|Water Mirror|みずかがみ
 ab.m_gale|Divine Gale|かみかぜざん
 ab.m_shift|Shrink Step|しゅくち
 act.mine|The Old Mine|こうざんどうくつ
+act.temple|The Babylon Temple|バビロンしんでん
 act.forest|The Mistwood|きりのもり
 act.trial|The Trial Path|しれんのやまみち
 act.ordeal|The Demon's Ordeal|まおうのこうれん
@@ -2485,10 +2509,12 @@ act.heian|The Three Bridges|へいあんきょうさんばし
 act.gaol|The Abyss Gaol|しんえんろうごく
 act.mirror|The Mirrored World|かがみのせかい
 act.crystal|The Crystal Seam|すいしょうこうざん
+act.hall|The Great Hall|ちかだいこうま
 act.tower|The Spire|つうてんとう
 act.final|The Last Labyrinth|さいごのめいきゅう
 act.chaos|The Chaos Chamber|こんとんのま
 acti.mine|You wake at the very bottom, remembering nothing. All you know is that you can learn.|いちばん したで めが さめた。なにも おぼえていない。まなべる ことだけを しっている。
+acti.temple|You wake on the temple flagstones with no memory of who you are or how you came here. Only the wind from the depths, blowing down and down.|しんでんの いしだたみで めが さめた。じぶんが だれか、どう きたのかも おぼえていない。おくから ふく かぜだけが、ずっと したへ むかっている。
 acti.forest|In the mist, every step is your own call. Nobody tells you which way is right.|きりの なか、いっぽ いっぽ じぶんで きめる。どちらが ただしいか だれも おしえない。
 acti.trial|The path changes. The route you memorised stops working — all you can carry out is how to find a route again.|やまみちは かわる。おぼえた みちは つうじない。もちだせるのは 「みちの さがしかた」だけ。
 acti.ordeal|One empty room, four walls feeding things in. This is not a test of skill — it asks whether you last.|からの へや ひとつ、しほうから おくりこまれる。ぎじゅつでは なく、たえられるかを とう。
@@ -2500,10 +2526,12 @@ acti.heian|Three bridges, three lesser kings. Cross them and you are given someo
 acti.gaol|Sixteen floors down. Everyone held here once climbed the way you are climbing.|16かい したへ。ここの ものは みな かつて あなたと おなじく のぼった。
 acti.mirror|Left and right are swapped. You think you go right — you go left. You cannot even trust yourself.|さゆうが はんてん。みぎと おもえば ひだり。じぶんさえ しんじられない。
 acti.crystal|Here light travels straight, and it reflects. For the first time you see the rule itself.|ここでは ひかりは まっすぐ すすみ、はんしゃする。はじめて 「きそく」そのものを みる。
+acti.hall|The bottom is not a dead end - it is a hall whose far wall you cannot see. The ceiling is broken, and light falls through.|そこは いきどまりでは なく、むこうの かべが みえない ひろまだった。てんじょうが やぶれ、ひかりが おちてくる。
 acti.tower|Twenty floors up. At the top there is a door, and behind it is not a place but a time.|20かい うえへ。とうちょうに とびら。その さきは ばしょでは なく じかん。
 acti.final|No map. No shop. You do not need them any more.|ちずも みせも ない。もう ひつようが ない。
 acti.chaos|No walls here, and no ceiling. Only the Mind — and you, about to become it.|かべも てんじょうも ない。あるのは「いしき」、そして それに なろうと している あなた。
 actr.mine|Milithru, the Stone of Riddles|ミリスル（なぞの いし）
+actr.temple|The Temple Lamp (magic point +1)|しんでんの ともしび（まほうポイント +1）
 actr.forest|Mystery Hat (a random job hat)|なぞの ぼうし（ランダムな しょくぎょうぼう）
 actr.trial|Blessing of the Pure Spring (max HP +20)|せいせんの かご（たいりょく じょうげん +20）
 actr.ordeal|Helm of the Brave (defence +4)|ゆうしゃの かぶと（ぼうぎょ +4）
@@ -2515,6 +2543,7 @@ actr.heian|The Oni Mask Helm|おにめんかぶと
 actr.gaol|The Gaoler's Key|ろうごくちょうの かぎ
 actr.mirror|The Heart of Darkness|やみの こころ
 actr.crystal|The Key of Space and Time|じくうの かぎ
+actr.hall|The Key of the Spire (the Waystation opens, max HP +30)|とうの かぎ（ちゅうけいの むらが ひらく・たいりょく じょうげん +30）
 actr.tower|Sword of the Gods (attack +18)|しんきの つるぎ（こうげき +18）
 actr.final|The door to the Chaos Chamber|こんとんの まへの とびら
 lk.herb.0|Crimson Herb|あかい くさ
@@ -2597,6 +2626,7 @@ k.back|Just put it back. No hard feelings.|もどしてくれれば それでい
 k.shop|This is a shop.|ここは みせだ。
 k.money|You have {n} G. You can sell things here too.|しょじきん {n} G。かばんの ものも うれる。
 bl.b_warden|The stone is breathing. It has woken.|いしが いきをしている。めざめた。
+bl.b_keeper|The relief on the door moved. It does not chase you - it simply stands in the only way out.|とびらの レリーフが うごいた。おってこない —— ただ ゆいいつの みちを ふさいでいる。
 bl.b_treant|The mist parts - that is not a tree.|きりが はれる —— あれは きではない。
 bl.b_ballista|White tiles light up - that is the firing line.|しろい マスが ひかる —— それが しゃていだ。
 bl.b_pyro|Once every three turns. The pillars are the only answer.|3ターンに いちど。こたえは はしらだけ。
@@ -2607,6 +2637,7 @@ bl.b_oni|It draws faster than you blink.|まばたきより はやく ぬく。
 bl.b_gaoler|The key hangs at its waist.|かぎは こしに ぶらさがっている。
 bl.b_queen|Break her once and she stands again. Three times.|いちど くだいても また たつ。3かい。
 bl.b_prism|Light travels straight - so do not stand on the line.|ひかりは まっすぐ すすむ —— せんじょうに たつな。
+bl.b_hallking|It sits in the middle of the hall. The light behind it is where you are going.|ひろまの まんなかに すわっている。せなかの ひかりが、めざす ばしょだ。
 bl.b_mermaid|A song from the top of the spire.|とうの てっぺんの うたごえ。
 bl.b_gate|The last door.|さいごの とびら。
 bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
@@ -2757,6 +2788,8 @@ k.down|Descend|おりる
 k.up|Ascend|のぼる
 v.towerlbl|Act {n} / {all} — {dir}|だい{n} / {all}しょう —— {dir}
 v.towerup|climbing the spire|とうを のぼっている
+v.towersurf|the temple above ground - where it begins|ちじょうの しんでん —— ここから はじまる
+v.towerwide|the deepest hall - cross it and find the door that leads up|さいしんぶの ひろま —— よこぎって うえへの とびらを さがせ
 v.towerdown|still below ground, heading down|まだ ちか、したへ
 k.npc|Lost villager|まいごの むらびと
 m.npcmet|"Thank goodness... someone came." The lost villager follows you.|「よかった…… だれか きた」まいごの むらびとが ついてくる。
@@ -2947,10 +2980,11 @@ for(const k in SPR) atlas[k] = bake(SPR[k]);
    改成「同族雜魚的剪影 + 一圈金邊 + 壓暗的底色」：
    玩家一眼就看得出「這一隻不一樣」，剪影又還是認得出是什麼族。 */
 const BOSS_BASE = {
+  b_keeper:'golem',
   b_warden:'golem', b_treant:'shroom', b_ballista:'turret', b_pyro:'mage',
   b_lord:'slime', b_phoenix:'imp', b_hanzo:'wolf', b_oni:'knight',
   b_gaoler:'skeleton', b_queen:'mage', b_prism:'turret', b_mermaid:'mage',
-  b_gate:'knight',
+  b_hallking:'knight', b_gate:'knight',
 };
 function crownSprite(base){
   const src = atlas[base] || atlas.rat;
@@ -4322,12 +4356,26 @@ const THEMES = {
   crystal:  {ramp:['n','p','r','+'], floor:'icefield', lightAll:1, wall:'icecliff', prop:'ice', propRate:11, air:'snow', surface:'ice', mark:'geode', back:'ice'},
   // 通天塔核心採深藍釉磚、赭金浮雕與白色花紋，讓「巴比倫」在高潮章節最明確。
   spire:    {ramp:['n','o','q','r'], floor:'lapis', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
+  /* 序章的地上神殿。跟塔用同一套釉磚與赭金浮雕，只是曬過太陽 ——
+     日光的砂色取代深藍。這是刻意的：玩家在第一章看到的花紋，
+     二十章之後會在塔裡原樣重現，那時候他才會知道自己一開始站的是什麼地方。
+     lightAll 讓神殿是亮的 —— 序章不該一開場就把人關進 3x3 的黑。 */
+  temple:   {ramp:['8','a','c','d'], floor:'temple', lightAll:1, wall:'glazed', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'sky'},
+  /* 地下大廣間。神殿的釉磚在地底最深處再出現一次 —— 大廳是塔的地基。
+     這一章刻意**不**設 cave：整章的重點就是「看得到這間屋子有多大」，
+     把視野關成 3x3 的話，大廣間跟一條走廊沒有分別。 */
+  /* 名字是 greathall 不是 hall —— TRACKS.hall 已經被「怪物之間」用掉了，
+     而曲子是照**地貌 id** 查表的。取名 hall 的話，整章的背景音樂會悄悄
+     變成怪物之間那首沒有解決的等待曲，沒有錯誤、沒有測試看得見。 */
+  greathall:{ramp:['7','9','b','d'], floor:'lapis', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
   void:     {ramp:['0','1','2','4'], wall:'void', air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
+  temple:'temple',
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
   lake:'lake', beast:'beast', ninja:'wood', heian:'wood', gaol:'stone',
-  mirror:'mirror', crystal:'crystal', tower:'spire', final:'void', chaos:'void',
+  mirror:'mirror', crystal:'crystal', hall:'greathall',
+  tower:'spire', final:'void', chaos:'void',
 };
 /* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張 16x16
    在手機上是看得到的頓挫。 */
@@ -5406,7 +5454,12 @@ function shapeRooms(rooms, kind, rng, t, roomAt){
   }
 }
 
-function genFloor(rng, depth, theme){
+/* opt.wide = 這一層是「大廣間」。它只改房間大小的骰子：一般樓層
+   28% 小室 / 22% 大廳，大廣間改成 0% / 100%，於是整層都是走進去
+   看不到對面牆的空間。改骰子而不是另寫一套生成器是刻意的 ——
+   連通性、門、樓梯、怪物分佈全部沿用同一條路，不會多出一組
+   只有一章走得到、因此永遠沒人測過的程式。 */
+function genFloor(rng, depth, theme, opt){
   const t = new Uint8Array(MW*MH);
   const roomAt = new Int8Array(MW*MH).fill(-1);
   const zones=[];
@@ -5422,7 +5475,8 @@ function genFloor(rng, depth, theme){
     /* 房間大小刻意拉開差距。全部都是 4~8 × 4~7 的時候，每一層長得都一樣 ——
        走過的房間玩家一個都記不住。先擲一次「這是個什麼房間」，再決定尺寸：
        同一層裡就會同時出現轉個身就滿的小室與空曠的大廳。 */
-    const cls = rng.i(1,100);
+    const wide = !!(opt && opt.wide);
+    const cls = wide ? 100 : rng.i(1,100);
     const w = cls<=28 ? rng.i(3,4) : cls>=78 ? rng.i(7,8) : rng.i(4,6);
     const h = cls<=28 ? rng.i(3,4) : cls>=78 ? rng.i(6,8) : rng.i(4,6);
     const x=rng.i(ux0,ux1-w+1), y=rng.i(uy0,uy1-h+1);
@@ -5560,10 +5614,26 @@ function genFloor(rng, depth, theme){
    死亡回到「本章開頭」而不是第一章。理由很簡單：
    一百層的戰役如果死一次就從頭，沒有人會走完第三章。
    死亡仍然有代價 —— 這一趟的等級與背包全部歸零。 */
+/* ★ 序章與轉折點 ────────────────────────────────────────────
+   使用者：「主角因為失憶被傳送到一個古代巴比倫神殿，進入了巴比倫神殿
+   以後在深處發現了通往地下通天塔的隱藏入口，然後才開始 B1 的冒險」，
+   路線是「神殿 →（往下）地下大廣間 → 橫向打敗小王，找到向上的入口
+   →（往上）塔頂的時空之門」。
+
+   原本的戰役少了頭尾兩塊：開場直接躺在礦坑最底下（為什麼在那裡？沒說），
+   收尾則是水晶礦坑打完就忽然開始爬塔（那道向上的門是哪裡來的？也沒說）。
+   補上 temple 與 hall 之後，這條路線第一次講得完整：
+   地面上的神殿是**入口**，地底的大廣間是**轉折**，中繼之村是**補給**，
+   塔是**回去的路**。 */
 const ACTS = [
+  /* 序章。三層，因為它要教的只有三件事：走路、打架、撿東西。
+     再長就變成一章地牢，而序章的工作是把人送進故事，不是考驗他。 */
+  {id:'temple', nm:'巴比倫神殿', sub:'THE BABYLON TEMPLE',  floors:3, surf:1,
+   boss:'b_keeper', reward:'神殿的燈（魔法點數 +1）',
+   intro:'你在神殿的石板上醒來，不記得自己是誰、也不記得怎麼來的。只有最深處吹上來的那道風，一直往下。'},
   {id:'mine',   nm:'礦坑洞穴',   sub:'THE OLD MINE',        floors:5,
    boss:'b_warden', reward:'米里斯魯（神秘石）',
-   intro:'你在最底下醒來，什麼都不記得。只知道自己會學。'},
+   intro:'門後面不是地窖，是一座礦坑。有人比你先來過 —— 而且沒有走出去。'},
   {id:'forest', nm:'迷霧森林',   sub:'THE MISTWOOD',        floors:7,
    boss:'b_treant', reward:'神秘之帽（隨機職業帽）',
    intro:'霧裡的每一步都要自己判斷。沒有人告訴你哪條路是對的。'},
@@ -5597,6 +5667,17 @@ const ACTS = [
   {id:'crystal',nm:'水晶礦坑',   sub:'THE CRYSTAL SEAM',    floors:5,
    boss:'b_prism', reward:'時空的鑰匙',
    intro:'光在這裡會走直線，也會反射。你第一次看見「規則」本身。'},
+  /* ★ 整趟旅程的最低點，也是唯一一章**橫著走**的地方。
+     使用者的剖面圖：往下走到底之後不是繼續往下，是走進一個大廣間，
+     橫過去打敗小王，才找得到向上的那道門。
+
+     為什麼要有這一章：沒有它的話，「往下十二章」與「往上三章」之間
+     是一個沒有畫面的接縫 —— 玩家在水晶礦坑打完頭目，下一秒就在塔上。
+     大廣間就是那個接縫的樣子：地底最深最寬的一間屋子，
+     天花板上有一個洞，光從那裡下來。 */
+  {id:'hall',   nm:'地下大廣間', sub:'THE GREAT HALL',      floors:3, wide:1,
+   boss:'b_hallking', reward:'通天塔之鑰（中繼之村開門．體力上限 +30）',
+   intro:'走到底了，卻不是死路 —— 是一間看不到對面牆的大廳。天花板破了一個洞，光從那裡漏下來。'},
   /* 規格寫「三十層、每十層一個休息層」。走通測試打了幾百趟：
      三十層的版本每一次都走到第 30 層才倒下 —— 不是打不贏頭目，
      是二十九層的消耗讓人到不了終點。
@@ -5632,20 +5713,33 @@ function absDepth(actIdx, floor){
   for(let i=0;i<actIdx && i<ACTS.length;i++) d += ACTS[i].floors;
   return d + floor;
 }
+/* ★ 序章的層數不算進難度曲線。
+   序章是三層教學，但它就是三層 —— 加進來之後，後面每一章的絕對深度
+   都往前推了三層，而曲線在前段爬得最陡，於是「試煉的山道」的走通測試
+   從 3 次重試變成 27 次（上限 40）。玩家不會知道那是序章造成的，
+   他只會覺得第四章忽然變兇。
+
+   所以難度吃的是「離開序章之後走了幾層」：序章本身固定在最淺的一階，
+   礦坑洞穴以後的每一章拿回它原本的難度，一個數字都不用重調。
+   絕對深度（G.depth）不動 —— 那是地圖種子與樓層編號用的，
+   序章的三層必須有自己的三顆種子，不然神殿第一層會跟礦坑第一層長一樣。 */
+const PROLOGUE_FLOORS = ACTS.reduce((n,a) => n + (a.surf ? a.floors : 0), 0);
 const TOTAL_FLOORS = absDepth(ACTS.length, 0);
+const MON_FLOORS = Math.max(1, TOTAL_FLOORS - PROLOGUE_FLOORS);
 /* ── 換算深度 ────────────────────────────────────────────────
-   怪物表與道具分級當初是為「30 層的地牢」寫的。戰役有 103 層，
+   怪物表與道具分級當初是為「30 層的地牢」寫的。戰役有一百層，
    如果直接吃絕對層數，第三章（深度 13）就已經是原作終盤的骷髏兵與狼群，
    後面九十層就沒有東西可以變強了 —— 走通測試正是卡在這裡。
-   所以難度一律吃這個換算值：把 1..103 攤平回 1..30。 */
+   所以難度一律吃這個換算值：把序章以後的一百層攤平回 1..30。 */
 const MON_SPAN = 30;
 /* 曲線刻意不是直線。線性攤平的話，第一章五層只涵蓋換算深度 1~2 ——
    五層的老鼠與史萊姆，模擬跑出來的死亡率是 1.7%，
    那不是「新手章節」，那是沒有張力。
-   指數 0.75 讓前段爬得快、後段爬得慢：第一章到 4、第三章到 9、
+   指數 0.75 讓前段爬得快、後段爬得慢：礦坑到 4、試煉到 9、
    最後一章仍然是 30。 */
 const scaleDepth = d => 1 + (MON_SPAN - 1) *
-  Math.pow(Math.max(0, d - 1) / Math.max(1, TOTAL_FLOORS - 1), 0.75);
+  Math.pow(Math.max(0, Math.min(MON_FLOORS, d - PROLOGUE_FLOORS) - 1) /
+           Math.max(1, MON_FLOORS - 1), 0.75);
 
 const ZONES = [
   {to:5,  nm:'苔濕迴廊', sub:'MOSSFALL GALLERY'},
@@ -5665,6 +5759,12 @@ const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
 
    死掉一樣什麼都不留 —— 想把戰利品變成裝備，就得自己走出去。 */
 const VILLAGE_KEY = 'claude-abyss-village';
+/* ★ 存檔版本。VILLAGE.act 存的是**章節索引**，而序章與地下大廣間
+   分別插在第 0 章與第 13 章 —— 舊存檔裡的每一個索引都往後移了。
+   不遷移的下場很具體：一個已經打到通天塔（舊 12）的人，
+   打開遊戲會發現自己被丟回水晶礦坑（新 12），而且沒有任何錯誤訊息。
+   版本號存在存檔裡，遷移只跑一次；遷移完寫回去，下次就不再動它。 */
+const VILLAGE_VER = 2;
 /* name/col = 玩家的名字與造型顏色；board = 排行榜。
    排行榜只存在這台裝置上 —— 靜態頁面沒有伺服器可以比對別人的成績。
    要做成真正的全球榜，需要一個後端，見 README。 */
@@ -5681,6 +5781,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
                 act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
+                vault: 0, npcDone: 0, ver: VILLAGE_VER,
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -5705,12 +5806,21 @@ function sanitizeSch(raw){
   for(const k in out) out[k] = Math.max(0, Math.min(SCH_MAX, raw[k] | 0));
   return out;
 }
+/* 舊章節索引 → 新章節索引。序章插在 0，地下大廣間插在 13，
+   所以 0~11（礦坑～水晶礦坑）往後一格，12~14（塔、最後的迷宮、混沌之間）
+   往後兩格。寫成一張表而不是一條算式，是因為下一次插章的時候，
+   看得懂的東西才改得對。 */
+const ACT_MIGRATE_V2 = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16];
+const migrateAct = (a, ver) => ver >= 2 ? a
+  : (ACT_MIGRATE_V2[Math.max(0, Math.min(ACT_MIGRATE_V2.length-1, a|0))] | 0);
+
 function loadVillage(){
   try{
     const raw = localStorage.getItem(VILLAGE_KEY);
     if(raw){
       const v = JSON.parse(raw);
       if(v && typeof v === 'object'){
+        const ver = v.ver | 0;
         VILLAGE = {
           gold: v.gold|0, stock: Array.isArray(v.stock)?v.stock:[], unlocked: !!v.unlocked,
           name: typeof v.name === 'string' ? v.name : '',
@@ -5722,12 +5832,19 @@ function loadVillage(){
              那不是獎勵舊玩家，那是數值失控，而且不會報任何錯。 */
           sch: sanitizeSch(v.sch),
           jobs: sanitizeJobs(v.jobs),
-          act: Math.max(0, Math.min(ACTS.length-1, v.act|0)),
+          act: Math.max(0, Math.min(ACTS.length-1, migrateAct(v.act|0, ver))),
+          ver: VILLAGE_VER,
           hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
           defBonus: Math.max(0, Math.min(40, v.defBonus|0)),
           strBonus: Math.max(0, Math.min(40, v.strBonus|0)),
           feather: v.feather ? 1 : 0,
           godsword: v.godsword ? 1 : 0,
+          /* Token 金庫與「救過了沒」。這兩個原本沒有列進來 ——
+             而這支函式是「重建一個乾淨的 VILLAGE」，沒列到的欄位
+             就在讀檔的那一刻消失。護送成功的人只要重整一次分頁，
+             金庫就不見了，而且不會有任何錯誤訊息。 */
+          vault: v.vault ? 1 : 0,
+          npcDone: v.npcDone ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
           skin: SKINS.includes(v.skin) ? v.skin : 'blob',
@@ -5736,6 +5853,8 @@ function loadVillage(){
             : {open:false, item:null},
           pots: Array.isArray(v.pots) ? v.pots.slice(0, 3) : [],
         };
+        // 遷移過就立刻寫回去，不然每次開遊戲都會再遷移一次同一份存檔
+        if(ver < VILLAGE_VER) saveVillage();
       }
     }
   }catch(e){}                       // 沙箱可能擋 localStorage —— 擋了就只存在記憶體裡
@@ -5760,7 +5879,12 @@ loadVillage();
    地圖不存 —— 它由 (seed, depth) 決定，讀檔時重新生成一模一樣的一張。
    要存的只有玩家身上的東西，那是幾 KB 而不是幾百 KB。 */
 const RUN_KEY = 'claude-abyss-run';
-const RUN_VER = 1;
+/* 版本 2：章節索引改了（序章與地下大廣間插隊）。中途存檔記的是
+   「第幾章第幾層」，而那個編號在新版本指向別的地方 —— 讀進來的話，
+   玩家會在完全不同的一章繼續一個不屬於那裡的角色。
+   跟村莊不同，這一份不遷移而是**丟掉**：一趟冒險而已，
+   村莊的長期進度（等級、職業、金庫、章節）一個都不會少。 */
+const RUN_VER = 2;
 
 // 道具只存「重建它需要的欄位」。整個 d 存進去的話，改了一次數值表，
 // 舊存檔就會帶著舊數值復活。
@@ -5908,13 +6032,17 @@ function submitScore(how){
    沒有任何用途的數字，而「沒有用途的數字」就是沒有成就感的定義。
 
    from = 要解鎖到第幾章鐵匠才打得出來（跟 VILLAGE.act 同一個 0 起算的編號）。
-   分段上架而不是一次全開：一次全開的話，第五章就看得到終點在哪裡。 */
+   分段上架而不是一次全開：一次全開的話，第五章就看得到終點在哪裡。
+
+   ★ 序章（巴比倫神殿）插在最前面之後，每一個 from 都往後推了一格 ——
+     這裡寫的是**索引**，而索引會被插隊。忘了推的下場不會報錯：
+     只是每一件貨都早一章上架，後面十章的賞金又變回沒有用途的數字。 */
 const VILLAGE_STOCK = [
   {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'},
-  {cat:'weap', id:'katana', from:3}, {cat:'weap', id:'mith'},
-  {cat:'weap', id:'drgn',  from:4}, {cat:'weap', id:'sky', from:7}, {cat:'weap', id:'babel', from:10},
+  {cat:'weap', id:'katana', from:4}, {cat:'weap', id:'mith'},
+  {cat:'weap', id:'drgn',  from:5}, {cat:'weap', id:'sky', from:8}, {cat:'weap', id:'babel', from:11},
   {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
-  {cat:'shld', id:'drac',  from:6}, {cat:'shld', id:'aegis', from:10},
+  {cat:'shld', id:'drac',  from:7}, {cat:'shld', id:'aegis', from:11},
 ];
 /* 現在買得到的。渲染與走通測試都走這一支 —— 兩邊各寫一份過濾條件的話，
    遲早會有一份忘記跟上，而那一份會給出一個安心的綠燈。 */
@@ -6268,7 +6396,7 @@ function buildFloor(){
   G.depth = absDepth(G.act, G.floor);
   G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
-  G.f = genFloor(rng, G.depth, themeNow());
+  G.f = genFloor(rng, G.depth, themeNow(), {wide: !!actAt(G.act).wide});
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
   /* 村民只有在「跟著你」的時候才會過樓層。留在原地的那一個就留在那一層 ——
      他本來就沒要走，是玩家決定要不要帶他。 */
@@ -9101,7 +9229,11 @@ function npcArt(){
   if(!npcSprite) npcSprite = makeBlob('b', {age:'adult'});
   return npcSprite;
 }
-const NPC_ACT = 0, NPC_FLOOR = 3;
+/* 迷路的村民在「礦坑洞穴」第三層 —— 使用者原話是「第一關的第三層」，
+   而序章加進來之後那一章的索引往後移了一格。用 id 找而不是寫死 0：
+   下一次再插一章，這一行不會默默指到別的地方去（而且不會報錯，
+   只會變成村民再也不出現，沒有任何測試看得出來）。 */
+const NPC_ACT = Math.max(0, ACTS.findIndex(a => a.id === 'mine')), NPC_FLOOR = 3;
 /* 血量與被打的比例是量出來的。第一版是 24 點、兩邊各一半 ——
    機器人在會治療的前提下二十七趟只帶回五趟（19%）。
    那個數字對「順手救一個人」來說太兇：多數玩家會失敗，
@@ -9267,6 +9399,25 @@ function grantReward(act){
   if(act.id === 'ordeal') VILLAGE.defBonus = (VILLAGE.defBonus|0) + 4;
   if(act.id === 'beast') VILLAGE.feather = 1;    // 死亡時自動復活一次
   if(act.id === 'tower') VILLAGE.godsword = 1;
+  /* 序章的獎勵刻意小而且**永久**：一點魔法點數。序章的東西如果會隨死亡
+     消失，那三層就白走了；給一個跨越死亡的點數，才對得起「這是序章」。 */
+  if(act.id === 'temple'){
+    VILLAGE.sp = (VILLAGE.sp|0) + 1;
+    p.sp = VILLAGE.sp;
+    /* 序章的收尾要把「為什麼要下去」講完。使用者的原話是
+       「進入了巴比倫神殿以後在深處發現了通往地下通天塔的隱藏入口」——
+       所以這一句是整個故事的第一個扣環，不能只是一行獎勵通知。 */
+    say(TX('s.temple','門番碎了，門後面的地板也跟著裂開 —— 底下是一段往下的階梯，深得看不到底。你還是不記得自己是誰，但你知道答案在下面。'),'gold');
+  }
+  /* 大廣間打完就開始爬二十層的塔，中間只回得了中繼之村一次 ——
+     所以這一章給的是「撐得住那二十層」的東西，而不是一把新武器。
+     +30 是照著純淨之泉（+20）往上排的：它在後面十章，該更重。 */
+  if(act.id === 'hall'){
+    VILLAGE.hpBonus = (VILLAGE.hpBonus|0) + 30;
+    /* 整趟旅程的方向在這一句話換過來。它必須被說出來 ——
+       下一章的樓梯忽然變成向上的，玩家要知道那不是 bug。 */
+    say(TX('s.hall','廣間盡頭的門開了，門後面是一座塔的塔基。你走了十二章的路都是往下的 —— 從這裡開始，每一階都是往上。'),'gold');
+  }
   // 隱藏職業的帽子本身也給 —— 光開放進度但拿不到帽子等於沒給
   const hatFor = {briar:'cone', ninja:'band', heian:'oni'}[act.id];
   if(hatFor) p.inv.push(mk('hat', hatFor, {known:1}));
@@ -9670,6 +9821,40 @@ const BGM = (()=>{
         [[0,86,4],[4,83,4],[8,81,4],[12,86,4]],
         [[0,88,2],[2,86,2],[4,83,4],[8,79,4],[12,81,4]],
         [[0,84,4],[4,81,2],[6,79,2],[8,76,8]],
+      ],
+    }),
+    /* 巴比倫神殿（序章）。整套裡最空的一首：只有低音、幾乎沒有鼓，
+       旋律是四個長音一路往下 —— 那是「往下」這個動作的聲音，
+       而序章要玩家做的唯一一件事就是往下走。
+       用 Dorian（Dm 上的 B 還原）而不是自然小調：它少一點悲傷、
+       多一點古老，配得上一座已經沒有人的神殿。 */
+    temple: T_({
+      bpm:84, wave:'triangle', pad:'sine', cut:2200, lvol:.07, avol:.036,
+      bass:[0,8], hat:[], kick:[0],
+      root:[50,48,46,50],
+      chord:[[62,65,69],[60,64,67],[58,62,65],[62,65,69]],
+      lead:[
+        [[0,74,4],[4,72,4],[8,71,6],[14,69,2]],
+        [[0,72,4],[4,69,4],[8,67,8]],
+        [[0,70,4],[4,69,2],[6,67,2],[8,65,8]],
+        [[0,69,6],[6,71,2],[8,74,8]],
+      ],
+    }),
+    /* 地下大廣間。它是往下與往上的接點，所以曲子也是：
+       前兩小節沿用礦坑那條 Am 的走向（你走了十二章的那個聲音），
+       後兩小節換成通天塔那條一小節升一階的低音 —— 同一首曲子裡，
+       玩家會先聽到自己是從哪裡來的，再聽到接下來要往哪裡去。
+       慢、寬、混響長：這是全遊戲最大的一間屋子。 */
+    greathall: T_({
+      bpm:92, wave:'triangle', pad:'triangle', cut:2600, lvol:.08, avol:.044,
+      bass:[0,6,8,14], hat:[8], kick:[0,8],
+      root:[45,41,45,48],
+      chord:[[57,60,64],[53,57,60],[57,60,64],[60,64,67]],
+      lead:[
+        [[0,64,4],[4,69,4],[8,72,4],[12,71,4]],
+        [[0,65,4],[4,69,4],[8,72,6],[14,69,2]],
+        [[0,69,2],[2,72,2],[4,76,4],[8,74,8]],
+        [[0,72,2],[2,76,2],[4,79,4],[8,84,8]],
       ],
     }),
     // 通天塔：低音一小節升一階、旋律一小節爬一層。整首曲子都在往上。
@@ -12852,14 +13037,20 @@ function openVillage(){
      euro　中古世紀歐洲：半木構、陡坡瓦頂、石砌煙囪、水井、圓冠樹
      cave　土耳其地下城市／義大利山城：鑿進凝灰岩錐的拱形洞屋、蓄水池、絲柏
      edo 　江戶城下町：低矮町家、深屋簷、暖簾、紙燈籠、石板路、松、遠方天守
+     spire 塔腳的中繼之村：貼著塔基蓋起來的磚砌拱棧、銅燈、石碑、那道往上的門
 
    每一章走到哪一村，是由進度決定的 —— 故事往前，鎮也換一個。 */
-const VSTYLES = ['euro', 'cave', 'edo'];
+/* ★ 中繼之村。使用者：「找到往上的地方（中繼之村）然後往上進入通天塔」。
+   它不是第四個順序上的村莊，是**轉折點的村莊**：打通地下大廣間之後，
+   玩家第一次不再往下走，而這件事必須看得見。所以它不吃 a/5 的順序，
+   而是直接問「下一章是不是往上」—— 條件就是它在故事裡的意義本身。 */
+const VSTYLES = ['euro', 'cave', 'edo', 'spire'];
 function villageStyle(){
   const a = Math.max(0, Math.min(ACTS.length-1, VILLAGE.act|0));
-  return VSTYLES[Math.min(VSTYLES.length-1, Math.floor(a / 5))];
+  if(actUp(a)) return 'spire';
+  return VSTYLES[Math.min(2, Math.floor(a / 5))];
 }
-const VNAME = {euro:'爐火村', cave:'岩窟聚落', edo:'燈籠町'};
+const VNAME = {euro:'爐火村', cave:'岩窟聚落', edo:'燈籠町', spire:'中繼之村'};
 const VPAL = {
   euro: {sky:['#243051','#4a4460','#8a6a4c'], far:'#232c3e', mid:'#2f3a4a',
          wall:'#cdb894', wall2:'#a8916d', beam:'#4a3324', roof:'#8a3f2f', roof2:'#5f2a20',
@@ -12874,6 +13065,12 @@ const VPAL = {
          wall:'#d3c7ae', wall2:'#a89b84', beam:'#3a2a20', roof:'#414a5c', roof2:'#2b3140',
          road:'#5d5a52', grass:'#33452f', grass2:'#293a27', tree:'#2b4030', trunk:'#3a2a20',
          pond:'#25415e', lit:'#f2b45a'},
+  // 中繼之村用的是塔的色 —— 深藍釉磚與赭金。玩家在這裡抬頭看到的顏色，
+  // 就是接下來二十層要住的顏色。地上沒有草，只有被磨平的塔基石。
+  spire:{sky:['#0b1226','#152146','#2c3a63'], far:'#101a34', mid:'#1a2748',
+         wall:'#5f7fb8', wall2:'#3c568a', beam:'#a87a1e', roof:'#dcae35', roof2:'#a87a1e',
+         road:'#4c5566', grass:'#2c3446', grass2:'#232a3a', tree:'#59657e', trunk:'#3c4356',
+         pond:'#2f57a0', lit:'#f5dc7a'},
 };
 function paintVillageScene(){
   const c = $('vscene'); if(!c) return;
@@ -12908,6 +13105,30 @@ function paintVillageScene(){
     x.fillStyle = shaft;
     x.beginPath(); x.moveTo(W*0.44, 0); x.lineTo(W*0.56, 0);
     x.lineTo(W*0.66, H*0.7); x.lineTo(W*0.34, H*0.7); x.closePath(); x.fill();
+  } else if(st === 'spire'){
+    /* 中繼之村的遠景只有一樣東西：塔。它從村子後面直接往上出畫面 ——
+       畫得比畫布高是刻意的，因為玩家問的「還要爬多久」在這裡沒有答案，
+       只有「很高」。頂上不收邊，讓它看起來沒有盡頭。 */
+    x.fillStyle = P.far;                              // 洞頂：塔穿出去的那個破口
+    x.beginPath(); x.moveTo(0,0); x.lineTo(W,0); x.lineTo(W,H*0.16);
+    for(let i=12;i>=0;i--){
+      const px2 = i*W/12;
+      const hole = Math.abs(px2 - W*0.5) < W*0.17;    // 破口正上方沒有岩頂
+      x.lineTo(px2, hole ? -6 : H*(0.06 + ((mix32(i,11)%100)/100)*0.12));
+    }
+    x.closePath(); x.fill();
+    const tw = Math.round(W*0.26), tx0 = Math.round(W*0.5 - tw/2);
+    x.fillStyle = P.wall2; x.fillRect(tx0, 0, tw, Math.round(H*0.62));
+    x.fillStyle = P.wall;  x.fillRect(tx0, 0, Math.round(tw*0.42), Math.round(H*0.62));
+    x.fillStyle = P.roof;                             // 赭金的腰帶：每一段塔身之間的浮雕
+    for(let k=6;k<H*0.62;k+=13) x.fillRect(tx0, k, tw, 2);
+    x.fillStyle = '#0b1226';                          // 塔的窗
+    for(let k=11;k<H*0.62;k+=13) x.fillRect(tx0 + (tw>>1) - 2, k, 4, 5);
+    const beam = x.createLinearGradient(0, 0, 0, H*0.72);   // 破口漏下來的光
+    beam.addColorStop(0,'rgba(245,220,122,.26)'); beam.addColorStop(1,'rgba(245,220,122,0)');
+    x.fillStyle = beam;
+    x.beginPath(); x.moveTo(W*0.30, 0); x.lineTo(W*0.70, 0);
+    x.lineTo(W*0.84, H*0.72); x.lineTo(W*0.16, H*0.72); x.closePath(); x.fill();
   } else {
     for(let i=0;i<44;i++){                       // 星
       const sx = r.i(0,W-1), sy = r.i(0,Math.floor(H*0.42));
@@ -12941,11 +13162,11 @@ function paintVillageScene(){
   x.fillStyle = P.grass2; x.fillRect(0, gy, W, H-gy);
   const roadY = Math.round(H*0.74);
   x.fillStyle = P.road; x.fillRect(0, roadY, W, Math.round(H*0.13));
-  if(st === 'edo'){                               // 石板：橫向的縫
+  if(st === 'edo' || st === 'spire'){              // 石板：橫向的縫
     x.fillStyle = 'rgba(0,0,0,.22)';
     for(let i=0;i<W;i+=11) x.fillRect(i + ((i/11)%2?5:0), roadY+3, 7, 1);
     for(let i=0;i<W;i+=11) x.fillRect(i, roadY+8, 6, 1);
-  } else {                                        // 泥土／碎石：散點
+  } else {                                      // 泥土／碎石：散點
     for(let i=0;i<70;i++){
       x.fillStyle = i%3 ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.08)';
       x.fillRect(r.i(0,W-1), roadY + r.i(1, Math.round(H*0.12)), 1, 1);
@@ -13008,6 +13229,27 @@ function paintVillageScene(){
         if(i === 0){ x.fillStyle = P.lit; x.fillRect(ax+2, ay+4, 2, 3); }
       }
       continue;                                   // 岩窟屋不需要方窗
+    } else if(st === 'spire'){
+      /* 拱棧：貼著塔基蓋的補給棧。沒有屋頂 —— 它們的屋頂是塔本身，
+         所以每一間都是一道拱門加一盞掛在門上的銅燈。
+         這是四個村莊裡唯一「靠著別的東西蓋」的聚落，那正是中繼站的意思。 */
+      x.fillStyle = P.wall2; x.fillRect(hx, hy, hw, hh);
+      x.fillStyle = P.wall;  x.fillRect(hx, hy, hw, 2);          // 受光的上緣
+      x.fillStyle = P.roof2;                                     // 磚縫
+      for(let k=hy+5;k<hy+hh;k+=5) x.fillRect(hx, k, hw, 1);
+      const aw = Math.max(6, Math.round(hw*0.42));               // 拱形門洞
+      const ax2 = hx + Math.round((hw-aw)/2), ay2 = hy + hh - Math.round(hh*0.62);
+      x.fillStyle = '#0b1226';
+      x.beginPath(); x.moveTo(ax2, hy+hh); x.lineTo(ax2, ay2 + aw/2);
+      x.arc(ax2 + aw/2, ay2 + aw/2, aw/2, Math.PI, 0);
+      x.lineTo(ax2 + aw, hy+hh); x.closePath(); x.fill();
+      x.fillStyle = P.beam;                                      // 拱心的赭金磚
+      x.fillRect(ax2 + Math.round(aw/2) - 1, ay2 - 1, 2, 2);
+      x.fillStyle = P.lit;                                       // 掛在門邊的銅燈
+      x.fillRect(hx + hw - 4, hy + 4, 2, 3);
+      x.fillStyle = 'rgba(245,220,122,.14)';
+      x.fillRect(hx + hw - 8, hy, 8, 10);
+      continue;                                   // 拱棧沒有方窗，燈就是它的光
     } else {
       // 町家：低矮、寬、深屋簷；暖簾與燈籠是它的招牌
       x.fillStyle = P.wall; x.fillRect(hx, hy, hw, hh);
@@ -13029,13 +13271,25 @@ function paintVillageScene(){
   // ── 林木 ──
   const trees = st === 'edo'   ? [[30,12],[86,10],[164,13]]
               : st === 'cave'  ? [[34,14],[88,11],[160,15]]
+              : st === 'spire' ? [[30,15],[88,12],[166,16]]
                                : [[32,13],[84,11],[162,14]];
   for(const [tx, th] of trees){
     const ty = gy + 4;
+    if(st === 'spire'){
+      /* 地底沒有樹。這裡站的是石碑 —— 每一塊刻著一個爬過塔的名字。
+         換掉樹而不是拿掉它，是因為那一排直立的東西在構圖上撐著中景；
+         少了它，村子會變成一條扁掉的橫帶。 */
+      x.fillStyle = P.trunk; x.fillRect(tx-3, ty - th, 6, th);
+      x.fillStyle = P.tree;  x.fillRect(tx-3, ty - th, 3, th);
+      x.fillStyle = P.roof2;
+      for(let k=2;k<th-2;k+=4) x.fillRect(tx-2, ty - th + k, 4, 1);
+      x.fillStyle = P.trunk; x.fillRect(tx-4, ty-1, 8, 2);        // 基座
+      continue;
+    }
     x.fillStyle = P.trunk;
     x.fillRect(tx-1, ty - th*(st==='edo' ? 0.9 : 0.5), 2, th*(st==='edo' ? 0.95 : 0.6));
     x.fillStyle = P.tree;
-    if(st === 'cave'){                            // 絲柏：又細又高的紡錘
+    if(st === 'cave'){                         // 絲柏：又細又高的紡錘
       x.beginPath(); x.ellipse(tx, ty-th*0.55, 3.2, th*0.62, 0, 0, Math.PI*2); x.fill();
     } else if(st === 'edo'){                      // 松：三層橫展的傘
       for(let i=0;i<3;i++){
@@ -13060,14 +13314,29 @@ function paintVillageScene(){
     x.fillRect(fx-5, fy-6, 10, 2);
     x.fillStyle = P.lit;  x.fillRect(fx-3, fy-5, 6, 4);
     x.fillStyle = '#6d6a62'; x.fillRect(fx-6, fy-9, 12, 3);
+  } else if(st === 'spire'){
+    /* 中繼之村的中心不是爐火，是**那道門** —— 通往塔裡的入口。
+       其他三個村莊的中心都是「停下來的理由」（水井、燈籠、爐火）；
+       這一個的中心是「再出發的理由」，而那正是中繼站與家的差別。 */
+    x.fillStyle = P.wall2; x.fillRect(fx-9, fy-16, 18, 20);
+    x.fillStyle = P.wall;  x.fillRect(fx-9, fy-16, 5, 20);
+    x.fillStyle = '#0b1226';                      // 門洞
+    x.beginPath(); x.moveTo(fx-5, fy+4); x.lineTo(fx-5, fy-8);
+    x.arc(fx, fy-8, 5, Math.PI, 0); x.lineTo(fx+5, fy+4); x.closePath(); x.fill();
+    x.fillStyle = P.beam;                         // 拱心與門楣的赭金
+    x.fillRect(fx-10, fy-17, 20, 2); x.fillRect(fx-1, fy-14, 2, 2);
+    const up = x.createLinearGradient(fx, fy+4, fx, fy-13);   // 門裡透出來的光：往上
+    up.addColorStop(0,'rgba(245,220,122,0)'); up.addColorStop(1,'rgba(245,220,122,.55)');
+    x.fillStyle = up; x.fillRect(fx-5, fy-13, 10, 17);
   } else {                                        // 岩窟：中央的爐火
     x.fillStyle = '#2a1d14'; x.fillRect(fx-6, fy+4, 12, 3);
   }
   // 爐火／燈火的光暈。整張圖唯一飽和的暖色，village 的中心點就是它。
   const glow = x.createRadialGradient(fx, fy-2, 1, fx, fy-2, 34);
-  glow.addColorStop(0,'rgba(245,169,94,.42)'); glow.addColorStop(1,'rgba(245,169,94,0)');
+  const gc = st === 'spire' ? '245,220,122' : '245,169,94';   // 塔腳的光是金的，不是橙的
+  glow.addColorStop(0,'rgba('+gc+',.42)'); glow.addColorStop(1,'rgba('+gc+',0)');
   x.fillStyle = glow; x.fillRect(fx-34, fy-36, 68, 68);
-  if(st !== 'edo'){
+  if(st !== 'edo' && st !== 'spire'){
     x.fillStyle = '#e87a4a'; x.fillRect(fx-3, fy-1, 6, 6);
     x.fillStyle = '#f5a95e'; x.fillRect(fx-2, fy+1, 4, 4);
     x.fillStyle = '#f5dc7a'; x.fillRect(fx-1, fy+2, 2, 3);
@@ -13084,11 +13353,22 @@ function paintVillageScene(){
    然後每一章節前都標註主角最新位置，讓玩家有概念這個遊戲的玩法」。
 
    兩件事一起解決：ACTS 裡的 up:1 讓後三章真的往上走，
-   這張圖則把整趟路一次攤開 —— 地平線以下十二章一路往下，
-   走到最深處之後轉頭，沿著塔往上爬到頂。
+   這張圖則把整趟路一次攤開。
+
+   ★ 這張圖現在畫的是使用者手繪的那張剖面圖，一比一：
+     地面上左邊是**巴比倫神殿**（surf） —— 故事開始的地方；
+     神殿底下往下鑽十二章（往下的章節）；
+     最深處是**地下大廣間**（wide） —— 唯一橫著走的一段，
+     它把左邊的豎井接到右邊的塔基，那個橫的轉折就是「找到向上的路」；
+     然後從塔基往上爬三章，塔頂那道光是時空之門。
+
+   為什麼一定要把「橫的那一段」畫出來：使用者的路線寫得很清楚 ——
+   「往下抵達地底廣場→橫向打敗小王，找到向上前往通天塔入口」。
+   舊版把上下兩段直接疊在同一條中線上，那條路讀起來是「走到底，
+   然後原地轉頭往上」，中間那件事在圖上不存在。
 
    為什麼畫成側面而不是清單：玩家問的是「還要走多遠」，
-   那是一個**空間**的問題。十五行文字答不了，一張側面圖一眼就答完。
+   那是一個**空間**的問題。十七行文字答不了，一張側面圖一眼就答完。
 
    畫在村莊而不是每一層的進場卡：村莊是「出發之前」，
    那正是會想「我現在在哪」的時刻；進場卡只有一秒半，塞不下。 */
@@ -13101,21 +13381,32 @@ function paintTower(actIdx){
   x.clearRect(0, 0, TOWER_W, TOWER_H);
   const R = (a,b,w,h,col)=>{ x.fillStyle=col; x.fillRect(a,b,w,h); };
 
-  /* 每一章佔的高度跟它的層數走，不是每章一格。
-     這樣這張圖同時回答兩件事：「我在哪」與「哪一段最長」——
-     通天塔二十層，畫出來就真的是最高的那一段（每章一格的話它
-     跟只有一層的混沌之間一樣高，那張圖就只是一份目錄）。
-     最少三格：一層的章節不能在圖上消失。 */
-  const SEG = ACTS.map(a => Math.max(3, Math.round(a.floors * 2.1)));
-  const upH   = ACTS.reduce((n,a,i2) => n + (a.up ? SEG[i2] : 0), 0);
-  const downH = ACTS.reduce((n,a,i2) => n + (a.up ? 0 : SEG[i2]), 0);
-  const TOP = 14;                                   // 塔頂的光留的位置
-  const GROUND = TOP + upH + 6;
+  /* ── 版面 ──────────────────────────────────────────────────
+     兩段路的長度差太多，不能共用同一個「一層 = 幾像素」：
+     往下十二章一共九十層，往上三章只有二十六層。同一個比例的話，
+     塔在圖上只有豎井的四分之一高 —— 而這款遊戲叫通天之塔。
+
+     所以上下兩段各自把自己那一段撐滿：豎井分掉地平線到大廣間之間，
+     塔分掉大廣間到畫布頂端之間。段內仍然照層數分（通天塔二十層，
+     在塔的三章裡就是最高的那一節），段跟段之間才換比例。
+     這張圖要回答的是「我在哪、路長什麼形狀」，不是「幾比幾」。 */
+  const SEG  = ACTS.map(a => Math.max(3, Math.round(a.floors * 1.9)));
+  const kindOf = a => a.up ? 'up' : a.surf ? 'surf' : a.wide ? 'wide' : 'down';
+  const sum = k => ACTS.reduce((n,a,i2) => n + (kindOf(a) === k ? SEG[i2] : 0), 0);
+  const downT = Math.max(1, sum('down')), upT = Math.max(1, sum('up'));
+
+  const TOP    = 16;                 // 塔頂那道光留的位置
+  const GROUND = 62;                 // 地平線。地上要放得下神殿，所以固定
+  const SURF_H = 22;                 // 神殿的高度（地面上，不跟層數走）
+  const HALL_H = 13;                 // 大廣間：它量的是寬，不是深
+  const HALL_Y = TOWER_H - HALL_H - 5;
+  const DOWN_H = HALL_Y - (GROUND + 3);            // 豎井分得到的高度
+  const DX = 38, UX = 106;                         // 左：往下的豎井　右：往上的塔
 
   // 天空與地底
   R(0, 0, TOWER_W, GROUND, '#1d3468');
-  R(0, 0, TOWER_W, Math.floor(GROUND*0.5), '#101c3a');
-  for(let i=0;i<30;i++){
+  R(0, 0, TOWER_W, Math.floor(GROUND*0.6), '#101c3a');
+  for(let i=0;i<26;i++){
     const sx = (i*37+11) % TOWER_W, sy = (i*53+7) % Math.max(1, GROUND-6);
     R(sx, sy, 1, 1, i%3 ? '#4a86cf' : '#c8c8d4');
   }
@@ -13126,35 +13417,62 @@ function paintTower(actIdx){
     R(sx, sy, 1, 1, '#43301f');
   }
 
-  const MID = TOWER_W>>1;
-  /* 每一章畫成一段，並記下它的中心 —— 標記與「你在這裡」都用這個位置。
-     兩段在地平線接起來，那個轉折就是這款遊戲的形狀。 */
+  /* 每一章畫成一段，並記下它的中心 —— 標記與「你在這裡」都用這個位置。 */
   const spots = [];
-  let yUp = GROUND - 4, yDn = GROUND + 4;
+  let yDn = GROUND + 3, yUp = HALL_Y;
   for(let i=0;i<ACTS.length;i++){
-    const h = SEG[i];
-    if(ACTS[i].up){
-      const y = yUp - h;
-      // 越高越窄
-      const w = Math.max(14, 34 - Math.round((GROUND - y) / 6));
-      R(MID-(w>>1), y, w, h, '#3d3d4d');
-      R(MID-(w>>1), y, w, 1, '#565668');
-      R(MID-(w>>1), y+h-1, w, 1, '#1a1a24');
-      for(let k=y+2;k<y+h-2;k+=4) R(MID-2, k, 4, 2, '#101c3a');   // 窗
-      spots.push({x:MID, y:y + (h>>1), w});
+    const kind = kindOf(ACTS[i]);
+    if(kind === 'surf'){
+      // 神殿：地面上的階梯塔（ziggurat）。三階越往上越窄，正面一個門洞。
+      const base = 34, step = Math.round(SURF_H/3);
+      for(let s2=0;s2<3;s2++){
+        const w2 = base - s2*9, yy = GROUND - (s2+1)*step;
+        R(DX-(w2>>1), yy, w2, step, s2 ? '#8a7350' : '#a08862');
+        R(DX-(w2>>1), yy, w2, 1, '#c6a677');
+        R(DX-(w2>>1), yy+step-1, w2, 1, '#5e442c');
+      }
+      R(DX-3, GROUND-6, 6, 6, '#1a1410');            // 往下的那道門
+      R(DX-1, GROUND-SURF_H-3, 2, 3, '#dcae35');     // 頂上的火
+      spots.push({x:DX, y:GROUND - (SURF_H>>1), w:base});
+    } else if(kind === 'wide'){
+      // 大廣間：把左邊的豎井橫接到右邊的塔基。圖上唯一橫的一段。
+      const x0 = DX-13, x1 = UX+13;
+      R(x0, HALL_Y, x1-x0, HALL_H, '#161d21');
+      R(x0, HALL_Y, x1-x0, 1, '#2f57a0');
+      R(x0, HALL_Y+HALL_H-1, x1-x0, 1, '#0b1226');
+      for(let k=x0+8;k<x1-6;k+=13) R(k, HALL_Y+3, 2, HALL_H-6, '#2f3a55');  // 廳裡的柱子
+      spots.push({x:(x0+x1)>>1, y:HALL_Y + (HALL_H>>1), w:x1-x0});
+    } else if(kind === 'up'){
+      // 塔：從大廣間長到畫布頂端，段內照層數分。越高越窄。
+      const h = Math.max(6, Math.round((HALL_Y - TOP) * SEG[i] / upT));
+      const y = Math.max(TOP, yUp - h), hh = yUp - y;
+      const w = Math.max(15, 32 - Math.round((GROUND - y) / 9));
+      R(UX-(w>>1), y, w, hh, '#3d3d4d');
+      R(UX-(w>>1), y, w, 1, '#565668');
+      R(UX-(w>>1), yUp-1, w, 1, '#1a1a24');
+      for(let k=y+3;k<yUp-3;k+=6) R(UX-2, k, 4, 3, '#101c3a');   // 窗
+      spots.push({x:UX, y:y + (hh>>1), w});
       yUp = y;
     } else {
-      R(MID-12, yDn, 24, h, '#161d21');
-      R(MID-12, yDn, 24, 1, '#232c32');
-      for(let k=yDn+3;k<yDn+h-1;k+=5) R(MID-9, k, 18, 1, '#232c32');  // 層線
-      spots.push({x:MID, y:yDn + (h>>1), w:24});
+      // 豎井：地平線到大廣間之間，段內照層數分
+      const h = Math.max(4, Math.round(DOWN_H * SEG[i] / downT));
+      R(DX-13, yDn, 26, h, '#161d21');
+      R(DX-13, yDn, 26, 1, '#232c32');
+      for(let k=yDn+3;k<yDn+h-1;k+=5) R(DX-10, k, 20, 1, '#232c32');  // 層線
+      spots.push({x:DX, y:yDn + (h>>1), w:26});
       yDn += h;
     }
   }
-  // 塔頂：一道往上的光
-  R(MID-5, yUp-6, 10, 6, '#565668');
-  R(MID-3, yUp-11, 6, 6, '#dcae35');
-  R(MID-1, yUp-14, 2, 4, '#f5dc7a');
+  // 塔頂：一道往上的光 —— 時空之門
+  R(UX-6, yUp-5, 12, 5, '#565668');
+  R(UX-3, yUp-10, 6, 5, '#dcae35');
+  R(UX-1, yUp-14, 2, 4, '#f5dc7a');
+
+  /* 中繼之村：塔腳那一點金。它標的是「這裡可以停下來，然後開始往上」——
+     圖上唯一一個不是章節的記號，所以它畫成一盞燈而不是一段路。 */
+  R(UX+11, HALL_Y-7, 6, 6, '#dcae35');
+  R(UX+12, HALL_Y-6, 4, 4, '#f5dc7a');
+  R(UX+13, HALL_Y-1, 2, 1, '#8a7350');
 
   // 走過的章壓一層金，還沒去的維持灰
   for(let i=0;i<spots.length;i++){
@@ -13162,12 +13480,15 @@ function paintTower(actIdx){
     const s2 = spots[i];
     R(s2.x-(s2.w>>1)+1, s2.y-1, s2.w-2, 2, 'rgba(168,122,30,.55)');
   }
-  // 你在這裡：一個箭頭 + 主角本人。放在右邊，不擋住塔身
+  // 你在這裡：一個箭頭 + 主角本人。放在右邊，不擋住塔身；
+  // 太靠右會畫出畫布，所以碰到邊就翻到左邊去。
   const me = spots[Math.max(0, Math.min(ACTS.length-1, actIdx))];
-  const ax = me.x + (me.w>>1) + 3;
+  const right = me.x + (me.w>>1) + 3 + 23 <= TOWER_W;
+  const ax = right ? me.x + (me.w>>1) + 3 : me.x - (me.w>>1) - 8;
   R(ax, me.y-1, 5, 2, '#f5dc7a');
   R(ax, me.y-3, 2, 2, '#f5dc7a'); R(ax, me.y+1, 2, 2, '#f5dc7a');
-  x.drawImage(blobFor(VILLAGE.col, VILLAGE.skin), ax+7, me.y-8, 16, 16);
+  x.drawImage(blobFor(VILLAGE.col, VILLAGE.skin),
+              right ? ax+7 : ax-18, me.y-8, 16, 16);
 }
 
 /* 村民會講下一章。村莊如果只有買賣，它就只是一個商店介面 ——
@@ -13199,9 +13520,15 @@ function renderVillage(){
   const nx2 = Math.min(VILLAGE.act | 0, ACTS.length - 1);
   paintTower(nx2);
   const tl = $('towerlbl');
+  // 方向有四種，因為路線本來就有四段：地面的神殿、往下、橫過大廣間、往上。
+  // 只寫「往上／往下」的話，走到大廣間那一章的玩家會看到「繼續往下」，
+  // 而他實際上要做的是橫著走過去找那道門。
+  const dir = ACTS[nx2].up   ? TX('v.towerup','沿著塔往上')
+            : ACTS[nx2].surf ? TX('v.towersurf','地面上的神殿　—　從這裡開始')
+            : ACTS[nx2].wide ? TX('v.towerwide','地底最深處　—　橫過大廣間，找那道向上的門')
+                             : TX('v.towerdown','還在地底，繼續往下');
   if(tl) tl.textContent = M('v.towerlbl','第 {n} / {all} 章　{dir}',
-    {n:nx2+1, all:ACTS.length,
-     dir: ACTS[nx2].up ? TX('v.towerup','沿著塔往上') : TX('v.towerdown','還在地底，繼續往下')});
+    {n:nx2+1, all:ACTS.length, dir});
 
   // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
   const folk = $('vfolk');
@@ -13569,8 +13896,10 @@ function refreshResume(){
     return;
   }
   btn.hidden = false;
-  btn.textContent = M('ui.resume','繼續冒險　第 {n} 章　B{d}F',
-    {n:q.act+1, d:absDepth(q.act, q.floor)});
+  /* 樓層寫的是「這一章的第幾層」，而且照那一章的方向標 ——
+     序章在地上、後三章在塔上，寫死的 B 會告訴玩家他在地底，那是假的。 */
+  btn.textContent = M('ui.resume','繼續冒險　第 {n} 章　{f}',
+    {n:q.act+1, f:floorLabel(q.act, q.floor)});
   start.classList.add('secondary');
   start.textContent = TX('ui.fresh','從頭開始新的一趟');
 }

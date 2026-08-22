@@ -76,6 +76,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
   'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
+  'villageStyle, VSTYLES, VNAME, VPAL, migrateAct, VILLAGE_VER, RUN_VER,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
