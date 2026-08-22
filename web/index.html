@@ -4688,7 +4688,7 @@ const THEMES = {
      日光的砂色取代深藍。這是刻意的：玩家在第一章看到的花紋，
      二十章之後會在塔裡原樣重現，那時候他才會知道自己一開始站的是什麼地方。
      lightAll 讓神殿是亮的 —— 序章不該一開場就把人關進 3x3 的黑。 */
-  temple:   {ramp:['A','B','C','D'], floor:'limestone', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'sky', sun:1},
+  temple:   {ramp:['A','B','C','D'], floor:'limestone', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'temple', sun:1},
   /* 地下大廣間。神殿的釉磚在地底最深處再出現一次 —— 大廳是塔的地基。
      這一章刻意**不**設 cave：整章的重點就是「看得到這間屋子有多大」，
      把視野關成 3x3 的話，大廣間跟一條走廊沒有分別。 */
@@ -11258,7 +11258,41 @@ function drawBackdrop(kind, ox, oy){
   const px1 = ox * 0.18, py1 = oy * 0.10;
   const px2 = ox * 0.34, py2 = oy * 0.20;
 
-  if(kind === 'forest'){
+  if(kind === 'temple'){
+    /* 神殿不是浮在天空上的平台。未探索處是高牆、柱廊與封閉的側室，
+       只有高窗切進幾道光。用大塊水平砌層與方柱剪影，避免背景細節
+       跟真正可走的地磚競爭；鈷藍只留在殘破飾帶。 */
+    cx.fillStyle='#0c0b0a'; cx.fillRect(0,0,W,H);
+    cx.fillStyle='#17130f'; cx.fillRect(0,H*.16,W,H*.84);
+    cx.fillStyle='#211b14'; cx.fillRect(0,H*.48,W,H*.52);
+    const offX=((px2%48)+48)%48, offY=((py2%20)+20)%20;
+    for(let yy=-20-offY;yy<H+20;yy+=20){
+      cx.fillStyle=yy%40?'#2a2118':'#33281d'; cx.fillRect(0,yy,W,2);
+      cx.fillStyle='#0b0a09'; cx.fillRect(0,yy+18,W,2);
+      for(let xx=-48-offX;xx<W+48;xx+=48){
+        cx.fillStyle='#0f0d0b'; cx.fillRect(xx+(yy%40?12:32),yy+2,3,16);
+      }
+    }
+    // 遠柱與壁龕：右側整塊壓暗，左緣留石灰岩受光面。
+    for(let i=0;i<7;i++){
+      const xx=((i*79-px2*.45)%(W+80))-40;
+      cx.fillStyle='#090909'; cx.fillRect(xx,H*.10,22,H*.90);
+      cx.fillStyle='#4b453b'; cx.fillRect(xx+2,H*.10,4,H*.76);
+      cx.fillStyle='#6f6656'; cx.fillRect(xx+3,H*.10,2,H*.54);
+      cx.fillStyle='#1d3468'; cx.fillRect(xx+5,H*.37,15,3);
+      cx.fillStyle='#a87a1e'; cx.fillRect(xx+8,H*.37,4,2);
+    }
+    // 三道高窗光，保持硬邊階梯形；它們只是遠景，地板上的真正光由 litAt 畫。
+    cx.save(); cx.globalCompositeOperation='screen';
+    for(let i=0;i<3;i++){
+      const xx=((i*137+38-px1*.25)%(W+120))-60;
+      cx.fillStyle='rgba(235,213,171,.075)';
+      cx.beginPath(); cx.moveTo(xx,0); cx.lineTo(xx+18,0);
+      cx.lineTo(xx+86,H); cx.lineTo(xx+54,H); cx.closePath(); cx.fill();
+      cx.fillStyle='rgba(255,239,199,.08)'; cx.fillRect(xx+8,0,5,H*.36);
+    }
+    cx.restore();
+  } else if(kind === 'forest'){
     // 深林遠景用大塊像素色帶，不用柔順漸層。近景樹幹移動較快，霧層較慢。
     cx.fillStyle='#07120c'; cx.fillRect(0,0,W,H);
     cx.fillStyle='#0d2114'; cx.fillRect(0,H*.18,W,H*.82);
@@ -11614,7 +11648,8 @@ function draw(dt){
      最後沿著頂緣描一條受光線（太陽在上面），轉角才立得起來。
 
      只有戶外章節需要。地底章節外面本來就是岩盤，不會露出天空。 */
-  if(BACK === 'sky' || BACK === 'high' || BACK === 'water' || BACK === 'ice' || BACK === 'forest'){
+  if(BACK === 'sky' || BACK === 'high' || BACK === 'water' || BACK === 'ice' ||
+     BACK === 'forest' || BACK === 'temple'){
     const SKIRT = [[22,.62], [12,.36], [5,.14]];
     for(const [dy, dark] of SKIRT){
       for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
@@ -11630,6 +11665,7 @@ function draw(dt){
     // 頂緣的受光線：只描在「上面沒有東西」的那一排
     cx.fillStyle = BACK==='forest' ? 'rgba(121,201,122,.30)'
                  : BACK==='ice' ? 'rgba(242,239,231,.72)'
+                 : BACK==='temple' ? 'rgba(205,194,168,.58)'
                  : 'rgba(207,224,242,.5)';
     for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
       if(!G.seen[key(x,y)] || (y > 0 && G.seen[key(x,y-1)])) continue;
