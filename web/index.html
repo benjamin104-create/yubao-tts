@@ -2235,6 +2235,8 @@ dir.e|east|ひがし
 dir.w|west|にし
 dir.here|right below|まうえ
 m.corner|You cannot cut that corner.|その かどは まがれない。
+m.iceSlide|The smooth ice carries you one extra square.|なめらかな こおりで もう 1マス すべった。
+m.iceRidge|A raised ice ridge blocks the way.|せりあがった こおりの うねが みちを ふさいでいる。
 m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
 m.stairsup|Stairs leading up. (Ascend)|うえへの かいだん。（のぼる）
 m.pick|Picked up "{nm}".|「{nm}」を ひろった。
@@ -4543,6 +4545,73 @@ function makeFloor(seed, corridor, ramp, soft, quiet, kind){
   }
   return c;
 }
+
+/* ── 兩格寬的大面積地磚 ──────────────────────────────────────
+   16px 一格不代表每一格都必須是一塊磚。成人玩家會先讀到空間尺度：
+   牢獄的大旗石、神殿的大浮雕板、鏡界的整面鏡磚與冰原的大冰片，
+   尺寸不同，章節才不是同一張棋盤換顏色。
+
+   每張 16x16 只是 32x32 大板的四分之一，依世界座標奇偶拼回完整圖樣；
+   圖仍可快取，網頁不增加任何圖片下載。 */
+function makeMacroFloor(kind,qx,qy,ramp){
+  const R=ramp||RAMP, c=document.createElement('canvas'); c.width=T; c.height=T;
+  const x=c.getContext('2d'), GX=qx*T, GY=qy*T;
+  const P=(col,a,b,w=1,h=1)=>{ x.fillStyle=col; x.fillRect(a-GX,b-GY,w,h); };
+  const base=kind==='mirror'?R[2]:kind==='ice'?R[2]:R[2];
+  x.fillStyle=PAL[base]; x.fillRect(0,0,T,T);
+  // 32x32 大板只在外緣有主縫；內部四格不再各自套一個粗框。
+  if(qx===0){ x.fillStyle=PAL[R[3]]; x.fillRect(0,0,2,T); }
+  if(qy===0){ x.fillStyle=PAL[R[3]]; x.fillRect(0,0,T,2); }
+  if(qx===1){ x.fillStyle=PAL[R[0]]; x.fillRect(14,0,2,T); }
+  if(qy===1){ x.fillStyle=PAL[R[0]]; x.fillRect(0,14,T,2); }
+  if(kind==='slab'){
+    // 一整塊不規則旗石：左上有磨亮面，右下有敲缺與砂礫填縫。
+    P(PAL[R[3]],3,3,15,1); P(PAL[R[3]],3,3,1,11);
+    P(PAL[R[1]],24,18,1,9); P(PAL[R[1]],18,26,7,1);
+    P(PAL[R[0]],20,8,1,6); P(PAL[R[0]],18,13,3,1);
+    P(PAL[R[0]],9,20,1,5); P(PAL[R[0]],9,24,4,1);
+    P(PAL['s'],26,27,4,2); P(PAL['t'],26,26,3,1);
+  } else if(kind==='mosaic'){
+    // 跨四格的八瓣日輪；只用低彩底與少量釉藍／赭金，角色仍比它亮。
+    P(PAL[R[1]],15,5,2,22); P(PAL[R[1]],5,15,22,2);
+    for(const [a,b,w,h] of [[11,7,10,3],[11,22,10,3],[7,11,3,10],[22,11,3,10]])
+      P(PAL[R[1]],a,b,w,h);
+    P(PAL['o'],13,13,6,6); P(PAL['q'],13,13,4,2);
+    P(PAL['u'],15,12,2,8); P(PAL['u'],12,15,8,2); P(PAL['v'],15,15,2,2);
+    P(PAL[R[0]],23,8,3,2); P(PAL[R[0]],24,10,1,4); // 崩掉一瓣
+  } else if(kind==='mirror'){
+    // 整面 2x2 菱鏡，深鉛線與白亮切面跨過格線連續。
+    for(let i=2;i<30;i++){
+      P(PAL[R[0]],i,i,1,1); P(PAL[R[0]],31-i,i,1,1);
+      if(i<16){ P(PAL['6'],i,i-1,1,1); P(PAL[R[3]],30-i,i,1,1); }
+    }
+    P(PAL['6'],5,3,8,1); P(PAL['6'],4,4,1,6);
+    P(PAL[R[0]],22,9,1,7); P(PAL[R[0]],19,15,4,1); P(PAL[R[0]],19,16,1,4);
+    P(PAL[R[3]],14,14,4,4); P(PAL['6'],15,14,2,2);
+  } else if(kind==='ice'){
+    // 大冰片：左上整面受光、右下深藍切面，中間主裂縫有兩條分支。
+    P(PAL['r'],2,2,20,3); P(PAL['+'],3,2,13,1); P(PAL['q'],2,5,12,1);
+    P(PAL['p'],25,17,5,13); P(PAL['o'],22,25,8,5);
+    P(PAL['n'],16,5,1,10); P(PAL['n'],17,14,1,8); P(PAL['n'],18,21,7,1);
+    P(PAL['n'],10,13,7,1); P(PAL['n'],9,11,1,3);
+    P(PAL['r'],15,6,1,6); P(PAL['q'],16,15,1,5);
+  } else if(kind==='void'){
+    // 同心方環跨四格，讀成一座巨大幾何機構而不是 16px 小磁磚。
+    for(const [a,b,s,col] of [[3,3,26,R[1]],[7,7,18,R[2]],[12,12,8,R[3]]]){
+      P(PAL[col],a,b,s,1); P(PAL[col],a,b,1,s);
+      P(PAL[R[0]],a,b+s-1,s,1); P(PAL[R[0]],a+s-1,b,1,s);
+    }
+    P(PAL['6'],15,15,2,2); P(PAL[R[3]],5,24,2,2); P(PAL[R[3]],25,6,1,1);
+  }
+  return c;
+}
+const MACRO_FLOORS={};
+function macroFloorsFor(theme){
+  if(MACRO_FLOORS[theme]) return MACRO_FLOORS[theme];
+  const th=THEMES[theme]||THEMES.stone;
+  if(!th.macro) return MACRO_FLOORS[theme]=null;
+  return MACRO_FLOORS[theme]=[0,1,2,3].map(i=>makeMacroFloor(th.macro,i&1,i>>1,th.ramp));
+}
 function makeWall(face, ramp){
   const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
@@ -4762,32 +4831,32 @@ function makeHat(i){
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
   // 礦坑與牢獄是被後人挖穿的古代聖域：泥磚拱道、浮雕磚、積沙、守護獸殘像。
-  stone:    {ramp:['7','8','a','c'], floor:'dungeon', wall:'temple', prop:'ruin', propRate:8, surface:'drip', air:'dust', mark:'guardian', cave:1},
+  stone:    {ramp:['7','8','a','c'], floor:'dungeon', wall:'earthcut', macro:'slab', prop:'ruin', propRate:8, surface:'drip', air:'dust', mark:'guardian', cave:1},
   // 森林不是綠色石板路：土、根、苔與葉形成不規則地面，霧裡會穿過斑駁天光。
   forest:   {ramp:['7','j','k','l'], floor:'forest', torch:'#79c97a', lightAll:1, wall:'forestwall', prop:'grass', propRate:8, air:'forest', mark:'tree', back:'forest'},
   mountain: {ramp:['1','3','4','6'], floor:'snowstone', lightAll:1, wall:'cliff', prop:'rock', air:'wind', mark:'stele', back:'sky'},
   briar:    {ramp:['0','e','8','f'], floor:'templeRed', torch:'#e87a4a', wall:'temple', prop:'ruin', propRate:8, air:'ember', mark:'ruinIdol'},
   // 湖畔保留水色，但腳下是被淹沒的儀式庭院，不再只是藍色地板。
-  lake:     {ramp:['n','o','p','q'], floor:'wetTemple', lightAll:1, wall:'temple', prop:'ripple', air:'shimmer', mark:'lantern', back:'water'},
+  lake:     {ramp:['n','o','p','q'], floor:'wetTemple', macro:'mosaic', lightAll:1, wall:'temple', prop:'ripple', air:'shimmer', mark:'lantern', back:'water'},
   beast:    {ramp:['7','8','a','c'], floor:'forest', torch:'#f5a95e', wall:'forestwall', prop:'grass', air:'mist', mark:'bones', cave:1},
   wood:     {ramp:['7','8','9','b'], floor:'woodfloor', torch:'#dcae35', wall:'plank', prop:'rock', propRate:11, mark:'torii'},      // 木紋地板：忍者之里、平安京
-  mirror:   {ramp:['1','2','4','6'], floor:'mirrorfloor', lightAll:1, wall:'shard', prop:'glint', propRate:12, air:'shimmer', mark:'mirror', back:'pale'},           // 鏡像：冷白無影
-  crystal:  {ramp:['n','p','r','+'], floor:'icefield', lightAll:1, wall:'icecliff', prop:'ice', propRate:11, air:'snow', surface:'ice', mark:'geode', back:'ice'},
+  mirror:   {ramp:['1','2','4','6'], floor:'mirrorfloor', macro:'mirror', lightAll:1, wall:'shard', prop:'glint', propRate:12, air:'shimmer', mark:'mirror', back:'pale'},           // 鏡像：冷白無影
+  crystal:  {ramp:['n','p','r','+'], floor:'icefield', macro:'ice', slip:1, lightAll:1, wall:'icecliff', prop:'ice', propRate:11, air:'snow', surface:'ice', mark:'geode', back:'ice'},
   // 通天塔核心採深藍釉磚、赭金浮雕與白色花紋，讓「巴比倫」在高潮章節最明確。
-  spire:    {ramp:['n','o','q','r'], floor:'lapis', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
+  spire:    {ramp:['n','o','q','r'], floor:'lapis', macro:'mosaic', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
   /* 序章的地上神殿。跟塔用同一套釉磚與赭金浮雕，只是曬過太陽 ——
      日光的砂色取代深藍。這是刻意的：玩家在第一章看到的花紋，
      二十章之後會在塔裡原樣重現，那時候他才會知道自己一開始站的是什麼地方。
      lightAll 讓神殿是亮的 —— 序章不該一開場就把人關進 3x3 的黑。 */
-  temple:   {ramp:['A','B','C','D'], floor:'limestone', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'temple', sun:1},
+  temple:   {ramp:['A','B','C','D'], floor:'limestone', macro:'mosaic', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'temple', sun:1},
   /* 地下大廣間。神殿的釉磚在地底最深處再出現一次 —— 大廳是塔的地基。
      這一章刻意**不**設 cave：整章的重點就是「看得到這間屋子有多大」，
      把視野關成 3x3 的話，大廣間跟一條走廊沒有分別。 */
   /* 名字是 greathall 不是 hall —— TRACKS.hall 已經被「怪物之間」用掉了，
      而曲子是照**地貌 id** 查表的。取名 hall 的話，整章的背景音樂會悄悄
      變成怪物之間那首沒有解決的等待曲，沒有錯誤、沒有測試看得見。 */
-  greathall:{ramp:['7','9','b','d'], floor:'lapis', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
-  void:     {ramp:['0','1','2','4'], floor:'voidfloor', wall:'void', prop:'glint', propRate:14, air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
+  greathall:{ramp:['7','9','b','d'], floor:'lapis', macro:'mosaic', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
+  void:     {ramp:['0','1','2','4'], floor:'voidfloor', macro:'void', wall:'void', prop:'glint', propRate:14, air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
   temple:'temple',
@@ -5289,7 +5358,34 @@ function themeWall(kind, face, ramp){
   const r = RNG(kind.length*7919 + (face?31:17));
   x.fillStyle = PAL['0']; x.fillRect(0,0,T,T);
 
-  if(kind === 'temple'){                     // 泥磚神殿：階梯城垛、厚磚與殘缺浮雕帶
+  if(kind === 'earthcut'){                   // 土壁剖面：夯土層、砂礫、根與崩落口
+    /* 洞窟不能只是「棕色磚牆」。人真正讀成土的訊號，是不水平的沉積層、
+       一截被切斷的根、夾在土裡的碎石，以及底部剛掉下來的鬆土。 */
+    x.fillStyle=PAL['7']; x.fillRect(0,1,T,15);
+    x.fillStyle=PAL['8']; x.fillRect(0,2,T,4);
+    x.fillStyle=PAL['9']; x.fillRect(0,2,9,1); x.fillRect(2,3,12,1);
+    x.fillStyle=PAL['0'];
+    x.fillRect(0,6,5,1); x.fillRect(5,7,8,1); x.fillRect(13,6,3,1);
+    x.fillRect(0,12,8,1); x.fillRect(8,11,5,1); x.fillRect(13,12,3,1);
+    x.fillStyle=PAL['a']; x.fillRect(1,8,6,3); x.fillRect(9,8,6,2);
+    x.fillStyle=PAL['c']; x.fillRect(2,8,3,1); x.fillRect(10,8,3,1);
+    // 礫石不是芝麻點：每一顆都有亮面與埋進土裡的暗腳。
+    for(const [sx,sy,w] of [[2,5,3],[11,5,2],[6,10,3],[12,13,3]]){
+      x.fillStyle=PAL['0']; x.fillRect(sx,sy,w,2);
+      x.fillStyle=PAL['b']; x.fillRect(sx,sy,Math.max(1,w-1),1);
+    }
+    // 被剖開的根從上層穿向裂縫，到了右下轉為暗面。
+    x.fillStyle=PAL['0']; x.fillRect(8,0,2,6); x.fillRect(9,5,4,1); x.fillRect(12,5,1,3);
+    x.fillStyle=PAL['b']; x.fillRect(8,0,1,5); x.fillRect(9,5,3,1);
+    if(face){
+      x.fillStyle=PAL['c']; x.fillRect(0,8,T,1);
+      x.fillStyle=PAL['8']; x.fillRect(0,9,T,3);
+      x.fillStyle=PAL['7']; x.fillRect(0,12,T,4);
+      x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
+      x.fillRect(4,12,4,1); x.fillRect(10,14,4,1);
+      x.fillStyle=PAL['a']; x.fillRect(1,9,5,2); x.fillRect(8,10,5,1);
+    }
+  } else if(kind === 'temple'){              // 泥磚神殿：階梯城垛、厚磚與殘缺浮雕帶
     x.fillStyle=PAL[R[0]]; x.fillRect(0,2,T,14);
     x.fillStyle=PAL[R[1]];
     x.fillRect(0,1,4,2); x.fillRect(6,0,4,3); x.fillRect(12,1,4,2); // 階梯狀上緣
@@ -5318,28 +5414,42 @@ function themeWall(kind, face, ramp){
     x.fillRect(7,8,2,3); x.fillRect(5,9,6,1); x.fillRect(6,8,1,1); x.fillRect(9,10,1,1);
     x.fillStyle=PAL['v']; x.fillRect(7,9,2,1);
     x.fillStyle=PAL['n']; x.fillRect(10,8,1,1);                // 殘缺的一瓣
-  } else if(kind === 'forestwall'){          // 林牆：盤根、粗幹、暗樹冠，不是規則木柵
+  } else if(kind === 'forestwall'){          // 林牆：泥坡、橫倒木、盤根混成不規則路岸
     x.fillStyle=PAL['0']; x.fillRect(0,0,T,T);
-    x.fillStyle=PAL['7'];
-    x.fillRect(1,2,5,14); x.fillRect(8,0,6,16); x.fillRect(14,5,2,11);
-    x.fillStyle=PAL['b']; x.fillRect(2,2,1,12); x.fillRect(9,1,2,13);
-    x.fillStyle=PAL['0'];
-    for(let i=0;i<8;i++) x.fillRect(r.i(1,14),r.i(3,15),1,r.i(1,3));
-    // 樹根向地面張開；一旦有這個外張剪影，牆才像活的林緣。
-    x.fillStyle=PAL['7']; x.fillRect(0,13,7,3); x.fillRect(7,12,9,4);
-    x.fillStyle=PAL['j']; x.fillRect(0,0,T,4);
-    x.fillStyle=PAL['k']; x.fillRect(1,0,5,2); x.fillRect(9,0,4,2); x.fillRect(5,3,6,1);
-    x.fillStyle=PAL['l']; x.fillRect(2,0,3,1); x.fillRect(10,0,2,1);
-  } else if(kind === 'icecliff'){            // 冰崖：雪唇、直立冰面與下垂冰柱
+    // 先畫切開的泥岸，土面不能跟樹幹一樣是一整片棕色。
+    x.fillStyle=PAL['7']; x.fillRect(0,5,T,11);
+    x.fillStyle=PAL['8']; x.fillRect(0,6,7,4); x.fillRect(9,7,7,5);
+    x.fillStyle=PAL['a']; x.fillRect(1,6,5,1); x.fillRect(10,7,4,1);
+    x.fillStyle=PAL['0']; x.fillRect(0,10,6,1); x.fillRect(6,11,6,1); x.fillRect(12,10,4,1);
+    // 兩根方向與粗細不同的倒木，讀成自然堆積，不是人工木柵。
+    x.fillStyle=PAL['0']; x.fillRect(0,2,12,4); x.fillRect(7,0,9,4);
+    x.fillStyle=PAL['8']; x.fillRect(0,2,11,3); x.fillRect(8,0,8,3);
+    x.fillStyle=PAL['b']; x.fillRect(1,2,8,1); x.fillRect(9,0,6,1);
+    x.fillStyle=PAL['0']; x.fillRect(3,2,1,3); x.fillRect(12,0,1,3);
+    // 根腳伸入泥路邊，最下緣保留清楚的阻擋剪影。
+    x.fillStyle=PAL['0']; x.fillRect(1,12,7,4); x.fillRect(8,13,8,3);
+    x.fillStyle=PAL['8']; x.fillRect(2,12,5,3); x.fillRect(9,12,5,3);
+    x.fillStyle=PAL['j']; x.fillRect(0,4,5,2); x.fillRect(11,3,5,3);
+    x.fillStyle=PAL['k']; x.fillRect(1,4,3,1); x.fillRect(12,3,3,1);
+    x.fillStyle=PAL['l']; x.fillRect(2,3,2,1); x.fillRect(14,4,2,1);
+  } else if(kind === 'icecliff'){            // 冰崖：大切面、折射稜線、深裂縫與冰柱
     x.fillStyle=PAL['n']; x.fillRect(0,3,T,13);
     x.fillStyle=PAL['p']; x.fillRect(1,2,14,12);
     x.fillStyle=PAL['r'];
     for(let i=0;i<T;i++) x.fillRect(i,1+((i+kind.length)%4===0?1:0),1,3);
     x.fillStyle=PAL['+']; x.fillRect(0,1,10,1); x.fillRect(2,2,12,1);
-    // 垂直稜面固定左亮右暗，冰不會讀成藍色石牆。
-    x.fillStyle=PAL['q']; x.fillRect(2,4,2,9); x.fillRect(8,3,2,11);
-    x.fillStyle=PAL['o']; x.fillRect(5,5,2,10); x.fillRect(12,4,3,11);
-    x.fillStyle=PAL['n']; x.fillRect(6,6,1,9); x.fillRect(14,5,1,10);
+    // 三塊不等寬切面。整片亮／中／暗面比幾條反光線更像真冰。
+    x.fillStyle=PAL['q'];
+    for(let yy=4;yy<14;yy++) x.fillRect(1,yy,Math.max(1,7-(yy>>2)),1);
+    x.fillStyle=PAL['p'];
+    for(let yy=3;yy<15;yy++) x.fillRect(6,yy,Math.max(2,12-(yy>>2)),1);
+    x.fillStyle=PAL['o'];
+    for(let yy=5;yy<16;yy++) x.fillRect(11,yy,5,1);
+    // 主裂縫從雪唇一路分叉到底；右下暗邊固定遵守光源。
+    x.fillStyle=PAL['n']; x.fillRect(8,2,1,5); x.fillRect(7,6,2,1);
+    x.fillRect(6,7,1,4); x.fillRect(9,6,3,1); x.fillRect(11,7,1,5);
+    x.fillStyle=PAL['r']; x.fillRect(2,4,1,6); x.fillRect(7,3,1,3);
+    x.fillStyle=PAL['+']; x.fillRect(1,3,1,5); x.fillRect(6,3,1,2);
     if(face){
       x.fillStyle=PAL['r']; x.fillRect(1,8,14,1);
       x.fillStyle=PAL['q']; x.fillRect(2,9,2,5); x.fillRect(8,9,2,7); x.fillRect(13,9,1,4);
@@ -5355,7 +5465,7 @@ function themeWall(kind, face, ramp){
     }
     x.fillStyle = PAL[R[3]];                 // 樹冠壓在上緣，讓上下有別
     for(let i=0;i<14;i++) x.fillRect(r.i(0,15), r.i(0,3), r.i(1,2), 1);
-  } else if(kind === 'cliff'){               // 山道：岩層橫紋，上緣鋸齒
+  } else if(kind === 'cliff'){               // 山道：大塊岩層、崩落斷口與鋸齒上緣
     x.fillStyle = PAL[R[0]]; x.fillRect(0,2,T,14);
     for(let y=3;y<16;y+=3){
       x.fillStyle = PAL[R[1]]; x.fillRect(0,y,T,1);
@@ -5363,6 +5473,11 @@ function themeWall(kind, face, ramp){
     }
     x.fillStyle = PAL[R[2]];                 // 頂緣的碎岩
     for(let i=0;i<16;i++) x.fillRect(i, 1 + (r.chance(.5)?0:1), 1, 1);
+    // 一道斜向崩裂把水平岩層切斷；斷口右下塞著落石。
+    x.fillStyle=PAL['0']; x.fillRect(5,3,1,4); x.fillRect(6,6,3,1);
+    x.fillRect(8,7,1,4); x.fillRect(9,10,4,1);
+    x.fillStyle=PAL[R[2]]; x.fillRect(11,12,3,2); x.fillRect(13,14,3,2);
+    x.fillStyle=PAL[R[3]]; x.fillRect(11,12,2,1); x.fillRect(14,14,1,1);
   } else if(kind === 'column'){              // 通天塔：直立石柱，柱頭有金線
     x.fillStyle = PAL[R[1]]; x.fillRect(2,0,12,T);
     x.fillStyle = PAL[R[2]]; x.fillRect(3,0,2,T); x.fillRect(8,0,2,T);
@@ -5420,7 +5535,7 @@ function themeWall(kind, face, ramp){
   } else {
     return makeWall(face, R);                // 石造：沿用原本的磚牆
   }
-  if(face && kind !== 'icecliff'){           // 立面：下方是地板時畫出厚度
+  if(face && !['icecliff','earthcut','forestwall'].includes(kind)){ // 立面：下方是地板時畫出厚度
     /* 頂面縮成上半格，讓下半格真的成為「面」。左上石唇吃光，
        右下側邊與底縫最暗；這比整格只換深淺更像站起來的牆。 */
     x.fillStyle=PAL[R[3]]; x.fillRect(0,8,T,1);
@@ -5474,8 +5589,50 @@ function terrainDetailHash(x,y,salt=0){
 }
 function drawWallPatina(theme,x,y,px_,py,face){
   const h=terrainDetailHash(x,y,theme.length);
-  if(h%5!==0 && !(face && h%7===0)) return;
   const R=(THEMES[theme]||THEMES.stone).ramp;
+  /* 牆上的雕像不是地面芝麻點，而是房間會被記住的節點。神殿、古礦坑與
+     大廣間的正面牆偶爾開一座深龕：黑色凹部、左上石唇、半身守護像、台座。
+     密度壓到約每十三格一座，才像建築配置而不是貼滿圖案的壁紙。 */
+  const sacred = ['stone','temple','spire','greathall','briar','lake'].includes(theme);
+  if(face && sacred && h%13===0){
+    cx.save(); cx.globalAlpha=.94;
+    cx.fillStyle=PAL['0']; cx.fillRect(px_+3,py+3,10,11); cx.fillRect(px_+4,py+2,8,1);
+    cx.fillStyle=PAL[R[3]]; cx.fillRect(px_+3,py+3,1,9); cx.fillRect(px_+4,py+2,6,1);
+    cx.fillStyle=PAL[R[0]]; cx.fillRect(px_+12,py+4,1,9);
+    // 角狀髮冠、肩、胸與台座；右肩缺掉一塊，讀成廢棄神像而非 NPC。
+    cx.fillStyle=PAL[R[1]]; cx.fillRect(px_+6,py+5,5,3); cx.fillRect(px_+5,py+8,7,3);
+    cx.fillStyle=PAL[R[2]]; cx.fillRect(px_+6,py+4,1,2); cx.fillRect(px_+10,py+4,1,2);
+    cx.fillStyle=PAL[R[3]]; cx.fillRect(px_+6,py+5,2,4); cx.fillRect(px_+5,py+8,2,2);
+    cx.fillStyle=PAL['0']; cx.fillRect(px_+7,py+6,1,1); cx.fillRect(px_+10,py+6,1,1);
+    cx.fillRect(px_+10,py+9,2,2);
+    cx.fillStyle=PAL[R[2]]; cx.fillRect(px_+4,py+11,9,2);
+    cx.fillStyle=PAL[R[3]]; cx.fillRect(px_+4,py+11,7,1);
+    cx.fillStyle=PAL['0']; cx.fillRect(px_+3,py+13,11,2);
+    cx.restore();
+    return;
+  }
+  // 林牆偶爾露出被根包住的古老木面具，冰崖則封著一枚凍結輪廓。
+  if(face && (theme==='forest'||theme==='beast') && h%17===0){
+    cx.save(); cx.globalAlpha=.9;
+    cx.fillStyle=PAL['0']; cx.fillRect(px_+5,py+4,7,9);
+    cx.fillStyle=PAL['8']; cx.fillRect(px_+5,py+4,6,8);
+    cx.fillStyle=PAL['b']; cx.fillRect(px_+6,py+4,3,2);
+    cx.fillStyle=PAL['0']; cx.fillRect(px_+6,py+7,1,2); cx.fillRect(px_+9,py+7,1,2);
+    cx.fillRect(px_+7,py+10,3,1);
+    cx.fillStyle=PAL['k']; cx.fillRect(px_+4,py+3,2,8); cx.fillRect(px_+11,py+2,2,10);
+    cx.restore(); return;
+  }
+  if(face && theme==='crystal' && h%19===0){
+    cx.save(); cx.globalAlpha=.88;
+    cx.fillStyle=PAL['n']; cx.fillRect(px_+4,py+4,9,10);
+    cx.fillStyle=PAL['q']; cx.fillRect(px_+5,py+4,5,8);
+    cx.fillStyle=PAL['r']; cx.fillRect(px_+6,py+5,3,5);
+    cx.fillStyle=PAL['+']; cx.fillRect(px_+6,py+5,1,4);
+    cx.fillStyle=PAL['n']; cx.fillRect(px_+7,py+7,1,1); cx.fillRect(px_+10,py+7,1,1);
+    cx.fillRect(px_+8,py+10,3,1);
+    cx.restore(); return;
+  }
+  if(h%5!==0 && !(face && h%7===0)) return;
   cx.save(); cx.globalAlpha=.78;
   if(theme==='forest' || theme==='beast'){
     // 藤蔓從牆頂垂下，葉只在末端分叉，避免畫成規則綠線。
@@ -5551,6 +5708,65 @@ function drawFloorThreshold(theme,x,y,t,px_,py){
   cx.fillStyle=theme==='wood'?PAL['4']:PAL[R[2]];
   if(n||s){ cx.fillRect(px_+2,py+(s?13:1),1,1); cx.fillRect(px_+13,py+(s?13:1),1,1); }
   if(l||r){ cx.fillRect(px_+(r?13:1),py+2,1,1); cx.fillRect(px_+(r?13:1),py+13,1,1); }
+  cx.restore();
+}
+/* 走道要解釋自己為什麼長成這樣。洞窟是曾經坍塌又被踩出來的路，森林是
+   泥土和根間的缺口，冰原走道則是粗糙的雪脊（也是滑行的自然煞車區）。 */
+function drawCorridorDamage(theme,x,y,px_,py){
+  const h=terrainDetailHash(x,y,41), R=(THEMES[theme]||THEMES.stone).ramp;
+  const vertical=walkable(x,y-1)&&walkable(x,y+1);
+  cx.save();
+  if(theme==='stone' || theme==='briar'){
+    // 連續裂口＋三顆有明暗面的崩石；不是每格都有，路上才有節奏。
+    if(h%3===0){
+      cx.globalAlpha=.9; cx.fillStyle=PAL['0'];
+      cx.fillRect(px_+3,py+3,1,4); cx.fillRect(px_+4,py+6,4,1);
+      cx.fillRect(px_+7,py+7,1,4); cx.fillRect(px_+8,py+10,4,1);
+      for(const [sx,sy] of [[2,12],[11,3],[10,13]]){
+        cx.fillStyle=PAL['0']; cx.fillRect(px_+sx,py+sy,3,2);
+        cx.fillStyle=PAL[R[2]]; cx.fillRect(px_+sx,py+sy,2,1);
+      }
+    }
+    if(h%7===1){
+      // 一邊正在崩：暗缺口咬進走道，外緣堆著剛掉下來的碎土。
+      cx.fillStyle='rgba(2,3,5,.72)';
+      if(vertical) cx.fillRect(px_+(h&1?0:12),py+4,4,8);
+      else cx.fillRect(px_+4,py+(h&1?0:12),8,4);
+      cx.fillStyle=PAL[R[2]];
+      if(vertical) cx.fillRect(px_+(h&1?3:11),py+6,2,5);
+      else cx.fillRect(px_+6,py+(h&1?3:11),5,2);
+    }
+  } else if(theme==='forest' || theme==='beast'){
+    // 泥車轍沿走道方向延伸，根則橫過它；方向一換，材質也跟著轉。
+    cx.globalAlpha=.72; cx.fillStyle=PAL['7'];
+    if(vertical){ cx.fillRect(px_+4,py,2,T); cx.fillRect(px_+11,py,1,T); }
+    else { cx.fillRect(px_,py+4,T,2); cx.fillRect(px_,py+11,T,1); }
+    if(h%3===0){
+      cx.globalAlpha=.92; cx.fillStyle=PAL['0'];
+      if(vertical){ cx.fillRect(px_+1,py+8,14,2); cx.fillRect(px_+4,py+6,2,5); }
+      else { cx.fillRect(px_+8,py+1,2,14); cx.fillRect(px_+6,py+4,5,2); }
+      cx.fillStyle=PAL['b'];
+      if(vertical) cx.fillRect(px_+1,py+8,12,1); else cx.fillRect(px_+8,py+1,1,12);
+    }
+  } else if(theme==='crystal'){
+    // 粗糙雪脊與橫向冰紋明確告訴玩家：這裡不是房間中央那片滑冰面。
+    cx.globalAlpha=.82; cx.fillStyle=PAL['o'];
+    if(vertical){ cx.fillRect(px_+1,py,3,T); cx.fillRect(px_+13,py,2,T); }
+    else { cx.fillRect(px_,py+1,T,3); cx.fillRect(px_,py+13,T,2); }
+    cx.fillStyle=PAL['r'];
+    if(vertical){ cx.fillRect(px_+3,py+2,1,5); cx.fillRect(px_+12,py+9,1,5); }
+    else { cx.fillRect(px_+2,py+3,5,1); cx.fillRect(px_+9,py+12,5,1); }
+    if(h%4===0){
+      cx.fillStyle=PAL['+']; cx.fillRect(px_+6,py+6,4,1);
+      cx.fillStyle=PAL['n']; cx.fillRect(px_+8,py+7,1,4); cx.fillRect(px_+9,py+10,3,1);
+    }
+  } else if(['temple','spire','greathall','lake'].includes(theme) && h%6===0){
+    // 儀式建築的走道有整片脫落的嵌飾與積沙，不靠隨機小點假裝老舊。
+    cx.globalAlpha=.76; cx.fillStyle=PAL['0']; cx.fillRect(px_+4,py+5,8,6);
+    cx.fillStyle=PAL[R[1]]; cx.fillRect(px_+5,py+5,6,4);
+    cx.fillStyle=PAL['t']; cx.fillRect(px_+7,py+6,2,3); cx.fillRect(px_+6,py+7,4,1);
+    cx.fillStyle=PAL['s']; cx.fillRect(px_+9,py+9,5,2);
+  }
   cx.restore();
 }
 /* 地面雜物：每種地貌 4 個。一樣壓在地形自己的色階裡 ——
@@ -6059,6 +6275,35 @@ function shapeRooms(rooms, kind, rng, t, roomAt){
   }
 }
 
+/* 冰原的制動石。只在四周八格都是房間地板的中心放冰脊，所以它不可能封住
+   門或切斷通路；玩家可以利用冰脊周圍的粗糙邊緣停下來，再改變方向。
+   這不是純裝飾：格子本身是 WALL，畫面會以高亮冰脊清楚顯示碰撞。 */
+function addIceStoppers(rooms,rng,t,roomAt){
+  const out=[];
+  for(const rk of rng.shuffle(Object.keys(rooms))){
+    const r=rooms[rk];
+    if(r.w<5 || r.h<5) continue;
+    const cand=[];
+    for(let y=r.y+1;y<r.y+r.h-1;y++) for(let x=r.x+1;x<r.x+r.w-1;x++){
+      let open=t[y*MW+x]===ROOM;
+      for(let oy=-1;oy<=1&&open;oy++) for(let ox=-1;ox<=1;ox++){
+        if(!ox&&!oy) continue;
+        if(t[(y+oy)*MW+x+ox]!==ROOM){ open=false; break; }
+      }
+      if(open && !r.doors.includes(x+','+y)) cand.push({x,y});
+    }
+    rng.shuffle(cand);
+    const want=r.w>=7&&r.h>=6?2:1;
+    for(const p of cand){
+      if(out.filter(q=>q.room===+rk).some(q=>Math.max(Math.abs(q.x-p.x),Math.abs(q.y-p.y))<3)) continue;
+      const k=p.y*MW+p.x;
+      t[k]=WALL; roomAt[k]=-1; out.push({x:p.x,y:p.y,room:+rk});
+      if(out.filter(q=>q.room===+rk).length>=want) break;
+    }
+  }
+  return out;
+}
+
 /* opt.wide = 這一層是「大廣間」。它只改房間大小的骰子：一般樓層
    28% 小室 / 22% 大廳，大廣間改成 0% / 100%，於是整層都是走進去
    看不到對面牆的空間。改骰子而不是另寫一套生成器是刻意的 ——
@@ -6390,6 +6635,8 @@ function genFloor(rng, depth, theme, opt){
 
   // 房間雕形狀：一定要排在通道挖完之後，因為它需要 doors 才知道哪幾格不能動
   shapeRooms(rooms, THEME_SHAPE[theme], rng, t, roomAt);
+  // 冰原房間中央會滑；先放不封路的冰脊，讓玩家有可預測的煞車點。
+  const iceStops = theme==='crystal' ? addIceStoppers(rooms,rng,t,roomAt) : [];
   // 雕過形狀之後，房間矩形裡不再每一格都是地板 —— 挑格子的地方一律改用這支
   const pickIn = (r)=>{
     for(let i=0;i<80;i++){
@@ -6414,7 +6661,7 @@ function genFloor(rng, depth, theme, opt){
 
   const mark = placeMark(t, roomAt, rooms, spawn, stairs, theme, rng);
 
-  return {t, roomAt, el, rooms, spawn, stairs, depth, mark};
+  return {t, roomAt, el, rooms, spawn, stairs, depth, mark, iceStops};
 }
 
 /* 地標：佔 2x2、擋路。擋路是刻意的 —— 走得過去的東西是背景，
@@ -7223,9 +7470,10 @@ function growRoom(rk){
   // 地標是刻意擋路的 2x2 —— 撐開房間的時候要繞過它，不然它就不擋了
   const isMark = (x,y) => f.mark && x >= f.mark.x && x < f.mark.x+2
                                  && y >= f.mark.y && y < f.mark.y+2;
+  const isIceStop = (x,y) => (f.iceStops||[]).some(s=>s.x===x&&s.y===y);
   const cells = [];
   for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
-    if(isMark(x,y)) continue;
+    if(isMark(x,y) || isIceStop(x,y)) continue;
     const k = y*MW + x;
     // 走廊也一起併進來 —— 大廳中間橫過一條顏色不同的通道會看起來像沒畫完
     if(f.t[k] === WALL || f.t[k] === CORR){ f.t[k] = ROOM; f.roomAt[k] = +rk; }
@@ -7859,6 +8107,33 @@ function cornerOK(fx,fy,tx,ty){
   return true;
 }
 
+/* 冰面只讓「房間中央、四邊都開放」的平滑冰片滑動。走道、門邊、牆腳與
+   冰脊周圍都是粗糙面，天然成為煞車區；玩家不需要猜哪一格會停。 */
+function iceSlickAt(x,y){
+  const th=THEMES[themeNow()]||THEMES.stone;
+  if(!th.slip || tileAt(x,y)!==ROOM) return false;
+  // 八個鄰格都必須仍是房間地板。這會留下至少一格寬的粗糙外圈，
+  // 也排除鋸齒房角；轉向點因此永遠不會被一次滑過去。
+  for(let oy=-1;oy<=1;oy++) for(let ox=-1;ox<=1;ox++)
+    if((ox||oy) && tileAt(x+ox,y+oy)!==ROOM) return false;
+  return true;
+}
+/* 回傳一步的實際落點。ignoreActors=true 給地圖連通測試使用；遊戲中若第二格
+   有人、店員或尚未結帳的門檻，就安全停在第一格，不會穿過實體。 */
+function iceMoveTarget(fx,fy,dx,dy,ignoreActors){
+  const first={x:fx+dx,y:fy+dy};
+  if(!iceSlickAt(first.x,first.y)) return first;
+  const second={x:first.x+dx,y:first.y+dy};
+  if(!walkable(second.x,second.y) || !cornerOK(first.x,first.y,second.x,second.y)) return first;
+  if(!ignoreActors){
+    if(monAt(second.x,second.y) || allyAt(second.x,second.y) || npcAt(second.x,second.y) ||
+       keeperAt(second.x,second.y)) return first;
+    if(G.shop && unpaid().length && roomOf(first.x,first.y)===G.shop.room &&
+       roomOf(second.x,second.y)!==G.shop.room) return first;
+  }
+  return second;
+}
+
 /* ─── 視野：房間全揭露 / 通道只見 1 格 ─────────────────────── */
 function vision(){
   for(let i=0;i<G.seen.length;i++) if(G.seen[i]===2) G.seen[i]=1;
@@ -8046,9 +8321,11 @@ function tryMove(dx,dy){
     }
     if(markCellAt(nx,ny)) say(TX('m.landmark','巨大的遺跡擋住了去路。'));
     else if(interiorBlockerAt(nx,ny))
-      say(blockerVariantAt(nx,ny)===0
-        ? TX('m.pit','前方是很深的崩塌凹洞，不能通過。')
-        : TX('m.mound','隆起的土塊與碎石擋住了去路。'));
+      say(themeNow()==='crystal'
+        ? TX('m.iceRidge','隆起的冰脊擋住了去路。')
+        : (blockerVariantAt(nx,ny)===0
+          ? TX('m.pit','前方是很深的崩塌凹洞，不能通過。')
+          : TX('m.mound','隆起的土塊與碎石擋住了去路。')));
     else say(TX('m.wall','前面是牆壁。'));
     return;
   }
@@ -8057,9 +8334,16 @@ function tryMove(dx,dy){
   SFX.play('step');
   echoStep(dx, dy);                       // 複寫型態的分身完全跟著你走
   faceActor(p,dx,dy);
-  G.anim.push({o:p, fx:p.x, fy:p.y, t:0, kind:'walk'});
+  const landing=iceMoveTarget(p.x,p.y,dx,dy,false);
+  const slid=landing.x!==nx || landing.y!==ny;
+  if(slid) echoStep(dx,dy);
+  G.anim.push({o:p, fx:p.x, fy:p.y, t:0, kind:slid?'slide':'walk', dur:slid?.18:.11});
   burst(p.x, p.y, 2, '#5b6a72', 12, -4, 0.3);     // 腳下揚起的塵
-  p.x=nx; p.y=ny;
+  p.x=landing.x; p.y=landing.y;
+  if(slid){
+    burst(p.x,p.y,5,'#d9f3ff',18,-3,.35);
+    if(!G.f.slideHint){ G.f.slideHint=1; say(TX('m.iceSlide','光滑的冰面讓你多滑了一格。'),'gold'); }
+  }
   stepOn();
   endTurn();
 }
@@ -11798,6 +12082,7 @@ function draw(dt){
   const THEME_ID = THEME_ID0;
   const THEME_CFG = THEMES[THEME_ID] || THEMES.stone;
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
+  const MF = macroFloorsFor(THEME_ID);                          // 2x2 大板的四個象限
   const OUTDOOR = !!THEME_CFG.lightAll;
   const CAVE = !!THEME_CFG.cave;
   /* 這一層有沒有高低差。沒有的樓層直接是 null —— 每一格多跑四次查表
@@ -11943,7 +12228,11 @@ function draw(dt){
       }
     } else {
       const arr = t===CORR ? TS.corr : TS.floor;
-      blit(arr[(x*7+y*13)%arr.length], px_, py);
+      // 大廳、冰原與儀式空間用 2x2 格才拼完的一整塊板；走道仍用窄小鋪面。
+      // 這個尺寸差本身就會告訴玩家「房間」與「通道」是兩種空間。
+      const floorImg = t===ROOM && MF ? MF[((y&1)<<1)|(x&1)]
+                                     : arr[(x*7+y*13)%arr.length];
+      blit(floorImg, px_, py);
       if(t===CORR){
         // 走道是比房間低一階、磨損較連續的帶狀空間，不再只是「窄房間」。
         cx.fillStyle='rgba(2,3,5,.24)'; cx.fillRect(px_,py,T,T);
@@ -11954,6 +12243,7 @@ function draw(dt){
         cx.save(); cx.globalAlpha=.16; cx.fillStyle=PAL[THEME_CFG.ramp[3]];
         if(vertical) cx.fillRect(px_+2,py,1,T); else cx.fillRect(px_,py+2,T,1);
         cx.restore();
+        drawCorridorDamage(THEME_ID,x,y,px_,py);
       } else {
         // 房間地面略提亮並保持連續，與暗牆、暗走道形成三段明度。
         cx.fillStyle='rgba(255,239,210,.055)'; cx.fillRect(px_,py,T,T);
@@ -12408,6 +12698,8 @@ function draw(dt){
     const a = G.anim.find(v=>v.o===o);
     if(o.recoil) return {kind:'hurt', phase:Math.min(1,o.recoil.t/(o.recoil.dur||.20))};
     if(o.lunge) return {kind:'attack', phase:Math.min(1,o.lunge.t/(o.lunge.dur||.26))};
+    if(a && a.kind==='slide')
+      return {kind:'slide', phase:Math.min(1,a.t/(a.dur||.18))};
     if(a && ['walk','charge'].includes(a.kind||'walk'))
       return {kind:'walk', phase:Math.min(1,a.t/(a.dur||.11))};
     return {kind:'idle', phase:0};
@@ -12426,6 +12718,18 @@ function draw(dt){
      每半只移動一個實體像素（0.5 邏輯 px × RS=2），仍保持硬邊像素，
      但走動時能看到雙腳交替，不再是整張站姿在地板上滑。 */
   const drawPosed = (img, PX, PY, w2, pose, o, name, fly)=>{
+    if(pose.kind === 'slide'){
+      // 滑行時腳不交替：下半身貼地，上半身沿行進方向微傾，讀成失去抓地力。
+      const f=o.face||[0,1], side=Math.sign(f[0]);
+      const bands=4, lean=Math.sin(pose.phase*Math.PI);
+      for(let i=0;i<bands;i++){
+        const sy0=Math.floor(i*img.height/bands), sy1=Math.floor((i+1)*img.height/bands);
+        const dy0=PY+i*w2/bands, dh=i===bands-1?PY+w2-dy0:w2/bands;
+        const sx=side*lean*(bands-1-i)*.34;
+        cx.drawImage(img,0,sy0,img.width,sy1-sy0,PX+sx,dy0,w2,dh);
+      }
+      return;
+    }
     if(pose.kind === 'walk' && hasFeet(o,name,fly)){
       const sy = Math.floor(img.height*.72), sh = img.height-sy;
       const dy = PY + w2*sy/img.height, dh = w2*sh/img.height;

@@ -74,7 +74,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'DIRS, key, walkable, monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN,' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
-  'buildFloor, THEME_SHAPE, ACT_THEME, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
+  'buildFloor, THEME_SHAPE, ACT_THEME, iceSlickAt, iceMoveTarget, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
   'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +

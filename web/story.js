@@ -84,6 +84,66 @@ ok(api.THEMES.stone.floor === 'dungeon', '礦坑／牢獄使用錯縫大石板')
 ok(api.THEMES.wood.floor === 'woodfloor', '忍者之里／平安京使用斜向木板');
 ok(api.THEMES.mirror.floor === 'mirrorfloor', '鏡界使用菱形鏡板');
 ok(api.THEMES.void.floor === 'voidfloor', '終章使用幾何核心地板');
+ok(api.THEMES.stone.macro === 'slab' && api.THEMES.crystal.macro === 'ice' &&
+   api.THEMES.spire.macro === 'mosaic',
+   '礦坑大旗石、冰原大冰片、神殿大浮雕板各有 2×2 大面積地磚');
+ok(api.THEMES.stone.wall === 'earthcut' && api.THEMES.forest.wall === 'forestwall' &&
+   api.THEMES.crystal.wall === 'icecliff',
+   '土層剖面、林地倒木泥岸、冰崖切面是三種不同牆體結構');
+
+/* ═══ 冰原的滑行與制動 ═══════════════════════════════════════
+   美術畫了大冰片，就要兌現它的物理：房間中央多滑一格；走廊、牆腳與冰脊
+   周圍停下。最重要的是，套用真滑行規則後每一張圖仍然走得到樓梯。 */
+console.log('\n=== 冰原的滑行與制動（48 張圖） ===');
+{
+  const CRYSTAL=AI('crystal');
+  let maps=0, stopperMaps=0, allStops=0, reached=0, slideCase=null, brakeCase=null;
+  for(let seed=260800;seed<260848;seed++){
+    api.newGame(seed);
+    const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor(); maps++;
+    const stops=(g.f.iceStops||[]).filter(s=>g.f.t[s.y*api.MW+s.x]===api.WALL);
+    if(stops.length) stopperMaps++;
+    allStops+=stops.length;
+
+    // 以遊戲真正的 8 向＋牆角＋滑一格規則做 BFS。
+    const q=[g.f.spawn], seen=new Set([api.key(g.f.spawn.x,g.f.spawn.y)]);
+    for(let h=0;h<q.length;h++){
+      const c=q[h];
+      for(const d of api.DIRS){
+        const fx=c.x+d[0], fy=c.y+d[1];
+        if(!api.walkable(fx,fy)||!api.cornerOK(c.x,c.y,fx,fy)) continue;
+        const z=api.iceMoveTarget(c.x,c.y,d[0],d[1],true), k=api.key(z.x,z.y);
+        if(seen.has(k)) continue; seen.add(k); q.push(z);
+      }
+    }
+    if(seen.has(api.key(g.f.stairs.x,g.f.stairs.y))) reached++;
+
+    if(!slideCase || !brakeCase){
+      for(let y=1;y<api.MH-1;y++) for(let x=1;x<api.MW-1;x++) for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const fx=x+d[0], fy=y+d[1];
+        if(!api.walkable(x,y)||!api.walkable(fx,fy)||!api.cornerOK(x,y,fx,fy)) continue;
+        const z=api.iceMoveTarget(x,y,d[0],d[1],true);
+        if(!slideCase && Math.max(Math.abs(z.x-x),Math.abs(z.y-y))===2)
+          slideCase={seed,x,y,d,z};
+        if(!brakeCase && g.f.t[fy*api.MW+fx]===2 && z.x===fx && z.y===fy)
+          brakeCase={x,y,d,z};                    // CORR = 2：粗糙走道必須停
+      }
+    }
+  }
+  ok(stopperMaps>=44 && allStops>=80,
+     '幾乎每張冰原都有清楚的冰脊制動點（'+stopperMaps+'/'+maps+' 張，共 '+allStops+' 座）');
+  ok(reached===maps, '套用實際滑行後仍全部走得到樓梯（'+reached+'/'+maps+' 張）');
+  ok(!!slideCase, '找得到房間中央會多滑一格的平滑冰片');
+  ok(!!brakeCase, '粗糙走道會在第一格停下，不會一路失控');
+  if(slideCase){
+    const {seed,x,y,d,z}=slideCase;
+    api.newGame(seed); const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor();
+    g.p.x=x; g.p.y=y; g.mons=[]; g.allies=[]; g.npc=null; g.shop=null; g.over=false;
+    api.tryMove(d[0],d[1]);
+    ok(g.p.x===z.x&&g.p.y===z.y,
+       '實際操作也會滑兩格（'+x+','+y+' → '+g.p.x+','+g.p.y+'）');
+  } else ok(false,'實際操作也會滑兩格');
+}
 
 /* ═══ 神殿的平面 ═══════════════════════════════════════════════
    使用者：「我需要一個立體神殿的類似像『入口迷宮』的設定場景」，
