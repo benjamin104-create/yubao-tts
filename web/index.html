@@ -910,13 +910,23 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #village> *{flex:none}
 /* 村莊的場景。地牢有天空與雲了，村莊卻只有一排村民站在漸層前面 ——
    那讀起來是「一個選單」，不是「一個地方」。 */
+#vsceneWrap{
+  position:relative; width:min(100%,512px); margin:0 auto 4px; overflow:visible;
+}
 #vscene{
-  width:min(100%,512px); height:auto; image-rendering:pixelated;
-  image-rendering:crisp-edges; display:block; margin:0 auto -4px; border-radius:2px;
+  width:100%; height:auto; image-rendering:pixelated;
+  image-rendering:crisp-edges; display:block; margin:0; border-radius:2px;
   border:2px solid #17110d; outline:1px solid rgba(221,176,91,.48); outline-offset:-3px;
   box-shadow:0 18px 42px rgba(0,0,0,.58), 0 2px 0 rgba(245,220,122,.18),
              inset 0 -1px 0 rgba(245,220,122,.18);
 }
+#vportrait{
+  position:absolute; right:-10px; bottom:-16px; z-index:2; pointer-events:none;
+  width:min(43%,220px); height:auto; image-rendering:pixelated; image-rendering:crisp-edges;
+  filter:drop-shadow(0 8px 4px rgba(0,0,0,.72));
+  animation:villageCastBob 2.8s steps(2,end) infinite;
+}
+@keyframes villageCastBob{50%{transform:translateY(-2px)}}
 #vfolk{display:none}
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
 #towerwrap{display:flex; flex-direction:column; align-items:center; gap:5px; margin:2px 0 4px}
@@ -1302,7 +1312,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div>
 
   <div id="village">
-    <canvas id="vscene" width="256" height="144" aria-hidden="true"></canvas>
+    <div id="vsceneWrap">
+      <canvas id="vscene" width="512" height="288" aria-hidden="true"></canvas>
+      <canvas id="vportrait" width="220" height="96" aria-hidden="true"></canvas>
+    </div>
     <div id="vfolk"></div>
     <div class="vhead">
       <em>SAFE HAVEN</em>
@@ -15896,7 +15909,7 @@ const VNAME = {euro:'爐火村', cave:'岩窟聚落', edo:'燈籠町', spire:'�
 /* 村莊不是一張可以隨便縮放的裝飾圖。這份規格同時給畫圖、無頭測試與
    美術驗收頁讀，避免之後只換顏色就被誤認成「四個不同的村莊」。 */
 const VILLAGE_SCENE_SPEC={
-  version:11,w:256,h:144,
+  version:12,w:512,h:288,
   feature:{
     euro:{building:'timber',landmark:'well',ground:'cobbled-road'},
     cave:{building:'tuff-arch',landmark:'cistern-fire',ground:'rock-cut-path'},
@@ -16463,6 +16476,65 @@ function paintVillageSceneV11(){
   }
 }
 
+/* ═══ 村莊場景 v12：精緻背景＋破格角色群像 ═════════════════════
+   v11 已經把村莊改成 3/4 俯視，但所有房舍仍由 fillRect 即時拼出，
+   在 256×144 裡無法承載屋瓦、石縫、鍛爐、岩層與浮雕等真正的環境資訊。
+
+   v12 把四座村莊各自做成 512×288 的正式場景圖；主角與村人仍由遊戲精靈
+   即時合成到獨立透明畫布，所以換顏色、換外觀後不會跟背景裡的固定人物打架。
+   群像故意壓在右下角並超出場景邊框：它不是地圖上的等比例人物，而是安全區
+   的角色插畫層，讓村莊畫面有封面式的「破格」焦點。 */
+const VILLAGE_ART_FILE={
+  euro:'hearthfire', cave:'rock-cavern', edo:'lantern-town', spire:'tower-foot',
+};
+const VILLAGE_BG={};
+function villageBg(st){
+  if(VILLAGE_BG[st]) return VILLAGE_BG[st];
+  if(typeof Image!=='function') return null;
+  const im=new Image(), name=VILLAGE_ART_FILE[st];
+  im.onload=()=>{ im.ready=1; if(villageStyle()===st) paintVillageSceneV12(); };
+  im.onerror=()=>{};
+  im.src=(ART_DATA&&ART_DATA['village#'+name])||ART_DIR+'village/'+name+'.png';
+  VILLAGE_BG[st]=im;
+  return im;
+}
+function paintVillagePortrait(){
+  const c=$('vportrait'); if(!c||!c.getContext) return;
+  const x=c.getContext('2d');
+  c.width=220;c.height=96;x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);
+  const cast=[
+    {art:makeBlob('b',{age:'old'}),   px:2,   py:37, s:48},
+    {art:makeBlob('l',{age:'adult'}), px:35,  py:28, s:56},
+    {art:makeBlob('u',{age:'adult'}), px:139, py:31, s:55},
+    {art:makeBlob('q',{age:'child'}), px:178, py:45, s:43},
+    {art:blobFor(VILLAGE.col||'#',VILLAGE.skin),px:78,py:12,s:72,hero:1},
+  ];
+  for(const p of cast){
+    x.fillStyle=p.hero?'rgba(245,220,122,.30)':'rgba(5,7,13,.50)';
+    x.beginPath();x.ellipse(p.px+p.s*.5,p.py+p.s*.86,p.s*.34,p.s*.10,0,0,Math.PI*2);x.fill();
+    x.drawImage(p.art,p.px,p.py,p.s,p.s);
+    if(p.hero){
+      x.fillStyle='rgba(255,240,174,.82)';x.fillRect(p.px+20,p.py+2,32,2);
+      x.fillStyle='#fff7df';x.fillRect(p.px+30,p.py,12,2);
+    }
+  }
+}
+function paintVillageSceneV12(){
+  const c=$('vscene'); if(!c||!c.getContext) return;
+  if(c.width!==VILLAGE_SCENE_SPEC.w||c.height!==VILLAGE_SCENE_SPEC.h){
+    c.width=VILLAGE_SCENE_SPEC.w;c.height=VILLAGE_SCENE_SPEC.h;
+  }
+  const x=c.getContext('2d'),st=villageStyle(),P=VPAL[st],im=villageBg(st);
+  x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);
+  if(im&&im.ready) x.drawImage(im,0,0,c.width,c.height);
+  else{
+    // 圖片只在第一次進村時載入；等待期間仍以該村色盤鋪滿，不閃白。
+    x.fillStyle=P.sky[0];x.fillRect(0,0,c.width,c.height);
+    x.fillStyle=P.mid;x.fillRect(0,c.height*.45,c.width,c.height*.55);
+  }
+  paintVillagePortrait();
+}
+
 /* ═══ 旅程全圖（塔的側面） ═══════════════════════════════════
    使用者：「遊戲名稱叫通天之塔，但是樓梯是一直往下？？（感覺應該反過來？）
    或是應該有個遊戲的介紹圖面（通天塔與周邊側面圖，和標註主角位置）……
@@ -16649,7 +16721,7 @@ function renderVillage(){
   // 換了建築卻不換名字，玩家會以為是同一個地方換了佈景。
   const vs = villageStyle();
   $('vname').textContent = TX('v.name.' + vs, VNAME[vs]);
-  paintVillageSceneV11();
+  paintVillageSceneV12();
   const t = villagerLine();
   $('vtalk').innerHTML = M('v.talkfmt','<b>{who}</b>：「{body}」<br>—— 下一章：<b>{nx}</b>',
     {who:t.who, body:t.body, nx:locAct(t.act)});

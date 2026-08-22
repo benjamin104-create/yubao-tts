@@ -408,8 +408,8 @@ ok(api.VSTYLES.includes('spire') && !!api.VNAME.spire && !!api.VPAL.spire,
 const lits = api.VSTYLES.map(s => api.VPAL[s].lit);
 ok(new Set(lits).size === api.VSTYLES.length, '四個村莊的燈火各是各的顏色');
 const VS = api.VILLAGE_SCENE_SPEC;
-ok(VS.version >= 11 && VS.w >= 256 && VS.h >= 144,
-   '村莊用 256×144 的 v11 俯視場景，不會退回扁平橫幅');
+ok(VS.version >= 12 && VS.w >= 512 && VS.h >= 288,
+   '村莊用 512×288 的 v12 精緻場景，不會退回扁平橫幅');
 ok(Object.keys(VS.feature).length === api.VSTYLES.length,
    '四個村莊都有自己的建築、地標與地面文法');
 for(const field of ['building','landmark','ground']){
