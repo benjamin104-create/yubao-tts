@@ -47,6 +47,8 @@ global.document = {
   documentElement: { lang: '', style:{}, scrollWidth:1280, scrollHeight:900 },
 };
 global.addEventListener = () => {};
+// QA 快速入口會讀 location.search；無頭測試等同一般遊戲入口，查詢字串為空。
+global.location = { search:'', href:'http://localhost/game/' };
 // 視窗尺寸：遊戲會依螢幕方向切換視野格數，打樁成一般桌機尺寸
 global.innerWidth = 1280;
 global.innerHeight = 900;
@@ -64,7 +66,7 @@ global.requestAnimationFrame = () => {};
 global.prompt = () => null;
 
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
-const m = html.match(/<script>\n"use strict";([\s\S]*)<\/script>/);
+const m = html.match(/<script>\r?\n"use strict";([\s\S]*)<\/script>/);
 if(!m){ console.error('index.html 裡找不到遊戲腳本'); process.exit(2); }
 
 eval(m[1] + '\n;globalThis.__api = {' +

@@ -4334,9 +4334,11 @@ function makeFloor(seed, corridor, ramp, soft, quiet, kind){
       x.fillStyle=PAL[lime?B1:B0];
       x.fillRect(7,4,2,8); x.fillRect(4,7,8,2);
       x.fillRect(5,5,2,2); x.fillRect(9,5,2,2); x.fillRect(5,9,2,2); x.fillRect(9,9,2,2);
-      x.fillStyle=lapis?PAL['v']:PAL['t'];
+      // 巴比倫神殿的石板保留少量鈷藍釉嵌片；不是把整座神殿染藍，
+      // 而是讓八瓣花與之後通天塔的釉磚形成同一條視覺伏筆。
+      x.fillStyle=lapis?PAL['v']:lime?PAL['p']:PAL['t'];
       x.fillRect(7,5,2,2); x.fillRect(5,7,2,2); x.fillRect(9,7,2,2); x.fillRect(7,9,2,2);
-      x.fillStyle=lapis?PAL['+']:PAL['v']; x.fillRect(7,7,2,2);
+      x.fillStyle=lapis?PAL['+']:lime?PAL['q']:PAL['v']; x.fillRect(7,7,2,2);
     } else if(v===2){
       x.fillStyle=PAL[B0];
       for(const [wx,wy] of [[4,4],[8,5],[6,8],[10,10]]){
@@ -4346,6 +4348,10 @@ function makeFloor(seed, corridor, ramp, soft, quiet, kind){
       x.fillStyle=PAL[B0]; x.fillRect(9,1,1,5); x.fillRect(8,5,2,1);
       x.fillRect(8,6,1,4); x.fillRect(6,9,3,1); x.fillRect(6,10,1,5);
       x.fillStyle=PAL[B2]; x.fillRect(10,2,1,2); x.fillRect(9,7,1,1);
+      if(lime){
+        x.fillStyle=PAL['o']; x.fillRect(2,12,5,1); x.fillRect(6,11,2,1);
+        x.fillStyle=PAL['q']; x.fillRect(2,11,2,1); // 崩落的釉磚碎片
+      }
     } else {
       x.fillStyle=PAL[B2]; x.fillRect(4,4,4,1); x.fillRect(4,4,1,3);
       x.fillStyle=PAL[B0]; x.fillRect(10,10,3,1); x.fillRect(12,11,1,2);
@@ -4547,10 +4553,9 @@ function makeBlocker(kind, variant, ramp){
   const ice = kind === 'icefield' || kind === 'crystal';
   const roots = kind === 'forest' || kind === 'beast';
   const plinth = kind === 'lapis' || kind === 'mirror' || kind === 'spire';
-  /* 神殿的列柱。使用者：「應該有柱面……有雕像、有柱面的感覺」。
-     柱面指的是柱身上那一道道直的凹槽（fluting）—— 它是希臘與兩河
-     石柱最好認的特徵，而且在 16px 上剛好畫得出來：三道亮、三道暗，
-     交錯排一遍，柱子就從一根方棍變成一根柱子。 */
+  /* 神殿的列柱。不是希臘式圓柱，而是巴比倫建築更常見的厚實方形柱墩：
+     淺色灰泥包著泥磚核心，柱身用束蘆般的直帶分節，柱頭做成階梯狀。
+     鈷藍釉磚與赭金小花只佔一條飾帶，讓它跟通天塔的藍釉磚互相呼應。 */
   const column = kind === 'temple' || kind === 'limestone';
   const pit = !ice && !roots && !plinth && !column && variant===0;
   if(pit){                                      // 大凹洞：亮石唇 → 暗斷面 → 純黑洞底
@@ -4568,24 +4573,25 @@ function makeBlocker(kind, variant, ramp){
     px(x,PAL['8'],4,7,8,5); px(x,PAL['b'],5,6,6,4); px(x,PAL['c'],6,6,3,1);
     px(x,PAL['0'],2,13,5,1); px(x,PAL['0'],9,12,5,2);
     px(x,PAL['j'],4,9,3,2); px(x,PAL['k'],5,8,2,1);
-  } else if(column){                            // 石灰岩列柱：柱礎、有凹槽的柱身、柱頭
-    px(x,PAL['0'],2,13,12,3);                   // 地上的影子（光在左上，影子往右下）
-    px(x,PAL[R[0]],2,12,12,2);                  // 柱礎
-    px(x,PAL[R[1]],3,11,10,2);
-    px(x,PAL[R[1]],4,3,8,9);                    // 柱身
-    // 柱面：三亮三暗交錯。亮的偏左（受光），暗的偏右
-    for(let i=0;i<4;i++){
-      px(x,PAL[R[2+((i<2)?1:0)]], 4+i*2, 3, 1, 9);
-      px(x,PAL[R[i<2?1:0]],       5+i*2, 3, 1, 9);
-    }
-    px(x,PAL[R[3]],4,3,1,9);                    // 最左那一道吃滿光
-    px(x,PAL['0'],11,3,1,9);                    // 最右那一道全暗
-    px(x,PAL[R[0]],3,1,10,2);                   // 柱頭
-    px(x,PAL[R[2]],3,1,10,1);
-    px(x,PAL[R[3]],4,1,4,1);
-    px(x,PAL['0'],2,0,12,1);
-    // 崩了一角：這是遺跡，不是新蓋的
-    if(variant){ px(x,PAL['0'],10,4,2,3); px(x,PAL[R[0]],10,7,2,1); }
+  } else if(column){                            // 巴比倫方柱墩：階梯柱頭、束蘆直帶、釉磚飾帶
+    px(x,PAL['0'],2,13,13,3);                   // 固定左上光源，陰影落向右下
+    px(x,PAL[R[0]],2,12,12,3);                  // 三層柱礎
+    px(x,PAL[R[2]],2,11,10,1);
+    px(x,PAL[R[1]],4,3,8,9);                    // 厚實方柱身
+    px(x,PAL[R[3]],4,3,2,8);                    // 左側整塊受光面
+    px(x,PAL[R[2]],6,3,2,8);
+    px(x,PAL[R[1]],8,3,2,8);
+    px(x,PAL[R[0]],10,3,2,9);                   // 右側暗面
+    px(x,PAL['o'],4,7,8,2);                     // 鈷藍釉磚帶
+    px(x,PAL['q'],5,7,3,1);
+    px(x,PAL['u'],7,7,2,2);                     // 八瓣花簡化成金色十字
+    px(x,PAL['v'],7,7,1,1);
+    px(x,PAL[R[0]],3,1,10,2);                   // 階梯式柱頭
+    px(x,PAL[R[2]],2,1,12,1);
+    px(x,PAL[R[3]],3,0,7,1);
+    px(x,PAL['0'],2,2,12,1);
+    // 崩了一角：露出內部暗色泥磚，不像新蓋好的展示柱
+    if(variant){ px(x,PAL['0'],10,3,2,4); px(x,PAL['8'],10,6,2,2); }
   } else if(plinth){                            // 神殿／鏡廳柱座：方形三階台，絕不讀成平面
     px(x,PAL['0'],2,10,12,5); px(x,PAL[R[0]],3,9,10,5);
     px(x,PAL[R[1]],4,6,8,6); px(x,PAL[R[2]],5,4,6,6); px(x,PAL[R[3]],5,4,5,2);
@@ -4682,7 +4688,7 @@ const THEMES = {
      日光的砂色取代深藍。這是刻意的：玩家在第一章看到的花紋，
      二十章之後會在塔裡原樣重現，那時候他才會知道自己一開始站的是什麼地方。
      lightAll 讓神殿是亮的 —— 序章不該一開場就把人關進 3x3 的黑。 */
-  temple:   {ramp:['A','B','C','D'], floor:'limestone', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'sky', sun:1},
+  temple:   {ramp:['A','B','C','D'], floor:'limestone', lightAll:1, wall:'fluted', prop:'ruin', propRate:9, air:'dust', mark:'guardian', back:'temple', sun:1},
   /* 地下大廣間。神殿的釉磚在地底最深處再出現一次 —— 大廳是塔的地基。
      這一章刻意**不**設 cave：整章的重點就是「看得到這間屋子有多大」，
      把視野關成 3x3 的話，大廣間跟一條走廊沒有分別。 */
@@ -5287,7 +5293,7 @@ function themeWall(kind, face, ramp){
       x.fillStyle = PAL['0']; x.fillRect(0,y+3,T,1);
       x.fillStyle = PAL[R[0]]; x.fillRect(r.i(1,13), y+1, 1, 1);
     }
-  } else if(kind === 'fluted'){              // 曬白的石灰岩：切石砌、金飾帶、風蝕的缺角
+  } else if(kind === 'fluted'){              // 巴比倫神殿外牆：灰泥切石、鈷藍釉帶、風蝕缺角
     /* 使用者要的是「更純白色、沙地廢墟感」＋「柱面」。
        這一面牆做的是**切石**（ashlar）：整齊的大石塊、細縫、
        上緣被風磨圓。它跟泥磚神殿（temple）最大的差別在明度 ——
@@ -5302,9 +5308,16 @@ function themeWall(kind, face, ramp){
       x.fillStyle=PAL[R[0]]; x.fillRect(off,yy-4,1,4);
     }
     x.fillStyle=PAL[R[1]]; x.fillRect(0,14,T,2);      // 貼地那一段壓暗
-    // 金飾帶：兩河神廟的琺瑯／鎏金分隔線，整面牆唯一的暖色
-    x.fillStyle=PAL['t']; x.fillRect(0,9,T,1);
-    x.fillStyle=PAL['u']; x.fillRect(2,9,4,1); x.fillRect(10,9,3,1);
+    /* 大英博物館巴比倫館藏裡最強的建築色彩訊號，是鈷藍釉磚配赭黃
+       動物與花紋。這裡只嵌一條殘缺飾帶，保持神殿仍是曬白的遺址。 */
+    x.fillStyle=PAL['o']; x.fillRect(0,8,T,3);
+    x.fillStyle=PAL['p']; x.fillRect(0,8,T,1);
+    x.fillStyle=PAL['n']; x.fillRect(0,10,T,1);
+    for(const bx of [3,11]){
+      x.fillStyle=PAL['u']; x.fillRect(bx,8,2,3); x.fillRect(bx-1,9,4,1);
+      x.fillStyle=PAL['v']; x.fillRect(bx,9,2,1);
+    }
+    x.fillStyle=PAL[R[0]]; x.fillRect(11,8,2,2); // 一段已經剝落
     // 風蝕：邊角缺一塊、表面幾個蝕孔。沒有這些它就是新蓋的牆
     x.fillStyle=PAL['0'];
     if(r.chance(.5)) x.fillRect(13,1,3,2); else x.fillRect(0,1,2,3);
@@ -5328,18 +5341,17 @@ function themeWall(kind, face, ramp){
     x.fillStyle=PAL['0']; x.fillRect(15,10,1,5);
     x.fillRect(4,12,4,1); x.fillRect(10,14,3,1);
     if(kind === 'fluted'){
-      /* ★ 柱面。牆的**正面**（下半格）刻成一道道直的凹槽 ——
-         這就是使用者說的「柱面的感覺」。它跟前面那些橫向分層的立面
-         完全相反：橫線讀成「一層一層堆的磚」，直線讀成「一根一根的柱」，
-         而一整排連續的直槽正是神廟外側柱廊的樣子。
-         亮暗交錯而不是等距同色：等距同色在 16px 上會糊成一片灰。 */
+      /* 牆腳沿用柱墩的束蘆直帶，不做希臘式圓柱槽。四道寬面有明確
+         左亮右暗，中央壓一小段藍釉與金色日輪，手機上仍讀得出高度。 */
       x.fillStyle=PAL[R[1]]; x.fillRect(0,9,T,7);
-      for(let i=0;i<8;i++){
-        x.fillStyle=PAL[i%2 ? R[0] : R[2]]; x.fillRect(i*2,   9, 1, 6);
-        x.fillStyle=PAL[i%2 ? R[2] : R[1]]; x.fillRect(i*2+1, 9, 1, 6);
+      for(let i=0;i<4;i++){
+        x.fillStyle=PAL[i<2 ? R[2] : R[0]]; x.fillRect(i*4,   9, 2, 6);
+        x.fillStyle=PAL[i<2 ? R[1] : '0'];   x.fillRect(i*4+2, 9, 2, 6);
       }
       x.fillStyle=PAL[R[3]]; x.fillRect(0,8,T,1);     // 柱頂線（受光）
-      x.fillStyle=PAL['t']; x.fillRect(0,10,T,1);     // 金線壓在柱面上緣
+      x.fillStyle=PAL['o']; x.fillRect(0,10,T,2);     // 藍釉帶壓在柱面上緣
+      x.fillStyle=PAL['q']; x.fillRect(1,10,5,1);
+      x.fillStyle=PAL['u']; x.fillRect(7,10,2,2); x.fillRect(6,11,4,1);
       x.fillStyle=PAL['0']; x.fillRect(0,15,T,1);
     } else if(kind === 'temple' || kind === 'glazed'){
       // 神殿立面多一條殘缺的儀式飾帶；左段受光、右段崩落。
@@ -5648,6 +5660,60 @@ function makeLandmark(kind, ramp){
   }
   return c;
 }
+
+/* 巴比倫神殿的小型建築文物。大型地標仍負責「記住這一層」，這些一格寬、
+   兩格高的物件則負責讓空間讀成一座有儀式用途的神殿，而不是白色迷宮。
+
+   造型依大英博物館巴比倫館藏抽出三個可在 16px 讀出的訊號：
+   1. 巴比倫獅／神獸的側面剪影；2. 黑色圓頂界碑；3. 日輪、月輪、八角星與
+   成排楔形刻痕。沒有照搬單一文物，避免把博物館展品當成裝飾貼圖。 */
+const TEMPLE_RELIC_ART = {};
+function makeTempleRelic(kind, dir){
+  const c=document.createElement('canvas'); c.width=T; c.height=T*2;
+  const x=c.getContext('2d');
+  const P=(col,a,b,w=1,h=1)=>{ x.fillStyle=col; x.fillRect(a,b,w,h); };
+  const O=PAL['0'];
+  if(kind === 'lion'){
+    // 台座先用鈷藍釉磚收邊，石獅本體保持灰砂岩色。
+    P(O,1,27,14,5); P(PAL['A'],2,26,12,5); P(PAL['C'],2,26,9,1);
+    P(PAL['o'],3,28,10,2); P(PAL['q'],3,28,5,1); P(PAL['u'],7,28,2,2);
+    // 面向右的獅：低身、厚胸、抬頭。最後再依左右位置鏡射。
+    P(O,1,16,3,9); P(PAL['A'],2,17,2,7);             // 上捲的尾
+    P(O,2,17,10,9); P(PAL['B'],3,18,8,7);             // 獸身
+    P(PAL['D'],3,18,5,2); P(PAL['C'],4,20,6,3);       // 左上受光面
+    P(O,4,23,3,5); P(O,9,23,3,5);                     // 四足合併成兩組剪影
+    P(PAL['B'],5,23,1,4); P(PAL['A'],10,23,1,4);
+    P(O,9,13,5,8); P(PAL['A'],10,14,4,6);             // 鬃與頸
+    P(PAL['C'],10,14,2,5); P(O,11,10,4,7);            // 頭
+    P(PAL['B'],11,11,3,5); P(PAL['D'],11,11,2,2);
+    P(O,14,14,2,3); P(PAL['C'],14,14,1,2);            // 方形吻部
+    P(O,10,9,3,3); P(PAL['B'],11,10,2,2);             // 耳
+    P(O,12,12,1,1); P(PAL['u'],12,12,1,1);            // 尚有金色嵌料的一眼
+    P(PAL['A'],4,20,1,1); P(PAL['A'],7,22,2,1);       // 風蝕缺口
+  } else { // kudurru：黑石界碑／奉獻碑
+    P(O,2,28,12,4); P(PAL['1'],3,27,10,4); P(PAL['4'],3,27,6,1);
+    P(O,3,7,10,22); P(O,4,4,8,4); P(O,5,3,6,2);       // 圓頂輪廓
+    P(PAL['2'],4,7,8,20); P(PAL['3'],4,7,2,19); P(PAL['1'],11,8,1,19);
+    P(PAL['4'],5,5,5,2); P(PAL['3'],4,7,7,2);         // 左上石面受光
+    // 月輪、日輪與八角星；下半以短橫＋豎切模擬楔形文字。
+    P(PAL['u'],5,9,3,1); P(PAL['u'],5,10,1,2); P(PAL['v'],6,11,2,1);
+    P(PAL['u'],9,9,2,2); P(PAL['v'],9,9,1,1);
+    P(PAL['u'],7,13,1,4); P(PAL['u'],5,14,5,1); P(PAL['v'],7,14,1,1);
+    for(let yy=18;yy<26;yy+=2){
+      const off=((yy>>1)&1); P(PAL['5'],5+off,yy,5,1); P(PAL['6'],5+off,yy,1,1);
+      P(PAL['1'],8+off,yy+1,1,1);
+    }
+    P(PAL['o'],4,25,8,2); P(PAL['q'],5,25,3,1);      // 後期補上的釉磚基座
+  }
+  if(kind !== 'lion' || dir !== -1) return c;
+  const m=document.createElement('canvas'); m.width=c.width; m.height=c.height;
+  const mx=m.getContext('2d'); mx.translate(T,0); mx.scale(-1,1); mx.drawImage(c,0,0);
+  return m;
+}
+function templeRelicArt(kind, dir){
+  const k=kind+':' + (dir||1);
+  return TEMPLE_RELIC_ART[k] || (TEMPLE_RELIC_ART[k]=makeTempleRelic(kind,dir||1));
+}
 const THEME_MARK = {};
 function markFor(theme){
   if(THEME_MARK[theme] !== undefined) return THEME_MARK[theme];
@@ -5845,6 +5911,7 @@ function genTemple(rng, depth, theme){
   const roomAt = new Int8Array(MW*MH).fill(-1);
   const el = new Uint8Array(MW*MH);
   const rooms = {};
+  const pillars = [], relics = [];
   const AX = TEMPLE_AXIS;
   const fill = (x0, y0, x1, y1, tile, rk, lv)=>{
     for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
@@ -5923,18 +5990,35 @@ function genTemple(rng, depth, theme){
      所以中軸永遠是通的 —— 玩家從門口一眼就看得到最裡面。
      擺完仍然要複查連通：柱子不會封死中軸，但它可能把前庭的角落切掉。 */
   const undo = [];
+  const columnX = [AX-5, AX+5];
   for(let cy = fy0+1; cy <= fy1-1; cy += 2){
-    for(const side of [-1, 1]){
-      const px = AX + side*rng.i(4, 6);
+    for(const px of columnX){
       const k = cy*MW + px;
       if(t[k] !== ROOM) continue;
       undo.push([k, t[k], roomAt[k], el[k]]);
       t[k] = WALL; roomAt[k] = -1;
+      pillars.push({x:px,y:cy});
     }
   }
   if(!templeConnected(t, AX, fy1-1)){
     for(const [k, tv, rv, ev] of undo){ t[k] = tv; roomAt[k] = rv; el[k] = ev; }
+    pillars.length = 0;
   }
+
+  /* ── 儀式雕像與黑石碑 ──────────────────────────────────────
+     內殿台階兩側是一對朝向中軸的石獅；內殿深處則是一對圓頂黑石碑。
+     石碑上的日、月、星與楔形刻痕來自巴比倫 kudurru 的視覺語彙。
+     它們佔的是本來就不在五格台階內的牆位，中央動線永遠不會被裝飾堵住。 */
+  const addRelic = (x0,y0,kind,dir,lv,inside)=>{
+    const k=y0*MW+x0;
+    relics.push({x:x0,y:y0,kind,dir:dir||1});
+    t[k]=WALL; el[k]=lv;
+    if(!inside) roomAt[k]=-1;
+  };
+  addRelic(AX-4, sy, 'lion',  1, 1, false);  // 左像面向右
+  addRelic(AX+4, sy, 'lion', -1, 1, false);  // 右像面向左
+  addRelic(AX-cw+1, cy0+3, 'kudurru', 1, 2, true);
+  addRelic(AX+cw-1, cy0+3, 'kudurru', 1, 2, true);
 
   /* ── 天窗與光柱 ────────────────────────────────────────────
      使用者：「可能會有窗或孔，讓陽光直射進來」「外面有陽光灑進來」。
@@ -6006,7 +6090,26 @@ function genTemple(rng, depth, theme){
      （十八層裡有七層中招，而且不會報任何錯 —— 是測試量出來的。）
      順手也把物理講對了：石像擋光，光就到不了它腳下。 */
   for(const k of [...litAt.keys()]) if(t[k] === WALL) litAt.delete(k);
-  return {t, roomAt, el, rooms, spawn, stairs, depth, mark, rays, litAt};
+
+  /* ── 硬邊投影 ──────────────────────────────────────────────
+     光從左上來，柱子與雕像的影子就往右下切成階梯狀。陰影按地圖格保存，
+     只畫在可走地面上；因此它不會穿牆，也不會變成蓋滿畫面的柔焦濾鏡。 */
+  const shadowAt = new Map();
+  const castShadow = (sx0,sy0,len,power)=>{
+    for(let i=1;i<=len;i++){
+      const yy=sy0+i, wide=i>2?2:1;
+      for(let j=0;j<wide;j++){
+        const xx=sx0+i-j, k=yy*MW+xx;
+        if(xx<1||yy<1||xx>=MW-1||yy>=MH-1||t[k]===WALL) continue;
+        const v=power*(1-(i-1)/(len+2));
+        shadowAt.set(k,Math.max(shadowAt.get(k)||0,v));
+      }
+    }
+  };
+  for(const p of pillars) castShadow(p.x,p.y,4,.92);
+  for(const r of relics) castShadow(r.x,r.y,r.kind==='lion'?3:2,r.kind==='lion'?.72:.56);
+  return {t, roomAt, el, rooms, spawn, stairs, depth, mark, rays, litAt,
+          pillars, relics, shadowAt};
 }
 /* 從前庭走得到全圖嗎。柱子擺完要複查 —— 擺柱子只會擋一格，
    但一格就足以把前庭的角落切成孤島，而孤島上如果掉了一件裝備，
@@ -11155,7 +11258,41 @@ function drawBackdrop(kind, ox, oy){
   const px1 = ox * 0.18, py1 = oy * 0.10;
   const px2 = ox * 0.34, py2 = oy * 0.20;
 
-  if(kind === 'forest'){
+  if(kind === 'temple'){
+    /* 神殿不是浮在天空上的平台。未探索處是高牆、柱廊與封閉的側室，
+       只有高窗切進幾道光。用大塊水平砌層與方柱剪影，避免背景細節
+       跟真正可走的地磚競爭；鈷藍只留在殘破飾帶。 */
+    cx.fillStyle='#0c0b0a'; cx.fillRect(0,0,W,H);
+    cx.fillStyle='#17130f'; cx.fillRect(0,H*.16,W,H*.84);
+    cx.fillStyle='#211b14'; cx.fillRect(0,H*.48,W,H*.52);
+    const offX=((px2%48)+48)%48, offY=((py2%20)+20)%20;
+    for(let yy=-20-offY;yy<H+20;yy+=20){
+      cx.fillStyle=yy%40?'#2a2118':'#33281d'; cx.fillRect(0,yy,W,2);
+      cx.fillStyle='#0b0a09'; cx.fillRect(0,yy+18,W,2);
+      for(let xx=-48-offX;xx<W+48;xx+=48){
+        cx.fillStyle='#0f0d0b'; cx.fillRect(xx+(yy%40?12:32),yy+2,3,16);
+      }
+    }
+    // 遠柱與壁龕：右側整塊壓暗，左緣留石灰岩受光面。
+    for(let i=0;i<7;i++){
+      const xx=((i*79-px2*.45)%(W+80))-40;
+      cx.fillStyle='#090909'; cx.fillRect(xx,H*.10,22,H*.90);
+      cx.fillStyle='#4b453b'; cx.fillRect(xx+2,H*.10,4,H*.76);
+      cx.fillStyle='#6f6656'; cx.fillRect(xx+3,H*.10,2,H*.54);
+      cx.fillStyle='#1d3468'; cx.fillRect(xx+5,H*.37,15,3);
+      cx.fillStyle='#a87a1e'; cx.fillRect(xx+8,H*.37,4,2);
+    }
+    // 三道高窗光，保持硬邊階梯形；它們只是遠景，地板上的真正光由 litAt 畫。
+    cx.save(); cx.globalCompositeOperation='screen';
+    for(let i=0;i<3;i++){
+      const xx=((i*137+38-px1*.25)%(W+120))-60;
+      cx.fillStyle='rgba(235,213,171,.075)';
+      cx.beginPath(); cx.moveTo(xx,0); cx.lineTo(xx+18,0);
+      cx.lineTo(xx+86,H); cx.lineTo(xx+54,H); cx.closePath(); cx.fill();
+      cx.fillStyle='rgba(255,239,199,.08)'; cx.fillRect(xx+8,0,5,H*.36);
+    }
+    cx.restore();
+  } else if(kind === 'forest'){
     // 深林遠景用大塊像素色帶，不用柔順漸層。近景樹幹移動較快，霧層較慢。
     cx.fillStyle='#07120c'; cx.fillRect(0,0,W,H);
     cx.fillStyle='#0d2114'; cx.fillRect(0,H*.18,W,H*.82);
@@ -11488,6 +11625,10 @@ function draw(dt){
     ? (G.f.elAny = G.f.el.some(v => v > 0)) : G.f.elAny) && G.f.el : null;
   // 陽光的光斑（只有地面上的章節有）
   const LIT = G.f.litAt || null;
+  const SHADOW = G.f.shadowAt || null;
+  const RELICS = G.f.relics || [];
+  const RELIC_AT = RELICS.length ? (G.f._relicAt || (G.f._relicAt = new Map(
+    RELICS.map(r=>[key(r.x,r.y),r])))) : null;
   const TPROPS = propsFor(THEME_ID);
   const PROP_RATE = (THEMES[THEME_ID] || {}).propRate || 9;
   const AIR = (THEMES[THEME_ID] || {}).air;
@@ -11507,7 +11648,8 @@ function draw(dt){
      最後沿著頂緣描一條受光線（太陽在上面），轉角才立得起來。
 
      只有戶外章節需要。地底章節外面本來就是岩盤，不會露出天空。 */
-  if(BACK === 'sky' || BACK === 'high' || BACK === 'water' || BACK === 'ice' || BACK === 'forest'){
+  if(BACK === 'sky' || BACK === 'high' || BACK === 'water' || BACK === 'ice' ||
+     BACK === 'forest' || BACK === 'temple'){
     const SKIRT = [[22,.62], [12,.36], [5,.14]];
     for(const [dy, dark] of SKIRT){
       for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
@@ -11523,6 +11665,7 @@ function draw(dt){
     // 頂緣的受光線：只描在「上面沒有東西」的那一排
     cx.fillStyle = BACK==='forest' ? 'rgba(121,201,122,.30)'
                  : BACK==='ice' ? 'rgba(242,239,231,.72)'
+                 : BACK==='temple' ? 'rgba(205,194,168,.58)'
                  : 'rgba(207,224,242,.5)';
     for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
       if(!G.seen[key(x,y)] || (y > 0 && G.seen[key(x,y-1)])) continue;
@@ -11540,23 +11683,47 @@ function draw(dt){
     const px_=ox+x*T, py=oy+y*T, t=tileAt(x,y);
     // 地標腳下那 2x2 在地圖上是牆（所以擋路），但畫的是地板 ——
     // 畫成牆的話，樹後面會浮出一塊方方正正的石壁，一眼就穿幫。
-    if(t===WALL && MK && x>=MK.x && x<MK.x+2 && y>=MK.y && y<MK.y+2){
+    if(t===WALL && RELIC_AT && RELIC_AT.has(key(x,y))){
+      // 雕像佔地不可走，但腳下仍是神殿地板；本體稍後以兩格高精靈蓋上。
       blit(TS.floor[(x*7+y*13)%TS.floor.length], px_, py);
+      cx.fillStyle='rgba(5,7,11,.34)'; cx.fillRect(px_+2,py+12,T-2,4);
+      cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.42;
+      cx.fillRect(px_+2,py+11,T-4,1); cx.globalAlpha=1;
+    } else if(t===WALL && MK && x>=MK.x && x<MK.x+2 && y>=MK.y && y<MK.y+2){
+      blit(TS.floor[(x*7+y*13)%TS.floor.length], px_, py);
+      // 大型地標的 2x2 佔地加一圈明暗底座，玩家不用撞上去才知道不能穿過。
+      cx.fillStyle='rgba(5,7,11,.28)'; cx.fillRect(px_,py+12,T,4);
+      if(y===MK.y){ cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.34;
+                    cx.fillRect(px_,py+1,T,1); cx.globalAlpha=1; }
     } else if(t===WALL && interiorBlockerAt(x,y)){
       // 房間裡的不可通行格改畫成深坑／土丘／冰脊／柱座，不再假裝是地板。
       blit(TS.blocker[blockerVariantAt(x,y)], px_, py);
+      // 阻擋物一律有亮的左上唇與深的右下腳，碰撞邊界要比表面紋理優先。
+      cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.42;
+      cx.fillRect(px_+2,py+1,T-5,1); cx.fillRect(px_+1,py+2,1,T-5);
+      cx.fillStyle=PAL['0']; cx.globalAlpha=.78;
+      cx.fillRect(px_+3,py+14,T-4,2); cx.fillRect(px_+14,py+4,2,T-4);
+      cx.globalAlpha=1;
     } else if(t===WALL){
       const face = walkable(x,y+1);
       blit(face ? TS.wallFace : TS.wall, px_, py);
       // 洞窟牆再壓深一階；下方接地時仍保留一條明亮石唇，輪廓才不會糊掉。
       cx.fillStyle = CAVE
-        ? (face ? 'rgba(1,2,4,.32)' : 'rgba(1,2,4,.48)')
-        : (face ? 'rgba(2,3,5,.20)' : 'rgba(2,3,5,.34)');
+        ? (face ? 'rgba(1,2,4,.36)' : 'rgba(1,2,4,.54)')
+        : (face ? 'rgba(2,3,5,.27)' : 'rgba(2,3,5,.46)');
       cx.fillRect(px_,py,T,T);
       if(face){
-        cx.save(); cx.globalAlpha=.64; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_,py+8,T,1);
-        cx.globalAlpha=CAVE ? .90 : .72; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+14,T,2); cx.restore();
+        cx.save();
+        cx.globalAlpha=.82; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_,py+7,T,2);
+        cx.globalAlpha=CAVE ? .94 : .84; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+13,T,3);
+        cx.globalAlpha=.55; cx.fillStyle=PAL[THEME_CFG.ramp[1]]; cx.fillRect(px_+2,py+10,T-4,2);
+        cx.restore();
       }
+      // 側面貼著可走地板時也要有厚度；只有正面有立面會讓轉角看成平面花紋。
+      cx.save(); cx.fillStyle=PAL['0']; cx.globalAlpha=CAVE?.86:.68;
+      if(walkable(x-1,y)) cx.fillRect(px_,py+5,3,11);
+      if(walkable(x+1,y)) cx.fillRect(px_+13,py+5,3,11);
+      cx.restore();
       if(CAVE){
         // 轉角的垂直暗面：直牆只有牆腳，L 型牆角則多一塊厚陰影。
         // 這幾塊都是整數像素硬邊，不會破壞 16-bit 的讀法。
@@ -11627,6 +11794,16 @@ function draw(dt){
           cx.fillRect(px_+3, py, T-6, T);
         }
       }
+      if(SHADOW){
+        const sh0=SHADOW.get(key(x,y));
+        if(sh0){
+          // 不用漸層：兩塊錯位矩形就是 16-bit 硬邊投影，右下最深。
+          cx.fillStyle='rgba(21,16,15,'+(sh0*.38).toFixed(3)+')';
+          cx.fillRect(px_,py+2,T,T-2);
+          cx.fillStyle='rgba(4,6,10,'+(sh0*.22).toFixed(3)+')';
+          cx.fillRect(px_+5,py+7,T-5,T-7);
+        }
+      }
       /* ── 台基的高低差 ────────────────────────────────────
          使用者：「立體神殿」，選的是「俯視＋看得出高低」。
 
@@ -11646,15 +11823,26 @@ function draw(dt){
         if(dS > 0){
           /* 南面的立面：台基的側面。越高越厚，中間再切一條磚縫 ——
              一整塊純色讀起來像陰影，有磚縫才讀得出「那是一面牆」。 */
-          const hgt = Math.min(7, 4 + dS);
-          cx.fillStyle = 'rgba(5,7,11,.66)';      cx.fillRect(px_, py + T - hgt, T, hgt);
-          cx.fillStyle = 'rgba(246,239,227,.20)'; cx.fillRect(px_, py + T - hgt, T, 1);
-          cx.fillStyle = 'rgba(0,0,0,.30)';       cx.fillRect(px_, py + T - (hgt>>1), T, 1);
+          const hgt = Math.min(10, 5 + dS*2);
+          cx.save();
+          cx.globalAlpha=.94; cx.fillStyle=PAL[THEME_CFG.ramp[0]];
+          cx.fillRect(px_, py + T - hgt, T, hgt);
+          cx.globalAlpha=.76; cx.fillStyle=PAL[THEME_CFG.ramp[1]];
+          cx.fillRect(px_+1, py + T - hgt + 2, T-2, Math.max(1,hgt-3));
+          cx.globalAlpha=1; cx.fillStyle=PAL[THEME_CFG.ramp[3]];
+          cx.fillRect(px_, py + T - hgt, T, 2);              // 厚亮石唇
+          cx.fillStyle=PAL[THEME_CFG.ramp[0]];
+          cx.fillRect(px_, py + T - (hgt>>1), T, 1);         // 台基砌縫
+          cx.fillRect(px_+7, py + T - hgt + 2, 1, hgt-2);   // 交錯豎縫
+          cx.fillStyle=PAL['0']; cx.fillRect(px_,py+T-2,T,2);
+          cx.restore();
           // 影子投到下面那一格
-          cx.fillStyle = 'rgba(4,6,10,.38)';      cx.fillRect(px_, py + T, T, 3);
+          cx.fillStyle = 'rgba(4,6,10,.52)';      cx.fillRect(px_, py + T, T, 5);
         }
-        if(lv - lo(x-1, y) > 0){ cx.fillStyle = 'rgba(246,239,227,.12)'; cx.fillRect(px_, py, 1, T); }
-        if(lv - lo(x+1, y) > 0){ cx.fillStyle = 'rgba(5,7,11,.48)';      cx.fillRect(px_+T-1, py, 1, T); }
+        if(lv - lo(x-1, y) > 0){ cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.48;
+                                 cx.fillRect(px_,py,2,T); cx.globalAlpha=1; }
+        if(lv - lo(x+1, y) > 0){ cx.fillStyle=PAL['0']; cx.globalAlpha=.72;
+                                 cx.fillRect(px_+T-3,py,3,T); cx.globalAlpha=1; }
         /* 北邊比自己高 = 這一格就是台階的**腳下**。
            畫幾道踏板線，那一格才會從「地板」變成「往上走的地方」——
            只有立面與陰影的話，玩家看得到有落差，卻看不出上得去。
@@ -11662,10 +11850,12 @@ function draw(dt){
            內殿前的五格、前庭通往長廊的三格，剛好就是全圖唯二的兩處。 */
         const dN = lo(x, y-1) - lv;
         if(dN > 0){
-          cx.fillStyle = 'rgba(4,6,10,.30)'; cx.fillRect(px_, py, T, 3);
-          for(let k2 = 4; k2 < T; k2 += 4){
-            cx.fillStyle = 'rgba(246,239,227,.13)'; cx.fillRect(px_+1, py + k2,     T-2, 1);
-            cx.fillStyle = 'rgba(0,0,0,.26)';       cx.fillRect(px_+1, py + k2 + 1, T-2, 1);
+          cx.fillStyle=PAL[THEME_CFG.ramp[0]]; cx.globalAlpha=.62;
+          cx.fillRect(px_,py,T,T); cx.globalAlpha=1;
+          cx.fillStyle=PAL['0']; cx.fillRect(px_,py,2,T); cx.fillRect(px_+T-2,py,2,T);
+          for(let k2 = 2; k2 < T; k2 += 4){
+            cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_+2,py+k2,T-4,2);
+            cx.fillStyle=PAL[THEME_CFG.ramp[0]]; cx.fillRect(px_+2,py+k2+2,T-4,2);
           }
         }
       }
@@ -11674,6 +11864,25 @@ function draw(dt){
       if(!walkable(x, y+1)) blit(AO.d, px_, py);
       if(!walkable(x-1, y)) blit(AO.l, px_, py);
       if(!walkable(x+1, y)) blit(AO.r, px_, py);
+      /* 可走區的輪廓線。AO 告訴眼睛「牆站在這裡」，這一明一暗的硬邊
+         則直接告訴玩家「到這裡為止」；即使地板紋理很多也不會吃掉碰撞界線。 */
+      cx.save();
+      if(!walkable(x,y-1)){
+        cx.fillStyle='rgba(2,3,5,.62)'; cx.fillRect(px_,py,T,2);
+        cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.28; cx.fillRect(px_+1,py+2,T-2,1);
+      }
+      if(!walkable(x,y+1)){
+        cx.globalAlpha=.46; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_+1,py+13,T-2,1);
+        cx.globalAlpha=.82; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+14,T,2);
+      }
+      if(!walkable(x-1,y)){
+        cx.globalAlpha=.56; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_,py+1,1,T-2);
+        cx.globalAlpha=.62; cx.fillStyle=PAL['0']; cx.fillRect(px_+1,py+3,1,T-4);
+      }
+      if(!walkable(x+1,y)){
+        cx.globalAlpha=.84; cx.fillStyle=PAL['0']; cx.fillRect(px_+14,py+1,2,T-1);
+      }
+      cx.restore();
       if(CAVE){
         // 兩面牆交會的地板角落再疊一個階梯形暗楔。
         // 牆角因此比直牆腳更深，玩家不用靠花紋猜哪裡能走。
@@ -11725,6 +11934,18 @@ function draw(dt){
         cx.fillRect(ox + x*T + fx, oy + y*T + Math.floor(fy), 1, 1);
       }
     }
+  }
+
+  /* 成對石獅與黑石碑。它們畫在地形、光斑與投影之後，生物之前；
+     因此角色走到像前會遮住台座，雕像仍明確站在場景裡而不是貼在 UI 上。 */
+  for(const r of RELICS){
+    const vis=G.seen[key(r.x,r.y)] || G.seen[key(r.x,Math.max(0,r.y-1))];
+    if(!vis) continue;
+    cx.save();
+    if(vis===1) cx.globalAlpha=OUTDOOR?.58:.34;
+    const art=templeRelicArt(r.kind,r.dir);
+    cx.drawImage(art,ox+r.x*T,oy+(r.y-1)*T,T,T*2);
+    cx.restore();
   }
 
   /* 砲座。地磚換色 + 上面一具裝置，冷卻時整個暗下來。
