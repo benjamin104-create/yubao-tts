@@ -74,6 +74,75 @@ ok(api.ACT_THEME.hall !== api.ACT_THEME.crystal, '大廣間跟水晶礦坑不是
 ok(api.ACT_THEME.hall !== 'hall',
    '大廣間的地貌沒有叫 hall（那個名字已經被「怪物之間」那首曲子佔走了）');
 
+/* ═══ 神殿的平面 ═══════════════════════════════════════════════
+   使用者：「我需要一個立體神殿的類似像『入口迷宮』的設定場景」，
+   而「立體」選的是「俯視＋看得出高低」。
+
+   這一段驗的是那座建築真的長成建築：一條中軸、對稱的側室、
+   越往裡越高的台基。全部都是不會報錯的東西 —— 生成器退回
+   3x3 隨機房間，遊戲照樣跑得完，只是神殿又變回一座貼皮的地牢。 */
+console.log('\n=== 神殿的平面（中軸、側室、台基） ===');
+{
+  const V1 = api.VILLAGE();
+  const AX = api.MW >> 1;
+  let axisOK = 0, lvOK = 0, upward = 0, chambers = 0, maps = 0, sym = 0;
+  const N = 200;   // 單邊的平面在原本的寫法下約 0.6% —— 四十張抽不到，兩百張才抽得到
+  for(let seed = 1; seed <= N; seed++){
+    V1.act = 0; api.newGame(seed);
+    const g = api.G(); g.act = 0; g.floor = 1; api.buildFloor();
+    const f = g.f, el = f.el;
+    maps++;
+    // (1) 中軸：從出生點那一列到樓梯那一列，中軸上每一格都走得到
+    let solid = true;
+    for(let y = f.stairs.y; y <= f.spawn.y; y++)
+      if(!api.walkable(AX, y)) solid = false;
+    if(solid) axisOK++;
+    // (2) 三種高度都在
+    const lvs = new Set();
+    for(let k = 0; k < api.MW*api.MH; k++) if(f.t[k] !== 0) lvs.add(el[k]);
+    if(lvs.has(0) && lvs.has(1) && lvs.has(2)) lvOK++;
+    // (3) 越往裡越高：樓梯站在最高階，出生點站在最低階
+    if(el[api.key(f.stairs.x, f.stairs.y)] === 2 &&
+       el[api.key(f.spawn.x, f.spawn.y)] === 0) upward++;
+    /* (4)(5) 側室：左右兩側都要有。內殿與前庭比側室高（h 都大於 4），
+       所以用高度篩掉它們兩個，剩下的就是側室。 */
+    let L = 0, R = 0;
+    for(const k of Object.keys(f.rooms)){
+      const r = f.rooms[k];
+      if(r.h > 4) continue;
+      if(r.x + r.w - 1 < AX) L++;
+      else if(r.x > AX) R++;
+    }
+    chambers += L + R;
+    if(L && R) sym++;
+  }
+  ok(maps === N, N + ' 張神殿圖都生得出來');
+  ok(axisOK === N, '中軸從門口一路通到內殿（' + axisOK + '/' + N + ' 張）');
+  ok(lvOK === N, '三種台基高度都在（' + lvOK + '/' + N + ' 張）');
+  ok(upward === N, '樓梯在最高階、出生點在最低階（' + upward + '/' + N + ' 張）');
+  /* 左右都要有側室，一張都不能漏。各自擲骰的第一版在八顆種子裡就中了
+     一顆全右邊的（三帶的左側都被跳過）—— 那不是變化，
+     那是把這一章唯一的形狀特徵弄丟了。所以掃四十顆，而且要求全中。 */
+  ok(sym === N, '每一張都是左右對稱的（' + sym + '/' + N + ' 張有兩側側室）');
+  ok(chambers >= N * 3, '側室的數量夠（共 ' + chambers + ' 間 / ' + N + ' 張）');
+}
+
+/* 別的章節必須是平的。高低差的算圖只在「這一層有高低」時才跑 ——
+   如果別的章節的 el 不小心也有值，那一段每一格會多跑四次查表，
+   而且會在沒有台基的地方畫出立面與陰影。兩件事都不會報錯。 */
+{
+  const V1 = api.VILLAGE();
+  let flat = 0, checked = 0;
+  for(const id of ['mine', 'forest', 'gaol', 'hall', 'tower']){
+    const a = AI(id);
+    V1.act = a; api.newGame(99);
+    const g = api.G(); g.act = a; g.floor = 1; api.buildFloor();
+    checked++;
+    if(g.f.el && !g.f.el.some(v => v > 0)) flat++;
+  }
+  ok(checked === 5 && flat === 5, '神殿以外的章節都是平的（' + flat + '/' + checked + '）');
+}
+
 /* ═══ 中繼之村 ═══════════════════════════════════════════════
    使用者：「然後找到往上的地方（中繼之村）然後往上進入通天塔」。
    它是**轉折點的村莊**：打通大廣間、下一章開始往上，才會住到這裡。 */

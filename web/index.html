@@ -5631,9 +5631,172 @@ function shapeRooms(rooms, kind, rng, t, roomAt){
    看不到對面牆的空間。改骰子而不是另寫一套生成器是刻意的 ——
    連通性、門、樓梯、怪物分佈全部沿用同一條路，不會多出一組
    只有一章走得到、因此永遠沒人測過的程式。 */
+/* ═══ 巴比倫神殿的平面 ═══════════════════════════════════════
+   使用者：「我需要一個立體神殿的類似像『入口迷宮』的設定場景」。
+
+   其他每一章都走同一支生成器：3x3 格子、隨機矩形房、生成樹接通道。
+   換色盤、換牆的剪影，走起來仍然是同一座地牢 —— 而序章要讓玩家
+   一眼知道「我走進了一座建築」，那件事顏色做不到，只有**平面**做得到。
+
+   所以神殿有自己的平面，照真的巴比倫神廟畫：一條中軸從前庭一路通到
+   最深處的內殿，側室對稱地排在中軸兩側。玩家一進來就站在中軸上、
+   往前看得到底 —— 側室是「要不要繞過去」的選擇，不是迷路。
+   「入口迷宮」的迷不在於找不到路，在於要不要多走那幾步。
+
+       y  2..8   內殿（cella）—— 台基最高，樓梯與門番在這裡
+       y  9      台階
+       y 10..21  中軸長廊 ＋ 兩側的側室
+       y 22..27  前庭 —— 出生點，最開闊也最低
+
+   高低差是這個平面的一部分，不是裝飾：前庭 0、長廊與側室 1、內殿 2。
+   越往裡越高，而玩家要往裡走 —— 那是所有神廟共通的語法。
+
+   刻意保留的隨機：內殿的寬度、側室的大小與進深、偶爾缺一間。
+   完全鏡像的平面走第二次就沒有東西可看了，而完全隨機就不是神殿。 */
+const TEMPLE_AXIS = MW >> 1;
+function genTemple(rng, depth, theme){
+  const t = new Uint8Array(MW*MH);                 // 預設全 WALL
+  const roomAt = new Int8Array(MW*MH).fill(-1);
+  const el = new Uint8Array(MW*MH);
+  const rooms = {};
+  const AX = TEMPLE_AXIS;
+  const fill = (x0, y0, x1, y1, tile, rk, lv)=>{
+    for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+      if(x < 1 || y < 1 || x >= MW-1 || y >= MH-1) continue;
+      const k = y*MW + x;
+      t[k] = tile; el[k] = lv;
+      roomAt[k] = (rk === undefined || rk === null) ? -1 : rk;
+    }
+  };
+  let rk = 0;
+
+  // ── 內殿 ──────────────────────────────────────────────────
+  const cw = rng.i(6, 8);                          // 半寬
+  const cy0 = 2, cy1 = rng.i(7, 8);
+  const cella = rk++;
+  rooms[cella] = {x:AX-cw, y:cy0, w:cw*2+1, h:cy1-cy0+1, doors:[]};
+  fill(AX-cw, cy0, AX+cw, cy1, ROOM, cella, 2);
+
+  // ── 台階：內殿與長廊之間唯一的通路，正對中軸 ──────────────
+  const sy = cy1 + 1;
+  fill(AX-2, sy, AX+2, sy, ROOM, cella, 1);
+  rooms[cella].doors.push(AX + ',' + sy);
+
+  // ── 中軸長廊 ──────────────────────────────────────────────
+  const hy0 = sy + 1, hy1 = 22;
+  fill(AX-1, hy0, AX+1, hy1, CORR, null, 1);
+
+  /* ── 側室：對稱排在長廊兩側，門開在長廊上 ──────────────────
+     每一間一定有門。做成「偶爾封死的密室」很誘人，但那會生出一塊
+     到不了的地板 —— connect.js 會紅，而且那是對的：玩家看得到、
+     走不到、又沒有任何提示，那不是謎題，那是 bug。 */
+  /* 每一帶之間留一格牆。不留的話，相鄰兩帶的側室會連成一整條，
+     讀起來是「長廊旁邊有兩片空地」，而不是「一間一間的側室」——
+     而側室之所以是側室，就是因為它有牆、有門、進出要繞。 */
+  const bands = [[hy0, hy0+3], [hy0+5, hy0+8], [hy0+10, hy1]];
+  /* 每一帶缺不缺一邊，先排好再蓋，而不是蓋的時候各自擲骰。
+     各自擲骰的問題是它會生出「整層只有右邊有側室」的平面 ——
+     實測 8 顆種子就中了一顆（三帶的左側都被跳過，機率約 0.6%）。
+     那不是變化，那是把這一章唯一的形狀特徵弄丟了：神殿是對稱的。
+       0 = 兩邊都有　-1 = 只有左　1 = 只有右
+     排完再補一次：左右都必須至少有一間。 */
+  const plan = bands.map(() => rng.chance(.26) ? (rng.chance(.5) ? -1 : 1) : 0);
+  if(!plan.some(v => v <= 0)) plan[rng.i(0, plan.length-1)] = 0;
+  if(!plan.some(v => v >= 0)) plan[rng.i(0, plan.length-1)] = 0;
+  for(let bi = 0; bi < bands.length; bi++){
+    const [by0, by1] = bands[bi];
+    for(const side of [-1, 1]){
+      if(plan[bi] === -side) continue;              // 這一帶這一邊不蓋
+      const w = rng.i(5, 8), gap = rng.i(1, 2);
+      const inner = AX + side*(2 + gap);           // 靠長廊的那一邊
+      const outer = inner + side*(w - 1);
+      const x0 = Math.min(inner, outer), x1 = Math.max(inner, outer);
+      const y1 = Math.min(by1, hy1);
+      if(x0 < 1 || x1 > MW-2 || y1 - by0 < 2) continue;
+      const id = rk++;
+      rooms[id] = {x:x0, y:by0, w:x1-x0+1, h:y1-by0+1, doors:[]};
+      fill(x0, by0, x1, y1, ROOM, id, 1);
+      // 門：從側室靠長廊的那一格橫向打回長廊外緣
+      const dy = rng.i(by0+1, y1-1);
+      const dx = AX + side*2;
+      fill(Math.min(dx, inner), dy, Math.max(dx, inner), dy, CORR, null, 1);
+      rooms[id].doors.push(dx + ',' + dy);
+    }
+  }
+
+  // ── 前庭 ──────────────────────────────────────────────────
+  const fy0 = hy1 + 1, fy1 = 27;    // 前庭：長廊走完就是它，兩段相鄰所以自然連通
+  const fw = rng.i(7, 9);
+  const court = rk++;
+  rooms[court] = {x:AX-fw, y:fy0, w:fw*2+1, h:fy1-fy0+1, doors:[]};
+  fill(AX-fw, fy0, AX+fw, fy1, ROOM, court, 0);
+  rooms[court].doors.push(AX + ',' + fy0);
+
+  /* ── 前庭的列柱 ────────────────────────────────────────────
+     兩排對稱的柱子。它們是牆（擋路），但只擺在中軸兩側各三格以外，
+     所以中軸永遠是通的 —— 玩家從門口一眼就看得到最裡面。
+     擺完仍然要複查連通：柱子不會封死中軸，但它可能把前庭的角落切掉。 */
+  const undo = [];
+  for(let cy = fy0+1; cy <= fy1-1; cy += 2){
+    for(const side of [-1, 1]){
+      const px = AX + side*rng.i(4, 6);
+      const k = cy*MW + px;
+      if(t[k] !== ROOM) continue;
+      undo.push([k, t[k], roomAt[k], el[k]]);
+      t[k] = WALL; roomAt[k] = -1;
+    }
+  }
+  if(!templeConnected(t, AX, fy1-1)){
+    for(const [k, tv, rv, ev] of undo){ t[k] = tv; roomAt[k] = rv; el[k] = ev; }
+  }
+
+  // ── 出生點與樓梯：一個在門口，一個在最深處 ────────────────
+  const spawn  = {x:AX, y:fy1 - 1};
+  const stairs = {x:AX, y:cy0 + 1};
+  t[spawn.y*MW + spawn.x]  = ROOM;
+  t[stairs.y*MW + stairs.x] = DOWN;
+
+  /* 守護獸像不能站在中軸上。它擋路，而連通複查只問「走不走得到」——
+     繞一圈仍然走得到，所以那個檢查會放行，而中軸卻被切斷了。
+     這一章整個平面的意思就是「一進門就看得到底」，那條線不能有東西。
+     （四十張圖裡中了一張，全圖連通檢查完全沒有意見。） */
+  const mark = placeMark(t, roomAt, rooms, spawn, stairs, theme, rng,
+                         (mx, my) => Math.abs(mx - AX) <= 1);
+  return {t, roomAt, el, rooms, spawn, stairs, depth, mark};
+}
+/* 從前庭走得到全圖嗎。柱子擺完要複查 —— 擺柱子只會擋一格，
+   但一格就足以把前庭的角落切成孤島，而孤島上如果掉了一件裝備，
+   玩家會看著它走一整層都拿不到。 */
+function templeConnected(t, sx, sy){
+  const seen = new Uint8Array(MW*MH), st = [[sx, sy]];
+  seen[sy*MW + sx] = 1;
+  while(st.length){
+    const [x, y] = st.pop();
+    for(const [ox, oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx = x+ox, ny = y+oy;
+      if(nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue;
+      const k = ny*MW + nx;
+      if(seen[k] || t[k] === WALL) continue;
+      seen[k] = 1; st.push([nx, ny]);
+    }
+  }
+  for(let k = 0; k < MW*MH; k++) if(t[k] !== WALL && !seen[k]) return false;
+  return true;
+}
+
 function genFloor(rng, depth, theme, opt){
+  /* ★ 神殿走自己的平面。放在這裡第一行 return，而不是在下面加一堆 if：
+     它跟 3x3 格子那一套沒有半點共用的東西，混在一起只會讓兩邊都難讀。
+     共用的是後面的地標放置（placeMark）—— 那一段有全圖連通複查，
+     複製一份遲早會有一份跟不上。 */
+  if(opt && opt.temple) return genTemple(rng, depth, theme);
   const t = new Uint8Array(MW*MH);
   const roomAt = new Int8Array(MW*MH).fill(-1);
+  /* 每一格的台基高度。一般的樓層是平的（全 0），只有神殿用得到 ——
+     它是**畫面**的資料，不是規則：高低差不擋路、不改任何移動判定。
+     擋路的話，連通性、怪物 AI、走通測試全部要跟著改，
+     而使用者要的是「看得出高低」，不是「爬得上爬不上」。 */
+  const el = new Uint8Array(MW*MH);
   const zones=[];
   for(let zy=0;zy<3;zy++) for(let zx=0;zx<3;zx++)
     zones.push({i:zy*3+zx, zx, zy, x0:zx*ZW, y0:zy*ZH, x1:zx*ZW+ZW-1, y1:zy*ZH+ZH-1});
@@ -5721,10 +5884,20 @@ function genFloor(rng, depth, theme, opt){
   const stairs = pickIn(rooms[dk]);
   t[stairs.y*MW+stairs.x]=DOWN;
 
-  /* 地標：佔 2x2、擋路。擋路是刻意的 —— 走得過去的東西是背景，
-     繞得過去的東西才是地標，玩家會記得自己繞過了它。
-     但擋路也代表它可能把某條路封死，所以放完一定重跑一次全圖連通，
-     封死了就整個收回。寧可這一層沒有地標，也不要有一層走不完。 */
+  const mark = placeMark(t, roomAt, rooms, spawn, stairs, theme, rng);
+
+  return {t, roomAt, el, rooms, spawn, stairs, depth, mark};
+}
+
+/* 地標：佔 2x2、擋路。擋路是刻意的 —— 走得過去的東西是背景，
+   繞得過去的東西才是地標，玩家會記得自己繞過了它。
+   但擋路也代表它可能把某條路封死，所以放完一定重跑一次全圖連通，
+   封死了就整個收回。寧可這一層沒有地標，也不要有一層走不完。
+
+   抽成函式是因為神殿有自己的平面生成器，而那條路一樣需要地標
+   （守護獸像正是神殿該有的東西）—— 複製一份連通複查，
+   遲早會有一份跟不上，而跟不上的那一份會給出一個安心的綠燈。 */
+function placeMark(t, roomAt, rooms, spawn, stairs, theme, rng, avoid){
   let mark = null;
   if((THEMES[theme] || {}).mark){
     const rks = rng.shuffle(Object.keys(rooms));
@@ -5740,6 +5913,7 @@ function genFloor(rng, depth, theme, opt){
           const cx2 = mx+i, cy2 = my+j;
           if(!solid(cx2,cy2) ||
              (cx2===spawn.x && cy2===spawn.y) || (cx2===stairs.x && cy2===stairs.y) ||
+             (avoid && avoid(cx2, cy2)) ||
              r.doors.includes((cx2)+','+(cy2))){ ok = false; break; }
         }
         // 頭頂那一格要留白，樹冠才不會長進牆裡
@@ -5771,7 +5945,7 @@ function genFloor(rng, depth, theme, opt){
     }
   }
 
-  return {t, roomAt, rooms, spawn, stairs, depth, mark};
+  return mark;
 }
 
 /* ─── 迷宮分區 ──────────────────────────────────────────────────
@@ -6571,7 +6745,8 @@ function buildFloor(){
   G.depth = absDepth(G.act, G.floor);
   G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
-  G.f = genFloor(rng, G.depth, themeNow(), {wide: !!actAt(G.act).wide});
+  G.f = genFloor(rng, G.depth, themeNow(),
+                 {wide: !!actAt(G.act).wide, temple: actAt(G.act).id === 'temple'});
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
   /* 村民只有在「跟著你」的時候才會過樓層。留在原地的那一個就留在那一層 ——
      他本來就沒要走，是玩家決定要不要帶他。 */
@@ -11058,6 +11233,10 @@ function draw(dt){
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
   const OUTDOOR = !!THEME_CFG.lightAll;
   const CAVE = !!THEME_CFG.cave;
+  /* 這一層有沒有高低差。沒有的樓層直接是 null —— 每一格多跑四次查表
+     在手機上是看得到的，而九成的樓層是平的。 */
+  const EL = (G.f.el && G.f.el.some) ? (G.f.elAny === undefined
+    ? (G.f.elAny = G.f.el.some(v => v > 0)) : G.f.elAny) && G.f.el : null;
   const TPROPS = propsFor(THEME_ID);
   const PROP_RATE = (THEMES[THEME_ID] || {}).propRate || 9;
   const AIR = (THEMES[THEME_ID] || {}).air;
@@ -11182,6 +11361,48 @@ function draw(dt){
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
       if(t===ROOM && h % PROP_RATE === 0) blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      /* ── 台基的高低差 ────────────────────────────────────
+         使用者：「立體神殿」，選的是「俯視＋看得出高低」。
+
+         做法刻意**不**位移任何座標：把高的那一格往上挪幾個像素，
+         站在上面的角色、掉在上面的道具、名牌、瞄準格全部都要跟著挪，
+         而漏掉任何一個都不會報錯，只會有東西浮在半空中。
+
+         改成畫「落差本身」：高的那一格如果南邊比它低，就在它的下緣
+         畫一道立面（踏板的側面），再把影子投到低的那一格上。
+         左右兩側畫一條窄邊。這正是 16-bit 俯視遊戲畫台階的老辦法 ——
+         它靠的是**邊緣**，不是位移。 */
+      if(EL){
+        const lv = EL[key(x,y)] | 0;
+        const lo = (nx2, ny2) => (nx2 < 0 || ny2 < 0 || nx2 >= MW || ny2 >= MH)
+          ? lv : (EL[key(nx2,ny2)] | 0);
+        const dS = lv - lo(x, y+1);
+        if(dS > 0){
+          /* 南面的立面：台基的側面。越高越厚，中間再切一條磚縫 ——
+             一整塊純色讀起來像陰影，有磚縫才讀得出「那是一面牆」。 */
+          const hgt = Math.min(7, 4 + dS);
+          cx.fillStyle = 'rgba(5,7,11,.66)';      cx.fillRect(px_, py + T - hgt, T, hgt);
+          cx.fillStyle = 'rgba(246,239,227,.20)'; cx.fillRect(px_, py + T - hgt, T, 1);
+          cx.fillStyle = 'rgba(0,0,0,.30)';       cx.fillRect(px_, py + T - (hgt>>1), T, 1);
+          // 影子投到下面那一格
+          cx.fillStyle = 'rgba(4,6,10,.38)';      cx.fillRect(px_, py + T, T, 3);
+        }
+        if(lv - lo(x-1, y) > 0){ cx.fillStyle = 'rgba(246,239,227,.12)'; cx.fillRect(px_, py, 1, T); }
+        if(lv - lo(x+1, y) > 0){ cx.fillStyle = 'rgba(5,7,11,.48)';      cx.fillRect(px_+T-1, py, 1, T); }
+        /* 北邊比自己高 = 這一格就是台階的**腳下**。
+           畫幾道踏板線，那一格才會從「地板」變成「往上走的地方」——
+           只有立面與陰影的話，玩家看得到有落差，卻看不出上得去。
+           規則就是幾何本身（北邊高一階），所以不需要另外標記哪裡是台階：
+           內殿前的五格、前庭通往長廊的三格，剛好就是全圖唯二的兩處。 */
+        const dN = lo(x, y-1) - lv;
+        if(dN > 0){
+          cx.fillStyle = 'rgba(4,6,10,.30)'; cx.fillRect(px_, py, T, 3);
+          for(let k2 = 4; k2 < T; k2 += 4){
+            cx.fillStyle = 'rgba(246,239,227,.13)'; cx.fillRect(px_+1, py + k2,     T-2, 1);
+            cx.fillStyle = 'rgba(0,0,0,.26)';       cx.fillRect(px_+1, py + k2 + 1, T-2, 1);
+          }
+        }
+      }
       // 貼著牆的那一圈壓暗 —— 牆才會像是站在地板上，而不是貼在旁邊
       if(!walkable(x, y-1)) blit(AO.u, px_, py);
       if(!walkable(x, y+1)) blit(AO.d, px_, py);

@@ -96,13 +96,12 @@ def wanted_chars():
         r'(?:placeholder|aria-label|data-lbl|title)="([^"]*)"', body))
     text = ' '.join(re.sub(r'<[^>]*>', ' ', body).split())
 
-    extra = ''
-    for f in sorted(ROOT.glob('web/*.js')):
-        s = f.read_text(encoding='utf-8')
-        extra += ''.join(m.group(1) or m.group(2) or '' for m in re.finditer(
-            r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"", s))
-
-    all_text = lit + ' ' + attrs + ' ' + text + ' ' + extra
+    # web/*.js 不掃。那幾支全部是測試（sim / campaign / story / music …），
+    # 它們的字串是印到終端機的斷言訊息，一個字都不會到玩家眼前。
+    # 掃了的話，每改一句測試訊息就要重建一次字型，而且子集裡會多出
+    # 一堆只有機器人看得到的字 —— 每一個都是幾百個位元組。
+    # （真的踩過：加了一條「側室夠多」的斷言，字型檢查就紅了。）
+    all_text = lit + ' ' + attrs + ' ' + text
     # 一律附上完整的可見 ASCII：玩家會打英文名字，數字與標點到處都是
     ascii_ = ''.join(chr(c) for c in range(0x20, 0x7f))
     # 控制字元不是字。換行、tab 這些會從 HTML 的文字節點掃進來，
