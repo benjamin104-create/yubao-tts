@@ -24,6 +24,16 @@ for(let r=0; r<RUNS; r++){
          而且不會報錯 —— 只會看到「第一章忽然過不去了」。
          一律同意：機器人的工作是量「護送走不走得完」，不是量拒絕。 */
       if(api.talkOpen()){ api.answerTalk(true); continue; }
+    /* 落石就順手搬開。機器人不會刻意去找事件，但它一定會走到旁邊 ——
+       不搬的話石匠永遠救不出來，於是每走幾層就再生一堆新的落石，
+       量到的會變成「一個永遠完成不了的事件」的成本，而不是玩家的成本
+       （玩家救一次就結束了）。實測差別很大：不搬的版本通天塔要 39 趟。 */
+    const evM = G.f && G.f.ev;
+    if(evM && evM.kind === 'mason' && !evM.done &&
+       Math.max(Math.abs(evM.x - p.x), Math.abs(evM.y - p.y)) === 1 &&
+       api.cornerOK(p.x, p.y, evM.x, evM.y)){
+      api.tryMove(Math.sign(evM.x - p.x), Math.sign(evM.y - p.y)); t++; continue;
+    }
       // 餓了就吃
       const food = p.inv.find(i=>i.cat==='food');
       if(p.sat < 25000 && food){ api.useItem(food,false); api.endTurn(); stats.used++; t++; continue; }

@@ -208,6 +208,12 @@ t('紀錄之環只出現在頭目層的前一層', ()=>{
     V().act = a;
     api.newGame(1717 + a);
     const G = api.G();
+    /* 章節要用 G.act 指定，不能只設 VILLAGE.act —— newGame() 會把
+       村莊的進度夾在主線最後一章（Math.min(…, LAST_MAIN)），
+       所以支線的副本迷宮用 VILLAGE.act 是進不去的。
+       不改的話，這個迴圈會拿副本的層數去比對別的章生出來的樓層，
+       然後報一個跟真正的問題完全無關的錯。 */
+    G.act = a;
     for(let f = 1; f <= act.floors; f++){
       G.floor = f; api.buildFloor();
       const want = !!(act.boss && f === act.floors - 1);

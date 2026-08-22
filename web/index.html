@@ -1218,7 +1218,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
     <div id="vstock"></div>
     <div id="vowned"></div>
-    <div class="vbtns"><button id="vboard">紀錄碑</button><button id="vgo">再次下潛　B1F</button></div>
+    <div class="vbtns"><button id="vboard">紀錄碑</button><!-- 副本迷宮：救到石匠之後才會出現，打完就收起來。     它是**支線**，所以按鈕跟主線的「前往下一章」分開放 ——      混在同一顆按鈕裡的話，玩家會不知道自己按下去要去哪。 --><button id="vside" hidden>祕匠的副本</button><button id="vgo">再次下潛　B1F</button></div>
       </div>
 
   <div id="board">
@@ -1665,6 +1665,14 @@ const BOSS = [
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1, fly:1,
   rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
+ /* 副本迷宮的守衛。石匠把自己最後的作品鎖在裡面，順手做了一個看門的。
+    它是**解謎型**（刀砍不動，只有砲座打得動）—— 副本的獎勵是全遊戲
+    最強的一把劍與一面盾，所以它不能是「數值夠高就打得贏」，
+    得是「看懂機關才過得去」。深度 66，數值排在牢獄長與光線人之間。 */
+ {id:'b_artisan',nm:'祕匠的守衛', ai:'R', hp:400,atk:32,def:19,exp:3000,spd:1, sight:13,ev:0, fl:[0,0], w:0, boss:1,
+  rng:11, still:1, telegraph:1, cadence:3, turret:{n:4, dmg:.17, cool:5},
+  rage:.4, adds:{n:2, cd:11}, imm:['睡','亂','麻'],
+  line:'它不是活的 —— 是石匠留下來的機關。刀砍不斷齒輪，砲座可以。'},
  /* 大廣間的小王。使用者的剖面圖寫的是「橫向打敗小王，找到向上前往
     通天塔入口」—— 所以這一場是**橫著打**的：它會助跑撞過來（charge），
     而大廣間有的是橫向的空間可以閃。它是整趟往下的最後一戰，
@@ -1829,7 +1837,12 @@ const WEAP = [
     換上去的那一秒就要比手上那把強，不然玩家買到的是一段要先變弱的路，
     而那正是「把最強的武器練到最高之後就沒有成就感」的相反面。
     它很貴，而且要走到第十一章鐵匠才打得出來。 */
- {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1},
+ /* ★ 究極。使用者：「主要究極的武器與防具，需要拯救到對的村人，
+    並經由事件進入到『副本迷宮』去拿武器和防具，其他取得路徑改成不可」。
+    ult:1 就是那句「其他取得路徑改成不可」：鐵匠鋪不上架、地上不會掉、
+    商店不進貨。少了這個旗標，它仍然是全遊戲最強的一把，
+    只是走到第十二章就能用錢買到 —— 副本迷宮那條線也就沒有人會走。 */
+ {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1, ult:1},
  /* 武士刀補在鋼劍與秘銀之間的成長空檔。只做俐落斬擊，不沿用長槍的直刺。 */
  {id:'katana',nm:'武士刀', atk:11, up:7, price:5200},
 ];
@@ -1841,7 +1854,7 @@ const SHLD = [
  /* 盾牌原本只到鏡之盾（打滿 16），而武器打滿是 30 ——
     後半段整個防禦端沒有東西可以買，錢只好一直往武器堆。 */
  {id:'drac', nm:'龍鱗之盾', def:9,  up:6, price:9000},
- {id:'aegis',nm:'聖域之盾', def:17, up:4, price:18000, reflect:1},
+ {id:'aegis',nm:'聖域之盾', def:17, up:4, price:18000, reflect:1, ult:1},   // ★ 究極（同上）
 ];
 
 /* ─── 職業與技能 ─────────────────────────────────────────────
@@ -1872,7 +1885,22 @@ const HAT = [
   {id:'oni',   nm:'鬼面兜',   job:'oni', price:2000, jobnm:'鬼武者', hidden:1},
   {id:'cone',  nm:'術士尖帽', job:'sor', price:1900, jobnm:'術士',   hidden:1},
 ];
-const OPEN_HAT = HAT.filter(h => !h.hidden);
+/* ★ 究極頭環。使用者：「究極的低耗魔頭環也需要透過『拯救』或『解謎』得到」。
+
+   job:'none' 是這件裝備的**代價**，不是偷懶：戴上它就沒有職業，
+   於是沒有職業技能、沒有職業進度、也拿不到 Master 的永久被動。
+   換來的是每一發咒文便宜三點 —— 而咒文的花費會隨系級長（SPELL_COST_PER_LV），
+   到了後段那三點省下來的比任何一頂職業帽都多。
+   「要職業還是要魔力」變成一個真的選擇，那才配叫究極。
+
+   ult:1 讓它跟通天之劍、聖域之盾走同一條規則：不上架、不掉落、
+   而且沒帶 Token 金庫的時候會耗損。 */
+const CIRCLET_OFF = 3;
+HAT.push({id:'circlet', nm:'賢者頭環', job:'none', price:20000, ult:1,
+          jobnm:'見習者'});
+/* 一般的帽子池不含究極頭環 —— 它掉在地上就等於「隨便走走就撿得到」，
+   而使用者指定的取得方式是拯救或解謎。 */
+const OPEN_HAT = HAT.filter(h => !h.hidden && !h.ult);
 const JOB_NM = {none:'見習者'};
 for(const h of HAT) JOB_NM[h.job] = h.jobnm;
 const JOB_MAX = 3;                  // 3 級＝Master
@@ -2071,7 +2099,8 @@ const SPELL_COST_PER_LV = 0.35;
 function spellCost(p, sp){
   if(sp.mpAll) return Math.max(1, p.mp);
   const lv = (p && p.sch && p.sch[sp.sc]) || 0;
-  const off = (typeof hasMaster === 'function' && hasMaster('red')) ? 1 : 0;
+  let off = (typeof hasMaster === 'function' && hasMaster('red')) ? 1 : 0;
+  if(p && p.hat === 'circlet') off += CIRCLET_OFF;      // ★ 賢者頭環
   return Math.max(1, Math.round(sp.mp * (1 + lv * SPELL_COST_PER_LV)) - off);
 }
 
@@ -2272,6 +2301,7 @@ ui.dive|Head for {nm}|{nm} へ むかう
 ui.retry|Into the dungeon again|もういちどダンジョンへ
 ui.score|Score|スコア
 ui.resume|Continue　Act {n}　{f}|つづきから　だい{n}しょう　{f}
+ui.ultleft|[{n} runs left]|[のこり {n}かい]
 ui.fresh|Start a fresh run|さいしょから はじめる
 ui.nostore|This browser blocks saving — progress from this run will not be kept.|このブラウザは セーブを ブロックしている —— この たびの しんちょくは のこらない。
 m.shrine|★ Ring of Record — progress saved, health and magic full.|★ きろくの わ —— しんちょくを ほぞん、たいりょくと まりょくが ぜんかい。
@@ -2432,6 +2462,7 @@ s.gate3|(Step onto the gate to enter the Chaos Chamber)|（もんに のって �
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
 s.temple|The doorkeeper crumbles, and the floor behind the door splits open - a stair going down, too deep to see the bottom. You still do not remember who you are. But you know the answer is down there.|もんばんが くだけ、とびらの おくの ゆかも われた —— したへ つづく かいだん、そこは みえない。じぶんが だれかは まだ わからない。だが こたえは したに ある。
 s.hall|The door at the end of the hall opens onto the foot of a spire. Twelve chapters of walking, all of it downward - from here, every step goes up.|ひろまの おくの とびらの さきは、とうの ねもとだった。ここまで 12しょう、ずっと したへ きた —— ここからは いっぽ ごとに うえへ。
+s.vault|The mason's chest opens - the Sword of Babel and the Aegis. (Each lasts {n} runs; carrying the Token Vault stops the wear.)|いしくの はこが ひらいた —— つうてんの つるぎと せいいきの たて。（それぞれ {n}かい ぶん。トークンきんこを もっていれば すりへらない）
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
 s.137|The curses on you vanish.|みに ついた のろいが きえた。
 s.138|Every ailment is cleared.|じょうたいいじょうが すべて なおった。
@@ -2560,6 +2591,7 @@ hat.hood|White Hood|しろのずきん
 hat.plume|Plumed Hunting Cap|はねかざりのかりぼう
 hat.band|Phantom Headband|げんにんのはちまき
 hat.oni|Demon Faceguard|おにめんかぶと
+hat.circlet|Sage's Circlet|けんじゃの かんむり
 hat.cone|Sorcerer's Point|じゅつしのとんがりぼう
 mon.pfx|Awakened |つよくなった
 mon.rat|Cave Rat|どうくつネズミ
@@ -2587,6 +2619,7 @@ mon.b_gaoler|Warden of the Gaol|ろうごくちょう
 mon.b_queen|Mirror Queen|かがみのじょおう
 mon.b_prism|Prism Walker|こうせんじん
 mon.b_hallking|Lord of the Great Hall|ひろまのおう
+mon.b_artisan|The Artisan's Warden|ひしょうの ばんにん
 mon.b_mermaid|Mermaid Queen|にんぎょのおうひ
 mon.b_gate|Gatewatcher|もんのしゅぼう
 mon.b_mind1|The Mind - Gaze|いしき・ぎょうし
@@ -2685,6 +2718,7 @@ act.gaol|The Abyss Gaol|しんえんろうごく
 act.mirror|The Mirrored World|かがみのせかい
 act.crystal|The Crystal Seam|すいしょうこうざん
 act.hall|The Great Hall|ちかだいこうま
+act.vault|The Artisan's Vault|ひしょうの べっかん
 act.tower|The Spire|つうてんとう
 act.final|The Last Labyrinth|さいごのめいきゅう
 act.chaos|The Chaos Chamber|こんとんのま
@@ -2702,6 +2736,7 @@ acti.gaol|Sixteen floors down. Everyone held here once climbed the way you are c
 acti.mirror|Left and right are swapped. You think you go right — you go left. You cannot even trust yourself.|さゆうが はんてん。みぎと おもえば ひだり。じぶんさえ しんじられない。
 acti.crystal|Here light travels straight, and it reflects. For the first time you see the rule itself.|ここでは ひかりは まっすぐ すすみ、はんしゃする。はじめて 「きそく」そのものを みる。
 acti.hall|The bottom is not a dead end - it is a hall whose far wall you cannot see. The ceiling is broken, and light falls through.|そこは いきどまりでは なく、むこうの かべが みえない ひろまだった。てんじょうが やぶれ、ひかりが おちてくる。
+acti.vault|The mason left only one line: "It is at the very back. Only someone who can walk that far deserves it."|いしくが のこした ことばは ひとつ。「いちばん おくだ。そこまで あるける ものだけが うけとれる」
 acti.tower|Twenty floors up. At the top there is a door, and behind it is not a place but a time.|20かい うえへ。とうちょうに とびら。その さきは ばしょでは なく じかん。
 acti.final|No map. No shop. You do not need them any more.|ちずも みせも ない。もう ひつようが ない。
 acti.chaos|No walls here, and no ceiling. Only the Mind — and you, about to become it.|かべも てんじょうも ない。あるのは「いしき」、そして それに なろうと している あなた。
@@ -2719,6 +2754,7 @@ actr.gaol|The Gaoler's Key|ろうごくちょうの かぎ
 actr.mirror|The Heart of Darkness|やみの こころ
 actr.crystal|The Key of Space and Time|じくうの かぎ
 actr.hall|The Key of the Spire (the Waystation opens, max HP +30)|とうの かぎ（ちゅうけいの むらが ひらく・たいりょく じょうげん +30）
+actr.vault|The Sword of Babel + the Aegis|つうてんの つるぎ ＋ せいいきの たて
 actr.tower|Sword of the Gods (attack +18)|しんきの つるぎ（こうげき +18）
 actr.final|The door to the Chaos Chamber|こんとんの まへの とびら
 lk.herb.0|Crimson Herb|あかい くさ
@@ -2813,6 +2849,7 @@ bl.b_gaoler|The key hangs at its waist.|かぎは こしに ぶらさがって�
 bl.b_queen|Break her once and she stands again. Three times.|いちど くだいても また たつ。3かい。
 bl.b_prism|Light travels straight - so do not stand on the line.|ひかりは まっすぐ すすむ —— せんじょうに たつな。
 bl.b_hallking|It sits in the middle of the hall. The light behind it is where you are going.|ひろまの まんなかに すわっている。せなかの ひかりが、めざす ばしょだ。
+bl.b_artisan|It is not alive - it is a machine the mason left behind. Blades will not cut gears. The ballistae will.|いきものでは ない —— いしくが のこした からくりだ。やいばは はぐるまを きれない。とうせきだいなら きれる。
 bl.b_mermaid|A song from the top of the spire.|とうの てっぺんの うたごえ。
 bl.b_gate|The last door.|さいごの とびら。
 bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
@@ -2975,6 +3012,34 @@ t.npc.ask|"Thank goodness, someone came... I have been lost a long time. Could y
 t.npc.again|"...Have you changed your mind? I still cannot find my way out."|「…… きが かわった？ ぼくは まだ でられないんだ」
 t.npc.yes|Yes, come with me|いいとも、ついてこい
 t.npc.no|Sorry, I cannot|わるいが、むりだ
+k.mason|Trapped mason|したじきの いしく
+t.mason.ask|"Anyone there... my leg is pinned. I cannot shift the slab on my own - help me move it? You will not do it for nothing."|「だれか いないか…… あしが はさまれた。うえの いしは ひとりでは うごかせない —— どけるのを てつだって くれないか。ただでとは いわない」
+t.mason.again|"...Changed your mind? I am still down here."|「…… きが かわった？ ぼくは まだ ここだ」
+t.mason.yes|I will move it|いいとも、どけよう
+t.mason.no|Sorry, I am in a hurry|わるいが、いそいでいる
+m.ev.dig0|You brace the slab - about {n} more shoves. (Walk into him to shove.)|いしを ささえた —— あと {n}かい ぐらい。（かれの ほうへ あるくと どかす）
+m.ev.dig1|Shoving costs turns and monsters will close in. Clear the room first.|いしを どかすと ターンが すぎ、モンスターが よってくる。さきに かたづけて おこう。
+m.ev.digno|"...Fair enough. I will wait a while longer."|「…… しかたない。もう すこし まつよ」
+m.ev.dug|You heave a stone aside. ({a}/{b})|いしを ひとつ どけた。（{a}/{b}）
+m.ev.freed|★ The mason climbs out and dusts himself off.|★ いしくが はいだして、ほこりを はらった。
+m.ev.key|"My family cut a strongroom down here long ago - I have carried the key ever since." He presses a brass key into your hand.|「せんぞが この したに くらを ほった —— かぎは ずっと もっている」しんちゅうの かぎを にぎらせた。
+m.ev.side|The Artisan's Vault is open from the village - the Sword of Babel and the Aegis are inside.|むらから「ひめたくみの ダンジョン」に はいれる —— つうてんの つるぎと せいいきの たてが ある。
+m.ev.bagfull|Your bag is full - the circlet waits in the village and will be on you next run. ({n} runs)|にもつが いっぱい —— かんむりは むらに あずけた。つぎの たびで もっていく。（ぜんぶで {n}かい）
+m.ev.circlet|Got "{nm}" - spells cost less from now on. ({n} runs; carrying the Token Vault stops the wear.)|「{nm}」を てにいれた —— まほうの しょうひが さがる。（{n}かい ぶん。トークンきんこを もっていれば すりへらない）
+m.ev.unread|You cannot read the marks yet - somewhere on this floor is a slab with the order cut into it.|いしの しるしが よめない —— この かいの どこかに じゅんばんを きざんだ せきばんが ある。
+m.ev.wrong|The {nm} stone goes dark - wrong order, and all four go out.|{nm}の いしが きえた —— じゅんばんが ちがう。よっつ とも きえた。
+m.ev.lit|The {nm} stone lights up. ({a}/{b})|{nm}の いしが ひかった。（{a}/{b}）
+m.ev.solved|★ All four stones light at once - the slab splits open, and inside lies a plain circlet.|★ よっつの いしが いっせいに ひかり、せきばんが われた —— なかに かざりのない かんむりが あった。
+m.ev.slab|Four marks are cut into the slab, in a row -|せきばんに よっつの しるしが よこに ならんでいる ——
+m.ev.order|"{a} → {b} → {c} → {d}"　Step on the four stones in that order.|「{a} → {b} → {c} → {d}」　この じゅんばんで よっつの いしを ふめ。
+el.water|Water|みず
+el.fire|Fire|ひ
+el.wind|Wind|かぜ
+el.earth|Earth|つち
+lg.mason|rubble - someone|らくせき・ひと
+lg.dig|rubble {a}/{b}|らくせき {a}/{b}
+lg.slab|slab|せきばん
+lg.stone|{nm} stone{v}|{nm}の いし{v}
 m.npcok|The villager still looks steady.|むらびとは まだ だいじょうぶそうだ。
 m.npchit|The villager swings - {v0} takes {v1} damage.|むらびとが なぐった —— {v0} に {v1} の ダメージ。
 m.npchurt|{v0} strikes the villager! ({a}/{b})|{v0} が むらびとを うった！（{a}/{b}）
@@ -3165,7 +3230,7 @@ const BOSS_BASE = {
   b_warden:'golem', b_treant:'shroom', b_ballista:'turret', b_pyro:'mage',
   b_lord:'slime', b_phoenix:'imp', b_hanzo:'wolf', b_oni:'knight',
   b_gaoler:'skeleton', b_queen:'mage', b_prism:'turret', b_mermaid:'mage',
-  b_hallking:'knight', b_gate:'knight',
+  b_hallking:'knight', b_artisan:'turret', b_gate:'knight',
 };
 function crownSprite(base){
   const src = atlas[base] || atlas.rat;
@@ -4588,7 +4653,7 @@ const ACT_THEME = {
   temple:'temple',
   mine:'stone', forest:'forest', trial:'mountain', ordeal:'briar', briar:'briar',
   lake:'lake', beast:'beast', ninja:'wood', heian:'wood', gaol:'stone',
-  mirror:'mirror', crystal:'crystal', hall:'greathall',
+  mirror:'mirror', crystal:'crystal', hall:'greathall', vault:'spire',
   tower:'spire', final:'void', chaos:'void',
 };
 /* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張 16x16
@@ -6183,7 +6248,29 @@ const ACTS = [
   {id:'chaos',  nm:'混沌之間',   sub:'THE CHAOS CHAMBER',   floors:1, up:1,
    boss:'b_mind1', reward:null,        // 從第一型態開始，bossDown() 會接到二、三型態
    intro:'這裡沒有牆，也沒有天花板。只有「意識」—— 以及即將成為它的你。'},
+  /* ★ 副本迷宮。使用者：「主要究極的武器與防具，需要拯救到對的村人，
+     並經由事件進入到『副本迷宮』去拿武器和防具」。
+
+     side:1 讓它**不在主線上**：不算進總層數、不算進難度曲線、
+     不出現在旅程側面圖、打完不會把玩家推到下一章。
+     它是從村莊出發、打完就回來的一趟支線。
+
+     接在陣列最後面是刻意的：主線每一章的索引一個都沒有動，
+     所以不需要再來一次存檔遷移（上一次插章的教訓寫在
+     docs/story_route.md 的清單裡）。
+
+     depth0 = 它自己的絕對深度。不寫的話，absDepth 會把它算成
+     「所有章節加起來」那麼深，怪物直接跳到終盤 —— 而它的定位是
+     「中後段可以挑戰的支線」，不是第二個最終迷宮。 */
+  {id:'vault',  nm:'祕匠的副本',   sub:'THE ARTISAN’S VAULT',  floors:4, side:1, depth0:62,
+   boss:'b_artisan', reward:'通天之劍＋聖域之盾',
+   intro:'石匠留下的話只有一句：「東西在最裡面。走得到的人才配拿。」'},
 ];
+/* 主線的最後一章。有了支線之後 ACTS 的最後一個不再是主線的終點 ——
+   「打完這一章就是通關」這件事必須改問這個，不能再問 ACTS.length-1。 */
+const LAST_MAIN = (()=>{ let i = ACTS.length - 1;
+  while(i > 0 && ACTS[i].side) i--; return i; })();
+const actSide = i => !!actAt(i).side;
 const actAt = i => ACTS[Math.max(0, Math.min(ACTS.length-1, i|0))];
 /* 這一章是往上走的嗎。往上的章節不加 B ——「B3F」是地下三樓的意思，
    在塔上寫 B3F 等於告訴玩家他還在地底。 */
@@ -6191,8 +6278,14 @@ const actUp = i => !!actAt(i).up;
 const floorLabel = (actIdx, floor) => (actAt(actIdx).up ? '' : 'B') + floor + 'F';
 /* 章節第 f 層對應到的「絕對深度」—— 既有的難度系統全部吃這個值 */
 function absDepth(actIdx, floor){
+  // 支線自己說了算 —— 它不在主線上，前面那些章的層數跟它無關
+  const a = actAt(actIdx);
+  if(a.side) return (a.depth0 | 0) + floor;
   let d = 0;
-  for(let i=0;i<actIdx && i<ACTS.length;i++) d += ACTS[i].floors;
+  for(let i=0;i<actIdx && i<ACTS.length;i++){
+    if(ACTS[i].side) continue;
+    d += ACTS[i].floors;
+  }
   return d + floor;
 }
 /* ★ 序章的層數不算進難度曲線。
@@ -6206,7 +6299,7 @@ function absDepth(actIdx, floor){
    絕對深度（G.depth）不動 —— 那是地圖種子與樓層編號用的，
    序章的三層必須有自己的三顆種子，不然神殿第一層會跟礦坑第一層長一樣。 */
 const PROLOGUE_FLOORS = ACTS.reduce((n,a) => n + (a.surf ? a.floors : 0), 0);
-const TOTAL_FLOORS = absDepth(ACTS.length, 0);
+const TOTAL_FLOORS = ACTS.reduce((n,a) => n + (a.side ? 0 : a.floors), 0);
 const MON_FLOORS = Math.max(1, TOTAL_FLOORS - PROLOGUE_FLOORS);
 /* ── 換算深度 ────────────────────────────────────────────────
    怪物表與道具分級當初是為「30 層的地牢」寫的。戰役有一百層，
@@ -6240,6 +6333,12 @@ const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
    的迴圈裡，地牢本身反而變成手段。有耗損才會逼人繼續往下走。
 
    死掉一樣什麼都不留 —— 想把戰利品變成裝備，就得自己走出去。 */
+/* ★ 究極裝備：三件，共用同一套規則（只有副本迷宮／解謎拿得到、
+   沒帶 Token 金庫就會耗損）。cat 寫在這裡，發裝備的時候才知道要 mk 哪一種。 */
+const ULT_RUNS = 3;
+const ULT_IDS = ['babel', 'aegis', 'circlet'];
+const ULT_CAT = {babel:'weap', aegis:'shld', circlet:'hat'};
+
 const VILLAGE_KEY = 'claude-abyss-village';
 /* ★ 存檔版本。VILLAGE.act 存的是**章節索引**，而序章與地下大廣間
    分別插在第 0 章與第 13 章 —— 舊存檔裡的每一個索引都往後移了。
@@ -6264,6 +6363,10 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
                 act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
                 vault: 0, npcDone: 0, ver: VILLAGE_VER,
+                /* 究極裝備還剩幾趟。0 = 沒有這件。
+                   使用者：「若主角沒有持有『Token 金庫』的冒險狀態中，
+                   會耗損，挑戰 3 次」—— 所以它存的是次數不是有無。 */
+                ult: {}, sideKey: 0, sideDone: 0, circletDone: 0,
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -6279,6 +6382,18 @@ function sanitizeJobs(raw){
       lv: Math.max(0, Math.min(JOB_MAX, r.lv | 0)),
       prog: Math.max(0, Math.min(JOB_PER_LV - 1, r.prog | 0)),
     };
+  }
+  return out;
+}
+/* 究極裝備的剩餘次數。存檔在 localStorage，誰都改得動 ——
+   一個 {"babel": 9999} 就等於永久的通天之劍，而那正是這一整套
+   耗損規則要防的事。所以夾在 0~ULT_RUNS 之間，而且只收認得的 id。 */
+function sanitizeUlt(raw){
+  const out = {};
+  if(!raw || typeof raw !== 'object') return out;
+  for(const id of ULT_IDS){
+    const n = raw[id] | 0;
+    if(n > 0) out[id] = Math.min(ULT_RUNS, n);
   }
   return out;
 }
@@ -6314,7 +6429,7 @@ function loadVillage(){
              那不是獎勵舊玩家，那是數值失控，而且不會報任何錯。 */
           sch: sanitizeSch(v.sch),
           jobs: sanitizeJobs(v.jobs),
-          act: Math.max(0, Math.min(ACTS.length-1, migrateAct(v.act|0, ver))),
+          act: Math.max(0, Math.min(LAST_MAIN, migrateAct(v.act|0, ver))),
           ver: VILLAGE_VER,
           hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
           defBonus: Math.max(0, Math.min(40, v.defBonus|0)),
@@ -6327,6 +6442,10 @@ function loadVillage(){
              金庫就不見了，而且不會有任何錯誤訊息。 */
           vault: v.vault ? 1 : 0,
           npcDone: v.npcDone ? 1 : 0,
+          ult: sanitizeUlt(v.ult),
+          sideKey: v.sideKey ? 1 : 0,
+          sideDone: v.sideDone ? 1 : 0,
+          circletDone: v.circletDone ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
           skin: SKINS.includes(v.skin) ? v.skin : 'blob',
@@ -6522,9 +6641,12 @@ function submitScore(how){
 const VILLAGE_STOCK = [
   {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'},
   {cat:'weap', id:'katana', from:4}, {cat:'weap', id:'mith'},
-  {cat:'weap', id:'drgn',  from:5}, {cat:'weap', id:'sky', from:8}, {cat:'weap', id:'babel', from:11},
+  {cat:'weap', id:'drgn',  from:5}, {cat:'weap', id:'sky', from:8},
   {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
-  {cat:'shld', id:'drac',  from:7}, {cat:'shld', id:'aegis', from:11},
+  {cat:'shld', id:'drac',  from:7},
+  /* 通天之劍與聖域之盾**不在這張表上**。它們是究極裝備，只有副本迷宮
+     拿得到 —— 鐵匠打不出來，這是使用者指定的規則。
+     （原本兩件都是 from:11，第十二章就買得起。） */
 ];
 /* 現在買得到的。渲染與走通測試都走這一支 —— 兩邊各寫一份過濾條件的話，
    遲早會有一份忘記跟上，而那一份會給出一個安心的綠燈。 */
@@ -6570,7 +6692,12 @@ function newGame(seed){
   for(const k of ['wand','scroll','pot'])
     KIND[k].forEach(d => known[k+'/'+d.id] = 1);
   G = {
-    rng, seed, act: Math.min(VILLAGE.act|0, ACTS.length-1), floor: 1,
+    /* 這一趟走哪一章：平常是村莊記的進度，按了副本按鈕就是支線。
+       sideRun 是一次性的 —— 讀完就清掉，不然死一次之後重開會
+       莫名其妙又進副本。 */
+    rng, seed, act: (typeof sideRun !== 'undefined' && sideRun)
+      ? ACTS.findIndex(a2 => a2.side)
+      : Math.min(VILLAGE.act|0, LAST_MAIN), floor: 1,
     depth:1, turn:0, over:false, won:false,
     look, known, notes:{},
     p:{ x:0,y:0, lv:1, exp:0, hp:19, mhp:19, str:8, strb:0,
@@ -6585,6 +6712,9 @@ function newGame(seed){
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
   G.p.inv.push(mk('food','bread'));
+  // 這一趟的目的地已經決定好了，旗標就地清掉 ——
+  // 留著的話，死一次之後按「再下一次」會莫名其妙又進副本
+  if(typeof sideRun !== 'undefined') sideRun = 0;
   // 魔法點數與五系等級存在村莊 —— 它們不會因為任務失敗消失
   G.p.sp = VILLAGE.sp;
   G.p.sch = Object.assign({}, VILLAGE.sch);
@@ -6651,6 +6781,36 @@ function newGame(seed){
     VILLAGE.pots = []; saveVillage();
   }
 
+  /* ★ 究極裝備。使用者：「究極武器、防具、頭環，若主角沒有持有
+     『Token 金庫』的冒險狀態中，會耗損，挑戰 3 次」。
+
+     所以它跟鐵匠鋪買的東西不一樣：那些是「買了就是你的」，
+     這三件是**借來的**，每一趟燒掉一次，燒完就沒了。
+     帶著 Token 金庫（護送迷路的村民換來的）就不燒 ——
+     那條支線因此有了第二個理由：不救的人不只是存錢比較辛苦，
+     還會眼睜睜看著究極裝備在第三趟之後消失。
+
+     先發下去、再扣次數：這一趟本來就該用得到它。
+     扣到 0 就是這一趟用完之後不再有 —— 剛好三趟。 */
+  for(const id of ULT_IDS){
+    const left = VILLAGE.ult[id] | 0;
+    if(left <= 0) continue;
+    const it = mk(ULT_CAT[id], id, {known:1});
+    it.ultLeft = VILLAGE.vault ? 0 : left;      // 0 = 不耗損（有金庫）
+    G.p.inv.push(it);
+    if(ULT_CAT[id] === 'weap' && !G.p.weap) G.p.weap = it;
+    if(ULT_CAT[id] === 'shld' && !G.p.shld) G.p.shld = it;
+  }
+  if(!VILLAGE.vault){
+    for(const id of ULT_IDS){
+      const left = VILLAGE.ult[id] | 0;
+      if(left <= 0) continue;
+      VILLAGE.ult[id] = left - 1;
+      if(left - 1 <= 0) delete VILLAGE.ult[id];
+    }
+    saveVillage();
+  }
+
   // 諸神之劍：打倒人魚王后之後永久持有
   if(VILLAGE.godsword){
     const sw = mk('weap','mith',{known:1, up:4});
@@ -6696,7 +6856,11 @@ function mk(cat, id, o){
    只對裝備套用。消耗品的低階（回復草、麵包）到最後一層都還有用，
    把它們一起篩掉會讓深層變成一個沒有補給的地方。 */
 function pickTier(rng, list, cap, lowRatio){
-  let pool = list.filter(d => (d.price||0) <= cap);
+  /* 究極裝備永遠不進池子。它們只有一個來源（副本迷宮），
+     而「只有一個來源」如果靠的是機率很低，那就不是規則，是運氣 ——
+     深層的價格上限本來就摸得到通天之劍（24000），撿到一把
+     整條副本迷宮的線就白做了。 */
+  let pool = list.filter(d => !d.ult && (d.price||0) <= cap);
   if(!pool.length){
     let best = list[0];
     for(const d of list) if((d.price||0) < (best.price||0)) best = d;
@@ -6778,7 +6942,8 @@ function hatHere(floor){
   if(!hatFloors(G.act, act.floors).includes(floor)) return null;
   const r = RNG(mix32(G.act * 977 + floor * 31 + 7, G.seed));
   // 隱藏職業（忍者／鬼武者／術士）不在一般的帽子池裡 —— 留給更深的章節
-  const pool = G.depth <= 20 ? OPEN_HAT : HAT;
+  // 深層才進場的隱藏職業帽用 HAT，但究極頭環永遠不在池子裡
+  const pool = G.depth <= 20 ? OPEN_HAT : HAT.filter(h => !h.ult);
   return mk('hat', r.pick(pool).id, {known:1});
 }
 
@@ -7000,6 +7165,26 @@ function buildFloor(){
         }
     }
   }
+  /* ── 臨時狀況 ────────────────────────────────────────────────
+     一層最多一個，而且只在「對應的獎勵還沒拿到」的時候才可能出現。
+     自己一條亂數流，理由跟紀錄之環一模一樣：共用 rng 多抽幾個數字，
+     後面所有怪物與道具的位置會整個推移 —— 加一個純劇情的東西，
+     不該把已經量過的難度整條換掉。 */
+  G.f.ev = null;
+  if(evOK(act0, G.floor, G.f.rest)){
+    const erng = RNG(mix32(G.depth * 2971 + 91, G.seed));
+    const want = [];
+    // 已經在護送一個人的時候不放石匠：一次帶兩個人是兩件事，不是一件難的事
+    if(!VILLAGE.sideKey && !G.npc) want.push('mason');
+    if(!VILLAGE.circletDone) want.push('stones');
+    /* 兩件都還沒拿到的時候**先給石匠**，不是隨機挑一個。
+       隨機挑的版本量過：四十顆種子裡有人走到第 79 層才遇到石匠 ——
+       因為兩個事件各分掉一半的機率。而石匠後面掛著一整座副本迷宮
+       與兩件究極裝備，石碑只掛著一個頭環；先開大的那一扇門。 */
+    if(want.length && erng.chance(EV_RATE))
+      G.f.ev = makeEvent(want[0], erng, occ);
+  }
+
   /* ── 怪物之間 ──────────────────────────────────────────────
      房間的大小已經有落差了，但落差還不是事件。這裡把其中一間撐開成
      整個區塊那麼大的**大廳**，裡面站滿怪 —— 推開門的那一刻，
@@ -7423,7 +7608,14 @@ function spawnMon(d,x,y){
 
 const key=(x,y)=>y*MW+x;
 const tileAt=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? WALL : G.f.t[key(x,y)];
-const walkable=(x,y)=> tileAt(x,y)!==WALL;
+/* 落石也算走不過去。第一版只在 tryMove() 攔玩家，地形照樣是空地 ——
+   結果是怪物會走進石堆裡站著（然後玩家撞過去變成打牠，挖不了），
+   而任何用 walkable() 找路的東西都會一直把路線排進那一格。
+   它是**真的擋路的東西**，就該在唯一那一個定義裡擋路。
+   放這裡是安全的：石頭的位置在樓層生成之後才決定（那時 G.f.ev 還是 null），
+   而且放之前會做連通複查，所以地圖不會因此被切開。
+   人挖出來（done）之後這一格自動變回空地。 */
+const walkable=(x,y)=> tileAt(x,y)!==WALL && !rubbleAt(x,y);
 const roomOf=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? -1 : G.f.roomAt[key(x,y)];
 const roomRectAt=(x,y)=>{
   if(!G || !G.f || !G.f.rooms) return -1;
@@ -7615,6 +7807,10 @@ function tryMove(dx,dy){
       return;
     }
   }
+  /* 落石。撞上去 = 先問他要不要救，答應之後每撞一次搬一塊。
+     擋在 keeperAt 之前是刻意的：它是地形，不是人。 */
+  const rb = rubbleAt(nx,ny);
+  if(rb){ digMason(rb, dx, dy); return; }
   // 店員只擋「欠錢的人」。無條件擋路的話，只有一個出口的店會把
   // 沒偷東西的玩家永久關在裡面 —— 那不是難度，那是 bug。
   if(keeperAt(nx,ny)){
@@ -7708,6 +7904,7 @@ function stepOn(){
     say(TX('m.hall','★ 怪物之間 —— 整個大廳都是敵人！'),'bad');
     say(TX('m.hall2','退回走廊，一次只會進來一隻。'),'gold');
   }
+  evStep();                         // 石板／石碑：走過去就是踩上去
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   // 忍者 Master：踩上去也不會觸發
   if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say(TX('s.004','腳步輕得沒有觸動機關。'),'good'); }
@@ -8835,6 +9032,10 @@ function nameOf(it){
   }
   let n = locName(it.cat, it.d);
   if(it.cat === 'hat') n += `（${locJob(it.d.job)}）`;
+  /* 究極裝備要把「還剩幾趟」寫在名字上。不寫的話，玩家會在第三趟
+     結束之後發現最強的武器不見了，而且完全不知道發生了什麼事 ——
+     那是這條規則會被當成 bug 的唯一原因。 */
+  if(it.ultLeft > 0) n += M('ui.ultleft','［剩 {n} 趟］', {n: it.ultLeft});
   if(it.cat==='wand' && G.known[lookKey(it)]) n += ` [${it.uses}]`;
   if(it.cat==='pot') n += potGauge(it);
   if((it.cat==='weap'||it.cat==='shld') && it.known){
@@ -9891,6 +10092,243 @@ function healNpc(){
   return true;
 }
 
+/* ─── 迷宮裡的臨時狀況 ───────────────────────────────────────
+   使用者：「在不同迷宮章節中，隨機出現臨時的『拯救』或『解謎』狀況」，
+   而且「主要究極的武器與防具，需要拯救到對的村人」、
+   「究極的低耗魔頭環也需要透過『拯救』或『解謎』得到」。
+
+   所以這裡剛好兩個事件，各自是一件究極裝備的**唯一**來源：
+
+     受困的石匠（拯救）→ 開啟祕匠的副本 → 通天之劍＋聖域之盾
+     記憶的石碑（解謎）→ 賢者頭環
+
+   兩個都刻意**不做成護送**。護送已經有一條了（迷路的村民），
+   而且護送的代價是整整一章：石匠如果要跟你走到頭目，
+   在深淵牢獄那種十五層的章節等於半小時的保母工作，
+   失敗一次還全部重來。使用者的原話是「**臨時的**狀況」——
+   臨時的意思就是它該在一層之內結束。
+
+   兩個事件也都刻意**可以走掉**。石匠可以拒絕、石碑可以不解，
+   下一層還會再有機會。地牢裡不該有「錯過就永遠沒有」的東西 ——
+   那會逼玩家開攻略，而開了攻略的人就不是在玩了。 */
+
+/* 出現率。一層 16%：期望值大約六層遇到一次，
+   而每一章至少三層 —— 也就是說「一章遇得到一次」是常態，
+   「連兩章都沒遇到」是少數但存在的運氣。
+   拿到之後就永遠不再出現，所以它不會變成背景。 */
+const EV_RATE = .16;
+const MASON_DIG = 5;                    // 搬開落石要幾回合
+const STONE_ELS = ['water','fire','wind','earth'];
+const STONE_NM  = {water:'水', fire:'火', wind:'風', earth:'土'};
+const STONE_COL = {water:'#5aa6d8', fire:'#d8763a', wind:'#9ec4a8', earth:'#c2a06a'};
+const elName = id => TX('el.' + id, STONE_NM[id] || id);
+
+/* 這一層能不能出事件。條件全部是「不要打斷別的東西」：
+   序章在教走路、支線本身就是獎勵、頭目層與競技場層有自己的戲，
+   休息層是拿來喘氣的 —— 在補給站中間插一個謎題等於沒有補給站。 */
+function evOK(act, floor, rest){
+  if(!act || act.side || act.surf || act.arena) return false;
+  if(act.boss && floor >= act.floors) return false;
+  return !rest;
+}
+
+/* 把這一格當成牆之後，這一層還走得完嗎。
+   落石是**真的擋路的東西**，而「放在房間裡」不足以保證安全 ——
+   量出來的：兩百多次裡有六次把樓梯關在外面（2.5%）。
+   2.5% 聽起來很小，但它的後果是「這一趟結束了」，
+   而玩家不會知道那是隨機事件，只會知道遊戲壞了。 */
+function evBlocks(bx, by){
+  const seen = new Uint8Array(MW*MH), st = [[G.p.x, G.p.y]];
+  seen[G.p.y*MW + G.p.x] = 1;
+  while(st.length){
+    const [x,y] = st.pop();
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx = x+dx, ny = y+dy;
+      if(nx<0||ny<0||nx>=MW||ny>=MH) continue;
+      const k = ny*MW+nx;
+      if(seen[k] || tileAt(nx,ny) === WALL) continue;
+      if(nx === bx && ny === by) continue;              // 落石＝牆
+      seen[k] = 1; st.push([nx,ny]);
+    }
+  }
+  for(let k=0;k<MW*MH;k++){
+    if(k === by*MW+bx) continue;
+    if(tileAt(k%MW,(k/MW)|0) !== WALL && !seen[k]) return true;
+  }
+  return false;
+}
+/* 事件的位置。放在房間裡，不放走廊 ——
+   走廊只有一格寬，一塊擋路的落石在那裡就是一道關起來的門。
+   o.solid = 這一格會被堵住（要複查連通）
+   o.apart = 離這些點至少 o.gap 格（四塊碑要散開才叫四個地方） */
+function evSpot(rng, occ, minD, o){
+  o = o || {};
+  for(let i=0;i<200;i++){
+    const x = rng.i(1, MW-2), y = rng.i(1, MH-2);
+    const k = key(x,y);
+    if(!walkable(x,y) || occ.has(k) || roomOf(x,y) < 0) continue;
+    if(minD && Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) < minD) continue;
+    if(o.apart && o.apart.some(q =>
+       Math.max(Math.abs(q.x-x), Math.abs(q.y-y)) < o.gap)) continue;
+    if(o.solid && evBlocks(x, y)) continue;
+    occ.add(k); return {x,y};
+  }
+  return null;
+}
+function makeEvent(kind, rng, occ){
+  if(kind === 'mason'){
+    // 離出生點遠一點，才叫「在裡面發現的」；而且不能把樓梯關在外面
+    const s = evSpot(rng, occ, 5, {solid:1});
+    return s ? {kind:'mason', x:s.x, y:s.y, n:0, need:MASON_DIG,
+                asked:0, agreed:0, done:0} : null;
+  }
+  /* 記憶的石碑。石板寫著順序，四塊碑散在樓層各處，
+     照順序踩過去就開。**順序是寫給你看的**，不是猜的 ——
+     一個要靠試誤才解得開的謎題，在有怪物在追你的地方是懲罰不是謎題。 */
+  const slab = evSpot(rng, occ, 3);
+  if(!slab) return null;
+  const order = rng.shuffle(STONE_ELS.slice());   // 該踩的順序
+  const put   = rng.shuffle(STONE_ELS.slice());   // 哪一格是哪一個
+  const stones = [];
+  for(const el of put){
+    /* 彼此至少三格。量出來最近的兩塊可以貼在一起 ——
+       兩塊碑並排的時候，「照順序踩」讀起來就不像四個地方，
+       而且走過去很容易順手踩到旁邊那一塊。 */
+    const s = evSpot(rng, occ, 3, {apart:stones.concat([slab]), gap:3});
+    if(!s) return null;                           // 放不下四塊就整個不放
+    stones.push({x:s.x, y:s.y, el, lit:0});
+  }
+  return {kind:'stones', slab, stones, order, step:0, read:0, done:0};
+}
+
+/* 落石擋著的那一格。tryMove 會在「撞上去」的時候問它 ——
+   所以石匠不必進 walkable()：地圖生成、連通性檢查、怪物尋路
+   全部維持原樣，一行都不用改。 */
+const rubbleAt = (x,y)=>{
+  const ev = G.f && G.f.ev;
+  return (ev && ev.kind === 'mason' && !ev.done && ev.x === x && ev.y === y) ? ev : null;
+};
+let masonSprite = null;
+function masonArt(){
+  if(!masonSprite) masonSprite = makeBlob('5', {age:'adult'});
+  return masonSprite;
+}
+/* 先問，再搬。跟村民那一段同一個形狀，而且是同一支 openTalk ——
+   「可以拒絕」這件事如果只有一個事件有，玩家會以為那是特例。 */
+function askMason(ev){
+  SFX.play('open');
+  openTalk({
+    who: TX('k.mason','受困的石匠'),
+    art: masonArt(),
+    body: ev.asked
+      ? TX('t.mason.again','「……改變主意了嗎？我還在這下面。」')
+      : TX('t.mason.ask','「有人嗎……我的腿被壓住了。上面那塊我一個人推不動 —— 幫我搬開，好嗎？我不會白讓你出力的。」'),
+    yes: TX('t.mason.yes','好，我來搬'),
+    no:  TX('t.mason.no','抱歉，我趕時間'),
+    onYes(){
+      ev.agreed = 1; ev.asked = 1;
+      say(M('m.ev.dig0','你撐住上面那塊石頭 —— 大概要搬 {n} 次。（往他的方向走就是搬一次）',
+            {n:ev.need}),'gold');
+      say(TX('m.ev.dig1','搬石頭要花回合，怪會靠過來。先清乾淨再動手比較穩。'),'');
+    },
+    onNo(){
+      ev.asked = 1;
+      say(TX('m.ev.digno','「……那也沒辦法。我再等等吧。」'),'');
+    },
+  });
+}
+/* 搬一次 = 一回合。做成「撞上去」而不是站著自動進度：
+   撞是玩家主動按下去的，而回合會過去、怪會走近 ——
+   這段的緊張感全部來自那五回合，不是來自骰子。 */
+function digMason(ev, dx, dy){
+  if(!ev.agreed){ askMason(ev); return; }
+  ev.n++;
+  startAttackPose(G.p, dx, dy, 'melee');
+  SFX.play('hit');
+  G.shake = Math.max(G.shake, 3);
+  burst(ev.x, ev.y, 8, '#9a8e75', 30, 10, .6);
+  if(ev.n < ev.need){
+    say(M('m.ev.dug','你搬開一塊石頭。（{a}/{b}）',{a:ev.n, b:ev.need}));
+    endTurn(); return;
+  }
+  ev.done = 1;
+  VILLAGE.sideKey = 1; saveVillage();
+  SFX.play('level');
+  burst(ev.x, ev.y, 30, '#f5dc7a', 60, 22, 1);
+  say(TX('m.ev.freed','★ 石匠爬了出來，拍掉身上的灰。'),'gold');
+  say(TX('m.ev.key','「我祖上在這底下鑿過一間庫房，鑰匙我一直帶著。」他把一枚黃銅鑰匙塞進你手裡 —— 村莊的地圖上多了一個地方。'),'gold');
+  say(TX('m.ev.side','回村莊就能進「祕匠的副本」—— 通天之劍與聖域之盾在裡面。'),'gold');
+  endTurn();
+}
+
+/* 賢者頭環。發的是**次數**不是物件，理由跟另外兩件究極裝備一樣：
+   物件會隨死亡消失，次數存在村莊裡。
+   背包滿的時候不硬塞：這一趟先不給，次數照樣記著，
+   下一趟出發時它會在身上 —— 獎勵一次都不會掉。 */
+function giveCirclet(){
+  VILLAGE.circletDone = 1;
+  if(G.p.inv.length >= 20){
+    VILLAGE.ult.circlet = ULT_RUNS;
+    say(M('m.ev.bagfull','背包滿了 —— 頭環先寄在村莊，下一趟出發時就在身上。（共 {n} 趟）',
+          {n:ULT_RUNS}),'gold');
+  } else {
+    const it = mk('hat','circlet',{known:1});
+    it.ultLeft = VILLAGE.vault ? 0 : ULT_RUNS;
+    G.p.inv.push(it);
+    VILLAGE.ult.circlet = VILLAGE.vault ? ULT_RUNS : ULT_RUNS - 1;
+    say(M('m.ev.circlet','獲得「{nm}」—— 施法消耗永久降低。（撐 {n} 趟；帶著 Token 金庫就不會耗損）',
+          {nm:nameOf(it), n:ULT_RUNS}),'gold');
+  }
+  saveVillage();
+}
+/* 踩到一塊碑。三條規則，每一條都是為了「不要罰不知情的人」：
+     沒讀過石板 —— 什麼都不會發生（連錯都不算）
+     已經亮著的 —— 再踩一次不算數（走回頭路不該懲罰）
+     順序錯了　 —— 全部熄掉，重來，但**不扣任何東西** */
+function stoneStep(ev, st){
+  if(!ev.read){
+    say(TX('m.ev.unread','碑上的記號你還讀不懂 —— 這一層某處有一塊寫著順序的石板。'));
+    return;
+  }
+  if(st.lit) return;
+  if(st.el !== ev.order[ev.step]){
+    for(const s of ev.stones) s.lit = 0;
+    ev.step = 0;
+    SFX.play('miss');
+    say(M('m.ev.wrong','{nm}的碑黯了下去 —— 順序錯了，四塊碑一起熄滅。',{nm:elName(st.el)}),'bad');
+    return;
+  }
+  st.lit = 1; ev.step++;
+  SFX.play('ident');
+  burst(st.x, st.y, 12, STONE_COL[st.el], 34, 12, .7);
+  if(ev.step < ev.order.length){
+    say(M('m.ev.lit','{nm}的碑亮了。（{a}/{b}）',
+          {nm:elName(st.el), a:ev.step, b:ev.order.length}),'good');
+    return;
+  }
+  ev.done = 1;
+  SFX.play('level');
+  burst(ev.slab.x, ev.slab.y, 34, '#f5dc7a', 66, 24, 1.05);
+  say(TX('m.ev.solved','★ 四塊碑同時亮起 —— 石板從中間裂開，裡面躺著一只素面的頭環。'),'gold');
+  giveCirclet();
+}
+/* 踩上石板或石碑。由 stepOn() 呼叫，所以「走過去」就會發生 ——
+   石板是要讀的東西，讀它不該再多一個按鍵。 */
+function evStep(){
+  const ev = G.f && G.f.ev, p = G.p;
+  if(!ev || ev.done || ev.kind !== 'stones') return;
+  if(ev.slab.x === p.x && ev.slab.y === p.y){
+    if(!ev.read){ ev.read = 1; SFX.play('open'); }
+    say(TX('m.ev.slab','石板上刻著四個記號，排成一列 ——'),'gold');
+    say(M('m.ev.order','「{a} → {b} → {c} → {d}」　照這個順序踩過四塊碑。',
+          {a:elName(ev.order[0]), b:elName(ev.order[1]),
+           c:elName(ev.order[2]), d:elName(ev.order[3])}),'gold');
+    return;
+  }
+  const st = ev.stones.find(s => s.x === p.x && s.y === p.y);
+  if(st) stoneStep(ev, st);
+}
+
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say(TX('s.110','這裡沒有樓梯。')); return; }
@@ -9931,8 +10369,11 @@ function clearAct(){
     say(TX('m.vaultget','他把家傳的「Token 金庫」交給你 —— 從今以後，倒下時身上的錢一分都不會少。'),'gold');
     G.npc = null;
   } else if(G.npc && G.npc.follow){ G.npc = null; }
-  const last = G.act >= ACTS.length - 1;
-  if(!last && (VILLAGE.act|0) <= G.act){ VILLAGE.act = G.act + 1; }
+  /* 「打完這一章就是通關」要問主線的最後一章，不能問 ACTS 的最後一個 ——
+     副本迷宮接在陣列尾巴，問錯的話打完副本會直接跑結局。 */
+  const last = !act.side && G.act >= LAST_MAIN;
+  // 支線不推主線的進度：打完副本迷宮回到村莊，下一章仍然是原本那一章
+  if(!last && !act.side && (VILLAGE.act|0) <= G.act){ VILLAGE.act = G.act + 1; }
   /* 通關賞金。從「進下一章不再白送裝備」開始，村莊的鐵匠鋪就是取得裝備的
      正規途徑 —— 那條路必須真的走得通。撿來的錢會隨著死亡歸零，
      光靠它，第八章之後永遠買不起那個深度該有的裝備（走通測試就卡在這裡：
@@ -9982,6 +10423,17 @@ function grantReward(act){
   /* 大廣間打完就開始爬二十層的塔，中間只回得了中繼之村一次 ——
      所以這一章給的是「撐得住那二十層」的東西，而不是一把新武器。
      +30 是照著純淨之泉（+20）往上排的：它在後面十章，該更重。 */
+  /* ★ 副本迷宮的獎勵：兩件究極裝備，各三趟。
+     使用者：「經由事件進入到『副本迷宮』去拿武器和防具，
+     其他取得路徑改成不可」—— 這裡是它們**唯一**的來源。
+     發的是次數不是物件：物件會隨死亡消失，次數存在村莊裡。 */
+  if(act.id === 'vault'){
+    VILLAGE.ult.babel = ULT_RUNS;
+    VILLAGE.ult.aegis = ULT_RUNS;
+    VILLAGE.sideDone = 1;
+    say(M('s.vault','石匠的箱子開了 —— 通天之劍與聖域之盾。（各撐 {n} 趟；帶著 Token 金庫就不會耗損）',
+          {n:ULT_RUNS}),'gold');
+  }
   if(act.id === 'hall'){
     VILLAGE.hpBonus = (VILLAGE.hpBonus|0) + 30;
     /* 整趟旅程的方向在這一句話換過來。它必須被說出來 ——
@@ -11677,6 +12129,72 @@ function draw(dt){
     cx.restore();
   }
 
+  /* ── 臨時狀況的東西 ──────────────────────────────────────
+     兩件都畫在地板上、生物底下：它們是這一層的地形，不是角色。
+     落石畫成一堆亂放的石塊加一隻伸出來的手 —— 一堆石頭本身
+     讀不出「下面有人」，而那正是玩家要看懂的唯一一件事。 */
+  const EV = G.f.ev;
+  if(EV && !EV.done && EV.kind === 'mason' && G.seen[key(EV.x, EV.y)]){
+    const bx = ox + EV.x*T, by = oy + EV.y*T;
+    const lit = G.seen[key(EV.x, EV.y)] === 2;
+    cx.save();
+    cx.globalAlpha = lit ? 1 : .45;
+    // 石堆：三層，越上面越小、越亮（受光在上，這是整套美術的規則）
+    const rock = [[1,9,14,6,'B'],[3,6,10,5,'C'],[6,3,6,4,'D']];
+    for(const [rx,ry,rw,rh,c] of rock){
+      cx.fillStyle = PAL[c] || '#9a8e75';
+      cx.fillRect(bx+rx, by+ry, rw, rh);
+    }
+    cx.fillStyle = PAL['A'] || '#4b453b';
+    cx.fillRect(bx+1, by+14, 14, 1);                 // 落地的陰影
+    // 石縫裡伸出來的手。它是唯一「這是一個人」的訊號，所以最亮。
+    cx.fillStyle = '#c9a98a';
+    cx.fillRect(bx+11, by+7, 2, 2);
+    cx.fillRect(bx+12, by+5, 2, 2);
+    if(lit && EV.agreed){                            // 答應之後才數進度
+      cx.fillStyle = '#f5dc7a';
+      for(let i=0;i<EV.need;i++)
+        cx.fillRect(bx+2 + i*3, by+1, 2, i < EV.n ? 2 : 1);
+    }
+    cx.restore();
+  }
+  if(EV && !EV.done && EV.kind === 'stones'){
+    const puff = 0.55 + 0.45*Math.sin(clock*2.0);
+    if(G.seen[key(EV.slab.x, EV.slab.y)]){           // 石板：平躺，刻著一列記號
+      const bx = ox + EV.slab.x*T, by = oy + EV.slab.y*T;
+      cx.save();
+      cx.globalAlpha = G.seen[key(EV.slab.x, EV.slab.y)] === 2 ? 1 : .45;
+      cx.fillStyle = PAL['C'] || '#9a8e75'; cx.fillRect(bx+2, by+4, 12, 9);
+      cx.fillStyle = PAL['B'] || '#6f6656'; cx.fillRect(bx+2, by+12, 12, 1);
+      for(let i=0;i<4;i++){
+        cx.fillStyle = EV.read ? STONE_COL[EV.order[i]] : (PAL['A'] || '#4b453b');
+        cx.fillRect(bx+3 + i*3, by+7, 2, 3);
+      }
+      cx.restore();
+    }
+    for(const s of EV.stones){
+      if(!G.seen[key(s.x, s.y)]) continue;
+      const bx = ox + s.x*T, by = oy + s.y*T;
+      cx.save();
+      cx.globalAlpha = G.seen[key(s.x, s.y)] === 2 ? 1 : .45;
+      cx.fillStyle = PAL['B'] || '#6f6656'; cx.fillRect(bx+4, by+3, 8, 11);
+      cx.fillStyle = PAL['D'] || '#cdc2a8'; cx.fillRect(bx+4, by+3, 8, 1);
+      cx.fillStyle = PAL['A'] || '#4b453b'; cx.fillRect(bx+4, by+14, 8, 1);
+      /* 亮著的碑用純色、還沒亮的用暗色 —— 玩家要一眼數得出來
+         「我踩到第幾塊了」，那是這個謎題唯一的進度條。 */
+      cx.globalAlpha *= s.lit ? 1 : .55;
+      cx.fillStyle = s.lit ? STONE_COL[s.el] : '#3b382f';
+      cx.fillRect(bx+6, by+6, 4, 5);
+      if(s.lit){
+        cx.globalCompositeOperation = 'lighter';
+        cx.globalAlpha = .35 * puff;
+        cx.fillStyle = STONE_COL[s.el];
+        cx.fillRect(bx+2, by+2, 12, 12);
+      }
+      cx.restore();
+    }
+  }
+
   /* 地標本體。畫在地磚之後、生物之前 ——
      這樣站在它前面的怪物會蓋住它的下半，深度感才對。
      只要腳下任一格看過就整個畫出來：一棵三格高的樹，
@@ -12346,6 +12864,23 @@ function updateTags(){
       const shr = G.f.shrine;
       if(shr && !shr.used && G.seen[key(shr.x, shr.y)])
         push(shr.x, shr.y, TX('lg.shrine','紀錄點'), 'stair');
+      /* 石碑的名字一定要在名牌上。謎題的答案是「照順序踩」——
+         如果非得踩上去才知道那一塊是水還是火，那就不是解謎，是試誤，
+         而試誤在一個會有怪追過來的地方只會讓人生氣。 */
+      const evL = G.f.ev;
+      if(evL && !evL.done && evL.kind === 'mason' && G.seen[key(evL.x, evL.y)])
+        push(evL.x, evL.y, evL.agreed
+          ? M('lg.dig','落石 {a}/{b}',{a:evL.n, b:evL.need})
+          : TX('lg.mason','落石．有人'), 'shop');
+      if(evL && !evL.done && evL.kind === 'stones'){
+        if(G.seen[key(evL.slab.x, evL.slab.y)])
+          push(evL.slab.x, evL.slab.y, TX('lg.slab','石板'), 'stair');
+        for(const s of evL.stones){
+          if(!G.seen[key(s.x, s.y)]) continue;
+          push(s.x, s.y, M('lg.stone','{nm}碑{v}',
+                           {nm:elName(s.el), v:s.lit ? '★' : ''}), 'stair', 'e'+s.el);
+        }
+      }
       for(const t of (G.f.turrets || [])){
         if(G.seen[key(t.x,t.y)] !== 2) continue;
         push(t.x, t.y, t.cd > 0 ? M('lg.turretcd','砲座 {n}',{n:t.cd})
@@ -12477,6 +13012,17 @@ function paintMap(mcx, mini, MMS){
   for(const m of G.mons)  if(G.seen[key(m.x,m.y)]===2) dot(m.x,m.y,'#a83c32',5);
   for(const a of G.allies) dot(a.x,a.y,PAL[a.d.col],5);
   if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x,G.npc.y)]) dot(G.npc.x,G.npc.y,'#79c97a',5);
+  /* 臨時狀況也上小地圖。石碑散在整層，沒有小地圖的話玩家會為了
+     「第四塊在哪」把整層再走一遍 —— 那不是謎題的難度，是路程。 */
+  const evM = G.f.ev;
+  if(evM && !evM.done){
+    if(evM.kind === 'mason' && G.seen[key(evM.x,evM.y)]) dot(evM.x,evM.y,'#f5dc7a',5);
+    if(evM.kind === 'stones'){
+      if(G.seen[key(evM.slab.x,evM.slab.y)]) dot(evM.slab.x,evM.slab.y,'#f5dc7a',5);
+      for(const s of evM.stones)
+        if(G.seen[key(s.x,s.y)]) dot(s.x,s.y, s.lit ? STONE_COL[s.el] : '#7a7263', 4);
+    }
+  }
   // 玩家：白點加一圈黑框，壓在所有東西上面
   mcx.fillStyle='#14110f'; mcx.fillRect(G.p.x*MMS, G.p.y*MMS, MMS, MMS);
   mcx.fillStyle='#e8dcc0'; mcx.fillRect(G.p.x*MMS+1, G.p.y*MMS+1, MMS-2, MMS-2);
@@ -13927,6 +14473,17 @@ document.querySelectorAll('[data-act]').forEach(b=>{
   };
 });
 $('vgo').onclick = ()=>{
+  sideRun = 0;
+  closeVillage();
+  $('over').classList.remove('show');
+  restart();
+};
+/* 這一趟是不是副本。restart() → newGame() 讀的是 VILLAGE.act，
+   而副本不能動 VILLAGE.act（動了主線的進度就跳掉了），
+   所以用一個一次性的旗標把它帶進去。 */
+let sideRun = 0;
+$('vside').onclick = ()=>{
+  sideRun = 1;
   closeVillage();
   $('over').classList.remove('show');
   restart();
@@ -13999,7 +14556,7 @@ function openVillage(){
    而是直接問「下一章是不是往上」—— 條件就是它在故事裡的意義本身。 */
 const VSTYLES = ['euro', 'cave', 'edo', 'spire'];
 function villageStyle(){
-  const a = Math.max(0, Math.min(ACTS.length-1, VILLAGE.act|0));
+  const a = Math.max(0, Math.min(LAST_MAIN, VILLAGE.act|0));
   if(actUp(a)) return 'spire';
   return VSTYLES[Math.min(2, Math.floor(a / 5))];
 }
@@ -14344,7 +14901,8 @@ function paintTower(actIdx){
      在塔的三章裡就是最高的那一節），段跟段之間才換比例。
      這張圖要回答的是「我在哪、路長什麼形狀」，不是「幾比幾」。 */
   const SEG  = ACTS.map(a => Math.max(3, Math.round(a.floors * 1.9)));
-  const kindOf = a => a.up ? 'up' : a.surf ? 'surf' : a.wide ? 'wide' : 'down';
+  // 支線不在這條路上 —— 畫進去只會讓「還要走多遠」這個問題答錯
+  const kindOf = a => a.side ? 'skip' : a.up ? 'up' : a.surf ? 'surf' : a.wide ? 'wide' : 'down';
   const sum = k => ACTS.reduce((n,a,i2) => n + (kindOf(a) === k ? SEG[i2] : 0), 0);
   const downT = Math.max(1, sum('down')), upT = Math.max(1, sum('up'));
 
@@ -14375,6 +14933,7 @@ function paintTower(actIdx){
   let yDn = GROUND + 3, yUp = HALL_Y;
   for(let i=0;i<ACTS.length;i++){
     const kind = kindOf(ACTS[i]);
+    if(kind === 'skip'){ spots.push(spots[spots.length-1] || {x:DX, y:GROUND, w:24}); continue; }
     if(kind === 'surf'){
       // 神殿：地面上的階梯塔（ziggurat）。三階越往上越窄，正面一個門洞。
       const base = 34, step = Math.round(SURF_H/3);
@@ -14448,7 +15007,7 @@ function paintTower(actIdx){
    有人在這裡對你說「接下來要去哪、那裡有什麼」，主線才接得起來。
    講的是**下一章**而不是這一章：村莊的作用是把人推出門。 */
 function villagerLine(){
-  const nx = Math.min(VILLAGE.act | 0, ACTS.length - 1);
+  const nx = Math.min(VILLAGE.act | 0, LAST_MAIN);
   const a = ACTS[nx];
   const who = TX('v.who.' + (nx % 4), ['老鐵匠','守夜的孩子','旅行商人','村長'][nx % 4]);
   // 直接用章節簡介 —— 那本來就是「這一章是什麼」的一句話，
@@ -14468,9 +15027,18 @@ function renderVillage(){
   $('vtalk').innerHTML = M('v.talkfmt','<b>{who}</b>：「{body}」<br>—— 下一章：<b>{nx}</b>',
     {who:t.who, body:t.body, nx:locAct(t.act)});
   $('vgo').textContent = M('ui.dive','前往　{nm}', {nm: locAct(t.act)});
+  /* 副本迷宮的按鈕：救到石匠才出現，拿完就收起來。
+     一直掛在那裡的話，玩家會反覆進去刷究極裝備 ——
+     而那三趟的耗損規則就沒有意義了。 */
+  const sideBtn = $('vside');
+  if(sideBtn){
+    const on = !!VILLAGE.sideKey && !VILLAGE.sideDone;
+    sideBtn.hidden = !on;
+    if(on) sideBtn.textContent = locAct(ACTS[ACTS.findIndex(a2 => a2.side)]);
+  }
 
   // 旅程全圖：標的是**下一章**，跟村民講的是同一件事
-  const nx2 = Math.min(VILLAGE.act | 0, ACTS.length - 1);
+  const nx2 = Math.min(VILLAGE.act | 0, LAST_MAIN);
   paintTower(nx2);
   const tl = $('towerlbl');
   // 方向有四種，因為路線本來就有四段：地面的神殿、往下、橫過大廣間、往上。

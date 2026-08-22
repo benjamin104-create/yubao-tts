@@ -760,6 +760,9 @@ t('每一章都撿得到職業帽（最後的競技場除外）', ()=>{
       V.act = a; V.stock = [];
       api.newGame(90000 + s * 811);
       const G = api.G();
+      /* 支線的副本迷宮進不去 VILLAGE.act（newGame() 會夾在 LAST_MAIN），
+         要直接指定 G.act，不然量到的是別章的樓層。 */
+      G.act = a;
       let hats = 0;
       for(let f = 1; f <= act.floors; f++){
         G.floor = f; api.buildFloor();

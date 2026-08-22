@@ -14,8 +14,13 @@ let fail = 0, total = 0;
 const ok = (cond, msg) => { total++; if(cond) console.log('  ✓ ' + msg);
   else { console.log('  ✗ ' + msg); fail++; } };
 
-const ACTS = api.i18n.ACTS;
-const AI = id => ACTS.findIndex(a => a.id === id);
+const ALL_ACTS = api.i18n.ACTS;
+/* 路線的形狀只看**主線**。副本迷宮（side:1）接在陣列尾巴，
+   它不在「神殿 → 往下 → 大廣間 → 往上」那條線上 ——
+   把它算進來的話，「最後一章在塔上」會變成假的，
+   而那條斷言要釘的事情其實一點都沒有壞。 */
+const ACTS = ALL_ACTS.filter(a => !a.side);
+const AI = id => ALL_ACTS.findIndex(a => a.id === id);
 
 /* ═══ 整條路線的形狀 ═══════════════════════════════════════════
    使用者手繪的剖面圖：「從神殿找到隱藏前往地底廣場的入口 → 往下抵達
@@ -444,11 +449,209 @@ console.log('\n=== 牢牢跟著（十張圖、各亂走 150 步） ===');
   ok(worst <= 2, '一次都沒有掉隊（最遠 ' + worst + ' 格）');
 }
 
+/* ═══ 迷宮裡的臨時狀況 ═══════════════════════════════════════
+   使用者：「在不同迷宮章節中，隨機出現臨時的『拯救』或『解謎』狀況」，
+   而且究極武具要「拯救到對的村人」、頭環要「透過拯救或解謎」拿到。
+
+   這一整段驗的是那句話真的成立：兩個事件各自是一件究極裝備的唯一來源，
+   而且都可以拒絕、都不會把玩家關在樓層裡。 */
+console.log('\n=== 什麼樣的樓層會出事件 ===');
+{
+  const A = id => ALL_ACTS[AI(id)];
+  ok(!api.evOK(A('temple'), 1, false), '序章不出事件（那三層在教走路）');
+  ok(!api.evOK(A('vault'), 1, false),  '副本迷宮不出事件（它本身就是獎勵）');
+  ok(!api.evOK(A('ordeal'), 1, false), '競技場那一章不出事件');
+  ok(!api.evOK(A('mine'), A('mine').floors, false), '頭目層不出事件');
+  ok(!api.evOK(A('gaol'), 5, true),    '休息層不出事件（補給站中間插謎題等於沒有補給站）');
+  ok(api.evOK(A('mine'), 2, false),    '一般的迷宮層會出事件');
+}
+
+/* 找一層真的長出指定事件的樓層。事件是隨機的，所以掃過去找 ——
+   找不到就是機率或條件壞了，那本身就是要報出來的事。 */
+function findEv(kind, prep){
+  const V3 = api.VILLAGE();
+  for(let seed = 1; seed <= 60; seed++){
+    api.newGame(seed * 104729);
+    prep(api.VILLAGE());
+    const G4 = api.G();
+    for(let a = 0; a < ALL_ACTS.length; a++){
+      if(ALL_ACTS[a].side) continue;
+      for(let f = 1; f <= ALL_ACTS[a].floors; f++){
+        G4.act = a; G4.floor = f; G4.npc = null;
+        api.buildFloor();
+        if(G4.f.ev && G4.f.ev.kind === kind) return G4;
+      }
+    }
+  }
+  return null;
+}
+const noNpc = V4 => { V4.sideKey = 0; V4.circletDone = 0; V4.vault = 0; V4.npcDone = 1; };
+
+console.log('\n=== 受困的石匠（拯救 → 副本迷宮） ===');
+{
+  /* 落石是真的會擋路的東西。第一版沒有連通複查，
+     兩百多次裡有六次把樓梯關在牆的另一邊（2.5%）——
+     那個機率小到單一種子看不見，但它的後果是「這一趟結束了」。
+     所以這裡掃很多層，不是掃幾層。 */
+  let seen = 0, blocked = 0;
+  for(let seed = 1; seed <= 12; seed++){
+    api.newGame(seed * 7919);
+    noNpc(api.VILLAGE());
+    const G5 = api.G();
+    for(let a = 0; a < ALL_ACTS.length; a++){
+      if(ALL_ACTS[a].side) continue;
+      for(let f = 1; f <= ALL_ACTS[a].floors; f++){
+        G5.act = a; G5.floor = f; G5.npc = null;
+        api.buildFloor();
+        const ev = G5.f.ev;
+        if(!ev || ev.kind !== 'mason') continue;
+        seen++;
+        // 把落石當牆，從出生點走一遍，樓梯還到不到
+        const vis = new Set([api.key(G5.p.x, G5.p.y)]);
+        const q = [[G5.p.x, G5.p.y]];
+        for(let h = 0; h < q.length; h++){
+          const [cx, cy] = q[h];
+          for(const d of api.DIRS){
+            const nx = cx + d[0], ny = cy + d[1], k = api.key(nx, ny);
+            if(vis.has(k) || !api.walkable(nx, ny)) continue;
+            if(nx === ev.x && ny === ev.y) continue;
+            if(!api.cornerOK(cx, cy, nx, ny)) continue;
+            vis.add(k); q.push([nx, ny]);
+          }
+        }
+        if(!vis.has(api.key(G5.f.stairs.x, G5.f.stairs.y))) blocked++;
+      }
+    }
+  }
+  ok(seen >= 40, '掃到夠多的落石（' + seen + ' 次，太少就驗不出 2.5% 的事）');
+  ok(blocked === 0, '落石一次都沒有把樓梯關在外面（' + blocked + '/' + seen + '）');
+}
+{
+  const G6 = findEv('mason', noNpc);
+  ok(!!G6, '找得到有石匠的樓層');
+  if(G6){
+    const ev = G6.f.ev, V6 = api.VILLAGE();
+    // 站到落石旁邊，然後撞過去
+    let d0 = null;
+    for(const d of api.DIRS){
+      const sx = ev.x - d[0], sy = ev.y - d[1];
+      if(api.walkable(sx, sy) && !api.monAt(sx, sy) && api.cornerOK(sx, sy, ev.x, ev.y)){
+        G6.p.x = sx; G6.p.y = sy; d0 = d; break;
+      }
+    }
+    ok(!!d0, '走得到落石旁邊');
+    V6.sideKey = 0;
+    api.tryMove(d0[0], d0[1]);
+    ok(api.talkOpen(), '撞上去會先問，不會直接開挖');
+    ok(ev.n === 0, '還沒答應之前一塊石頭都沒搬');
+    api.answerTalk(false);
+    ok(!ev.agreed, '按「不同意」不會開始搬（不救也可以）');
+    api.tryMove(d0[0], d0[1]);
+    ok(api.talkOpen(), '再撞一次會再問一次（反悔不該有代價）');
+    api.answerTalk(true);
+    ok(ev.agreed === 1, '按「同意」就開始搬');
+    ok(V6.sideKey === 0, '答應的當下還沒開副本 —— 要真的搬完才算');
+    /* 「搬幾次」不能只拿 MASON_DIG 自己去比 —— 那是拿常數驗常數，
+       把它改成 1 測試照樣全綠（破壞測試就是這樣抓到的）。
+       要釘的其實是「拯救有代價」：至少三回合，而且第一下挖不出來。 */
+    ok(api.MASON_DIG >= 3, '搬石頭至少要三回合（實際 ' + api.MASON_DIG + '）—— 一下就好等於沒有代價');
+    api.tryMove(d0[0], d0[1]);
+    ok(ev.n === 1 && !ev.done, '第一下搬不出來（' + ev.n + '/' + api.MASON_DIG + '）');
+    ok(V6.sideKey === 0, '搬到一半副本還沒開');
+    for(let i = 1; i < api.MASON_DIG - 1; i++) api.tryMove(d0[0], d0[1]);
+    ok(ev.n === api.MASON_DIG - 1, '每撞一次搬一塊（' + ev.n + '/' + api.MASON_DIG + '）');
+    ok(V6.sideKey === 0, '差一塊的時候副本還沒開');
+    api.tryMove(d0[0], d0[1]);
+    ok(ev.done === 1, '搬滿 ' + api.MASON_DIG + ' 次就把人挖出來了');
+    ok(V6.sideKey === 1, '★ 石匠獲救 → 祕匠的副本開了');
+    api.saveVillage(); api.loadVillage();
+    ok(api.VILLAGE().sideKey === 1, '副本的鑰匙撐得過重新讀檔');
+  }
+}
+
+console.log('\n=== 記憶的石碑（解謎 → 賢者頭環） ===');
+{
+  const G7 = findEv('stones', V7 => { V7.sideKey = 1; V7.circletDone = 0; V7.vault = 0; V7.npcDone = 1; });
+  ok(!!G7, '找得到有石碑的樓層');
+  if(G7){
+    const ev = G7.f.ev, V8 = api.VILLAGE();
+    const at = el => ev.stones.find(s => s.el === el);
+    const stepTo = pt => { G7.p.x = pt.x; G7.p.y = pt.y; api.stepOn(); };
+    // 四塊碑要散得開 —— 兩塊並排的話「照順序踩」讀不出是四個地方
+    let mind = 99;
+    for(let i = 0; i < ev.stones.length; i++)
+      for(let j = i + 1; j < ev.stones.length; j++)
+        mind = Math.min(mind, Math.max(Math.abs(ev.stones[i].x - ev.stones[j].x),
+                                       Math.abs(ev.stones[i].y - ev.stones[j].y)));
+    ok(mind >= 3, '四塊碑彼此至少三格（最近的兩塊差 ' + mind + ' 格）');
+    ok(ev.order.length === 4 && new Set(ev.order).size === 4, '順序是四個不重複的記號');
+
+    /* 沒讀石板就踩，什麼都不該發生 —— 連「錯」都不算。
+       看不懂的東西不該罰人，而這一條同時也是「不能靠試誤解開」：
+       沒讀石板的人根本推不動這個謎題。 */
+    stepTo(at(ev.order[0]));
+    ok(ev.step === 0 && !at(ev.order[0]).lit, '沒讀石板就踩碑，碑不會亮');
+    stepTo(ev.slab);
+    ok(ev.read === 1, '踩上石板就讀到了順序');
+
+    stepTo(at(ev.order[0]));
+    ok(at(ev.order[0]).lit === 1 && ev.step === 1, '照順序踩第一塊，碑亮了');
+    stepTo(at(ev.order[0]));
+    ok(ev.step === 1, '再踩一次已經亮的碑不算數（走回頭路不該被罰）');
+    stepTo(at(ev.order[2]));
+    ok(ev.step === 0 && ev.stones.every(s => !s.lit), '踩錯順序，四塊碑一起熄滅');
+
+    ok(!V8.circletDone, '還沒解開之前沒有頭環');
+    const bag0 = G7.p.inv.length;
+    for(const el of ev.order) stepTo(at(el));
+    ok(ev.done === 1, '重來一次、四塊踩完就解開了');
+    ok(V8.circletDone === 1, '★ 解謎完成 → 賢者頭環到手');
+    ok((V8.ult.circlet | 0) > 0, '頭環記的是「趟數」，不是一件會隨死亡消失的物件');
+    ok(G7.p.inv.length === bag0 + 1, '這一趟身上就多了一只頭環');
+    const cir = G7.p.inv.find(i => i.d && i.d.id === 'circlet');
+    ok(!!cir && cir.ultLeft > 0, '頭環身上帶著剩餘趟數（' + (cir ? cir.ultLeft : '-') + '）');
+    api.saveVillage(); api.loadVillage();
+    ok(api.VILLAGE().circletDone === 1, '解過的謎撐得過重新讀檔');
+    ok((api.VILLAGE().ult.circlet | 0) > 0, '頭環的趟數撐得過重新讀檔');
+  }
+}
+
+/* 「其他取得路徑改成不可」。這三件東西如果還能在地上撿到、
+   在鐵匠鋪買到，那前面整段拯救與解謎就只是一條繞遠路的支線。 */
+console.log('\n=== 究極裝備只有這兩條路 ===');
+{
+  const ULT = new Set(api.ULT_IDS);
+  ok(!api.OPEN_HAT.some(h => ULT.has(h.id)), '究極頭環不在一般的帽子池裡');
+  ok(!api.VILLAGE_STOCK.some(g => ULT.has(g.id)), '究極裝備不在村莊商店的貨架上');
+  let dropped = 0;
+  for(let seed = 1; seed <= 8; seed++){
+    api.newGame(seed * 31337);
+    const G9 = api.G();
+    for(let a = 0; a < ALL_ACTS.length; a++){
+      if(ALL_ACTS[a].side) continue;
+      for(let f = 1; f <= ALL_ACTS[a].floors; f++){
+        G9.act = a; G9.floor = f; G9.npc = null;
+        api.buildFloor();
+        for(const k of Object.keys(G9.items))
+          if(G9.items[k] && G9.items[k].d && ULT.has(G9.items[k].d.id)) dropped++;
+      }
+    }
+  }
+  ok(dropped === 0, '走了幾千層，地上一件究極裝備都沒有掉（' + dropped + ' 件）');
+}
+
 /* Token 金庫要撐得過重新整理。這一條是踩出來的：loadVillage() 會用
    白名單重建一整個 VILLAGE，而 vault 不在白名單裡 —— 護送成功的人
    只要重整一次分頁，金庫就消失了，而且不會有任何錯誤訊息。 */
 console.log('\n=== 存下來的東西真的存得住 ===');
-V.vault = 1; V.npcDone = 1; api.saveVillage(); api.loadVillage();
+/* 用 api.VILLAGE() 現拿，不要用開頭抓的那個 V —— loadVillage() 會
+   用白名單**重建**一整個 VILLAGE 物件，抓在手上的舊參考從那一刻起
+   就指著一個沒有人在看的東西了。 */
+{
+  const Vn = api.VILLAGE();
+  Vn.vault = 1; Vn.npcDone = 1;
+}
+api.saveVillage(); api.loadVillage();
 ok(api.VILLAGE().vault === 1, 'Token 金庫撐得過重新讀檔');
 ok(api.VILLAGE().npcDone === 1, '「救過了」撐得過重新讀檔');
 
