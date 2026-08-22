@@ -931,14 +931,14 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
 #towerwrap{display:flex; flex-direction:column; align-items:center; gap:5px; margin:2px 0 4px}
 #towermap{
-  width:min(240px,72vw); height:auto; image-rendering:pixelated;
+  width:min(320px,86vw); height:auto; image-rendering:pixelated;
   image-rendering:crisp-edges; display:block;
-  border:1px solid rgba(201,151,63,.22); background:#10141f;
-  box-shadow:0 10px 30px rgba(0,0,0,.40);
+  border:2px solid #111827; outline:1px solid rgba(201,151,63,.26);
+  background:#070b16; box-shadow:0 13px 34px rgba(0,0,0,.55);
 }
 #towerlbl{
-  margin:0; font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
-  color:var(--parch-dim); text-align:center; max-width:26ch; line-height:1.5;
+  margin:2px 0 0; font-family:var(--mono); font-size:10px; letter-spacing:.09em;
+  color:var(--parch-dim); text-align:center; max-width:36ch; line-height:1.5;
 }
 #vfolk canvas:nth-child(odd){animation:bob 3.1s ease-in-out infinite}
 #vfolk canvas:nth-child(even){animation:bob 2.6s ease-in-out infinite .4s}
@@ -1327,7 +1327,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
          玩家非知道不可的一件事是「我在哪、還要走多遠」——
          沒有這張圖的話，前十二章一直往下，而遊戲叫通天之塔。 -->
     <div id="towerwrap">
-      <canvas id="towermap" width="240" height="280" aria-hidden="true"></canvas>
+      <canvas id="towermap" width="320" height="480" aria-label="神殿、地下迷宮、中繼村與通天塔的旅程剖面圖"></canvas>
       <p id="towerlbl"></p>
     </div>
     <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
@@ -3142,11 +3142,18 @@ k.ground|Underfoot|あしもと
 k.bag|Bag|もちもの
 k.down|Descend|おりる
 k.up|Ascend|のぼる
-v.towerlbl|Act {n} / {all} — {dir}|だい{n} / {all}しょう —— {dir}
+v.towerlbl|Act {n} / {all} · {name} · {dir}|だい{n} / {all}しょう・{name}・{dir}
 v.towerup|climbing the spire|とうを のぼっている
 v.towersurf|the temple above ground - where it begins|ちじょうの しんでん —— ここから はじまる
 v.towerwide|the deepest hall - cross it and find the door that leads up|さいしんぶの ひろま —— よこぎって うえへの とびらを さがせ
 v.towerdown|still below ground, heading down|まだ ちか、したへ
+v.map.temple|Babylonian Temple|バビロン神殿
+v.map.depths|Underground Labyrinth|地下迷宮
+v.map.hall|Deep Grand Hall|地下大広間
+v.map.village|Intermediary Village|中継の村
+v.map.tower|Tower of Heaven|通天の塔
+v.map.gate|Time Gate|時空の門
+v.map.here|YOU ARE HERE|げんざいち
 k.npc|Lost villager|まいごの むらびと
 m.npcmet|The villager sticks close behind you - from now on they will not leave your side.|むらびとが ぴったりと ついてくる —— これから はなれない。
 m.npcask|Take them back to the village. They will get hurt on the way - step into them to heal with a herb.|むらまで つれて かえろう。みちで きずつく —— ぶつかれば くすりぐさで てあてする。
@@ -16560,8 +16567,8 @@ function paintVillageSceneV12(){
 
    畫在村莊而不是每一層的進場卡：村莊是「出發之前」，
    那正是會想「我現在在哪」的時刻；進場卡只有一秒半，塞不下。 */
-const TOWER_W = 240, TOWER_H = 280;
-function paintTower(actIdx){
+const TOWER_W = 320, TOWER_H = 480;
+function paintTowerV11(actIdx){
   const c = $('towermap');
   if(!c || !c.getContext) return;
   const x = c.getContext('2d');
@@ -16702,6 +16709,104 @@ function paintTower(actIdx){
   R(me.x-1,me.y-1,2,2,'#fff7df');
 }
 
+/* v12 旅程剖面圖：背景是正式繪製的巴比倫神殿／地下迷宮／通天塔美術，
+   路線、章節進度、地名與主角位置仍由程式畫。這樣圖可以精緻，位置也不會
+   被烙死在素材裡；換語言、換章節、換主角顏色都會跟著遊戲狀態更新。 */
+let JOURNEY_BG = null;
+const JOURNEY_SPOTS = [
+  [69,160], [70,184], [72,204], [70,225], [73,247], [70,269], [72,291],
+  [70,313], [73,335], [71,357], [73,378], [72,398], [78,417],
+  [151,437], [238,318], [238,180], [238,48]
+];
+function journeyBg(){
+  if(JOURNEY_BG) return JOURNEY_BG;
+  if(typeof Image !== 'function') return null;
+  const im = new Image();
+  im.onload = () => {
+    im.ready = 1;
+    paintTower(Math.min(VILLAGE.act | 0, LAST_MAIN));
+  };
+  im.onerror = () => { im.failed = 1; };
+  im.src = (ART_DATA && ART_DATA['map#journey-cutaway']) ||
+           ART_DIR + 'map/journey-cutaway.png';
+  JOURNEY_BG = im;
+  return im;
+}
+function paintTower(actIdx){
+  const c = $('towermap');
+  if(!c || !c.getContext) return;
+  c.width = TOWER_W; c.height = TOWER_H;
+  const x = c.getContext('2d'), bg = journeyBg();
+  x.imageSmoothingEnabled = false;
+  if(!bg || !bg.ready){
+    paintTowerV11(actIdx);
+    return;
+  }
+  x.clearRect(0, 0, TOWER_W, TOWER_H);
+  x.drawImage(bg, 0, 0, TOWER_W, TOWER_H);
+  const R = (a,b,w,h,col) => { x.fillStyle=col; x.fillRect(a,b,w,h); };
+  const pxLine = (a,b,c2,d,col,size=2) => {
+    let x0=Math.round(a), y0=Math.round(b), x1=Math.round(c2), y1=Math.round(d);
+    const dx=Math.abs(x1-x0), sx=x0<x1?1:-1, dy=-Math.abs(y1-y0), sy=y0<y1?1:-1;
+    let er=dx+dy;
+    for(;;){ R(x0-(size>>1),y0-(size>>1),size,size,col); if(x0===x1&&y0===y1) break;
+      const e2=2*er; if(e2>=dy){er+=dy;x0+=sx;} if(e2<=dx){er+=dx;y0+=sy;} }
+  };
+
+  const idx = Math.max(0, Math.min(JOURNEY_SPOTS.length-1, actIdx|0));
+  const route = JOURNEY_SPOTS.map(p=>[p[0],p[1]]);
+  // 大廣間先向右跨到塔基，再往塔內上升，清楚呈現「下到底、轉彎、再登塔」。
+  route.splice(14,0,[238,437]);
+  for(let i=1;i<route.length;i++){
+    const chapterAtEnd = i<=13 ? i : i-1;
+    const col = chapterAtEnd<=idx ? '#d7a940' : '#34445d';
+    pxLine(route[i-1][0],route[i-1][1],route[i][0],route[i][1],'#111827',5);
+    pxLine(route[i-1][0],route[i-1][1],route[i][0],route[i][1],col,2);
+  }
+  for(let i=0;i<JOURNEY_SPOTS.length;i++){
+    const [sx,sy]=JOURNEY_SPOTS[i], past=i<idx, now=i===idx;
+    R(sx-4,sy-4,8,8,'#101827');
+    R(sx-3,sy-3,6,6,now?'#fff4c7':past?'#e1b54e':'#53657b');
+    R(sx-1,sy-1,2,2,now?'#ffffff':'#172033');
+  }
+
+  const callout = (tx,ty,targetX,targetY,key,zh,align='left') => {
+    const label = TX(key,zh);
+    x.font='bold 8px monospace'; x.textBaseline='middle';
+    const w=Math.ceil(x.measureText(label).width)+9, h=15;
+    let bx=align==='right'?tx-w:tx;
+    bx=Math.max(4,Math.min(TOWER_W-w-4,bx));
+    const by=Math.max(4,Math.min(TOWER_H-h-4,ty));
+    const edgeX=targetX<bx?bx:targetX>bx+w?bx+w:Math.max(bx+3,Math.min(bx+w-3,targetX));
+    const edgeY=targetY<by?by:targetY>by+h?by+h:by+(h>>1);
+    pxLine(edgeX,edgeY,targetX,targetY,'#111827',4);
+    pxLine(edgeX,edgeY,targetX,targetY,'#c99b43',1);
+    R(bx,by,w,h,'rgba(5,9,18,.92)');
+    R(bx,by,w,1,'#c99b43'); R(bx,by+h-1,w,1,'#6f5128');
+    R(bx,by,1,h,'#c99b43'); R(bx+w-1,by,1,h,'#6f5128');
+    x.fillStyle='#f1e5c5'; x.fillText(label,bx+5,by+8);
+  };
+  callout(203,10,245,25,'v.map.gate','時空之門');
+  callout(7,128,61,154,'v.map.temple','巴比倫神殿');
+  callout(7,286,65,292,'v.map.depths','地下迷宮');
+  callout(311,215,244,220,'v.map.tower','通天之塔','right');
+  callout(82,451,151,437,'v.map.hall','地下大廣間');
+  callout(311,413,248,432,'v.map.village','中繼村','right');
+
+  // 主角不畫進底圖；依目前章節沿路移動，玩家每次回村都能一眼看到進度。
+  const [mx,my]=JOURNEY_SPOTS[idx];
+  const onRight=mx>170, hx=onRight?mx-38:mx+11, hy=Math.max(22,Math.min(443,my-17));
+  x.drawImage(blobFor(VILLAGE.col,VILLAGE.skin),hx,hy,30,30);
+  pxLine(onRight?hx+30:hx,my,mx,my,'#111827',5);
+  pxLine(onRight?hx+30:hx,my,mx,my,'#fff1af',2);
+  R(mx-5,my-5,10,10,'#0b1020'); R(mx-3,my-3,6,6,'#f7d86b'); R(mx-1,my-1,2,2,'#fff');
+  const here=TX('v.map.here','目前位置');
+  x.font='bold 8px monospace'; x.textBaseline='middle';
+  const hw=Math.ceil(x.measureText(here).width)+8, hbx=Math.max(4,Math.min(TOWER_W-hw-4,hx-(hw-30)/2));
+  R(hbx,hy-13,hw,11,'rgba(5,9,18,.94)');
+  R(hbx,hy-13,hw,1,'#f0c45b'); x.fillStyle='#fff4cf'; x.fillText(here,hbx+4,hy-7);
+}
+
 /* 村民會講下一章。村莊如果只有買賣，它就只是一個商店介面 ——
    有人在這裡對你說「接下來要去哪、那裡有什麼」，主線才接得起來。
    講的是**下一章**而不是這一章：村莊的作用是把人推出門。 */
@@ -16747,8 +16852,8 @@ function renderVillage(){
             : ACTS[nx2].surf ? TX('v.towersurf','地面上的神殿　—　從這裡開始')
             : ACTS[nx2].wide ? TX('v.towerwide','地底最深處　—　橫過大廣間，找那道向上的門')
                              : TX('v.towerdown','還在地底，繼續往下');
-  if(tl) tl.textContent = M('v.towerlbl','第 {n} / {all} 章　{dir}',
-    {n:nx2+1, all:ACTS.length, dir});
+  if(tl) tl.textContent = M('v.towerlbl','第 {n} / {all} 章・{name}・{dir}',
+    {n:nx2+1, all:LAST_MAIN+1, name:locAct(ACTS[nx2]), dir});
 
   // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
   const folk = $('vfolk');
