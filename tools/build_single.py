@@ -33,6 +33,10 @@ OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'dist' / 'index
 def key_for(rel):
     """檔案路徑 → adoptArt 用的鍵。對不上就回 None，讓呼叫端報錯。"""
     parts = rel.replace('\\', '/').split('/')
+    # art/tile/<地貌>/<部位>.png —— 外部手繪地磚。
+    # 跟 anim 一樣是三層，鍵的形狀也刻意一樣（'類別:群組#名字'）。
+    if len(parts) == 3 and parts[0] == 'tile' and parts[2].endswith('.png'):
+        return 'tile:%s#%s' % (parts[1], parts[2][:-4])
     if len(parts) == 3 and parts[0] == 'anim':
         cat, filename = parts[1], parts[2]
         if cat in ('hero', 'hat', 'weapon', 'shield', 'mon', 'boss') and filename.endswith('.png'):

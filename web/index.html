@@ -4705,8 +4705,9 @@ function macroFloorsFor(theme){
   if(Object.prototype.hasOwnProperty.call(MACRO_FLOORS,theme)) return MACRO_FLOORS[theme];
   const th=THEMES[theme]||THEMES.stone;
   if(!th.macro) return MACRO_FLOORS[theme]=null;
+  // 大板的四個象限也一起提升 —— 它們是房間中央面積最大的那一塊
   return MACRO_FLOORS[theme]=[0,1,2].flatMap(v=>
-    [0,1,2,3].map(i=>makeMacroFloor(th.macro,i&1,i>>1,th.ramp,v)));
+    [0,1,2,3].map(i=>tileHi(makeMacroFloor(th.macro,i&1,i>>1,th.ramp,v))));
 }
 function makeWall(face, ramp){
   const R4 = ramp || RAMP;
@@ -4961,19 +4962,145 @@ const ACT_THEME = {
   mirror:'mirror', crystal:'crystal', hall:'greathall', vault:'spire',
   tower:'spire', final:'void', chaos:'void',
 };
-/* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張 16x16
+/* ═══ 地形的解析度 ═══════════════════════════════════════════════
+   量出來的事實（tools/check_tile.py 每次 CI 再量一次）：
+
+     角色：外部手繪圖，怪 32x32、頭目 48x48、動作表一格 32px，
+           中位 12～25 色。一格在畫布上剛好是 32px，所以 **1:1**。
+     地形：13 個地貌**全部** 16x16，而且一張都沒有外部圖 ——
+           地板最多 9 色、牆最多 10 色，畫上去要放大 2 倍。
+
+   地形佔畫面九成五的面積。也就是說整個畫面裡面積最大的東西，
+   解析度只有角色的一半 —— 每個藝術像素在螢幕上是角色的**四倍大**。
+   「怪看起來還行，可是整個畫面很糙」就是這一件事，不是色票不夠
+   （色票有 115 色，一張磚只用到 3～9 色），也不是視窗格數。
+
+   而且它連帶造成第二個問題：畫布放到螢幕上是非整數倍（桌機 1.92 倍、
+   平板 1.50、iPad 2.18）。非整數倍配上 image-rendering:pixelated，
+   一個藝術像素有的佔兩個螢幕像素、有的佔一個 —— 同一條直線會粗細不均。
+   藝術像素越大，那個不均勻越明顯：16px 的磚是在 3.85px 的格子上抖，
+   32px 的磚只在 1.92px 上抖。**把地形畫細，兩個問題一起變小。**
+
+   ── 怎麼修（分兩條，可以同時走）──────────────────────────
+   1. `tileHi()`：把既有的 16x16 程式畫地磚提升成 32x32 的成品。
+      不是單純放大 —— 放大不會多出任何資訊。它在 32 的空間裡補上
+      **邊緣的受光與陰影**（16-bit 手繪地磚真正在做的事）與極輕的顆粒，
+      所以每一張磚的結構線變成兩倍銳利、色階變多。
+      一個地方改，13 個地貌一起受惠，既有的美術程式碼一行都不用動。
+   2. `art/tile/<地貌>/<部位>.png`：外部手繪地磚。跟 art/mon/ 同一條路，
+      放進去就覆蓋程式畫的那張。blit() 一律帶目的地寬高，所以來源
+      32x32、64x64 都行。要真的追上手繪水準，靠的是這一條。 */
+const TP = T * RS;              // 地磚真正的像素數 = 一格在畫布上的像素數
+
+/* 32 空間的細節：**只做邊緣浮雕，而且用固定的兩級**。
+
+   原本 16 空間的一個像素 = 32 空間的一個 2x2 方塊。只要這個方塊比
+   上面／左邊的亮（超過門檻），就在它的上緣／左緣補一條 1px 的受光；
+   比下面／右邊亮，就在下緣／右緣補一條 1px 的陰影。光源在左上，
+   跟全套美術一致。結果是磚縫、階邊、木紋這些**本來就存在的結構**
+   變成真正的 32 空間細節，而不是被放大的方塊。
+
+   ── 為什麼是「固定兩級」而不是照亮度差連續加減 ──────────────
+   第一版用了連續的量再加上 ±2 的顆粒，量出來一張地磚 45～176 色。
+   那不是精緻，那是**噪點**：像素風之所以讀起來乾淨，靠的是
+   「大片同色 + 硬邊」，而每個像素都差一點點正好把它拆掉
+   （整個畫面 26321 色、前 12 色只佔 4% 面積，就是這樣來的）。
+   對照組：特魯內克那個年代一張地磚是 4bpp，整組調色盤 16 色。
+
+   所以受光固定 +20、陰影固定 -16，一個來源顏色最多長出三種
+   （本色／亮邊／暗邊），一張磚因此落在十幾～三十幾色 ——
+   細節變兩倍，色數仍然在手繪像素圖的範圍裡。
+
+   透明的像素一律跳過 —— 不然會在鏤空的邊緣憑空長出一圈亮邊。 */
+function tileHi(src){
+  if(!src || !src.width) return src;
+  const n = TP, m = src.width, k = n / m;
+  const c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.drawImage(src, 0, 0, n, n);
+  // 來源本來就夠細（外部手繪圖）就別動它 —— 人畫的邊比演算法的準
+  if(k < 2 || m * k !== n) return c;
+  let id;
+  try{ id = x.getImageData(0, 0, n, n); }catch(e){ return c; }
+  const D = id.data;
+  if(!D || !D.length) return c;
+  const L = (px, py) => { const i = (py*n+px)*4;
+    return D[i+3] < 8 ? -1 : D[i]*.299 + D[i+1]*.587 + D[i+2]*.114; };
+  const add = (px, py, f) => { const i = (py*n+px)*4;
+    if(D[i+3] < 8) return;
+    D[i]  = Math.max(0, Math.min(255, D[i]   + f));
+    D[i+1]= Math.max(0, Math.min(255, D[i+1] + f));
+    D[i+2]= Math.max(0, Math.min(255, D[i+2] + f)); };
+  const TH = 8;                      // 亮度差多少才算「一條結構線」
+  const LIT = 20, SHD = -16;         // 固定兩級：受光、陰影
+  for(let sy = 0; sy < m; sy++) for(let sx = 0; sx < m; sx++){
+    const here = L(sx*k, sy*k);
+    if(here < 0) continue;
+    const up = sy > 0     ? L(sx*k, (sy-1)*k) : -1;
+    const lf = sx > 0     ? L((sx-1)*k, sy*k) : -1;
+    const dn = sy < m-1   ? L(sx*k, (sy+1)*k) : -1;
+    const rt = sx < m-1   ? L((sx+1)*k, sy*k) : -1;
+    if(up >= 0 && here - up > TH) for(let i=0;i<k;i++) add(sx*k+i, sy*k, LIT);
+    if(lf >= 0 && here - lf > TH) for(let j=0;j<k;j++) add(sx*k, sy*k+j, LIT);
+    if(dn >= 0 && here - dn > TH) for(let i=0;i<k;i++) add(sx*k+i, sy*k+k-1, SHD);
+    if(rt >= 0 && here - rt > TH) for(let j=0;j<k;j++) add(sx*k+k-1, sy*k+j, SHD);
+  }
+  x.putImageData(id, 0, 0);
+  return c;
+}
+
+/* 每組色帶烘一份地磚。烘一次就好 —— 每次進樓層重畫十幾張
    在手機上是看得到的頓挫。 */
 const TILE_SETS = {};
+/* 地磚的部位名稱。這一份同時是三件事的唯一來源：
+   外部圖的檔名、單檔版打包的鍵、以及 check_tile.py 要檢查哪些東西。
+   分三個地方各寫一次的話，加一個部位就會漏掉其中一個，而且不報錯。 */
+const TILE_SLOTS = ['floor0','floor1','floor2','floor3',
+                    'corr0','corr1','corr2','wall','wallface',
+                    'blocker0','blocker1'];
+/* 哪些地貌真的已經有手繪磚了。畫好一張就把部位名字加進來 ——
+   跟 ART_ANIM_AVAILABLE 同一套規矩，理由也一樣：開發版直接開
+   web/index.html 的時候，沒有列在這裡的檔案根本不會去要，
+   所以主控台不會被一整排 404 洗掉。
+   打包成單檔之後由 ART_DATA 接手，這份清單就不影響了。
+   規格與檔名見 docs/art_tile_spec.md。 */
+const ART_TILE_AVAILABLE = {};
+const tileSlotPut = (ts, slot, c) => {
+  const m = /^(floor|corr|blocker)(\d)$/.exec(slot);
+  if(m){ ts[m[1]][+m[2]] = c; return; }
+  if(slot === 'wall') ts.wall = c;
+  if(slot === 'wallface') ts.wallFace = c;
+};
 function tilesFor(theme){
   if(TILE_SETS[theme]) return TILE_SETS[theme];
   const th = THEMES[theme] || THEMES.stone;
   const r = th.ramp, sf = !!th.soft, q = !!th.quiet, fk = th.floor;
-  return TILE_SETS[theme] = {
-    floor:[makeFloor(1,0,r,sf,q,fk),makeFloor(2,0,r,sf,q,fk),makeFloor(3,0,r,sf,q,fk),makeFloor(4,0,r,sf,q,fk)],
-    corr:[makeFloor(11,1,r,sf,q,fk),makeFloor(12,1,r,sf,q,fk),makeFloor(13,1,r,sf,q,fk)],
-    wall:themeWall(th.wall||'brick', 0, r), wallFace:themeWall(th.wall||'brick', 1, r),
-    blocker:[makeBlocker(fk||theme,0,r), makeBlocker(fk||theme,1,r)],
+  const H = tileHi;
+  const ts = TILE_SETS[theme] = {
+    floor:[H(makeFloor(1,0,r,sf,q,fk)),H(makeFloor(2,0,r,sf,q,fk)),
+           H(makeFloor(3,0,r,sf,q,fk)),H(makeFloor(4,0,r,sf,q,fk))],
+    corr:[H(makeFloor(11,1,r,sf,q,fk)),H(makeFloor(12,1,r,sf,q,fk)),
+          H(makeFloor(13,1,r,sf,q,fk))],
+    wall:H(themeWall(th.wall||'brick', 0, r)),
+    wallFace:H(themeWall(th.wall||'brick', 1, r)),
+    blocker:[H(makeBlocker(fk||theme,0,r)), H(makeBlocker(fk||theme,1,r))],
   };
+  /* 外部手繪地磚。載得到就換掉那一張，載不到什麼都不做 ——
+     「還沒畫到」是這條遷移管線的正常狀態，跟怪物的圖一模一樣。
+     不做 tileHi()：人畫的 32x32 已經是成品，再補一次浮雕只會蓋掉筆觸。
+
+     只去要清單上有的檔案。不擋的話，開發版每進一個地貌就是 11 個 404，
+     十三個地貌 143 個 —— 主控台會被洗掉，而真正的錯誤就藏在裡面。
+     單檔版有 ART_DATA，直接查表，不受清單影響。 */
+  const avail = ART_TILE_AVAILABLE[theme] || [];
+  for(const slot of TILE_SLOTS){
+    const k = 'tile:' + theme + '#' + slot;
+    if(!(ART_DATA && ART_DATA[k]) && avail.indexOf(slot) < 0) continue;
+    artImage(k, ART_DIR + 'tile/' + theme + '/' + slot + '.png',
+             c => tileSlotPut(ts, slot, c));
+  }
+  return ts;
 }
 /* 砲座的四種顏色。刻意用飽和色 —— 這是全遊戲少數
    「不是活物、卻該被一眼看見」的東西，跟紀錄之環同一個理由。 */
@@ -4982,8 +5109,12 @@ const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
   wall:makeWall(0), wallFace:makeWall(1), blocker:[makeBlocker('stone',0),makeBlocker('stone',1)],
-  stairs:makeStairs(), rock:makeRock(),
-  exit:makeExit(),
+  /* 樓梯與出口跟地磚一樣走 blit()，所以一起提升到 32。
+     rock **不要**動：它是拿去 createPattern() 重複貼的底紋，
+     來源變成兩倍大，花紋的週期就會從 16 邏輯單位變成 32 —— 
+     背景會整個放大一倍，而那不是解析度變好，是版面壞掉。 */
+  stairs:tileHi(makeStairs()), rock:makeRock(),
+  exit:tileHi(makeExit()),
 };
 const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');

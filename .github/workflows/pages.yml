@@ -104,6 +104,12 @@ jobs:
           # 而「面板變回一張長清單」這種退化不會報錯，只會把使用者要求改掉的
           # 那件事默默改回去。
           python tools/check_slots.py
+          # 地形的解析度。地形佔畫面九成五的面積，而它一度整整比角色低一階
+          # （16x16 對 32x32），每個藝術像素在螢幕上大四倍 —— 那就是
+          # 「畫面很糙」的來源。這一支同時擋三種退化：新地磚寫回 16 的畫布、
+          # 把 16 放大兩倍假裝成 32（尺寸過關但沒有多出資訊）、
+          # 以及往另一邊過頭變成每個像素都差一點點的噪點。
+          python tools/check_tile.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
