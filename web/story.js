@@ -91,19 +91,46 @@ ok(api.THEMES.stone.wall === 'earthcut' && api.THEMES.forest.wall === 'forestwal
    api.THEMES.crystal.wall === 'icecliff',
    '土層剖面、林地倒木泥岸、冰崖切面是三種不同牆體結構');
 
+/* 背景不能再靠四階共用色帶硬撐。角色仍維持少色、強剪影，地形則需要
+   足夠的中間色去畫土壤雜質、苔緣、冰切面與古神殿釉磚；兩套色票分開，
+   增加材質色不會讓角色反而融進背景。 */
+const MATERIAL_COLORS = {
+  earth:['earthInk','earthDeep','earthLoam','earthClay','earthDust','earthSand','earthMica','earthWet'],
+  forest:['forestInk','forestSoil','forestLoam','barkDark','bark','barkHi','mossDeep','moss','mossHi','lichen'],
+  ice:['iceInk','iceDeep','iceMid','iceFace','iceLight','iceGlint','snowShade','snowBlue'],
+  temple:['templeInk','templeShade','templeMid','templeLight','glazeDeep','glaze','glazeLight','ochre','sun'],
+};
+const materialKeys=Object.values(MATERIAL_COLORS).flat();
+ok(materialKeys.length===35 && materialKeys.every(k=>api.PAL[k]),
+   '土、森林、冰、神殿共有 35 個獨立材質色');
+ok(new Set(materialKeys.map(k=>api.PAL[k])).size===35,
+   '35 個材質色沒有用重複色假裝增加色票');
+const hexLum = h => { h=h.slice(1); return parseInt(h.slice(0,2),16)*.2126+
+  parseInt(h.slice(2,4),16)*.7152+parseInt(h.slice(4,6),16)*.0722; };
+for(const [name,keys] of Object.entries(MATERIAL_COLORS)){
+  const ls=keys.map(k=>hexLum(api.PAL[k]));
+  ok(Math.max(...ls)-Math.min(...ls)>=95,
+     name+' 材質從暗面到亮面至少跨 95 明度（實際 '+Math.round(Math.max(...ls)-Math.min(...ls))+'）');
+}
+
 /* ═══ 冰原的滑行與制動 ═══════════════════════════════════════
    美術畫了大冰片，就要兌現它的物理：房間中央多滑一格；走廊、牆腳與冰脊
    周圍停下。最重要的是，套用真滑行規則後每一張圖仍然走得到樓梯。 */
-console.log('\n=== 冰原的滑行與制動（48 張圖） ===');
+console.log('\n=== 冰原的滑行與制動（120 張圖） ===');
 {
   const CRYSTAL=AI('crystal');
-  let maps=0, stopperMaps=0, allStops=0, reached=0, slideCase=null, brakeCase=null;
-  for(let seed=260800;seed<260848;seed++){
+  let maps=0, stopperMaps=0, allStops=0, reached=0, slideCase=null, brakeCase=null, diagCase=null;
+  let roomCells=0,slickCells=0,minSlick=Infinity;
+  for(let seed=260800;seed<260920;seed++){
     api.newGame(seed);
     const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor(); maps++;
     const stops=(g.f.iceStops||[]).filter(s=>g.f.t[s.y*api.MW+s.x]===api.WALL);
     if(stops.length) stopperMaps++;
     allStops+=stops.length;
+    let mapSlick=0;
+    for(let y=0;y<api.MH;y++) for(let x=0;x<api.MW;x++)
+      if(g.f.t[y*api.MW+x]===1){ roomCells++; if(api.iceSlickAt(x,y)){slickCells++;mapSlick++;} }
+    minSlick=Math.min(minSlick,mapSlick);
 
     // 以遊戲真正的 8 向＋牆角＋滑一格規則做 BFS。
     const q=[g.f.spawn], seen=new Set([api.key(g.f.spawn.x,g.f.spawn.y)]);
@@ -128,13 +155,23 @@ console.log('\n=== 冰原的滑行與制動（48 張圖） ===');
         if(!brakeCase && g.f.t[fy*api.MW+fx]===2 && z.x===fx && z.y===fy)
           brakeCase={x,y,d,z};                    // CORR = 2：粗糙走道必須停
       }
+      for(let y=1;y<api.MH-1&&!diagCase;y++) for(let x=1;x<api.MW-1&&!diagCase;x++){
+        const d=[1,1],fx=x+1,fy=y+1;
+        if(!api.walkable(x,y)||!api.walkable(fx,fy)||!api.cornerOK(x,y,fx,fy)) continue;
+        if(api.iceSlickAt(fx,fy)) diagCase={x,y,z:api.iceMoveTarget(x,y,1,1,true)};
+      }
     }
   }
-  ok(stopperMaps>=44 && allStops>=80,
+  ok(stopperMaps>=112 && allStops>=200,
      '幾乎每張冰原都有清楚的冰脊制動點（'+stopperMaps+'/'+maps+' 張，共 '+allStops+' 座）');
   ok(reached===maps, '套用實際滑行後仍全部走得到樓梯（'+reached+'/'+maps+' 張）');
+  const slickPct=slickCells/roomCells;
+  ok(slickPct>=.35 && slickPct<=.60 && minSlick>=6,
+     '亮冰不是稀有特例：佔房間 '+Math.round(slickPct*100)+'%，每張至少 '+minSlick+' 格');
   ok(!!slideCase, '找得到房間中央會多滑一格的平滑冰片');
   ok(!!brakeCase, '粗糙走道會在第一格停下，不會一路失控');
+  ok(!!diagCase && diagCase.z.x===diagCase.x+1 && diagCase.z.y===diagCase.y+1,
+     '斜走只移一格，可精準繞過冰脊與調整站位');
   if(slideCase){
     const {seed,x,y,d,z}=slideCase;
     api.newGame(seed); const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor();
