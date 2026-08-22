@@ -905,15 +905,19 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 /* 村莊的場景。地牢有天空與雲了，村莊卻只有一排村民站在漸層前面 ——
    那讀起來是「一個選單」，不是「一個地方」。 */
 #vscene{
-  width:min(100%,420px); height:auto; image-rendering:pixelated;
+  width:min(100%,480px); height:auto; image-rendering:pixelated;
   display:block; margin:0 auto -14px; border-radius:2px;
+  border:1px solid rgba(201,151,63,.24);
+  box-shadow:0 14px 34px rgba(0,0,0,.42), inset 0 -1px 0 rgba(245,220,122,.14);
 }
 #vfolk{display:flex; gap:6px; justify-content:center; position:relative}
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
 #towerwrap{display:flex; flex-direction:column; align-items:center; gap:5px; margin:2px 0 4px}
 #towermap{
-  width:min(150px,42vw); height:auto; image-rendering:pixelated;
+  width:min(240px,72vw); height:auto; image-rendering:pixelated;
   image-rendering:crisp-edges; display:block;
+  border:1px solid rgba(201,151,63,.22); background:#10141f;
+  box-shadow:0 10px 30px rgba(0,0,0,.40);
 }
 #towerlbl{
   margin:0; font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
@@ -947,10 +951,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 .vgold b{color:var(--brass); font-size:16px}
 #vstock, #vowned{width:100%; max-width:440px; display:grid; gap:4px}
 .vrow{
-  display:flex; align-items:center; gap:9px; padding:5px 10px; text-align:left;
+  display:flex; align-items:center; gap:10px; min-height:54px; padding:6px 10px; text-align:left;
   background:rgba(20,17,14,.6); border:1px solid var(--edge); font-size:12.5px;
 }
-.vrow canvas{width:24px; height:24px; flex:none; image-rendering:pixelated}
+.vrow canvas{
+  width:40px; height:40px; flex:none; box-sizing:border-box; padding:2px;
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  background:linear-gradient(135deg,rgba(245,220,122,.10),rgba(10,8,6,.72));
+  border:1px solid rgba(201,151,63,.28);
+}
 .vrow .nm{flex:1; min-width:0; color:var(--parch)}
 .vrow .st{font-family:var(--mono); font-size:11px; color:var(--parch-dim)}
 .vrow button{min-height:34px; padding:5px 12px; font-size:12px; touch-action:manipulation}
@@ -978,6 +987,37 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border:0; padding:12px 30px; font-weight:600; min-height:46px; touch-action:manipulation;
   box-shadow:0 8px 26px rgba(217,119,87,.32);
 }
+
+/* 美術驗收頁：只在 ?qa=gallery / ?qa=menu 出現，不進正式遊戲流程。 */
+#qagallery{
+  position:fixed; inset:0; z-index:60; overflow:auto; padding:22px 16px 44px;
+  background:radial-gradient(circle at 50% 0,#30241a,#0b0908 58%);
+  color:var(--parch); text-align:center;
+}
+#qagallery h1{margin:0 0 12px;color:#f6efe3;font-family:var(--serif);letter-spacing:.08em}
+#qagallery h2{margin:0 0 5px; color:#f6efe3; font-family:var(--serif); letter-spacing:.16em}
+#qagallery .qasub{margin:0 auto 18px; color:var(--parch-dim); font-size:12px; line-height:1.6}
+#qagallery .qasub a{color:#e7b75b;text-decoration:none;border-bottom:1px solid rgba(231,183,91,.35)}
+#qagallery .qagrid{
+  width:min(920px,100%); margin:auto; display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:8px;
+}
+#qagallery .qacard{
+  min-height:122px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  padding:9px 6px; color:var(--parch); text-decoration:none;
+  background:rgba(28,22,17,.86); border:1px solid rgba(201,151,63,.30);
+}
+#qagallery .qacard:hover{border-color:var(--brass); background:rgba(64,43,22,.90)}
+#qagallery .qacard canvas{width:72px;height:72px;image-rendering:pixelated;image-rendering:crisp-edges}
+#qagallery .qacard b{font-size:12.5px;font-weight:600}
+#qagallery .qacard small{font:10px var(--mono);color:var(--parch-dim)}
+#qagallery .qalinks .qacard{min-height:64px}
+#qagallery h2{margin-top:26px}
+#qagallery .qalinks article.qacard a{
+  min-width:82px;padding:3px 7px;color:#e7b75b;text-decoration:none;
+  border:1px solid rgba(201,151,63,.24);background:rgba(0,0,0,.18)
+}
+#qagallery .qalinks article.qacard a:hover{color:#fff4d8;border-color:var(--brass)}
 
 #over{
   position:absolute; inset:0; z-index:26; display:none; place-items:center; text-align:center;
@@ -1212,7 +1252,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
          玩家非知道不可的一件事是「我在哪、還要走多遠」——
          沒有這張圖的話，前十二章一直往下，而遊戲叫通天之塔。 -->
     <div id="towerwrap">
-      <canvas id="towermap" width="150" height="230" aria-hidden="true"></canvas>
+      <canvas id="towermap" width="240" height="280" aria-hidden="true"></canvas>
       <p id="towerlbl"></p>
     </div>
     <div class="vgold"><span id="vgoldl">持有金錢</span> <b id="vgold">0</b> G</div>
@@ -4430,6 +4470,74 @@ function makeWall(face, ramp){
   }
   return c;
 }
+
+/* 商店不是戰鬥格：它有足夠的面積讓武器真正長得像武器。
+   戰鬥中的 16px 圖仍保留，這裡另外畫 32px、斜放、剪影不同的展示圖。
+   若把 16px 直立圖單純放大，長槍、鋼劍與秘銀劍在手機上仍只是一條線。 */
+function makeShopWeapon(id){
+  const c=document.createElement('canvas'); c.width=32; c.height=32;
+  const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
+  const P=(col,a,b,w=1,h=1)=>{ x.fillStyle=col; x.fillRect(a*2,b*2,w*2,h*2); };
+  const dot=(col,a,b,r=0)=>P(col,a-r,b-r,r*2+1,r*2+1);
+  const line=(col,a,b,d,e,r=0)=>{
+    let dx=Math.abs(d-a), sx=a<d?1:-1, dy=-Math.abs(e-b), sy=b<e?1:-1, er=dx+dy;
+    for(;;){ dot(col,a,b,r); if(a===d&&b===e) break; const q=2*er; if(q>=dy){er+=dy;a+=sx;} if(q<=dx){er+=dx;b+=sy;} }
+  };
+  const dark=PAL['0'], steel=PAL['r'], white=PAL['+'], wood=PAL['9'];
+  const sword=(blade,guard,wide=1)=>{
+    line(dark,5,12,12,2,wide+1); line(blade,5,12,12,2,wide);
+    line(white,6,11,11,3,0);                  // 左上整塊亮面
+    line(dark,3,10,8,14,1); line(guard,3,10,8,14,0);
+    line(dark,1,15,5,11,1); line(PAL['8'],1,15,5,11,0); P(guard,1,14,2,2);
+  };
+  if(id==='wood'){
+    line(dark,3,14,11,3,2); line(PAL['8'],3,14,11,3,1);
+    P(PAL['b'],5,10,2,2); P(PAL['9'],8,6,2,2); P(PAL['c'],10,3,1,2); P(dark,9,2,3,2);
+  }else if(id==='spear'){
+    line(dark,2,15,11,4,1); line(wood,2,15,11,4,0); line(PAL['b'],3,14,8,4,0);
+    P(dark,10,1,5,6); P(steel,11,2,3,4); P(white,11,2,1,3); P(dark,1,14,3,2);
+  }else if(id==='katana'){
+    // 刀尖與刀背逐段偏移，讀得到微彎的單刃，不會像西洋劍。
+    line(dark,6,11,12,2,2); line(steel,6,11,12,2,1);
+    P(white,8,7,2,2); P(white,10,4,2,2); P(dark,11,1,3,3); P(steel,11,2,2,2);
+    P(dark,4,10,5,4); P(PAL['u'],5,11,3,2);             // 圓鍔
+    line(dark,1,15,5,12,1); line(PAL['4'],1,15,5,12,0); P(PAL['6'],2,14);
+  }else if(id==='drgn'){
+    line(dark,5,12,12,2,3); line(PAL['f'],5,12,12,2,2); line(PAL['h'],6,11,11,3,0);
+    // 鋸齒刀背
+    P(dark,9,3,2,2); P(dark,8,5,2,2); P(dark,6,8,2,2);
+    line(dark,2,10,8,15,1); line(PAL['e'],2,10,8,15,0);
+    line(dark,1,15,5,12,1); line(PAL['8'],1,15,5,12,0);
+  }else if(id==='sky'){
+    sword(PAL['r'],PAL['u'],1);
+    // 展翼護手：左右各三層羽片
+    P(dark,1,8,7,3); P(PAL['6'],1,9,6,1); P(white,2,8,3,1);
+    P(dark,7,13,7,3); P(PAL['6'],8,14,6,1); P(white,9,13,3,1);
+  }else if(id==='babel'){
+    line(dark,5,12,12,1,3); line(PAL['r'],5,12,12,1,2); line(white,6,11,11,2,1);
+    // 三層幾何環，比羽翼護手更沉、更終局。
+    P(dark,2,9,8,7); P(PAL['t'],3,10,6,5); P(dark,4,11,4,3); P(PAL['u'],5,12,2,1);
+    line(dark,1,15,5,12,1); line(PAL['s'],1,15,5,12,0); P(PAL['v'],1,14,2,2);
+  }else if(id==='mith'){
+    sword(PAL['r'],PAL['q'],0); P(PAL['q'],2,9,2,2); P(PAL['q'],8,14,2,2); P(white,10,3,2,2);
+  }else if(id==='brnz'){
+    sword(PAL['t'],PAL['9'],0); P(PAL['u'],9,4,2,2); P(PAL['c'],6,9,2,2);
+  }else{
+    sword(steel,PAL['6'],1); P(PAL['5'],4,9,2,2); P(white,9,4,2,2);
+  }
+  return c;
+}
+function makeShopShield(id){
+  const order=['wood','steel','mirr','drac','aegis'];
+  const src=makeShield(Math.max(0,order.indexOf(id)));
+  const c=document.createElement('canvas'); c.width=32; c.height=32;
+  const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
+  x.drawImage(src,0,0,32,32);
+  return c;
+}
+function villageGearIcon(cat,id){
+  return cat==='weap' ? makeShopWeapon(id) : makeShopShield(id);
+}
 /* 房間矩形內卻不能走的格子，不能再畫成「另一塊地板」。
    它可能是房形雕刻留下的凹洞、崩塌土塊、冰脊或柱座；共同規則是：
    中央要有一整塊黑暗／高度剪影，外圈要有明確亮邊，玩家不用撞上去才知道。 */
@@ -6241,6 +6349,10 @@ const zoneOf = d => ZONES.find(z => d <= z.to) || ZONES[ZONES.length-1];
 
    死掉一樣什麼都不留 —— 想把戰利品變成裝備，就得自己走出去。 */
 const VILLAGE_KEY = 'claude-abyss-village';
+/* ?qa=... 是只供美術驗收的入口。它可以把角色直接送到任一章或頭目房，
+   但絕不能污染正式進度與金錢；測試頁上的任何操作都只活在這一頁。 */
+const QA_QUERY = new URLSearchParams(location.search);
+const QA_MODE = QA_QUERY.has('qa');
 /* ★ 存檔版本。VILLAGE.act 存的是**章節索引**，而序章與地下大廣間
    分別插在第 0 章與第 13 章 —— 舊存檔裡的每一個索引都往後移了。
    不遷移的下場很具體：一個已經打到通天塔（舊 12）的人，
@@ -6342,6 +6454,7 @@ function loadVillage(){
   }catch(e){}                       // 沙箱可能擋 localStorage —— 擋了就只存在記憶體裡
 }
 function saveVillage(){
+  if(QA_MODE) return;
   try{ localStorage.setItem(VILLAGE_KEY, JSON.stringify(VILLAGE)); }catch(e){}
 }
 loadVillage();
@@ -14115,6 +14228,9 @@ function paintVillageScene(){
   x.fillStyle = P.grass2; x.fillRect(0, gy, W, H-gy);
   const roadY = Math.round(H*0.74);
   x.fillStyle = P.road; x.fillRect(0, roadY, W, Math.round(H*0.13));
+  // 道路上下都壓出一級落差，避免草、路、前景在小螢幕黏成同一平面。
+  x.fillStyle = 'rgba(246,239,222,.13)'; x.fillRect(0, roadY, W, 2);
+  x.fillStyle = 'rgba(18,12,9,.38)'; x.fillRect(0, roadY+Math.round(H*0.13)-2, W, 2);
   if(st === 'edo' || st === 'spire'){              // 石板：橫向的縫
     x.fillStyle = 'rgba(0,0,0,.22)';
     for(let i=0;i<W;i+=11) x.fillRect(i + ((i/11)%2?5:0), roadY+3, 7, 1);
@@ -14125,6 +14241,15 @@ function paintVillageScene(){
       x.fillRect(r.i(0,W-1), roadY + r.i(1, Math.round(H*0.12)), 1, 1);
     }
   }
+  // 透視鋪面：越往遠方越窄。村莊從「橫向色帶」變成可走進去的空間。
+  x.fillStyle = 'rgba(24,17,12,.23)';
+  for(let yy=roadY+3; yy<roadY+Math.round(H*.13); yy+=5){
+    const off=((yy-roadY)/5|0)%2 ? 5 : 0;
+    for(let xx=-off; xx<W; xx+=14) x.fillRect(xx,yy,9,1);
+  }
+  x.fillStyle = 'rgba(244,225,184,.10)';
+  x.fillRect(Math.round(W*.40),roadY,1,Math.round(H*.13));
+  x.fillRect(Math.round(W*.72),roadY,1,Math.round(H*.13));
   x.fillStyle = P.grass; x.fillRect(0, roadY + Math.round(H*0.13), W, H);
 
   // ── 池子 ──
@@ -14147,6 +14272,8 @@ function paintVillageScene(){
   const houses = [[10, 30, 20], [46, 26, 17], [96, 34, 22], [138, 28, 18]];
   for(const [hx, hw, hh] of houses){
     const hy = gy - hh + r.i(0,3);
+    // 每棟屋子先落一塊右下陰影。剪影與地面分開之後，房子才有重量。
+    x.fillStyle='rgba(12,9,8,.40)'; x.fillRect(hx+3,gy,hw+5,4);
     if(st === 'euro'){
       // 半木構：白灰泥牆 + 交叉的深色木樑 + 陡坡瓦頂 + 石砌煙囪
       x.fillStyle = P.wall; x.fillRect(hx, hy, hw, hh);
@@ -14162,6 +14289,14 @@ function paintVillageScene(){
       x.beginPath(); x.moveTo(hx+hw/2, hy-Math.round(hh*0.62));
       x.lineTo(hx+hw+4, hy); x.lineTo(hx+hw/2, hy); x.closePath(); x.fill();
       x.fillStyle = P.wall2; x.fillRect(hx+hw-9, hy-Math.round(hh*0.72), 4, Math.round(hh*0.4));
+      // 屋瓦層線、石基與有門框的入口。這三筆讓它不是紙片屋。
+      x.fillStyle='rgba(247,207,169,.16)';
+      for(let ry=hy-2;ry>hy-Math.round(hh*.55);ry-=4) x.fillRect(hx+2,ry,Math.max(4,hw-4),1);
+      x.fillStyle=P.beam; x.fillRect(hx+Math.floor(hw*.43),hy+hh-8,7,8);
+      x.fillStyle='#211711'; x.fillRect(hx+Math.floor(hw*.43)+2,hy+hh-6,3,6);
+      x.fillStyle='rgba(245,169,94,.8)'; x.fillRect(hx+Math.floor(hw*.43)+2,hy+hh-6,1,3);
+      x.fillStyle='rgba(31,23,17,.35)';
+      for(let bx=hx+2;bx<hx+hw-3;bx+=6) x.fillRect(bx,hy+hh-3,5,1);
     } else if(st === 'cave'){
       // 岩窟屋：鑿進凝灰岩錐裡，所以是一個尖錐加幾個拱形洞口
       x.fillStyle = P.wall;
@@ -14174,6 +14309,10 @@ function paintVillageScene(){
       x.beginPath(); x.moveTo(hx + hw*0.5, hy - Math.round(hh*1.05));
       x.lineTo(hx + hw*0.88, hy - Math.round(hh*0.7));
       x.lineTo(hx + hw, gy); x.lineTo(hx + hw*0.5, gy); x.closePath(); x.fill();
+      x.fillStyle='rgba(246,220,169,.18)';         // 被鑿過的岩層切面
+      for(let ry=hy-5;ry<gy-3;ry+=5) x.fillRect(hx+3+(ry&3),ry,Math.max(5,hw-8),1);
+      x.fillStyle='rgba(28,20,14,.30)';
+      x.fillRect(hx+Math.round(hw*.56),hy-4,Math.max(3,Math.round(hw*.32)),2);
       for(let i=0;i<2;i++){                       // 拱形洞口
         const ax = hx + 5 + i*Math.round(hw*0.45), ay = gy - 8;
         x.fillStyle = '#20160f';
@@ -14213,12 +14352,36 @@ function paintVillageScene(){
       x.beginPath(); x.moveTo(hx-5, hy); x.lineTo(hx+hw/2, hy-Math.round(hh*0.42));
       x.lineTo(hx+hw+5, hy); x.closePath(); x.fill();
       x.fillStyle = P.roof2; x.fillRect(hx-5, hy-1, hw+10, 2);
+      x.fillStyle='rgba(200,216,231,.16)';
+      for(let rx=hx-2;rx<hx+hw+3;rx+=5) x.fillRect(rx,hy-3,4,1); // 一格格的瓦
       x.fillStyle = '#7d2f28';                    // 暖簾
       x.fillRect(hx+2, hy+hh-7, hw-4, 4);
       x.fillStyle = P.lit;                        // 門口的紙燈籠
       x.fillRect(hx+hw-4, hy+hh-9, 3, 4);
+      x.fillStyle='#1d1714'; x.fillRect(hx+Math.floor(hw*.40),hy+hh-7,6,7);
     }
     litWin(hx, hy, hw, hh);
+  }
+
+  // ── 鐵匠鋪／市集 ──
+  // 商店不能只存在下方的 UI：村莊畫面中也要看得見「可以補給」的地方。
+  const sx=W-35, sy=roadY-5;
+  x.fillStyle='rgba(12,9,8,.42)'; x.fillRect(sx-3,sy+10,34,4);
+  x.fillStyle=P.beam; x.fillRect(sx,sy-8,2,20); x.fillRect(sx+25,sy-8,2,20);
+  x.fillStyle=st==='edo' ? '#7d2f28' : P.roof; x.fillRect(sx-3,sy-10,33,4);
+  x.fillStyle=P.roof2;
+  for(let aw=sx-3;aw<sx+30;aw+=6) x.fillRect(aw,sy-6,5,3); // 垂下的棚布
+  x.fillStyle='#211711'; x.fillRect(sx+4,sy+2,17,7);
+  x.fillStyle=P.wall2; x.fillRect(sx+7,sy+1,5,3);          // 砧座
+  x.fillRect(sx+5,sy+4,9,2); x.fillRect(sx+8,sy+6,3,3);
+  x.fillStyle=P.lit; x.fillRect(sx+17,sy+3,4,4);          // 小鍛爐
+  x.fillStyle='#e87a4a'; x.fillRect(sx+18,sy+1,2,4);
+
+  // 前景兩小段圍籬／界石，把畫面收出清楚的前、中、後景。
+  x.fillStyle=P.trunk;
+  for(const bx of [5,72]){
+    x.fillRect(bx,H-11,2,9); x.fillRect(bx+24,H-11,2,9);
+    x.fillRect(bx,H-8,26,2); x.fillRect(bx,H-4,26,2);
   }
 
   // ── 林木 ──
@@ -14325,7 +14488,7 @@ function paintVillageScene(){
 
    畫在村莊而不是每一層的進場卡：村莊是「出發之前」，
    那正是會想「我現在在哪」的時刻；進場卡只有一秒半，塞不下。 */
-const TOWER_W = 150, TOWER_H = 230;
+const TOWER_W = 240, TOWER_H = 280;
 function paintTower(actIdx){
   const c = $('towermap');
   if(!c || !c.getContext) return;
@@ -14349,37 +14512,47 @@ function paintTower(actIdx){
   const downT = Math.max(1, sum('down')), upT = Math.max(1, sum('up'));
 
   const TOP    = 16;                 // 塔頂那道光留的位置
-  const GROUND = 62;                 // 地平線。地上要放得下神殿，所以固定
-  const SURF_H = 22;                 // 神殿的高度（地面上，不跟層數走）
-  const HALL_H = 13;                 // 大廣間：它量的是寬，不是深
+  const GROUND = 72;                 // 地平線。地上要放得下神殿，所以固定
+  const SURF_H = 26;                 // 神殿的高度（地面上，不跟層數走）
+  const HALL_H = 16;                 // 大廣間：它量的是寬，不是深
   const HALL_Y = TOWER_H - HALL_H - 5;
   const DOWN_H = HALL_Y - (GROUND + 3);            // 豎井分得到的高度
-  const DX = 38, UX = 106;                         // 左：往下的豎井　右：往上的塔
+  const DX = 62, UX = 170;                         // 左：往下的豎井　右：往上的塔
 
   // 天空與地底
   R(0, 0, TOWER_W, GROUND, '#1d3468');
   R(0, 0, TOWER_W, Math.floor(GROUND*0.6), '#101c3a');
-  for(let i=0;i<26;i++){
+  for(let i=0;i<52;i++){
     const sx = (i*37+11) % TOWER_W, sy = (i*53+7) % Math.max(1, GROUND-6);
     R(sx, sy, 1, 1, i%3 ? '#4a86cf' : '#c8c8d4');
   }
-  R(0, GROUND, TOWER_W, TOWER_H-GROUND, '#2a1d14');
-  R(0, GROUND, TOWER_W, 2, '#5e442c');
-  for(let i=0;i<46;i++){
-    const sx=(i*61+5)%TOWER_W, sy=GROUND+5+((i*29)%Math.max(1,TOWER_H-GROUND-7));
-    R(sx, sy, 1, 1, '#43301f');
+  // 地平線：遠方山城、城門與一道真正切開地上／地下的亮土層。
+  R(0, GROUND-8, TOWER_W, 8, '#25334b');
+  for(let i=0;i<11;i++){
+    const hw=12+(i%3)*4, hx=i*23-5, hh=4+(i*7)%10;
+    R(hx,GROUND-hh,hw,hh,'#1a263a'); R(hx+3,GROUND-hh-3,hw-6,3,'#1a263a');
+  }
+  R(0, GROUND, TOWER_W, TOWER_H-GROUND, '#271b14');
+  R(0, GROUND, TOWER_W, 3, '#a47a3f');
+  R(0, GROUND+3, TOWER_W, 3, '#5e442c');
+  for(let i=0;i<86;i++){
+    const sx=(i*61+5)%TOWER_W, sy=GROUND+7+((i*29)%Math.max(1,TOWER_H-GROUND-9));
+    R(sx, sy, i%5?1:3, 1, i%4 ? '#43301f' : '#65472b');
   }
 
   /* 每一章畫成一段，並記下它的中心 —— 標記與「你在這裡」都用這個位置。 */
   const spots = [];
+  const actCols=['#8b7049','#526b4d','#74654b','#78534a','#764c39','#3b6270',
+                 '#6e3d2f','#344963','#574253','#413d48','#4d5f6a','#425d72',
+                 '#515064','#5d5965','#6c6680','#5d586c','#79738d'];
   let yDn = GROUND + 3, yUp = HALL_Y;
   for(let i=0;i<ACTS.length;i++){
     const kind = kindOf(ACTS[i]);
     if(kind === 'surf'){
       // 神殿：地面上的階梯塔（ziggurat）。三階越往上越窄，正面一個門洞。
-      const base = 34, step = Math.round(SURF_H/3);
+      const base = 54, step = Math.round(SURF_H/3);
       for(let s2=0;s2<3;s2++){
-        const w2 = base - s2*9, yy = GROUND - (s2+1)*step;
+        const w2 = base - s2*13, yy = GROUND - (s2+1)*step;
         R(DX-(w2>>1), yy, w2, step, s2 ? '#8a7350' : '#a08862');
         R(DX-(w2>>1), yy, w2, 1, '#c6a677');
         R(DX-(w2>>1), yy+step-1, w2, 1, '#5e442c');
@@ -14389,7 +14562,7 @@ function paintTower(actIdx){
       spots.push({x:DX, y:GROUND - (SURF_H>>1), w:base});
     } else if(kind === 'wide'){
       // 大廣間：把左邊的豎井橫接到右邊的塔基。圖上唯一橫的一段。
-      const x0 = DX-13, x1 = UX+13;
+      const x0 = DX-20, x1 = UX+20;
       R(x0, HALL_Y, x1-x0, HALL_H, '#161d21');
       R(x0, HALL_Y, x1-x0, 1, '#2f57a0');
       R(x0, HALL_Y+HALL_H-1, x1-x0, 1, '#0b1226');
@@ -14399,20 +14572,29 @@ function paintTower(actIdx){
       // 塔：從大廣間長到畫布頂端，段內照層數分。越高越窄。
       const h = Math.max(6, Math.round((HALL_Y - TOP) * SEG[i] / upT));
       const y = Math.max(TOP, yUp - h), hh = yUp - y;
-      const w = Math.max(15, 32 - Math.round((GROUND - y) / 9));
-      R(UX-(w>>1), y, w, hh, '#3d3d4d');
-      R(UX-(w>>1), y, w, 1, '#565668');
-      R(UX-(w>>1), yUp-1, w, 1, '#1a1a24');
+      const w = Math.max(30, 56 - Math.round((GROUND - y) / 12));
+      R(UX-(w>>1)-3, y+3, w+7, hh, '#10131c');
+      R(UX-(w>>1), y, w, hh, actCols[i%actCols.length]);
+      R(UX-(w>>1), y, 3, hh, '#857d70');
+      R(UX+(w>>1)-4, y, 4, hh, '#242431');
+      R(UX-(w>>1), y, w, 2, '#b08a4e');
+      R(UX-(w>>1), yUp-2, w, 2, '#171720');
       for(let k=y+3;k<yUp-3;k+=6) R(UX-2, k, 4, 3, '#101c3a');   // 窗
       spots.push({x:UX, y:y + (hh>>1), w});
       yUp = y;
     } else {
       // 豎井：地平線到大廣間之間，段內照層數分
       const h = Math.max(4, Math.round(DOWN_H * SEG[i] / downT));
-      R(DX-13, yDn, 26, h, '#161d21');
-      R(DX-13, yDn, 26, 1, '#232c32');
-      for(let k=yDn+3;k<yDn+h-1;k+=5) R(DX-10, k, 20, 1, '#232c32');  // 層線
-      spots.push({x:DX, y:yDn + (h>>1), w:26});
+      const w=42;
+      R(DX-(w>>1)-3, yDn+3, w+7, h, '#100e0d');
+      R(DX-(w>>1), yDn, w, h, actCols[i%actCols.length]);
+      R(DX-(w>>1), yDn, 3, h, '#6e5a40');
+      R(DX+(w>>1)-5, yDn, 5, h, '#201811');
+      R(DX-(w>>1), yDn, w, 2, '#9c7643');
+      for(let k=yDn+4;k<yDn+h-1;k+=6) R(DX-(w>>1)+5, k, w-10, 1, 'rgba(25,17,12,.46)');
+      R(DX-2,yDn,4,h,'#151b20');
+      for(let k=yDn+2;k<yDn+h-1;k+=5) R(DX-1,k,2,2,'#3a4650');
+      spots.push({x:DX, y:yDn + (h>>1), w});
       yDn += h;
     }
   }
@@ -14431,17 +14613,19 @@ function paintTower(actIdx){
   for(let i=0;i<spots.length;i++){
     if(i >= actIdx) continue;
     const s2 = spots[i];
-    R(s2.x-(s2.w>>1)+1, s2.y-1, s2.w-2, 2, 'rgba(168,122,30,.55)');
+    R(s2.x-(s2.w>>1)+2, s2.y-2, s2.w-5, 4, 'rgba(220,174,53,.68)');
   }
   // 你在這裡：一個箭頭 + 主角本人。放在右邊，不擋住塔身；
   // 太靠右會畫出畫布，所以碰到邊就翻到左邊去。
   const me = spots[Math.max(0, Math.min(ACTS.length-1, actIdx))];
-  const right = me.x + (me.w>>1) + 3 + 23 <= TOWER_W;
-  const ax = right ? me.x + (me.w>>1) + 3 : me.x - (me.w>>1) - 8;
-  R(ax, me.y-1, 5, 2, '#f5dc7a');
-  R(ax, me.y-3, 2, 2, '#f5dc7a'); R(ax, me.y+1, 2, 2, '#f5dc7a');
-  x.drawImage(blobFor(VILLAGE.col, VILLAGE.skin),
-              right ? ax+7 : ax-18, me.y-8, 16, 16);
+  const right = me.x + (me.w>>1) + 7 + 31 <= TOWER_W;
+  const ax = right ? me.x + (me.w>>1) + 7 : me.x - (me.w>>1) - 15;
+  R(ax, me.y-2, 8, 4, '#f5dc7a');
+  R(ax, me.y-5, 3, 3, '#f5dc7a'); R(ax, me.y+2, 3, 3, '#f5dc7a');
+  x.drawImage(blobFor(VILLAGE.col, VILLAGE.skin), right ? ax+9 : ax-23, me.y-11, 22, 22);
+  // 目前章節在路線上多一圈白亮核心，縮小看仍能立刻找到位置。
+  R(me.x-4,me.y-4,8,8,'#1a1410'); R(me.x-3,me.y-3,6,6,'#f5dc7a');
+  R(me.x-1,me.y-1,2,2,'#fff7df');
 }
 
 /* 村民會講下一章。村莊如果只有買賣，它就只是一個商店介面 ——
@@ -14503,8 +14687,7 @@ function renderVillage(){
   for(const g of shelf){
     const d = defOf(g.cat, g.id);
     const row = document.createElement('div'); row.className = 'vrow';
-    const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
-    const c = uiIcon(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx));
+    const c = villageGearIcon(g.cat, g.id);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d);
     const st = document.createElement('div'); st.className='st';
@@ -14540,8 +14723,7 @@ function renderVillage(){
   for(const g of VILLAGE.stock){
     const d = defOf(g.cat, g.id);
     const row = document.createElement('div'); row.className = 'vrow own';
-    const idx = (g.cat==='weap'?WEAP:SHLD).findIndex(x=>x.id===g.id);
-    const c = uiIcon(g.cat==='weap' ? makeWeapon(idx) : makeShield(idx));
+    const c = villageGearIcon(g.cat, g.id);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '');
     const st = document.createElement('div'); st.className='st';
@@ -14857,11 +15039,180 @@ function refreshResume(){
   start.textContent = TX('ui.fresh','從頭開始新的一趟');
 }
 
+/* ═══ 美術驗收入口（?qa=...）════════════════════════════════════
+   這不是作弊選單，而是一份可分享的驗收工具：網址決定章節、樓層或頭目，
+   重新整理仍回到同一畫面，且完全不寫進正式存檔。 */
+function qaUrl(params){
+  const u=new URL(location.href); u.search='';
+  for(const [k,v] of Object.entries(params)) if(v!==undefined) u.searchParams.set(k,v);
+  return u.href;
+}
+function qaActIndex(raw){
+  const n=Number(raw);
+  if(Number.isFinite(n) && String(raw).trim()!=='') return Math.max(0,Math.min(ACTS.length-1,n|0));
+  const i=ACTS.findIndex(a=>a.id===raw);
+  return i<0 ? 0 : i;
+}
+function qaOpenWorld(){
+  coverUp=false;
+  const cov=$('cover'); if(cov) cov.classList.add('gone');
+  try{ scrollTo(0,0); if(parent!==window) parent.scrollTo(0,0); }catch(e){}
+}
+function qaEnterFloor(actIdx,floor,seed){
+  VILLAGE.act=actIdx;
+  newGame(seed);
+  G.act=actIdx;
+  G.floor=Math.max(1,Math.min(ACTS[actIdx].floors,floor|0));
+  buildFloor();
+  G.p.hp=G.p.mhp; G.p.mp=G.p.mmp;
+  vision(); qaOpenWorld();
+  camX=G.p.x-VW/2+.5; camY=G.p.y-VH/2+.5;
+  refresh(); showCard();
+}
+function qaEnterBoss(id,seed){
+  const wanted=bossById(id) || BOSS[0];
+  let actIdx=ACTS.findIndex(a=>a.boss===wanted.id);
+  if(actIdx<0 && /^b_mind/.test(wanted.id)) actIdx=ACTS.findIndex(a=>a.id==='chaos');
+  if(actIdx<0) actIdx=0;
+  VILLAGE.act=actIdx;
+  newGame(seed);
+  G.act=actIdx; G.floor=ACTS[actIdx].floors; buildFloor();
+
+  let old=G.mons.find(m=>m.d.boss), boss=G.mons.find(m=>m.d.id===wanted.id);
+  if(!boss){
+    const spot=old ? {x:old.x,y:old.y} : {x:G.f.stairs.x,y:G.f.stairs.y};
+    G.mons=G.mons.filter(m=>!m.d.boss);
+    boss=spawnMon(wanted,spot.x,spot.y);
+  }
+  // 驗收頁只留一隻頭目，讓輪廓、尺寸與攻擊準備姿勢不被雜魚遮住。
+  G.mons=[boss]; G.f.bossLock=1; G.f.bossId=wanted.id;
+
+  // 正式遊戲的頭目房可以靠近地圖邊緣；驗收頁不行，否則巨大頭目會被裁掉。
+  // 挑一間靠近地圖中央、又足夠大的房，把頭目移到房間中心。
+  let qaRoom=null, qaRoomKey=null, qaScore=-1e9;
+  for(const rk in G.f.rooms){
+    const r=G.f.rooms[rk], cx=r.x+r.w/2, cy=r.y+r.h/2;
+    const area=r.w*r.h;
+    if(area<12) continue;
+    const score=Math.min(area,64)-(Math.abs(cx-MW/2)+Math.abs(cy-MH/2))*100;
+    if(score>qaScore){qaScore=score;qaRoom=r;qaRoomKey=rk;}
+  }
+  if(qaRoom){
+    growRoom(qaRoomKey); qaRoom=G.f.rooms[qaRoomKey];
+    let center=null, dist=1e9;
+    for(let y=qaRoom.y;y<qaRoom.y+qaRoom.h;y++) for(let x=qaRoom.x;x<qaRoom.x+qaRoom.w;x++){
+      if(!walkable(x,y)) continue;
+      const d=Math.abs(x-(qaRoom.x+qaRoom.w/2))+Math.abs(y-(qaRoom.y+qaRoom.h/2));
+      if(d<dist){dist=d;center={x,y};}
+    }
+    if(center){boss.x=center.x;boss.y=center.y;}
+  }
+
+  // 把玩家放在同一房間、約兩格外。鏡頭正式規則永遠跟著玩家，
+  // 四格在頭目推近倍率下會把巨大剪影推到畫面邊緣；兩格仍有安全留白。
+  const br=G.f.rooms[roomOf(boss.x,boss.y)];
+  let place=null, best=1e9;
+  const x0=br?br.x:1, y0=br?br.y:1, x1=br?br.x+br.w-1:MW-2, y1=br?br.y+br.h-1:MH-2;
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+    if(!walkable(x,y) || (x===boss.x&&y===boss.y)) continue;
+    const d=Math.max(Math.abs(x-boss.x),Math.abs(y-boss.y));
+    const score=Math.abs(d-2)*20 + Math.abs(y-boss.y);
+    if(score<best){best=score;place={x,y};}
+  }
+  if(place){G.p.x=place.x;G.p.y=place.y;}
+  G.p.mhp=G.p.hp=999; G.p.mmp=G.p.mp=99; G.p.sat=G.p.msat=100000;
+  G.p.weap=mk('weap','babel',{known:1,up:3});
+  G.p.shld=mk('shld','aegis',{known:1,up:3});
+  G.turn=0; vision(); qaOpenWorld();
+  // 鏡頭以頭目為中心；巨大剪影不可在驗收頁被畫面右緣切掉。
+  camX=boss.x-VW/2+.5; camY=boss.y-VH/2+.5;
+  refresh(); showCard();
+  say('美術驗收：'+wanted.nm+'　（HP 已鎖高，方便觀察動作）','gold');
+}
+function qaGallery(type){
+  qaOpenWorld();
+  let el=$('qagallery');
+  if(!el){ el=document.createElement('section'); el.id='qagallery'; document.body.appendChild(el); }
+  el.innerHTML='';
+  const title=document.createElement('h1');
+  title.textContent=type==='boss'?'頭目美術驗收':'怪物美術驗收';
+  const sub=document.createElement('p'); sub.className='qasub';
+  sub.textContent=type==='boss'?'點任何一隻，直接進入該頭目房。':'同一倍率並排檢查剪影、顏色與角色辨識度。';
+  const nav=document.createElement('p'); nav.className='qasub';
+  const home=document.createElement('a'); home.href=qaUrl({qa:'menu'}); home.textContent='← 回快速測試總表'; nav.appendChild(home);
+  const grid=document.createElement('div'); grid.className='qagrid';
+  const list=type==='boss'?BOSS:MONS;
+  for(const d of list){
+    const card=type==='boss'?document.createElement('a'):document.createElement('article');
+    card.className='qacard';
+    if(type==='boss') card.href=qaUrl({qa:'boss',boss:d.id,seed:260822});
+    const c=document.createElement('canvas');
+    const src=atlas[d.id] || atlas.rat; const sw=Math.max(16,src&&src.width||16), sh=Math.max(16,src&&src.height||16);
+    c.width=sw; c.height=sh; const cx=c.getContext('2d'); cx.imageSmoothingEnabled=false;
+    if(src) cx.drawImage(src,0,0,sw,sh);
+    const nm=document.createElement('b'); nm.textContent=d.nm;
+    const code=document.createElement('small'); code.textContent=d.id;
+    card.append(c,nm,code); grid.appendChild(card);
+  }
+  el.append(title,sub,nav,grid);
+}
+function qaMenu(){
+  qaOpenWorld();
+  let el=$('qagallery');
+  if(!el){ el=document.createElement('section'); el.id='qagallery'; document.body.appendChild(el); }
+  el.innerHTML='<h1>快速測試總表</h1><p class="qasub">入口／中段／章末與每隻頭目都可直接開啟；測試不會改動正式存檔。</p>';
+  const top=document.createElement('div'); top.className='qagrid qalinks';
+  for(const [label,href] of [
+    ['村莊與鐵匠鋪',qaUrl({qa:'village',act:0})],
+    ['中期岩窟聚落',qaUrl({qa:'village',act:5})],
+    ['後期燈籠町',qaUrl({qa:'village',act:10})],
+    ['塔腳中繼之村',qaUrl({qa:'village',act:14})],
+    ['全部怪物圖鑑',qaUrl({qa:'gallery',type:'mon'})],
+    ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
+  ]){
+    const a=document.createElement('a'); a.className='qacard'; a.href=href; a.textContent=label; top.appendChild(a);
+  }
+  el.appendChild(top);
+  const h2=document.createElement('h2'); h2.textContent='各章樓層'; el.appendChild(h2);
+  const floors=document.createElement('div'); floors.className='qagrid qalinks';
+  ACTS.forEach((a,i)=>{
+    const card=document.createElement('article'); card.className='qacard';
+    const b=document.createElement('b'); b.textContent=`第 ${i+1} 章　${a.nm}`; card.appendChild(b);
+    const picks=[1,Math.max(1,Math.ceil(a.floors/2)),a.floors].filter((v,j,z)=>z.indexOf(v)===j);
+    for(const f of picks){ const q=document.createElement('a'); q.href=qaUrl({qa:'floor',act:a.id,floor:f,seed:260822});
+      q.textContent=(f===1?'入口':f===a.floors?(a.boss?'頭目層':'章末'):'中段')+` ${floorLabel(i,f)}`; card.appendChild(q); }
+    floors.appendChild(card);
+  });
+  el.appendChild(floors);
+  const h3=document.createElement('h2'); h3.textContent='每一隻頭目'; el.appendChild(h3);
+  const bosses=document.createElement('div'); bosses.className='qagrid qalinks';
+  for(const b of BOSS){ const a=document.createElement('a'); a.className='qacard'; a.href=qaUrl({qa:'boss',boss:b.id,seed:260822}); a.textContent=b.nm; bosses.appendChild(a); }
+  el.appendChild(bosses);
+}
+function startQa(){
+  if(!QA_MODE) return false;
+  const kind=QA_QUERY.get('qa')||'menu', seed=Number(QA_QUERY.get('seed'))||260822;
+  if(kind==='floor') qaEnterFloor(qaActIndex(QA_QUERY.get('act')||'mine'),Number(QA_QUERY.get('floor'))||1,seed);
+  else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
+  else if(kind==='village'){
+    const a=qaActIndex(QA_QUERY.get('act')||0); VILLAGE.act=a; VILLAGE.gold=99999;
+    newGame(seed); qaOpenWorld(); renderVillage(); $('village').classList.add('show');
+  }else{
+    // 先建立一次遊戲狀態，部分外部精靈載入完成後再畫圖鑑。
+    newGame(seed);
+    if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')==='boss'?'boss':'mon'),250);
+    else qaMenu();
+  }
+  return true;
+}
+
 /* ─── 啟動 ──────────────────────────────────────────────────── */
 fitViewport();
 refreshResume();
-newGame((Math.random()*1e9)|0);
-camX = G.p.x - VW/2 + .5;
-camY = G.p.y - VH/2 + .5;
-refresh();
+if(!startQa()){
+  newGame((Math.random()*1e9)|0);
+  camX = G.p.x - VW/2 + .5;
+  camY = G.p.y - VH/2 + .5;
+  refresh();
+}
 </script>
