@@ -79,6 +79,114 @@ ok(api.ACT_THEME.hall !== api.ACT_THEME.crystal, '大廣間跟水晶礦坑不是
 ok(api.ACT_THEME.hall !== 'hall',
    '大廣間的地貌沒有叫 hall（那個名字已經被「怪物之間」那首曲子佔走了）');
 
+/* 四個最容易退回「同一張地磚換色」的區域，必須真的使用不同鋪面結構。
+   這裡驗的是材質 id 而非顏色：木板染成灰色仍然是木板，鏡面染成棕色
+   仍然是鏡面；玩家辨識章節靠結構，不是只靠色相。 */
+const signatureFloors = ['stone','wood','mirror','void'].map(id=>api.THEMES[id].floor);
+ok(new Set(signatureFloors).size === signatureFloors.length,
+   '礦坑、木造、鏡界、虛空各有不同鋪面（' + signatureFloors.join('／') + '）');
+ok(api.THEMES.stone.floor === 'dungeon', '礦坑／牢獄使用錯縫大石板');
+ok(api.THEMES.wood.floor === 'woodfloor', '忍者之里／平安京使用斜向木板');
+ok(api.THEMES.mirror.floor === 'mirrorfloor', '鏡界使用菱形鏡板');
+ok(api.THEMES.void.floor === 'voidfloor', '終章使用幾何核心地板');
+ok(api.THEMES.stone.macro === 'slab' && api.THEMES.crystal.macro === 'ice' &&
+   api.THEMES.spire.macro === 'mosaic',
+   '礦坑大旗石、冰原大冰片、神殿大浮雕板各有 2×2 大面積地磚');
+ok(api.THEMES.stone.wall === 'earthcut' && api.THEMES.forest.wall === 'forestwall' &&
+   api.THEMES.crystal.wall === 'icecliff',
+   '土層剖面、林地倒木泥岸、冰崖切面是三種不同牆體結構');
+
+/* 背景不能再靠四階共用色帶硬撐。角色仍維持少色、強剪影，地形則需要
+   足夠的中間色去畫土壤雜質、苔緣、冰切面與古神殿釉磚；兩套色票分開，
+   增加材質色不會讓角色反而融進背景。 */
+const MATERIAL_COLORS = {
+  earth:['earthInk','earthDeep','earthLoam','earthClay','earthDust','earthSand','earthMica','earthWet'],
+  forest:['forestInk','forestSoil','forestLoam','barkDark','bark','barkHi','mossDeep','moss','mossHi','lichen'],
+  ice:['iceInk','iceDeep','iceMid','iceFace','iceLight','iceGlint','snowShade','snowBlue'],
+  temple:['templeInk','templeShade','templeMid','templeLight','glazeDeep','glaze','glazeLight','ochre','sun'],
+};
+const materialKeys=Object.values(MATERIAL_COLORS).flat();
+ok(materialKeys.length===35 && materialKeys.every(k=>api.PAL[k]),
+   '土、森林、冰、神殿共有 35 個獨立材質色');
+ok(new Set(materialKeys.map(k=>api.PAL[k])).size===35,
+   '35 個材質色沒有用重複色假裝增加色票');
+const hexLum = h => { h=h.slice(1); return parseInt(h.slice(0,2),16)*.2126+
+  parseInt(h.slice(2,4),16)*.7152+parseInt(h.slice(4,6),16)*.0722; };
+for(const [name,keys] of Object.entries(MATERIAL_COLORS)){
+  const ls=keys.map(k=>hexLum(api.PAL[k]));
+  ok(Math.max(...ls)-Math.min(...ls)>=95,
+     name+' 材質從暗面到亮面至少跨 95 明度（實際 '+Math.round(Math.max(...ls)-Math.min(...ls))+'）');
+}
+
+/* ═══ 冰原的滑行與制動 ═══════════════════════════════════════
+   美術畫了大冰片，就要兌現它的物理：房間中央多滑一格；走廊、牆腳與冰脊
+   周圍停下。最重要的是，套用真滑行規則後每一張圖仍然走得到樓梯。 */
+console.log('\n=== 冰原的滑行與制動（120 張圖） ===');
+{
+  const CRYSTAL=AI('crystal');
+  let maps=0, stopperMaps=0, allStops=0, reached=0, slideCase=null, brakeCase=null, diagCase=null;
+  let roomCells=0,slickCells=0,minSlick=Infinity;
+  for(let seed=260800;seed<260920;seed++){
+    api.newGame(seed);
+    const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor(); maps++;
+    const stops=(g.f.iceStops||[]).filter(s=>g.f.t[s.y*api.MW+s.x]===api.WALL);
+    if(stops.length) stopperMaps++;
+    allStops+=stops.length;
+    let mapSlick=0;
+    for(let y=0;y<api.MH;y++) for(let x=0;x<api.MW;x++)
+      if(g.f.t[y*api.MW+x]===1){ roomCells++; if(api.iceSlickAt(x,y)){slickCells++;mapSlick++;} }
+    minSlick=Math.min(minSlick,mapSlick);
+
+    // 以遊戲真正的 8 向＋牆角＋滑一格規則做 BFS。
+    const q=[g.f.spawn], seen=new Set([api.key(g.f.spawn.x,g.f.spawn.y)]);
+    for(let h=0;h<q.length;h++){
+      const c=q[h];
+      for(const d of api.DIRS){
+        const fx=c.x+d[0], fy=c.y+d[1];
+        if(!api.walkable(fx,fy)||!api.cornerOK(c.x,c.y,fx,fy)) continue;
+        const z=api.iceMoveTarget(c.x,c.y,d[0],d[1],true), k=api.key(z.x,z.y);
+        if(seen.has(k)) continue; seen.add(k); q.push(z);
+      }
+    }
+    if(seen.has(api.key(g.f.stairs.x,g.f.stairs.y))) reached++;
+
+    if(!slideCase || !brakeCase){
+      for(let y=1;y<api.MH-1;y++) for(let x=1;x<api.MW-1;x++) for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const fx=x+d[0], fy=y+d[1];
+        if(!api.walkable(x,y)||!api.walkable(fx,fy)||!api.cornerOK(x,y,fx,fy)) continue;
+        const z=api.iceMoveTarget(x,y,d[0],d[1],true);
+        if(!slideCase && Math.max(Math.abs(z.x-x),Math.abs(z.y-y))===2)
+          slideCase={seed,x,y,d,z};
+        if(!brakeCase && g.f.t[fy*api.MW+fx]===2 && z.x===fx && z.y===fy)
+          brakeCase={x,y,d,z};                    // CORR = 2：粗糙走道必須停
+      }
+      for(let y=1;y<api.MH-1&&!diagCase;y++) for(let x=1;x<api.MW-1&&!diagCase;x++){
+        const d=[1,1],fx=x+1,fy=y+1;
+        if(!api.walkable(x,y)||!api.walkable(fx,fy)||!api.cornerOK(x,y,fx,fy)) continue;
+        if(api.iceSlickAt(fx,fy)) diagCase={x,y,z:api.iceMoveTarget(x,y,1,1,true)};
+      }
+    }
+  }
+  ok(stopperMaps>=112 && allStops>=200,
+     '幾乎每張冰原都有清楚的冰脊制動點（'+stopperMaps+'/'+maps+' 張，共 '+allStops+' 座）');
+  ok(reached===maps, '套用實際滑行後仍全部走得到樓梯（'+reached+'/'+maps+' 張）');
+  const slickPct=slickCells/roomCells;
+  ok(slickPct>=.35 && slickPct<=.60 && minSlick>=6,
+     '亮冰不是稀有特例：佔房間 '+Math.round(slickPct*100)+'%，每張至少 '+minSlick+' 格');
+  ok(!!slideCase, '找得到房間中央會多滑一格的平滑冰片');
+  ok(!!brakeCase, '粗糙走道會在第一格停下，不會一路失控');
+  ok(!!diagCase && diagCase.z.x===diagCase.x+1 && diagCase.z.y===diagCase.y+1,
+     '斜走只移一格，可精準繞過冰脊與調整站位');
+  if(slideCase){
+    const {seed,x,y,d,z}=slideCase;
+    api.newGame(seed); const g=api.G(); g.act=CRYSTAL; g.floor=1; api.buildFloor();
+    g.p.x=x; g.p.y=y; g.mons=[]; g.allies=[]; g.npc=null; g.shop=null; g.over=false;
+    api.tryMove(d[0],d[1]);
+    ok(g.p.x===z.x&&g.p.y===z.y,
+       '實際操作也會滑兩格（'+x+','+y+' → '+g.p.x+','+g.p.y+'）');
+  } else ok(false,'實際操作也會滑兩格');
+}
+
 /* ═══ 神殿的平面 ═══════════════════════════════════════════════
    使用者：「我需要一個立體神殿的類似像『入口迷宮』的設定場景」，
    而「立體」選的是「俯視＋看得出高低」。
@@ -221,6 +329,32 @@ console.log('\n=== 神殿的佈景（石灰岩、柱面、陽光） ===');
      '前庭比內殿亮（' + brighter + '/' + withSun + ' 層）—— 越往裡走越暗');
   ok(rays2 > 40 && headBright === rays2,
      '每一道光柱都是靠窗那頭最亮（' + headBright + '/' + rays2 + ' 道）');
+}
+
+/* 列柱、石獅與界碑不能只是畫面上偶爾碰巧出現。序章的視覺敘事靠它們，
+   所以固定掃多顆種子：兩排列柱必須對齊、石獅與黑石碑必須成對，
+   右下投影只能落在可走地面，否則玩家會把陰影誤認成牆。 */
+{
+  const V4=api.VILLAGE(), N=40;
+  let colOK=0, relicOK=0, shadowOK=0, shadowMaps=0;
+  for(let seed=301;seed<301+N;seed++){
+    V4.act=0; api.newGame(seed);
+    const g=api.G(); g.act=0; g.floor=1; api.buildFloor();
+    const f=g.f, cols=f.pillars||[], relics=f.relics||[], sh=f.shadowAt;
+    const xs=new Set(cols.map(p=>p.x));
+    if(cols.length>=4 && xs.size===2 && [...xs].every(x=>Math.abs(x-(api.MW>>1))===5)) colOK++;
+    const lions=relics.filter(r=>r.kind==='lion'), stones=relics.filter(r=>r.kind==='kudurru');
+    if(lions.length===2 && stones.length===2 && lions[0].dir===-lions[1].dir) relicOK++;
+    if(sh && sh.size){
+      shadowMaps++;
+      let bad=0; for(const k of sh.keys()) if(f.t[k]===api.WALL) bad++;
+      if(!bad) shadowOK++;
+    }
+  }
+  ok(colOK===N,'前庭兩排列柱固定對齊（'+colOK+'/'+N+' 張）');
+  ok(relicOK===N,'每層都有成對石獅與黑石碑（'+relicOK+'/'+N+' 張）');
+  ok(shadowMaps===N && shadowOK===N,
+     '柱像投影存在而且只落在可走地面（'+shadowOK+'/'+shadowMaps+' 張）');
 }
 
 /* 別的章節沒有陽光。神殿是地面上的建築，那是它跟後面十六章最大的分野；

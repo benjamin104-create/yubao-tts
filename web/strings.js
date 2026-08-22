@@ -33,6 +33,25 @@ let code = m[1].replace(/const DICT_RAW = `[\s\S]*?`;/, 'const DICT_RAW = ``;');
     code = code.replace('const DICT_RAW = ``;', 'const DICT_RAW = ``;' + '\n'.repeat(nl));
   }
 }
+/* 美術驗收入口（?qa=...）整段拿掉。那一段是**開發用的工具頁** ——
+   只有帶著 ?qa= 參數才進得去，玩家永遠看不到它，而它的標籤
+   （「頭目美術驗收」「回快速測試總表」）是給做美術的人看的。
+   把工具的字也算成漏翻，等於逼人替一個沒有玩家的畫面寫三種語言。
+
+   拿掉的是**一段明確標好邊界的區域**，不是「含有 qa 的行」——
+   後者會在別人把某個玩家看得到的函式取名成 qaSomething 的時候
+   悄悄地少掃一塊。邊界找不到就整段不切（寧可誤報，不可漏掉）。 */
+{
+  const a = m[1].indexOf('/* ═══ 美術驗收入口（?qa=...）');
+  const b = m[1].indexOf('/* ─── 啟動 ───', a + 1);
+  if(a >= 0 && b > a){
+    const cutQa = m[1].slice(a, b);
+    const nl = (cutQa.match(/\n/g) || []).length;
+    code = code.replace(cutQa, '\n'.repeat(nl));
+  } else {
+    console.log('※ 找不到美術驗收頁的邊界 —— 這一段照樣掃（可能是註解被改過）');
+  }
+}
 const head = src.slice(0, src.indexOf(m[1]));
 const baseLine = (head.match(/\n/g) || []).length;
 const lineOf = i => baseLine + (code.slice(0, i).match(/\n/g) || []).length;
