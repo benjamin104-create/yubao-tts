@@ -112,6 +112,28 @@ def main():
         if not ok_peak:
             bad += 1
 
+        # ── 每一首都要量，不能只量剛好在播的那一首 ──────────────
+        # 上面那一段量的是開場那一首。新寫的曲子如果稀疏到聽不見，
+        # 它永遠不會被抓到 —— 因為量到的從來不是它。
+        # 詠嘆調前兩小節幾乎沒有伴奏、森林只有幾顆長音，
+        # 正是最可能掉到「好像沒有音樂」那一邊的兩首。
+        ids = pg.evaluate("()=>Object.keys(BGM.TRACKS)")
+        print('\n每一首的音量（%d 首）' % len(ids))
+        for tid in ids:
+            pg.evaluate("(id)=>BGM.force(id)", tid)
+            pg.wait_for_timeout(1700)          # 等換曲的淡出淡入跑完
+            # 量滿一整輪四小節，不然只量到詠嘆調讓開的那半段
+            spins = pg.evaluate("(id)=>{const t=BGM.TRACKS[id];"
+                                " return Math.ceil(64 * 60 / t.bpm / 4 * 1000) + 300;}", tid)
+            mm = pg.evaluate(METER, min(9000, spins))
+            ok = MUSIC_RMS_MIN <= mm['rms'] <= MUSIC_RMS_MAX and mm['peak'] <= PEAK_CEILING
+            print('%s   %-10s RMS %6s　尖峰 %6s dBFS'
+                  % ('✓' if ok else '✗', tid, mm['rms'], mm['peak']))
+            if not ok:
+                bad += 1
+        pg.evaluate("()=>BGM.force(null)")
+        pg.wait_for_timeout(400)
+
         # 音效要穿得過音樂床
         pg.evaluate("()=>BGM.stop()")
         pg.wait_for_timeout(300)
