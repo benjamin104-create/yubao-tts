@@ -87,6 +87,22 @@ def main():
         sys.exit('index.html 裡找不到 %r —— 那個鉤子被改掉了' % anchor)
     html = html.replace(anchor, anchor + '\n' + payload, 1)
 
+    # 字型也要進來。它們是 CSS 裡的 url()，跟圖走的是完全不同的路 ——
+    # 忘了處理的話，單檔版會去打網路要一個不存在的相對路徑，
+    # 然後**安靜地**退回系統字型：檔案打得開、遊戲跑得動、只是字變回原樣。
+    # 那正是這款遊戲最常見的失效方式，所以下面驗到底。
+    fonts = 0
+    fdir = WEB / 'font'
+    for f in sorted(fdir.glob('*.woff2')) if fdir.is_dir() else []:
+        ref = 'url("font/%s")' % f.name
+        if ref not in html:
+            sys.exit('%s 沒有被 index.html 引用 —— 是不是改了檔名？' % f.name)
+        b64 = base64.b64encode(f.read_bytes()).decode('ascii')
+        html = html.replace(ref, 'url("data:font/woff2;base64,%s")' % b64)
+        fonts += 1
+    if not fonts:
+        sys.exit('web/font/ 底下沒有 woff2 —— 先跑 tools/build_font.py')
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding='utf-8')
 
@@ -94,10 +110,12 @@ def main():
     miss = [k for k in art if '"%s":"data:image/png' % k not in html]
     if miss:
         sys.exit('有 %d 個鍵沒寫進去：%s' % (len(miss), miss[:5]))
+    if 'url("font/' in html:
+        sys.exit('還有字型是用相對路徑引用的 —— 單檔版離線打開會沒有字型')
 
     size = OUT.stat().st_size
     print('寫出 %s' % OUT)
-    print('  內嵌 %d 張圖，總計 %.0f KB' % (len(art), size / 1024))
+    print('  內嵌 %d 張圖、%d 套字型，總計 %.0f KB' % (len(art), fonts, size / 1024))
 
 
 main()

@@ -134,10 +134,55 @@ G2.act = MINE; G2.floor = 3; api.buildFloor();
 const n = G2.npc;
 ok(!!n && n.hp === n.mhp, '出現時是滿血的');
 ok(!!n && !n.follow, '一開始不會跟 —— 玩家要先走過去');
+/* 走過去 = 跟他說話。使用者：「應該會需要和村人對話，主角可以選擇
+   同意或不同意，按同意的話，就會牢牢的跟著主角」。
+   舊版是撞一下就自動變成護送 —— 那不是選擇，是踩到機關，
+   而「不救也可以」這件事在畫面上根本不存在。 */
 const p = G2.p;
-p.x = n.x - 1; p.y = n.y;
-api.tryMove(1, 0);
-ok(!!G2.npc && G2.npc.follow, '走過去就開始護送');
+/* 站的位置要挑過：不但要能走到村民身上，自己旁邊還得留一格空地 ——
+   下一條要驗「對話框開著的時候走不動」，而如果四周本來就都是牆，
+   那條斷言會在功能壞掉的時候仍然是綠的（第一版就是這樣過的）。 */
+const freeAround = (x, y) => api.DIRS.filter(d =>
+  api.walkable(x + d[0], y + d[1]) && !api.monAt(x + d[0], y + d[1]) &&
+  !(x + d[0] === n.x && y + d[1] === n.y) &&
+  api.cornerOK(x, y, x + d[0], y + d[1])).length;
+let stand = null;
+for(const d of api.DIRS){
+  const sx = n.x - d[0], sy = n.y - d[1];
+  if(!api.walkable(sx, sy) || api.monAt(sx, sy)) continue;
+  if(!api.cornerOK(sx, sy, n.x, n.y)) continue;
+  if(freeAround(sx, sy) < 1) continue;
+  stand = [sx, sy, d]; break;
+}
+ok(!!stand, '找得到一個「走得到村民、旁邊又有空地」的位置');
+p.x = stand[0]; p.y = stand[1];
+api.tryMove(stand[2][0], stand[2][1]);
+ok(api.talkOpen(), '走過去會跟他說話（跳出對話框）');
+ok(!G2.npc.follow, '還沒回答之前不會開始跟');
+/* 對話框開著的時候方向鍵不該讓主角走路 —— 他正在回答一個問題。
+   要往一個**真的走得過去**的方向試：隨便挑一個方向的話，
+   那一格可能本來就是牆，於是「沒有移動」會是牆擋的，不是對話框擋的，
+   而這條斷言就會在功能壞掉的時候仍然是綠的。 */
+const open = api.DIRS.find(d =>
+  api.walkable(p.x + d[0], p.y + d[1]) &&
+  !api.monAt(p.x + d[0], p.y + d[1]) &&
+  !(G2.npc && G2.npc.x === p.x + d[0] && G2.npc.y === p.y + d[1]) &&
+  api.cornerOK(p.x, p.y, p.x + d[0], p.y + d[1]));
+ok(!!open, '旁邊有一格是真的走得過去的（不然下一條驗不到東西）');
+const kx = p.x, ky = p.y;
+if(open) api.tryMove(open[0], open[1]);
+ok(p.x === kx && p.y === ky, '對話框開著的時候主角不會走路');
+
+// 先按不同意：他要留在原地，而且不會擋路
+api.answerTalk(false);
+ok(!api.talkOpen(), '回答完對話框就關掉');
+ok(!!G2.npc && !G2.npc.follow, '按「不同意」他不會跟（不救也可以）');
+
+// 再走過去可以再問一次 —— 反悔不該有代價
+api.tryMove(stand[2][0], stand[2][1]);
+ok(api.talkOpen(), '再走過去會再問一次');
+api.answerTalk(true);
+ok(!!G2.npc && G2.npc.follow, '按「同意」就開始護送');
 const bx = p.x, by = p.y, nx = G2.npc.x, ny = G2.npc.y;
 api.tryMove(Math.sign(nx - bx), Math.sign(ny - by));
 ok(p.x === nx && p.y === ny && G2.npc.x === bx && G2.npc.y === by,
@@ -149,8 +194,11 @@ const before = p.inv.length;
 p.inv.push(api.mk ? api.mk('herb','heal') : null);
 if(p.inv[p.inv.length-1]){
   const hp0 = G2.npc.hp;
-  p.x = G2.npc.x - 1; p.y = G2.npc.y;
-  api.tryMove(1, 0);
+  // 站到他旁邊 —— 方向照實算，不要假設他還在右邊（他會跟著走）
+  const hd = api.DIRS.find(d => api.walkable(G2.npc.x - d[0], G2.npc.y - d[1])
+    && api.cornerOK(G2.npc.x - d[0], G2.npc.y - d[1], G2.npc.x, G2.npc.y));
+  p.x = G2.npc.x - hd[0]; p.y = G2.npc.y - hd[1];
+  api.tryMove(hd[0], hd[1]);
   ok(G2.npc.hp > hp0, '相鄰時走進去會用回復草替他治療（' + hp0 + ' → ' + G2.npc.hp + '）');
   ok(p.inv.length === before, '治療會花掉那一株草');
 } else { ok(false, '拿不到回復草，無法測治療'); }
@@ -164,6 +212,62 @@ G2.floor = 3; api.buildFloor();
 if(G2.npc) G2.npc.follow = 0;
 G2.floor = 4; api.buildFloor();
 ok(!G2.npc, '沒跟著的村民不會被帶走（不救也可以）');
+
+/* ═══ 「牢牢的跟著，不會亂跑」 ═══════════════════════════════
+   使用者的原話。這是一句可以量的話：帶著他在地牢裡亂走，
+   他應該幾乎全程都貼在旁邊。
+
+   為什麼要跑十顆種子而不是一顆：單一種子量不出差別。
+   實測（每顆 150 步）——
+       貪心走一步   775 步裡有 30 步距離超過兩格，最遠掉到 5 格
+       BFS ＋追趕   753 步裡有  0 步超過兩格，最遠 2 格
+   而在其中某些種子上，兩種寫法的成績一模一樣（地形夠開闊）。
+   只驗一顆的話，退回貪心版仍然是綠的 —— 這條測試就白寫了。 */
+console.log('\n=== 牢牢跟著（十張圖、各亂走 150 步） ===');
+{
+  const V2 = api.VILLAGE();
+  const SEEDS = [20260822, 11, 202, 3003, 40404, 555, 6006, 77, 808, 9009];
+  let maps = 0, steps = 0, farSteps = 0, worst = 0;
+  for(const seed of SEEDS){
+    V2.act = MINE; V2.vault = 0; V2.npcDone = 0;
+    api.newGame(seed);
+    const G3 = api.G();
+    G3.act = MINE; G3.floor = 3; api.buildFloor();
+    if(!G3.npc) continue;
+    const n3 = G3.npc, p3 = G3.p;
+    let st = null;
+    for(const d of api.DIRS){
+      const sx = n3.x - d[0], sy = n3.y - d[1];
+      if(api.walkable(sx, sy) && !api.monAt(sx, sy) && api.cornerOK(sx, sy, n3.x, n3.y)){
+        st = [sx, sy, d]; break;
+      }
+    }
+    if(!st) continue;
+    maps++;
+    p3.x = st[0]; p3.y = st[1];
+    api.tryMove(st[2][0], st[2][1]);
+    if(api.talkOpen()) api.answerTalk(true);
+    // 亂走。用自己的偽亂數，不吃遊戲的 RNG —— 吃遊戲的會影響怪物生成，
+    // 那樣量到的就不只是「跟得緊不緊」了。
+    const rnd = (s0 => () => (s0 = (s0 * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)(7);
+    for(let i = 0; i < 150 && G3.npc; i++){
+      const d = api.DIRS[(rnd() * 8) | 0];
+      const bx2 = p3.x, by2 = p3.y;
+      api.tryMove(d[0], d[1]);
+      if(p3.x === bx2 && p3.y === by2) continue;   // 撞牆不算一步
+      steps++;
+      const dist = Math.max(Math.abs(p3.x - G3.npc.x), Math.abs(p3.y - G3.npc.y));
+      worst = Math.max(worst, dist);
+      if(dist > 2) farSteps++;
+    }
+  }
+  ok(maps >= 8, '十顆種子裡至少八張圖跑得起來（實際 ' + maps + ' 張）');
+  ok(steps > 400, '真的走了幾百步（實際 ' + steps + ' 步）');
+  /* 門檻照實際量到的數字訂，不留寬鬆的餘地 —— 留了餘地的門檻
+     會在退化的時候仍然是綠的，而那正是這條測試要防的事。 */
+  ok(farSteps === 0, '全程貼著（' + farSteps + '/' + steps + ' 步距離超過兩格）');
+  ok(worst <= 2, '一次都沒有掉隊（最遠 ' + worst + ' 格）');
+}
 
 /* Token 金庫要撐得過重新整理。這一條是踩出來的：loadVillage() 會用
    白名單重建一整個 VILLAGE，而 vault 不在白名單裡 —— 護送成功的人

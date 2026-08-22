@@ -67,8 +67,12 @@ jobs:
       # 尺寸色盤全部合規。第一批圖轉了四輪才對，每一輪的錯都是這一類。
       - name: 美術資產檢查
         run: |
-          pip install --quiet pillow
+          pip install --quiet pillow fonttools brotli
           python tools/check_art.py
+          # 字型是子集化的：只收玩家真的會顯示的那 1400 個字。
+          # 加了新的中文訊息卻忘了重建，畫面上會冒出幾個豆腐 ——
+          # 不報錯、不當機，而且只有中文介面看得到。
+          python tools/build_font.py --check
           # 單檔打包也要跑得起來。這款遊戲的識別就是「一個檔案打開就能玩」，
           # 而打包靠 index.html 裡一個叫 ART_DATA 的鉤子 ——
           # 那個變數被改名或拿掉，打包會壞掉而網站版完全正常，

@@ -19,6 +19,11 @@ for(let r=0; r<RUNS; r++){
     let t = 0;
     while(!G.over && t < MAX_TURNS){
       const p = G.p;
+      /* 有人在跟你說話就先回答。對話框開著的時候方向鍵不會走路，
+         漏了這一段的話機器人會卡在原地跑完一千五百回合，
+         而且不會報錯 —— 只會看到「第一章忽然過不去了」。
+         一律同意：機器人的工作是量「護送走不走得完」，不是量拒絕。 */
+      if(api.talkOpen()){ api.answerTalk(true); continue; }
       // 餓了就吃
       const food = p.inv.find(i=>i.cat==='food');
       if(p.sat < 25000 && food){ api.useItem(food,false); api.endTurn(); stats.used++; t++; continue; }

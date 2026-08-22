@@ -3,13 +3,50 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <style>
+/* ── 字型 ────────────────────────────────────────────────────
+   使用者：「字型選一下吧？感覺好醜」。
+
+   原本用的是系統字型堆疊（PingFang／微軟正黑／Georgia）。
+   系統 UI 字型的問題不是難看，是**沒有立場** —— 它讓一款
+   16-bit 地牢遊戲讀起來像一個設定頁面。
+
+   兩套內嵌，各有各的工作：
+     Babel Display（Cinzel 子集）羅馬碑刻體。標題、英文副標、章節卡
+       本來就是加了字距的大寫 —— 那正是碑刻體長出來的地方。17 KB。
+     Babel Serif（思源宋體子集）敘事用的中文。宋體的橫細豎粗與三角襯線
+       就是「刻在石頭上」的形狀，跟這款遊戲的神殿、石碑、羊皮紙同一個世界。
+       只留遊戲真的會顯示的 1406 個字，290 KB。
+
+   介面的密集文字（背包清單、狀態列、按鈕）**刻意留給系統黑體**：
+   11px 的宋體比黑體難讀，而那些地方要的是看得快，不是看得美。
+
+   子集沒涵蓋到的字仍然有救 —— 後面接的還是原本的系統堆疊，
+   玩家自己打的名字會落到 PingFang 上。
+
+   字型檔與重建方式見 tools/build_font.py，授權見 web/font/OFL.txt。
+   font-display:swap —— 字型還沒到之前先用系統字型畫，
+   遊戲不能為了等字型而白畫面。 */
+@font-face{
+  font-family:"Babel Display"; font-style:normal; font-weight:400 900;
+  font-display:swap; src:url("font/cinzel.woff2") format("woff2");
+}
+@font-face{
+  font-family:"Babel Serif"; font-style:normal; font-weight:400;
+  font-display:swap; src:url("font/serif-tc.woff2") format("woff2");
+}
 :root{
   --ink:#14110f; --ink-2:#1d1915; --stone:#2b2620; --stone-2:#3a332b;
   --edge:#4a4038; --parch:#e8dcc0; --parch-dim:#a99a7e;
   --brass:#c9973f; --brass-dim:#8a6626;
   --blood:#a83c32; --moss:#6a8f4a; --azure:#5b86b8;
   --page:#0c0a09; --panel:#1a1613; --hair:rgba(201,151,63,.22);
-  --serif:"Songti TC","Noto Serif TC","Source Han Serif TC",Georgia,"Times New Roman",serif;
+  /* display = 招牌。碑刻體排拉丁，宋體排中文 —— 順序決定誰先接手。
+     serif   = 敘事。中文用宋體，英文交給系統的襯線（Cinzel 是展示體，
+               整段英文用它會很吵，而英文介面有大量的整段文字）。
+     sans    = 介面。密集、小字、要看得快的地方。
+     mono    = 數字。等寬 + 表格數字，血量跳動時位數不會左右晃。 */
+  --display:"Babel Display","Babel Serif","Songti TC","Noto Serif TC",Georgia,serif;
+  --serif:"Babel Serif","Songti TC","Noto Serif TC","Source Han Serif TC",Georgia,"Times New Roman",serif;
   --sans:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
@@ -91,17 +128,17 @@ body{
 
 #covertext{position:relative; display:grid; gap:12px; justify-items:center; max-width:520px}
 #cover h1{
-  margin:0; font-family:var(--serif); font-weight:600;
+  margin:0; font-family:var(--display); font-weight:600;
   font-size:clamp(30px,7.2vw,50px); letter-spacing:.2em; text-indent:.2em;
   color:#f6efe3; line-height:1.1;
   text-shadow:0 0 22px rgba(217,119,87,.5), 0 3px 0 rgba(0,0,0,.6);
 }
 #cover .en{
-  font-family:var(--mono); font-size:clamp(10px,2.4vw,13px);
+  font-family:var(--display); font-size:clamp(10px,2.4vw,13px);
   letter-spacing:.52em; text-indent:.52em; color:var(--brass);
 }
 #cover .lede{
-  margin:0; font-size:clamp(12.5px,3.2vw,15px); line-height:1.9; color:#cbbca0;
+  margin:0; font-family:var(--serif); font-size:clamp(12.5px,3.2vw,15px); line-height:1.9; color:#cbbca0;
   max-width:30ch;
 }
 #cover .lede b{color:#f2e3c4; font-weight:600}
@@ -109,7 +146,7 @@ body{
 
 #coverfoot{position:relative; display:grid; gap:14px; justify-items:center}
 #start{
-  font-family:var(--serif); font-size:16px; letter-spacing:.28em; text-indent:.28em;
+  font-family:var(--display); font-size:16px; letter-spacing:.28em; text-indent:.28em;
   color:#1a120d; background:linear-gradient(180deg,#e8a06f,var(--brass));
   border:0; padding:15px 40px; cursor:pointer; font-weight:600;
   box-shadow:0 0 0 1px rgba(246,239,227,.25), 0 10px 30px rgba(217,119,87,.35);
@@ -121,7 +158,7 @@ body{
 /* 有紀錄點的時候，「繼續」才是主要按鈕，「重新開始」退成次要的。
    兩顆一樣醒目的話，玩家會猶豫；而猶豫的那一秒就是想關掉的那一秒。 */
 #resume{
-  font-family:var(--serif); font-size:15px; letter-spacing:.2em; text-indent:.2em;
+  font-family:var(--display); font-size:15px; letter-spacing:.2em; text-indent:.2em;
   color:#f6efe3; background:rgba(106,143,74,.22); border:1px solid var(--moss);
   padding:13px 30px; cursor:pointer; font-weight:600; min-height:46px;
   touch-action:manipulation;
@@ -145,7 +182,7 @@ body{
 #langpick button.on{border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.14)}
 #covermeta{
   display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:center;
-  font-family:var(--mono); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
+  font-family:var(--display); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
 }
 #covermeta span{border:1px solid var(--edge); padding:4px 9px; white-space:nowrap}
 /* 署名。壓得比 covermeta 更輕 —— 落款該是最後才被看到的那一行，
@@ -267,7 +304,7 @@ body{
   border-bottom:1px solid var(--hair);
 }
 #sign h1{
-  margin:0; font-family:var(--serif); font-size:19px; font-weight:600;
+  margin:0; font-family:var(--display); font-size:19px; font-weight:600;
   letter-spacing:.14em; color:var(--parch);
 }
 /* 樓層是這款遊戲唯一的進度指標，招牌上就該讓人一眼看到 */
@@ -592,7 +629,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 }
 #panel.open{transform:none}
 #panel h2{
-  margin:0; padding:10px 14px 8px; font-family:var(--serif); font-size:14px;
+  margin:0; padding:10px 14px 8px; font-family:var(--display); font-size:14px;
   font-weight:600; letter-spacing:.16em; border-bottom:1px solid var(--hair);
   display:flex; justify-content:space-between; align-items:baseline;
 }
@@ -625,11 +662,11 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   color:#f6efe3; letter-spacing:.06em; text-shadow:0 0 26px rgba(217,119,87,.55);
 }
 #card em{
-  font-style:normal; font-family:var(--serif); font-size:clamp(15px,3.4vw,21px);
+  font-style:normal; font-family:var(--display); font-size:clamp(15px,3.4vw,21px);
   letter-spacing:.34em; text-indent:.34em; color:var(--brass);
 }
 #card i{
-  font-style:normal; font-family:var(--mono); font-size:clamp(8px,1.8vw,10px);
+  font-style:normal; font-family:var(--display); font-size:clamp(8px,1.8vw,10px);
   letter-spacing:.42em; text-indent:.42em; color:var(--parch-dim); opacity:.8;
 }
 @keyframes cardIn{
@@ -651,7 +688,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #bigmap.show{display:flex}
 .bmhead{display:flex; align-items:baseline; gap:10px}
 .bmhead b{font-family:var(--mono); font-size:24px; color:var(--brass); line-height:1}
-.bmhead em{font-style:normal; font-family:var(--serif); font-size:14px; letter-spacing:.2em; color:var(--parch)}
+.bmhead em{font-style:normal; font-family:var(--display); font-size:14px; letter-spacing:.2em; color:var(--parch)}
 .bmhead i{font-style:normal; font-family:var(--mono); font-size:10px; color:var(--parch-dim)}
 #bigc{
   image-rendering:pixelated; background:#07090a; border:1px solid var(--edge);
@@ -781,7 +818,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   padding:6px 10px; background:rgba(6,8,9,.94);
   border:1px solid var(--edge);
   box-shadow:inset 0 0 0 1px rgba(246,239,227,.10), 0 6px 18px rgba(0,0,0,.5);
-  font-size:12px; line-height:1.45; letter-spacing:.02em;
+  font-family:var(--serif); font-size:12.5px; line-height:1.5; letter-spacing:.02em;
   color:var(--parch); text-wrap:pretty;
 }
 #msgwin.on{display:block; animation:msgin .16s ease}
@@ -795,6 +832,60 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #msgwin .gold{color:var(--brass)}
 @keyframes msgin{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
 @keyframes msgout{to{opacity:0; visibility:hidden}}
+
+/* ── 對話框 ──────────────────────────────────────────────────
+   使用者：「護送村人，應該會需要和村人對話，主角可以選擇『同意』
+   或『不同意』，按同意的話，就會牢牢的跟著主角，不會亂跑」。
+
+   為什麼值得做成一個真的對話框，而不是再多兩行訊息：
+   原本走過去撞一下就自動變成護送 —— 那不是選擇，那是踩到機關。
+   而這段劇情的全部意義就在於它是**可以拒絕的**：使用者一開始的規格
+   就寫著「主角不救也可以」。沒有那個「不同意」的按鈕，
+   「可以不救」這件事在畫面上根本不存在。
+
+   它是強制的（z-index 在手把之上、會吃掉點擊）：有人在問你問題，
+   而回答之前遊戲不該繼續跑。這也是它跟訊息視窗最大的差別 ——
+   訊息視窗是唸給你聽的，對話框是在等你。 */
+#talk{
+  position:absolute; inset:0; z-index:30; display:none;
+  align-items:center; justify-content:center; padding:14px;
+  background:rgba(6,5,4,.62);
+}
+#talk.on{display:flex}
+#talk .tbox{
+  width:min(340px, 100%); padding:14px 16px 12px;
+  background:linear-gradient(180deg,rgba(26,22,19,.98),rgba(12,10,9,.98));
+  border:1px solid var(--brass-dim);
+  box-shadow:inset 0 0 0 1px rgba(246,239,227,.10), 0 14px 40px rgba(0,0,0,.6);
+}
+#talk .thead{display:flex; align-items:center; gap:10px; margin-bottom:9px}
+#talk .thead canvas{
+  width:36px; height:36px; image-rendering:pixelated;
+  border:1px solid var(--edge); background:rgba(0,0,0,.35);
+}
+#talk .thead b{
+  font-family:var(--display); font-size:14px; letter-spacing:.14em;
+  color:var(--brass); font-weight:600;
+}
+#talkbody{
+  margin:0 0 12px; font-family:var(--serif); font-size:13px; line-height:1.85;
+  color:#f0d9a8; text-wrap:pretty;
+}
+#talk .tbtns{display:flex; gap:8px}
+#talk .tbtns button{
+  flex:1; min-height:42px; padding:9px 10px; cursor:pointer;
+  font-family:var(--display); font-size:13.5px; letter-spacing:.12em;
+  color:var(--parch); background:rgba(10,8,7,.7); border:1px solid var(--edge);
+}
+#talkyes{color:#f6efe3; background:rgba(106,143,74,.24); border-color:var(--moss)}
+#talkyes:hover{background:rgba(106,143,74,.36)}
+#talkno:hover{background:rgba(255,255,255,.06)}
+/* 鍵盤選到的那一顆。手機上用不到，但桌機沒有它就不知道 Enter 會按到哪一個 */
+#talk .tbtns button.sel{outline:2px solid var(--brass); outline-offset:1px}
+#talk .thint{
+  margin-top:8px; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  color:var(--parch-dim); text-align:center;
+}
 
 /* ── 村莊 ──
    刻意跟地牢完全相反：暖色、有爐火、沒有暈影。
@@ -831,19 +922,19 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #vfolk canvas:nth-child(odd){animation:bob 3.1s ease-in-out infinite}
 #vfolk canvas:nth-child(even){animation:bob 2.6s ease-in-out infinite .4s}
 .vhead em{
-  font-style:normal; font-family:var(--mono); font-size:10px;
+  font-style:normal; font-family:var(--display); font-size:10px;
   letter-spacing:.5em; text-indent:.5em; color:var(--brass);
 }
 .vhead h3{
-  margin:2px 0 4px; font-family:var(--serif); font-size:clamp(22px,5.5vw,32px);
+  margin:2px 0 4px; font-family:var(--display); font-size:clamp(22px,5.5vw,32px);
   letter-spacing:.22em; text-indent:.22em; color:#f6efe3; font-weight:600;
   text-shadow:0 0 22px rgba(217,119,87,.5);
 }
-.vhead p{margin:0; font-size:12.5px; color:#cbbca0; line-height:1.7}
+.vhead p{margin:0; font-family:var(--serif); font-size:12.5px; color:#cbbca0; line-height:1.7}
 /* 村民說的話。用引號與縮排跟系統訊息分開 —— 這一行是「有人對你說話」，
    不是「遊戲告訴你狀態」，兩者混在一起村莊就只是個結算畫面。 */
 #vtalk{
-  margin-top:8px; max-width:32ch; font-size:12.5px; line-height:1.8;
+  margin-top:8px; font-family:var(--serif); max-width:32ch; font-size:12.5px; line-height:1.8;
   color:#f0d9a8; border-left:2px solid var(--brass-dim); padding-left:10px;
   text-align:left;
 }
@@ -902,7 +993,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 /* 行高一定要寫。#screenwrap 是 line-height:0（為了讓畫布沒有基線空隙），
    而 #over 在它裡面 —— 沒寫的話標題兩行會疊在一起，
    截圖裡「You hav[M]become the」就是這樣來的。 */
-#over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px;
+#over h3{font-family:var(--display); font-size:22px; letter-spacing:.2em; margin:0 0 10px;
          color:var(--blood); line-height:1.35}
 #over p{margin:0 0 16px; font-size:13px; color:var(--parch-dim); line-height:1.7}
 /* ── 結局：一段一段浮上來再散掉 ──────────────────────────────
@@ -1044,21 +1135,18 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #menu #keys button{flex:1 1 44%; min-height:46px}
   #menu #rail{border:0; flex:1}
 
-  /* 畫面下方一行最新訊息 —— 不必開選單也知道剛才發生什麼 */
-  /* 高度寫死：訊息一進來就長高的話，畫布的高度計算會晚一步，
-     結果第一行訊息永遠被螢幕底端切掉。 */
-  #ticker{
-    display:block; padding:4px 12px; background:var(--panel); box-sizing:border-box;
-    border-top:1px solid var(--hair); font-size:11.5px; line-height:15px; height:24px;
-    color:var(--parch-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  #ticker.good{color:var(--moss)} #ticker.bad{color:var(--blood)} #ticker.gold{color:var(--brass)}
+  /* 手機版原本在畫面最底下留一行「最新訊息」。訊息視窗接手之後
+     那一行就是同一句話講兩次，而且兩個一上一下，眼睛不知道該看哪一個。
+     留著元素（版面高度的計算讀它的 offsetHeight），但不再顯示。 */
 
   #screenwrap{padding-bottom:162px; background:#0a0908; --padh:162px}
   #vig{bottom:162px}
   #cross{bottom:8px; left:12px}
   #ab{bottom:20px; right:14px}
-  #card, #hint{bottom:162px}
+  #card{bottom:162px}
+  /* 提示往上抬，讓開訊息視窗那一條。它是浮在場上的一次性提示，
+     訊息視窗是常駐的閱讀面 —— 讓開的該是前者。 */
+  #hint{bottom:250px}
   /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
   #panel, #over, #aim, #bigmap{bottom:162px}
   #card{top:0}
@@ -1230,6 +1318,23 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
            訊息本來就都有（say()），差的是它們出現在哪裡 —— 原本在畫面外
            的側欄與底下那一行，眼睛得離開場上才讀得到。 -->
       <div id="msgwin" aria-live="polite"></div>
+      <!-- 對話：目前只有迷路的村民用得到，但它是通用的「有人對你說話，
+           而你要回答」的框。使用者：「護送村人，應該會需要和村人對話，
+           主角可以選擇同意或不同意」。 -->
+      <div id="talk" role="dialog" aria-modal="true">
+        <div class="tbox">
+          <div class="thead">
+            <canvas id="talkface" width="32" height="32" aria-hidden="true"></canvas>
+            <b id="talkwho"></b>
+          </div>
+          <p id="talkbody"></p>
+          <div class="tbtns">
+            <button id="talkyes"></button>
+            <button id="talkno"></button>
+          </div>
+          <div class="thint" id="talkhint"></div>
+        </div>
+      </div>
       <div id="card"><b id="cardf">B1F</b><em id="cardz">苔濕迴廊</em><i id="cards">MOSSFALL GALLERY</i></div>
       <div id="hint">十字鍵走　·　中央<b>長按休息</b>　·　<b>A</b> 確定　<b>B</b> 取消　<b>S</b> 技能</div>
       <div id="over">
@@ -2853,8 +2958,14 @@ v.towersurf|the temple above ground - where it begins|ちじょうの しんで�
 v.towerwide|the deepest hall - cross it and find the door that leads up|さいしんぶの ひろま —— よこぎって うえへの とびらを さがせ
 v.towerdown|still below ground, heading down|まだ ちか、したへ
 k.npc|Lost villager|まいごの むらびと
-m.npcmet|"Thank goodness... someone came." The lost villager follows you.|「よかった…… だれか きた」まいごの むらびとが ついてくる。
-m.npcask|Take them back to the village - they will get hurt on the way, so heal them with a herb.|むらまで つれて かえろう —— みちで きずつくから、くさで てあてを。
+m.npcmet|The villager sticks close behind you - from now on they will not leave your side.|むらびとが ぴったりと ついてくる —— これから はなれない。
+m.npcask|Take them back to the village. They will get hurt on the way - step into them to heal with a herb.|むらまで つれて かえろう。みちで きずつく —— ぶつかれば くすりぐさで てあてする。
+m.npcno|"...I see. I will wait a little longer, then." The villager stays where they are.|「…… そうか。もうすこし まつよ」むらびとは そのばに のこった。
+t.hint|LEFT RIGHT to choose - ENTER to confirm - ESC to decline|←→ えらぶ　ENTER けってい　ESC やめる
+t.npc.ask|"Thank goodness, someone came... I have been lost a long time. Could you take me back to the village? I will fight alongside you, but I am not strong - if I get hurt, please heal me with a herb."|「よかった、だれか きた…… ずっと まよっていたんだ。むらまで つれて いって くれないか。たたかいは てつだうが ちからは ない —— きずついたら、くすりぐさで たすけて ほしい」
+t.npc.again|"...Have you changed your mind? I still cannot find my way out."|「…… きが かわった？ ぼくは まだ でられないんだ」
+t.npc.yes|Yes, come with me|いいとも、ついてこい
+t.npc.no|Sorry, I cannot|わるいが、むりだ
 m.npcok|The villager still looks steady.|むらびとは まだ だいじょうぶそうだ。
 m.npchit|The villager swings - {v0} takes {v1} damage.|むらびとが なぐった —— {v0} に {v1} の ダメージ。
 m.npchurt|{v0} strikes the villager! ({a}/{b})|{v0} が むらびとを うった！（{a}/{b}）
@@ -6129,8 +6240,9 @@ let G = null;
 const KIND = {herb:HERB, scroll:SCROLL, wand:WAND, pot:POT};
 
 function newGame(seed){
-  // 新的一趟：把上一趟殘留的訊息視窗收掉（讀檔與重新開始都走這裡）
+  // 新的一趟：把上一趟殘留的訊息視窗與對話框收掉（讀檔與重新開始都走這裡）
   if(typeof clearMsgWin === 'function') clearMsgWin();
+  if(typeof closeTalk === 'function') closeTalk();
   const rng = RNG(seed);
   // 外觀映射每局重洗 —— 跨局不繼承是鑑定機制存活的前提
   const look = {};
@@ -7149,6 +7261,11 @@ function startHurtPose(o, fromX, fromY, dur){
 /* ─── 玩家行動 ─────────────────────────────────────────────── */
 function tryMove(dx,dy){
   if(G.over) return;
+  /* 有人在等你回答，這一步不算。守在 tryMove 而不是只守在按鍵處理裡 ——
+     玩家的移動有好幾個入口（鍵盤、虛擬手把、畫面上的方向鍵，以後還會有），
+     而漏掉任何一個都不會報錯，只會讓玩家在回答問題的時候走進怪堆裡。
+     這裡是所有入口的匯流點，守這裡才守得完。 */
+  if(talkOpen()) return;
   const p=G.p;
   if(p.st['睡']||p.st['麻']){ say(TX('s.002','身體動不了……'),'bad'); endTurn(); return; }
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
@@ -7160,11 +7277,14 @@ function tryMove(dx,dy){
   const npcHit = npcAt(nx,ny);
   if(npcHit){
     if(!npcHit.follow){
-      npcHit.follow = 1;
-      SFX.play('ident');
-      say(TX('m.npcmet','「太好了……有人來了。」迷路的村民跟在你身後。'),'gold');
-      say(TX('m.npcask','把他帶回村莊 —— 路上他會受傷，用回復草替他治療。'),'gold');
-      return;                       // 這一下只是「打招呼」，人不動
+      /* 走過去 = 跟他說話，然後**由玩家決定**要不要帶他走。
+         舊版是撞一下就自動變成護送 —— 那不是選擇，那是踩到機關，
+         而這整段劇情的意義就在於它可以拒絕（規格第一行就寫著
+         「主角不救也可以」）。沒有那顆「不同意」的按鈕，
+         「可以不救」這件事在畫面上根本不存在。
+         拒絕之後他還站在那裡，再走過去可以再問一次 —— 反悔不該有代價。 */
+      askVillager(npcHit);
+      return;                       // 這一下只是「說話」，人不動、回合不推進
     } else if(npcHit.hp < npcHit.mhp && p.inv.some(i => i.cat === 'herb' && i.d.hp > 0)){
       healNpc(); return;
     } else {
@@ -9319,6 +9439,32 @@ function spawnNpc(rng, free){
 }
 const npcAt = (x,y) => (G.npc && G.npc.hp > 0 && G.npc.x === x && G.npc.y === y) ? G.npc : null;
 
+/* 跟村民說話。同意就開始護送，不同意他就繼續站在那裡等 ——
+   再走過去可以再問一次。第一次問跟後來再問講的話不一樣：
+   同一句話問第二次，玩家會以為自己按錯了。 */
+function askVillager(n){
+  SFX.play('open');
+  openTalk({
+    who: TX('k.npc','迷路的村民'),
+    art: npcArt(),
+    body: n.asked
+      ? TX('t.npc.again','「……你改變主意了嗎？我還是走不出去。」')
+      : TX('t.npc.ask','「太好了，有人來了……我迷路很久了。能不能帶我回村莊？路上我會幫你打，但我沒什麼力氣 —— 要是受傷了，請用回復草救我。」'),
+    yes: TX('t.npc.yes','好，跟我走'),
+    no:  TX('t.npc.no','抱歉，不行'),
+    onYes(){
+      n.follow = 1; n.asked = 1;
+      SFX.play('ident');
+      say(TX('m.npcmet','村民緊緊跟在你身後 —— 從現在起他不會離開你身邊。'),'gold');
+      say(TX('m.npcask','把他帶回村莊。路上他會受傷，走到他身上就會用回復草替他治療。'),'gold');
+    },
+    onNo(){
+      n.asked = 1;
+      say(TX('m.npcno','「……這樣啊。那我再等等吧。」村民留在原地。'),'');
+    },
+  });
+}
+
 /* 村民的一回合：跟著走、順手打一下擋路的怪。
    攻擊力刻意很低（打得動但打不死）—— 他是要被保護的人，
    不是一隻免費的幻獸。使用者要的是「也會幫忙攻擊怪獸」，那是氣氛不是輸出。 */
@@ -9342,18 +9488,63 @@ function npcTurn(){
      但速度只有每十回合一點 —— 靠拖時間回滿要一百回合，
      那比走完一層還久，所以它不會取代「用草治療」。 */
   if(!visibleMons().length && n.hp < n.mhp && G.turn % 10 === 0) n.hp++;
-  const far = Math.max(Math.abs(p.x-n.x), Math.abs(p.y-n.y));
-  if(far <= 1) return;
-  let bs = -1e9, bdir = null;
-  for(const d of DIRS){
-    const nx = n.x+d[0], ny = n.y+d[1];
-    if(!walkable(nx,ny) || monAt(nx,ny) || allyAt(nx,ny)) continue;
-    if(nx===p.x && ny===p.y) continue;
-    if(!cornerOK(n.x,n.y,nx,ny)) continue;
-    const sc = -Math.max(Math.abs(nx-p.x), Math.abs(ny-p.y));
-    if(sc > bs){ bs = sc; bdir = d; }
+  /* 使用者：「按同意的話，就會牢牢的跟著主角，不會亂跑」。
+     舊版是貪心走一步：挑周圍八格裡離玩家最近的那一格。
+     那在開闊的房間裡沒問題，在地牢裡會出事 —— 凹角、L 型走廊、
+     繞過一根柱子，貪心都會卡住：離玩家最近的那一格是一面牆，
+     而他會在原地左右來回，直到玩家走遠、他徹底掉隊。
+
+     改成真的找路（BFS），而且落後兩格以上時一回合走兩步追上來。
+     追上來這件事一定要有：他一回合走一步、玩家也一回合走一步，
+     所以只要卡住一次就永遠差那一步，而「差一步」持續三十回合
+     就是玩家眼中的「他不見了」。 */
+  for(let step = 0; step < 2; step++){
+    const far = Math.max(Math.abs(p.x-n.x), Math.abs(p.y-n.y));
+    if(far <= 1) return;                       // 貼在旁邊就停下來，不要擠玩家
+    const d = npcStep(n, p);
+    if(!d) return;
+    G.anim.push({o:n, fx:n.x, fy:n.y, t:0, kind:'walk'});
+    n.x += d[0]; n.y += d[1]; faceActor(n, d[0], d[1]);
   }
-  if(bdir){ G.anim.push({o:n, fx:n.x, fy:n.y, t:0, kind:'walk'}); n.x += bdir[0]; n.y += bdir[1]; faceActor(n,bdir[0],bdir[1]); }
+}
+/* 從村民走到玩家的第一步。廣度優先，用的是**玩家真正的移動規則**
+   （八方向 + 牆角規則）—— 用別的規則找出來的路，村民會走進他其實
+   過不去的地方，然後卡在那裡。
+   上限 400 格：地圖是 30x30，找不到就是真的到不了，
+   而沒有上限的迴圈在「玩家跟他被門隔開」的時候會掃完整張圖。 */
+function npcStep(n, p){
+  const from = new Map(), q = [[n.x, n.y]];
+  from.set(key(n.x, n.y), null);
+  for(let h = 0; h < q.length && h < 400; h++){
+    const [cx, cy] = q[h];
+    for(const d of DIRS){
+      const nx = cx + d[0], ny = cy + d[1];
+      const k = key(nx, ny);
+      if(from.has(k)) continue;
+      if(nx === p.x && ny === p.y){
+        /* 到了 —— 從這裡一路回推到「起點的下一格」，那一格就是這一步。
+           回推要停在 prev 等於起點的時候，不是停在 prev 為 null 的時候：
+           null 代表 cur 已經是起點本身，那時候回傳的是 [0,0] ——
+           一個看起來完全合法、而且會讓村民原地不動的方向。
+           （第一版就是這樣寫的，村民一步都沒走，而且沒有任何錯誤；
+             是「走一百步量距離」那條測試把它照出來的。） */
+        let cur = [cx, cy];
+        for(let g = 0; g < 900; g++){
+          const prev = from.get(key(cur[0], cur[1]));
+          if(!prev) return null;                       // cur 就是起點：走不了
+          if(prev[0] === n.x && prev[1] === n.y)
+            return [cur[0] - n.x, cur[1] - n.y];
+          cur = prev;
+        }
+        return null;
+      }
+      if(!walkable(nx, ny) || monAt(nx, ny) || allyAt(nx, ny)) continue;
+      if(!cornerOK(cx, cy, nx, ny)) continue;
+      from.set(k, [cx, cy]);
+      q.push([nx, ny]);
+    }
+  }
+  return null;
 }
 
 function hurtNpc(dmg, who){
@@ -9865,7 +10056,7 @@ const BGM = (()=>{
     }),
     // 試煉的山道：C–G–Am–F 大調。開闊、明亮，濾波拉高 —— 這裡的光來自天空。
     mountain: T_({
-      bpm:124, cut:3200, bass:[0,4,8,12],
+      bpm:124, cut:3200, lvol:.078, avol:.050, bass:[0,4,8,12],   // 尖峰貼到 -1.1，留一點餘裕
       root:[48,43,45,41],
       chord:[[55,60,64],[55,59,62],[57,60,64],[53,57,60]],
       lead:[
@@ -9917,7 +10108,10 @@ const BGM = (()=>{
     /* 幻忍之里／平安京：都節音階（D-E♭-G-A-B♭）。
        那個半音 + 完全四度的組合是「日本」在音樂上唯一不需要解釋的記號。 */
     wood: T_({
-      bpm:92, wave:'triangle', cut:2600, lvol:.095,
+      // lvol 從 .095 降到 .080：逐首量音量之後，這一首的尖峰是 -0.8 dBFS，
+      // 已經在削波。三聲部同時發音的時候會疊在一起，而這一首的低音只有
+      // 兩顆（第 0、8 步），剛好每一顆都跟旋律的重拍撞在一起。
+      bpm:92, wave:'triangle', cut:2600, lvol:.080, avol:.048,
       bass:[0,8], hat:[4,12], kick:[0,8],
       root:[50,46,48,50],
       chord:[[62,67,69],[58,62,67],[60,64,67],[62,67,69]],
@@ -10281,7 +10475,7 @@ const BGM = (()=>{
      旋律是同一個三音動機半音往上爬，爬完又掉回原點。
      沒有進行、沒有到達，只有等待。走出這一層才會停。 */
   TRACKS.hall = T_({
-    bpm:144, wave:'square', pad:'triangle', cut:1900, lvol:.08, avol:.042,
+    bpm:144, wave:'square', pad:'triangle', cut:1900, lvol:.070, avol:.036,   // 同上，尖峰貼到 -1.0
     bass:[0,2,4,6,8,10,12,14],                 // 八分踏板音，一路不換
     hat:[3,7,11,15], kick:[0,4,8,12],
     root:[50,50,50,50],                        // D 踩到底
@@ -12139,13 +12333,6 @@ function refresh(){
   $('eqp').textContent = !VILLAGE.pocket.open ? M('p.pocketat','等級 {n} 取得',{n:POCKET_LV})
     : (VILLAGE.pocket.item ? defNm(VILLAGE.pocket.item) : TX('ui.empty','（空）'));
 
-  const last = G.log[G.log.length-1];
-  const tk = $('ticker');
-  if(tk && last){
-    tk.textContent = last.n>1 ? `${last.txt} ×${last.n}` : last.txt;
-    tk.className = last.cls || '';
-  }
-
   const lg = $('log'); lg.innerHTML='';
   for(const m of G.log.slice(-12)){
     const d=document.createElement('div');
@@ -12156,6 +12343,64 @@ function refresh(){
   drawMini();
   if(panelMode) renderPanel();
 }
+
+/* ─── 對話框 ────────────────────────────────────────────────
+   有人對你說話，而遊戲要等你回答。開著的時候方向鍵不走路、
+   回合不推進 —— 那正是「對話」與「訊息」的差別。
+
+   做成通用的 (who, body, yes, no, onYes, onNo)：目前只有迷路的村民
+   用得到，但使用者接下來要的「隨機出現的拯救或解謎」也是同一個形狀，
+   到時候不必再發明一次。 */
+let talkNow = null, talkSel = 0;
+function openTalk(o){
+  const el = $('talk'); if(!el) return;
+  talkNow = o; talkSel = 0;
+  $('talkwho').textContent = o.who;
+  $('talkbody').textContent = o.body;
+  $('talkyes').textContent = o.yes;
+  $('talkno').textContent = o.no;
+  $('talkhint').textContent = TX('t.hint','← → 選擇　Enter 確定　Esc 取消');
+  // 頭像：用場上那一隻的同一張圖，玩家才知道「是他在說話」
+  const fc = $('talkface');
+  if(fc && fc.getContext && o.art){
+    const x = fc.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.clearRect(0,0,fc.width,fc.height);
+    x.drawImage(o.art, 0, 0, fc.width, fc.height);
+  }
+  paintTalkSel();
+  el.classList.add('on');
+  SFX.play('open');
+}
+function paintTalkSel(){
+  const b = [$('talkyes'), $('talkno')];
+  b.forEach((e,i)=>{ if(e) e.classList.toggle('sel', i === talkSel); });
+}
+function closeTalk(){
+  talkNow = null;
+  const el = $('talk'); if(el) el.classList.remove('on');
+}
+/* 回答。answer(true) = 同意。兩條路都會關掉對話框並重畫 ——
+   忘了重畫的話，村民已經開始跟了但畫面上還是舊的一幀。 */
+function answerTalk(yes){
+  const o = talkNow;
+  if(!o) return;
+  closeTalk();
+  if(yes && o.onYes) o.onYes();
+  else if(!yes && o.onNo) o.onNo();
+  refresh();
+}
+const talkOpen = () => !!talkNow;
+/* 兩顆按鈕。滑鼠移過去也把選取移過去 —— 不然鍵盤的框停在「同意」上，
+   而滑鼠點的是「不同意」，畫面上會有兩個看起來都被選中的東西。 */
+(function bindTalk(){
+  const y = $('talkyes'), n = $('talkno');
+  if(!y || !n) return;
+  y.onclick = ()=> answerTalk(true);
+  n.onclick = ()=> answerTalk(false);
+  y.onmouseenter = ()=>{ talkSel = 0; paintTalkSel(); };
+  n.onmouseenter = ()=>{ talkSel = 1; paintTalkSel(); };
+})();
 
 /* ─── 訊息視窗 ──────────────────────────────────────────────
    《特魯內克大冒險》那種跳出來的對話框。內容跟側欄的紀錄完全一樣，
@@ -12887,6 +13132,7 @@ function cancelAim(){
   closeAim(); say(TX('s.121','取消了。')); refresh();
 }
 function handleDir(dx,dy){
+  if(talkOpen()) return;          // 有人在等你回答，這一步不算
   if(pendAbil){ closeAim(); fireAbil(dx,dy); return; }
   if(pendSpell){ closeAim(); fireSpell(dx,dy); return; }
   if(pendWand){ closeAim(); fireWand(dx,dy); return; }
@@ -12913,6 +13159,20 @@ addEventListener('keydown', ev=>{
   if(!G || coverUp) return;
   if(ev.target.tagName==='INPUT') return;
   const k = ev.key;
+  /* 對話框開著的時候，鍵盤只做三件事：左右換選項、Enter 確定、Esc 取消。
+     這一段必須排在方向鍵之前 —— 排在後面的話，玩家一按左右
+     角色就先走掉了，而他正在回答一個問題。 */
+  if(talkOpen()){
+    ev.preventDefault();
+    if(k==='ArrowLeft'||k==='ArrowRight'||k==='a'||k==='d'||k==='Tab'){
+      talkSel = 1 - talkSel; paintTalkSel(); SFX.play('move'); return;
+    }
+    if(k==='Enter'||k===' '){ answerTalk(talkSel === 0); return; }
+    if(k==='Escape'){ answerTalk(false); return; }
+    if(k==='y'||k==='Y'){ answerTalk(true); return; }
+    if(k==='n'||k==='N'){ answerTalk(false); return; }
+    return;
+  }
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
   if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
@@ -12935,7 +13195,7 @@ addEventListener('keydown', ev=>{
   if(k==='>'||k==='.'){ descend(); return; }
 });
 document.querySelectorAll('[data-dir]').forEach(b=>{
-  b.onclick = ()=>{ if(G&&!G.over&&!coverUp){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
+  b.onclick = ()=>{ if(G&&!G.over&&!coverUp&&!talkOpen()){ const [x,y]=b.dataset.dir.split(',').map(Number); handleDir(x,y); } };
 });
 
 /* B 鍵的行為由手把區塊實作，但鍵盤也要能用，所以宣告在外層 */
@@ -12950,7 +13210,7 @@ let pressB = ()=>{};
   let timer = null, held = null;
 
   // 打開大地圖或站在村莊裡時，方向鍵不該還在讓角色走路
-  const live = ()=> G && !G.over && !coverUp
+  const live = ()=> G && !G.over && !coverUp && !talkOpen()
     && !$('bigmap').classList.contains('show')
     && !$('village').classList.contains('show');
   function step(dir){
@@ -13309,7 +13569,7 @@ function leaveDungeon(){
   openVillage();
 }
 function openVillage(){
-  clearMsgWin();          // 上一趟最後一句不該浮在村莊上
+  closeTalk(); clearMsgWin();          // 上一趟最後一句不該浮在村莊上
   renderVillage();
   BGM.force('village');
   $('village').classList.add('show');
