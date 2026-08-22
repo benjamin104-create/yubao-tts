@@ -112,6 +112,60 @@ def main():
             if fails or over > 2:
                 bad += 1
 
+            # 訊息視窗（特魯內克那種跳出來的對話框）真的看得到嗎。
+            #
+            # 它不能列進 MUST_SEE：安靜四秒它就自己收起來了，
+            # 而「該在的時候在」跟「一直都在」是兩件不同的事。
+            #
+            # 這一條抓過的 bug 很具體：視窗貼在機殼下緣，而虛擬手把
+            # 是 z-index 20 的絕對定位 —— 三行字整段被十字鍵壓在底下，
+            # 沒有錯誤、沒有警告，只是玩家永遠讀不到「哪一隻在打你」。
+            mw = pg.evaluate("""()=>{
+              say('大老鼠 的攻擊！　主角 受到 6 點傷害。','bad');
+              say('主角 的攻擊！　大老鼠 倒下了。','good');
+              say('撿到了 回復草。');
+              refresh();
+              const e = document.getElementById('msgwin');
+              if(!e) return {ok:false, why:'找不到訊息視窗'};
+              const cs = getComputedStyle(e);
+              if(cs.display === 'none') return {ok:false, why:'有訊息卻沒有顯示'};
+              const r = e.getBoundingClientRect();
+              if(r.width < 40 || r.height < 10)
+                return {ok:false, why:'尺寸太小 ' + Math.round(r.width) + 'x' + Math.round(r.height)};
+              if(r.bottom > innerHeight + 1 || r.top < -1)
+                return {ok:false, why:'超出視窗 top ' + Math.round(r.top) +
+                                      ' bottom ' + Math.round(r.bottom) + ' / ' + innerHeight};
+              /* 三個取樣點都要真的看得到 —— 只驗中心的話，被手把蓋掉半邊
+                 仍然會過，而被蓋掉的那半邊正好是最舊的那一行。
+
+                 量之前要先把 pointer-events 打開：訊息視窗本身是
+                 pointer-events:none（它不該擋住點地圖），而
+                 elementFromPoint 會直接穿過那種元素，回報底下的畫布 ——
+                 於是「沒有被蓋住」也會被判成被畫布蓋住。
+                 打開之後回報的才是真正畫在它**上面**的東西。 */
+              const pe = e.style.pointerEvents;
+              e.style.pointerEvents = 'auto';
+              let bad = null;
+              for(const fx of [0.15, 0.5, 0.85]){
+                const px = r.left + r.width * fx, py = r.top + r.height / 2;
+                const hit = document.elementFromPoint(px, py);
+                if(!hit || !(e.contains(hit) || hit.contains(e))){
+                  bad = '被蓋住（x ' + Math.round(fx*100) + '%）：' +
+                        (hit ? (hit.id ? '#'+hit.id : hit.className || hit.tagName) : 'null');
+                  break;
+                }
+              }
+              e.style.pointerEvents = pe;
+              if(bad) return {ok:false, why:bad};
+              // 三行都要在
+              if(e.childElementCount !== 3)
+                return {ok:false, why:'只有 ' + e.childElementCount + ' 行'};
+              return {ok:true};
+            }""")
+            if not mw['ok']:
+                print('     %-10s %s' % ('#msgwin', mw['why']))
+                bad += 1
+
             # 背包圖示的畫布不能比來源的圖小。
             #
             # CSS 把那些畫布顯示成 24~34 px，但畫布本身一直是 16x16。

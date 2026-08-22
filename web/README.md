@@ -18,7 +18,7 @@ Godot 專案（`../godot/`）仍是完整系統的來源；這一版是**可直�
 正式遊戲網址後加查詢參數即可直達，不會寫入村莊金錢、章節或正式存檔：
 
 - `?qa=menu`：全部章節入口／中段／章末，以及每隻頭目的總表
-- `?qa=village&act=0`：村莊與鐵匠鋪；`act=5`、`act=10` 可看中、後期聚落
+- `?qa=village&act=0`：村莊與鐵匠鋪；`act=5`、`act=10`、`act=14` 可看中期、後期與塔腳聚落
 - `?qa=gallery&type=mon`：全部怪物美術圖鑑
 - `?qa=gallery&type=boss`：全部頭目美術圖鑑
 - `?qa=floor&act=forest&floor=4&seed=260822`：指定章節與樓層

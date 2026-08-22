@@ -35,16 +35,35 @@ t('每一首曲子的四個小節都寫滿了', ()=>{
   }
 });
 
+/* 鼓與低音的編排有兩種形狀：一整首共用一組步數，或四小節各一組
+   （詠嘆調用的 —— 前兩小節不進伴奏）。兩種都要驗，而且要驗到底層的數字，
+   不能只驗最外層是不是陣列：巢狀的那一種如果只看外層，
+   裡面塞了什麼都會過。 */
+const steps = lane => !lane ? []
+  : Array.isArray(lane[0]) ? [].concat.apply([], lane) : lane;
+
 t('所有音符都落在一小節之內、音高在可聽範圍', ()=>{
   for(const id in TRACKS){
     const tr = TRACKS[id];
-    for(const bar of tr.lead) for(const [s, n, d] of bar){
+    for(const bar of tr.lead) for(const [s, n, d, gl, vb] of bar){
       assert(s >= 0 && s < 16, id + ' 有音符起點在小節外：' + s);
       assert(d >= 1 && s + d <= 24, id + ' 有音符長度異常：' + s + '+' + d);
       assert(n >= 36 && n <= 96, id + ' 的音高離譜：' + n);
+      // 滑音的目標也是一個音高，一樣會被送進振盪器 —— 打錯字的話
+      // 那一顆會滑到聽不見的地方，而且不會報錯，只會忽然消失一顆音
+      if(gl !== undefined && gl !== 0)
+        assert(gl >= 36 && gl <= 96, id + ' 的滑音目標離譜：' + gl);
+      if(vb !== undefined)
+        assert(vb >= 0 && vb <= 100, id + ' 的顫音深度離譜：' + vb + ' 音分');
     }
-    for(const k of tr.bass.concat(tr.hat, tr.kick))
-      assert(k >= 0 && k < 16, id + ' 有鼓點落在小節外：' + k);
+    for(const lane of ['bass','hat','kick','tom','arp']){
+      if(!tr[lane]) continue;
+      if(Array.isArray(tr[lane][0]))
+        assert.strictEqual(tr[lane].length, 4,
+          id + ' 的 ' + lane + ' 分小節寫但不是四小節');
+      for(const k of steps(tr[lane]))
+        assert(k >= 0 && k < 16, id + ' 的 ' + lane + ' 有步數落在小節外：' + k);
+    }
     assert(tr.bpm >= 60 && tr.bpm <= 160, id + ' 的速度異常：' + tr.bpm);
   }
 });
@@ -75,7 +94,8 @@ t('鏡像世界的曲子真的是礦坑主題的倒影', ()=>{
 t('每一首的鼓組編排都不一樣（不然只是換了音高的同一首）', ()=>{
   const sig = id => {
     const tr = TRACKS[id];
-    return [tr.bpm, tr.bass.join(','), tr.hat.join(','), tr.kick.join(',')].join('|');
+    return [tr.bpm, steps(tr.bass).join(','), steps(tr.hat).join(','),
+            steps(tr.kick).join(','), steps(tr.tom).join(',')].join('|');
   };
   const seen = new Map();
   for(const id in TRACKS){
@@ -83,6 +103,98 @@ t('每一首的鼓組編排都不一樣（不然只是換了音高的同一首�
     if(seen.has(s)) throw new Error(id + ' 跟 ' + seen.get(s) + ' 的速度與鼓組完全一樣');
     seen.set(s, id);
   }
+});
+
+/* ═══ 參考曲的語彙 ═══════════════════════════════════════════
+   使用者點名了幾組參考（《深入地心》、神祕森林、中亞／巴比倫、
+   《第五元素》的女伶）。抄旋律是不行的 —— 那是別人的著作；
+   抄的是語彙：哪個音階、低音怎麼動、和弦怎麼疊。
+
+   而「語彙」正是那種改壞了不會報錯的東西：把增二度改掉、把增三和弦
+   改成大三和弦，曲子照樣播得出來、四小節照樣寫滿，只是它不再像那個地方。
+   所以每一項都寫成一條可以量的斷言。 */
+const PC = n => ((n % 12) + 12) % 12;
+
+t('神殿與通天塔用的是 Hijaz（中亞／巴比倫的那個增二度）', ()=>{
+  // D Hijaz：D E♭ F♯ G A B♭ C = 音級 2,3,6,7,9,10,0
+  const HIJAZ = new Set([2,3,6,7,9,10,0]);
+  for(const id of ['temple','spire']){
+    const tr = TRACKS[id];
+    const bad = [];
+    for(const bar of tr.lead) for(const [,n,,gl] of bar){
+      if(!HIJAZ.has(PC(n))) bad.push(n);
+      if(gl && !HIJAZ.has(PC(gl))) bad.push(gl);
+    }
+    assert(!bad.length, id + ' 的旋律有音不在 Hijaz 上：' + bad.join('/'));
+    // 光是「音都在音階裡」還不夠 —— 那個增二度必須真的被走過，
+    // 不然整首可以只用 D 小調那幾個音，聽起來就不是那個地方了
+    let jump = false;
+    for(const bar of tr.lead) for(let i = 1; i < bar.length; i++)
+      if(Math.abs(bar[i][1] - bar[i-1][1]) === 3 &&
+         ((PC(bar[i][1]) === 6 && PC(bar[i-1][1]) === 3) ||
+          (PC(bar[i][1]) === 3 && PC(bar[i-1][1]) === 6))) jump = true;
+    assert(jump, id + ' 從頭到尾沒有走過 E♭–F♯ 那個增二度 —— 那是整個音階的簽名');
+  }
+});
+
+t('神殿是持續低音，通天塔的低音自己爬過那個增二度', ()=>{
+  assert(TRACKS.temple.drone, '神殿沒有持續低音 —— 低音一走動就變回西方和聲');
+  assert(new Set(TRACKS.temple.root).size === 1, '神殿的低音有在動');
+  const r = TRACKS.spire.root;
+  assert(!TRACKS.spire.drone, '通天塔不該是持續低音 —— 它要往上爬');
+  for(let i = 1; i < r.length; i++)
+    assert(r[i] > r[i-1], '通天塔的低音第 ' + i + ' 小節沒有往上：' + r.join(','));
+  assert(r.some((_, i) => i && r[i] - r[i-1] === 3),
+         '通天塔的低音沒有爬過增二度（' + r.join(',') + '）');
+});
+
+t('迷霧森林是全音音階 —— 沒有半音就沒有解決，那就是「神祕」', ()=>{
+  const tr = TRACKS.forest;
+  const WT = new Set([0,2,4,6,8,10]);
+  for(const bar of tr.lead) for(const [,n] of bar)
+    assert(WT.has(PC(n)), '森林的旋律有音不在全音階上：' + n);
+  for(const bar of tr.chord){
+    const iv = bar.map(n => PC(n - bar[0])).sort((a,b)=>a-b);
+    assert.deepStrictEqual(iv, [0,4,8],
+      '森林的和弦不是增三和弦（' + bar.join(',') + '）—— 大三和弦會把主音指出來');
+  }
+  for(let i = 1; i < tr.root.length; i++)
+    assert.strictEqual(tr.root[i] - tr.root[i-1], 2,
+      '森林的低音沒有照全音階一階一階走');
+});
+
+t('礦坑的和弦沒有三音，低音半音往下（往地底下去的聲音）', ()=>{
+  const tr = TRACKS.stone;
+  for(let i = 1; i < tr.root.length; i++)
+    assert.strictEqual(tr.root[i] - tr.root[i-1], -1,
+      '礦坑的低音沒有半音往下：' + tr.root.join(','));
+  for(const bar of tr.chord){
+    const iv = new Set(bar.map(n => PC(n - bar[0])));
+    assert(!iv.has(3) && !iv.has(4),
+      '礦坑的和弦裡有三音（' + bar.join(',') + '）—— 有了三音就有大小調，' +
+      '而這一章要的是「空」，不是「悲傷」');
+  }
+});
+
+t('人魚王后有自己的一首，而且前半讓開、後半才進伴奏', ()=>{
+  const q = api.BOSS.find(d => d.id === 'b_mermaid');
+  assert(q, '找不到人魚王后');
+  assert.strictEqual(q.bgm, 'diva', '人魚王后沒有指定自己的曲子');
+  assert(TRACKS[q.bgm], '指定了 ' + q.bgm + ' 但那首曲子不存在');
+  // 每一隻寫了 bgm 的都要指得到真的曲子（打錯字的話會安靜地退回通用頭目曲）
+  for(const d of api.BOSS)
+    if(d.bgm) assert(TRACKS[d.bgm], d.nm + ' 的 bgm 指向不存在的曲子：' + d.bgm);
+  const tr = TRACKS.diva;
+  assert(Array.isArray(tr.kick[0]), '詠嘆調的鼓沒有分小節寫 —— 伴奏就不會「後來才進來」');
+  assert.strictEqual(tr.kick[0].length, 0, '第一小節就有鼓了，聲音會被蓋住');
+  assert(tr.kick[3].length > tr.kick[1].length, '後半的鼓沒有比前半密');
+  // 前半是人聲（滑音＋顫音），後半是唱不出來的（不滑也不抖）
+  const has = (bar, idx) => TRACKS.diva.lead[bar].some(n => n[idx]);
+  assert(has(0,4) || has(1,4), '前半沒有顫音 —— 沒有顫音就不像有人在唱');
+  assert(has(0,3) || has(1,3), '前半沒有滑音 —— 那些滑上去的大跳是這一段的識別');
+  assert(!has(2,4) && !has(3,4), '後半還在抖 —— 後半要的是機器的準確度');
+  const fast = TRACKS.diva.lead[2].filter(n => n[2] === 1).length;
+  assert(fast >= 10, '後半只有 ' + fast + ' 顆十六分音符 —— 快不起來就沒有那個轉折');
 });
 
 /* 怪物之間的音樂：踏進大廳音樂繃緊，離開這一層才鬆開。
@@ -122,6 +234,42 @@ t('踏進怪物之間，音樂會切成緊張的那一首', ()=>{
     }
   }
   assert(found, '掃了六十顆種子都生不出怪物之間');
+  BGM.force(null);
+});
+
+/* 詠嘆調有沒有真的被叫出來。上面那一條只驗到「資料表上寫了 bgm」——
+   而這個專案最常見的失效方式正是「寫了但沒有人讀」：
+   bossWatch() 裡如果還是寫死 force('boss')，資料表那一行就完全沒有效果，
+   遊戲照跑、頭目照打，只是那一場放的是跟前面十五場一樣的鼓點。 */
+t('打到人魚王后時，音樂真的換成她的那一首', ()=>{
+  const BGM = api.BGM, V = api.VILLAGE();
+  const a = api.ACTS.findIndex(x => x.id === 'tower');
+  V.act = a; V.stock = []; V.pots = [];
+  api.newGame(4242);
+  const G = api.G();
+  G.act = a; G.floor = api.ACTS[a].floors; api.buildFloor();
+  const b = G.mons.find(m => m.d.boss);
+  assert(b && b.d.id === 'b_mermaid', '塔頂那一層沒有人魚王后');
+  BGM.force(null);
+  // 看見她 —— 觸發點是「看得見」，不是踏進房間
+  G.p.x = b.x + 1; G.p.y = b.y; api.vision();
+  api.bossWatch();
+  assert.strictEqual(BGM.forced, 'diva',
+    '看見人魚王后了，音樂還是 ' + BGM.forced);
+
+  // 對照組：沒有指定 bgm 的頭目照樣要放通用的那一首，
+  // 不然「全部頭目都變成詠嘆調」也會通過上面那一條
+  const m = api.ACTS.findIndex(x => x.id === 'mine');
+  V.act = m; api.newGame(4242);
+  const G2 = api.G();
+  G2.act = m; G2.floor = api.ACTS[m].floors; api.buildFloor();
+  const b2 = G2.mons.find(x => x.d.boss);
+  assert(b2, '礦坑那一層沒有頭目');
+  BGM.force(null);
+  G2.p.x = b2.x + 1; G2.p.y = b2.y; api.vision();
+  api.bossWatch();
+  assert.strictEqual(BGM.forced, 'boss',
+    '礦坑守衛放的是 ' + BGM.forced + ' —— 專屬曲子外洩到別的頭目身上了');
   BGM.force(null);
 });
 
