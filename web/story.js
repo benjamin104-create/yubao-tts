@@ -127,6 +127,112 @@ console.log('\n=== 神殿的平面（中軸、側室、台基） ===');
   ok(chambers >= N * 3, '側室的數量夠（共 ' + chambers + ' 間 / ' + N + ' 張）');
 }
 
+/* ═══ 神殿的佈景：石灰岩、柱面、陽光 ═══════════════════════════
+   使用者：「應該有柱面、有光影、外面有陽光灑進來」「神殿的佈景，
+   應該是更純白色、或是沙地廢墟感，有雕像、有柱面的感覺」
+   「可能會有窗或孔，讓陽光直射進來」。
+
+   這一整段講的是**看起來像什麼**，而看起來像什麼是最容易安靜壞掉的
+   —— 地貌表上打錯一個字，遊戲照跑，只是神殿又變回泥磚色的地牢。 */
+console.log('\n=== 神殿的佈景（石灰岩、柱面、陽光） ===');
+{
+  const th = api.THEMES ? api.THEMES.temple : null;
+  ok(!!th, '找得到神殿的地貌設定');
+  if(th){
+    // 石灰岩：色階要比泥磚亮。拿最亮的那一階跟礦坑比
+    const lum = ch => { const h = api.PAL[ch].slice(1);
+      return (parseInt(h.slice(0,2),16)*.3 + parseInt(h.slice(2,4),16)*.6
+            + parseInt(h.slice(4,6),16)*.1); };
+    const bright = r => lum(r[3]);
+    /* 亮度要比礦坑高 —— 但只比**最亮那一階**是不夠的：泥磚色階的
+       最亮階（#ecd3ae）其實比石灰岩還亮，暗的是它下面三階。
+       所以比的是四階的平均。 */
+    const avgLum = r => r.reduce((a, c) => a + lum(c), 0) / r.length;
+    ok(avgLum(th.ramp) > avgLum(api.THEMES.stone.ramp) + 15,
+       '神殿整體比礦坑亮（' + Math.round(avgLum(th.ramp)) + ' 對 ' +
+       Math.round(avgLum(api.THEMES.stone.ramp)) + '）');
+    /* 而且要是**石頭**不是泥土：石灰岩幾乎沒有彩度，泥磚是飽和的橙棕。
+       只驗亮度的話，把色階換成更亮的黃土仍然會過，而那看起來是沙丘，
+       不是使用者要的「純白色／沙地廢墟」。 */
+    const sat = ch => { const h = api.PAL[ch].slice(1);
+      const v = [0,2,4].map(i => parseInt(h.slice(i,i+2),16));
+      return Math.max(...v) - Math.min(...v); };
+    const avgSat = r => r.reduce((a, c) => a + sat(c), 0) / r.length;
+    ok(avgSat(th.ramp) < 30,
+       '石灰岩是灰的不是棕的（彩度 ' + Math.round(avgSat(th.ramp)) +
+       '，礦坑是 ' + Math.round(avgSat(api.THEMES.stone.ramp)) + '）');
+    // 色階要真的分得開，不然整章糊成一片
+    const gaps = [1,2,3].map(i => lum(th.ramp[i]) - lum(th.ramp[i-1]));
+    ok(gaps.every(g => g > 20), '四階拉得開（' + gaps.map(Math.round).join('/') + '）');
+    ok(th.wall === 'fluted', '牆是柱面（fluted），不是釉磚');
+    ok(th.floor === 'limestone', '地板是石灰岩，不是泥磚');
+    ok(!!th.sun, '有陽光的旗標');
+    ok(!!th.mark, '有雕像（守護獸像）');
+  }
+
+  const V3 = api.VILLAGE();
+  let withSun = 0, brighter = 0, onFloor = 0, floors = 0, rays2 = 0, headBright = 0;
+  for(const seed of [11, 22, 33, 44, 55, 66]){
+    for(const fl of [1, 2, 3]){
+      V3.act = 0; api.newGame(seed);
+      const g = api.G(); g.act = 0; g.floor = fl; api.buildFloor();
+      const L = g.f.litAt;
+      floors++;
+      if(!L || !L.size) continue;
+      withSun++;
+      /* 光只打在走得到的地板上。打在牆上的話那不是天窗，
+         是貼在牆上的一塊黃色 —— 而且它會讓玩家以為那裡有路。 */
+      let bad = 0;
+      for(const k of L.keys()) if(g.f.t[k] === 0) bad++;
+      if(!bad) onFloor++;
+      /* 前庭（露天）要比內殿（只有一道天窗）亮。
+         那條由亮到暗的曲線就是「往神殿深處走」這件事本身 ——
+         反過來的話，玩家會覺得自己是從裡面往外走。 */
+      const avg = (y0, y1) => {
+        let sum = 0, n = 0;
+        for(let y = y0; y <= y1; y++) for(let x = 1; x < api.MW-1; x++){
+          const k = api.key(x, y);
+          if(g.f.t[k] === 0) continue;
+          sum += (L.get(k) || 0); n++;
+        }
+        return n ? sum / n : 0;
+      };
+      if(avg(23, 27) > avg(2, 8)) brighter++;
+      /* 每一道光柱自己也要由亮到暗：靠窗那一頭最亮，越往下越散。
+         反過來的話光是從地板長出來的，那不是天窗。
+         上面那一條比的是「前庭 vs 內殿」，比不到單一道光柱的方向 ——
+         前庭有三道、內殿只有一道，就算每一道都反過來，前庭還是比較亮。 */
+      for(const ray of g.f.rays){
+        const at = (yy, xx) => L.get(api.key(xx, yy)) || 0;
+        const head = at(ray.y,              ray.x + 1);
+        const tail = at(ray.y + ray.len - 1, ray.x + Math.round((ray.len-1)*0.5) + 1);
+        if(head > 0 && tail > 0){ rays2++; if(head > tail) headBright++; }
+      }
+    }
+  }
+  ok(floors === 18 && withSun === 18, '每一層都有陽光（' + withSun + '/' + floors + '）');
+  ok(onFloor === withSun, '光只打在走得到的地板上（' + onFloor + '/' + withSun + '）');
+  ok(brighter === withSun,
+     '前庭比內殿亮（' + brighter + '/' + withSun + ' 層）—— 越往裡走越暗');
+  ok(rays2 > 40 && headBright === rays2,
+     '每一道光柱都是靠窗那頭最亮（' + headBright + '/' + rays2 + ' 道）');
+}
+
+/* 別的章節沒有陽光。神殿是地面上的建築，那是它跟後面十六章最大的分野；
+   到處都有陽光的話，那個分野就消失了 —— 而且每一格會多跑一次查表。 */
+{
+  const V3 = api.VILLAGE();
+  let dark = 0, n = 0;
+  for(const id of ['mine', 'forest', 'gaol', 'hall', 'tower']){
+    const a = AI(id);
+    V3.act = a; api.newGame(99);
+    const g = api.G(); g.act = a; g.floor = 1; api.buildFloor();
+    n++;
+    if(!g.f.litAt || !g.f.litAt.size) dark++;
+  }
+  ok(dark === n, '神殿以外的章節沒有陽光（' + dark + '/' + n + '）');
+}
+
 /* 別的章節必須是平的。高低差的算圖只在「這一層有高低」時才跑 ——
    如果別的章節的 el 不小心也有值，那一段每一格會多跑四次查表，
    而且會在沒有台基的地方畫出立面與陰影。兩件事都不會報錯。 */
