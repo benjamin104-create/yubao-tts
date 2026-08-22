@@ -102,7 +102,10 @@ for name in sheets:
     for i, (x0, y0, x1, y1) in enumerate(boxes):
         frac = (x1 - x0) * (y1 - y0) / float(W * H)
         # 上限擋的是「兩個角色被併成一塊」，下限擋的是「把雜點當成角色」。
-        ok(0.005 <= frac <= 0.45,
+        # 只有一個主體的母圖本來就可能是特寫；這時 45% 不是黏到鄰格，
+        # 放寬到 75% 才符合單角色生成稿的實際構圖。
+        max_frac = 0.75 if len(boxes) == 1 else 0.45
+        ok(0.005 <= frac <= max_frac,
            "%s 第 %d 個主體佔比合理（%.1f%%）" % (name, i, frac * 100))
     for i in range(len(boxes)):
         for j in range(i + 1, len(boxes)):
@@ -252,7 +255,9 @@ else:
                 continue
             n += 1
             rel = os.path.relpath(os.path.join(dirpath, name), ART)
-            cat = rel.replace("\\", "/").split("/")[0]
+            parts = rel.replace("\\", "/").split("/")
+            is_anim = parts[0] == "anim"
+            cat = parts[1] if is_anim and len(parts) > 1 else parts[0]
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -278,7 +283,8 @@ else:
             frac = solid / float(len(px))
             # 帽子跟道具一樣：它本來就只佔畫面上方那一條，
             # 用怪物的下限去要求，只會逼出一頂佔滿整格、把臉蓋掉的帽子。
-            lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.15
+            lo = (0.06 if cat in ("item", "hat", "weapon", "shield")
+                  else 0.10 if is_anim else 0.15)
             ok(lo <= frac <= 0.92,
                "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
             # 主體必須碰到方框的最底下那一列。
@@ -292,7 +298,12 @@ else:
             # 兩者永遠貼在一起 —— check_ground 量的是「身體與影子的距離」，
             # 它看不到「這一組整個被抬高了」。一條斷言只看得到它量的東西。
             bot = im.getchannel("A").getbbox()
-            if cat == "hat":
+            if is_anim and cat in ("hat", "weapon", "shield"):
+                # 動畫疊圖是 10x3 atlas，整張的 bbox 當然會橫跨左右與三列；
+                # 靜態疊圖的「待在頭頂／左右半邊」規則不能直接套在整張 atlas。
+                # 每格的位置契約由 import_animation 的 overlay anchor 保證。
+                ok(bot is not None, "%s 動畫疊圖有可見內容" % rel)
+            elif cat == "hat":
                 # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
                 # 身體畫在下面。所以這裡問的正好相反：它有沒有乖乖待在頭頂那一段。

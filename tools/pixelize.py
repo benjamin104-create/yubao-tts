@@ -55,6 +55,21 @@ PALETTE_HEX = [
     "6b4a12", "a87a1e", "dcae35", "f5dc7a",
 ]
 
+# 動畫精靈需要比 32px 靜態圖多一點階調，否則連續動作裡的金屬、魔法與
+# 半透明材質會在量化後跳色。import_animation.mjs 已用這組擴充色盤輸出；
+# 檢查器也必須讀同一份契約，不能拿舊 32 色規格把合格動畫誤判成雜色。
+ANIM_PALETTE_HEX = [
+    "0d0d12", "1a1a24", "2b2b38", "3d3d4d", "565668", "757589", "c8c8d4",
+    "e8edf4", "f7f5eb",
+    "2a1d14", "43301f", "5e442c", "7d5c3c", "9c7850", "bb9668", "ecd3ae",
+    "6b1a1e", "9c2b2b", "c94a3a", "e87a4a", "f5a95e",
+    "1e5230", "2f7d45", "4aa85e", "79c97a",
+    "101c3a", "1d3468", "2f57a0", "4a86cf", "7cb8ea",
+    "382044", "573060", "75407f", "a85aaa", "d978c4", "f2b2df",
+    "1d6475", "2f90a6", "58c2cf", "a5ebeb",
+    "6b4a12", "a87a1e", "dcae35", "f5dc7a",
+]
+
 
 # 主角的身體只准用這五個色：描邊、三階陶土、眼白。
 #
@@ -79,6 +94,8 @@ def palette_hex_for(rel):
     parts = rel.replace("\\", "/").split("/")
     # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
     cat = parts[1] if len(parts) > 1 and parts[0] == "anim" else parts[0]
+    if parts[0] == "anim" and cat != "hero":
+        return ANIM_PALETTE_HEX
     return PALETTES.get(cat, PALETTE_HEX)
 
 

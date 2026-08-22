@@ -898,19 +898,26 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
      玩家打完第一章之後**看不到「再次下潛」在哪裡**。 */
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   padding:18px 16px calc(24px + env(safe-area-inset-bottom));
-  background:radial-gradient(90% 60% at 50% 22%, #3a2a1c 0%, #1d1510 46%, #0d0a08 100%);
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px) 0 0/16px 16px,
+    radial-gradient(90% 60% at 50% 18%, #493421 0%, #21170f 48%, #0d0a08 100%);
   text-align:center;
 }
 #village.show{display:flex}
+/* 村莊本身是可捲動的 flex 欄。沒有關掉 shrink 時，手機會把整間鐵匠鋪
+   壓成幾條 20px 高的細線來硬塞進一個螢幕；DOM 裡商品都在，肉眼卻像消失。
+   每一區保持原尺寸，由村莊容器負責捲動。 */
+#village> *{flex:none}
 /* 村莊的場景。地牢有天空與雲了，村莊卻只有一排村民站在漸層前面 ——
    那讀起來是「一個選單」，不是「一個地方」。 */
 #vscene{
-  width:min(100%,480px); height:auto; image-rendering:pixelated;
-  display:block; margin:0 auto -14px; border-radius:2px;
-  border:1px solid rgba(201,151,63,.24);
-  box-shadow:0 14px 34px rgba(0,0,0,.42), inset 0 -1px 0 rgba(245,220,122,.14);
+  width:min(100%,512px); height:auto; image-rendering:pixelated;
+  image-rendering:crisp-edges; display:block; margin:0 auto -4px; border-radius:2px;
+  border:2px solid #17110d; outline:1px solid rgba(221,176,91,.48); outline-offset:-3px;
+  box-shadow:0 18px 42px rgba(0,0,0,.58), 0 2px 0 rgba(245,220,122,.18),
+             inset 0 -1px 0 rgba(245,220,122,.18);
 }
-#vfolk{display:flex; gap:6px; justify-content:center; position:relative}
+#vfolk{display:none}
 #vfolk canvas{width:34px; height:34px; image-rendering:pixelated}
 #towerwrap{display:flex; flex-direction:column; align-items:center; gap:5px; margin:2px 0 4px}
 #towermap{
@@ -949,23 +956,53 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border:1px solid var(--edge); padding:6px 14px;
 }
 .vgold b{color:var(--brass); font-size:16px}
-#vstock, #vowned{width:100%; max-width:440px; display:grid; gap:4px}
+#vstock, #vowned{
+  width:100%; max-width:480px; display:grid; gap:6px; box-sizing:border-box;
+  padding:10px; position:relative; overflow:hidden;
+  border:1px solid rgba(201,151,63,.42);
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px) 0 0/12px 12px,
+    linear-gradient(180deg,rgba(47,35,25,.96),rgba(17,13,10,.97));
+  box-shadow:inset 0 1px 0 rgba(247,222,174,.14), inset 0 -8px 18px rgba(0,0,0,.28),
+             0 9px 24px rgba(0,0,0,.30);
+}
+#vstock::after, #vowned::after{
+  content:""; position:absolute; left:8px; right:8px; bottom:4px; height:2px;
+  background:linear-gradient(90deg,transparent,var(--brass-dim),transparent); opacity:.7;
+}
 .vrow{
-  display:flex; align-items:center; gap:10px; min-height:54px; padding:6px 10px; text-align:left;
-  background:rgba(20,17,14,.6); border:1px solid var(--edge); font-size:12.5px;
+  display:flex; align-items:center; gap:10px; min-height:62px; padding:7px 10px; text-align:left;
+  position:relative; overflow:hidden;
+  background:linear-gradient(180deg,rgba(62,47,34,.88),rgba(25,19,15,.92));
+  border:1px solid rgba(164,122,70,.48); border-left:3px solid #806040;
+  box-shadow:inset 0 1px 0 rgba(255,238,205,.10), inset 0 -5px 0 rgba(8,6,5,.30);
+  font-size:12.5px;
 }
+.vrow[data-cat="weap"]{border-left-color:#b97a43}
+.vrow[data-cat="shld"]{border-left-color:#6d91ae}
 .vrow canvas{
-  width:40px; height:40px; flex:none; box-sizing:border-box; padding:2px;
+  width:48px; height:48px; flex:none; box-sizing:border-box; padding:2px;
   image-rendering:pixelated; image-rendering:crisp-edges;
-  background:linear-gradient(135deg,rgba(245,220,122,.10),rgba(10,8,6,.72));
-  border:1px solid rgba(201,151,63,.28);
+  background:linear-gradient(135deg,rgba(245,220,122,.16),rgba(10,8,6,.82));
+  border:1px solid rgba(218,170,91,.45); box-shadow:inset 0 0 0 2px rgba(0,0,0,.22);
 }
-.vrow .nm{flex:1; min-width:0; color:var(--parch)}
+.vrow .nm{flex:1; min-width:0; color:#f3e5cb; font-family:var(--serif); font-size:13.5px}
 .vrow .st{font-family:var(--mono); font-size:11px; color:var(--parch-dim)}
 .vrow button{min-height:34px; padding:5px 12px; font-size:12px; touch-action:manipulation}
-.vrow.own{border-color:var(--brass-dim); background:rgba(60,40,16,.4)}
+.vrow.own{border-color:var(--brass-dim); background:linear-gradient(180deg,rgba(77,55,25,.72),rgba(30,21,13,.92))}
 .vrow.own .st{color:var(--brass)}
-.vhint{font-size:11.5px; color:var(--parch-dim); line-height:1.7; max-width:34ch}
+.vhint{font-size:11.5px; color:var(--parch-dim); line-height:1.7; max-width:none; text-align:left}
+#vstock>.vhint:first-child, #vowned>.vhint:first-child{
+  margin:-10px -10px 2px; padding:9px 12px 8px 34px; min-height:20px;
+  color:#f2d49b; font-family:var(--serif); letter-spacing:.05em;
+  background:linear-gradient(90deg,rgba(118,73,29,.78),rgba(32,23,16,.82));
+  border-bottom:1px solid rgba(201,151,63,.38); position:relative;
+}
+#vstock>.vhint:first-child::before, #vowned>.vhint:first-child::before{
+  content:""; position:absolute; left:12px; top:9px; width:12px; height:12px;
+  border:2px solid #d6a654; transform:rotate(45deg); box-sizing:border-box;
+  box-shadow:inset 0 0 0 2px rgba(33,22,13,.8);
+}
 /* 動作鍵釘在畫面底部。加了 overflow-y 之後村莊「捲得到」，
    但實測任何一款手機都是「不捲就看不到」—— 而畫面上沒有任何東西
    告訴玩家下面還有。使用者因此以為第一章打完之後沒有村莊。
@@ -1018,6 +1055,31 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border:1px solid rgba(201,151,63,.24);background:rgba(0,0,0,.18)
 }
 #qagallery .qalinks article.qacard a:hover{color:#fff4d8;border-color:var(--brass)}
+#qagallery .worldgrid{width:min(1040px,100%);margin:auto;display:grid;gap:12px}
+#qagallery .worldrow{
+  display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;align-items:center;
+  padding:10px;background:rgba(20,17,14,.88);border:1px solid rgba(201,151,63,.30);
+}
+#qagallery .worldrow h3{margin:0;color:#f1dfbe;font:600 13px var(--serif);letter-spacing:.08em}
+#qagallery .worldrow h3 small{display:block;margin-top:4px;color:var(--parch-dim);font:9px var(--mono)}
+#qagallery .worldshots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#qagallery .worldshot{margin:0;min-width:0}
+#qagallery .worldshot canvas{
+  display:block;width:100%;height:auto;background:#050607;border:1px solid rgba(201,151,63,.24);
+  image-rendering:pixelated;image-rendering:crisp-edges;
+}
+#qagallery .worldshot figcaption{margin-top:3px;color:#d9bd88;font:9px var(--mono)}
+#qagallery .qaaudio{width:min(920px,100%);margin:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+#qagallery .audiocard{padding:12px;text-align:left;background:linear-gradient(180deg,rgba(55,41,28,.92),rgba(19,15,12,.96));border:1px solid rgba(201,151,63,.34)}
+#qagallery .audiocard b{display:block;color:#f0d7a7;font-family:var(--serif);margin-bottom:5px}
+#qagallery .audiocard small{display:block;min-height:3.4em;color:var(--parch-dim);line-height:1.55}
+#qagallery .audiocard button{width:100%;margin-top:9px;color:#f5dc7a;border-color:var(--brass-dim);background:#17110d}
+#qagallery #qaudiostatus{position:sticky;top:0;z-index:3;width:min(900px,calc(100% - 20px));margin:0 auto 14px;padding:10px 14px;box-sizing:border-box;background:#15100c;border:1px solid var(--brass-dim);color:#f3dfb7;font:12px var(--mono)}
+@media(max-width:620px){
+  #qagallery .worldrow{grid-template-columns:1fr;padding:8px}
+  #qagallery .worldrow h3{text-align:left}
+  #qagallery .worldshots{gap:4px}
+}
 
 #over{
   position:absolute; inset:0; z-index:26; display:none; place-items:center; text-align:center;
@@ -1240,7 +1302,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div>
 
   <div id="village">
-    <canvas id="vscene" width="208" height="104" aria-hidden="true"></canvas>
+    <canvas id="vscene" width="256" height="144" aria-hidden="true"></canvas>
     <div id="vfolk"></div>
     <div class="vhead">
       <em>SAFE HAVEN</em>
@@ -1733,9 +1795,8 @@ const BOSS = [
  {id:'b_hallking',nm:'廣間之王',  ai:'C', hp:450,atk:37,def:21,exp:3500,spd:1,  sight:11,ev:4, fl:[0,0], w:0, boss:1,
   imm:['睡','麻'], charge:1, telegraph:1, cadence:4, quake:8, rage:.4, adds:{n:2, cd:11},
   line:'牠坐在廣間的正中央 —— 背後那道光，就是你要去的地方。'},
- /* bgm:'diva' —— 全遊戲唯一一隻有自己主題曲的頭目。
-    她的機制是 mpburn（唱到你忘記咒文），而那件事只有在**聽得到她唱**的
-    時候才成立。配通用的頭目戰鼓點的話，這一場跟前面十五場沒有分別。 */
+ /* 人魚王后保留 diva 詠嘆調。她的機制是 mpburn（唱到你忘記咒文），
+    而那件事只有在**聽得到她唱**的時候才成立；她不跟其他施術型頭目共曲。 */
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
   rng:9, mpburn:12, quake:8, telegraph:1, cadence:3, ward:{cd:13, dur:4}, adds:{n:2, cd:12},
   bgm:'diva',
@@ -1756,8 +1817,23 @@ const BOSS = [
   line:'三個你。只有一個不會跟著你動。'},
  {id:'b_mind', mul:{hp:1.3, atk:1.2, def:1.6},   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:3, opening:1, imm:['睡','亂','麻'],
-  line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
+ line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
 ];
+/* ── 頭目配樂分鏡 ────────────────────────────────────────────
+   「每隻王都播同一首快歌」只能告訴玩家戰鬥開始，不能告訴他正在面對誰。
+   十九隻王依戰鬥語彙分成四個樂團，人魚王后保留詠嘆調；最終意識三型態
+   各有一段，第二型態加速、第三型態才把整個節奏推到頂。屬性仍寫回王身上，
+   bossTrack() 不必猜章節，也能在同一章的連續型態間換曲。 */
+const BOSS_SCORE={
+  boss_guardian:['b_keeper','b_warden','b_treant','b_lord'],
+  boss_trickster:['b_ballista','b_phoenix','b_hanzo'],
+  boss_arcane:['b_pyro','b_queen','b_prism','b_artisan'],
+  boss_warlord:['b_oni','b_gaoler','b_hallking','b_gate'],
+  diva:['b_mermaid'],
+  mind_gaze:['b_mind1'], mind_echo:['b_mind2'], mind_unity:['b_mind'],
+};
+for(const [score,ids] of Object.entries(BOSS_SCORE))
+  for(const id of ids){const b=BOSS.find(x=>x.id===id);if(b)b.bgm=score;}
 const bossById = id => BOSS.find(b => b.id === id);
 
 /* 這一層抽得到哪些怪。
@@ -4952,7 +5028,9 @@ const THEMES = {
   /* 名字是 greathall 不是 hall —— TRACKS.hall 已經被「怪物之間」用掉了，
      而曲子是照**地貌 id** 查表的。取名 hall 的話，整章的背景音樂會悄悄
      變成怪物之間那首沒有解決的等待曲，沒有錯誤、沒有測試看得見。 */
-  greathall:{ramp:['7','9','b','d'], floor:'lapis', macro:'mosaic', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian', back:'high'},
+  /* lightAll 是大廳內的固定火光；外圍仍然是地下岩盤。不能套 high，
+     否則房間周圍會露出塔頂雲海，地下大廣間就看起來浮在天空。 */
+  greathall:{ramp:['7','9','b','d'], floor:'lapis', macro:'mosaic', lightAll:1, wall:'glazed', prop:'ruin', propRate:10, air:'dust', mark:'guardian'},
   void:     {ramp:['0','1','2','4'], floor:'voidfloor', macro:'void', wall:'void', prop:'glint', propRate:14, air:'star', mark:'rift', back:'flow'},                       // 最後的迷宮、混沌之間
 };
 const ACT_THEME = {
@@ -12181,6 +12259,114 @@ const BGM = (()=>{
     ],
   });
 
+  /* ── 石、木與水的守護者 ────────────────────────────────────
+     門番、礦坑守衛、森之主與湖水之主不是決鬥者，是一整個地方站起來。
+     低音因此用寬的五度與不平均的大鼓，旋律每次只抬高一步再沉回主音；
+     壓迫感來自重量，不靠把速度拉滿。 */
+  TRACKS.boss_guardian = T_({
+    bpm:116, wave:'sawtooth', pad:'triangle', cut:2500, lvol:.090, avol:.042,
+    root:[38,38,41,36],
+    chord:[[50,57,62],[50,55,62],[53,60,65],[48,55,60]],
+    bass:[0,4,7,10,12,15], hat:[3,7,11,15], kick:[0,6,8,14], tom:[0,5,10,15],
+    lead:[
+      [[0,62,3],[3,65,2],[6,69,2],[8,67,4],[12,62,4]],
+      [[0,62,2],[2,67,2],[5,70,3],[8,69,2],[10,65,2],[12,62,4]],
+      [[0,65,3],[3,69,2],[6,72,2],[8,70,4],[12,65,4]],
+      [[0,60,4],[4,67,2],[6,65,2],[8,62,4],[12,60,4]],
+    ],
+  });
+
+  /* ── 追獵者與騙術師 ────────────────────────────────────────
+     投石小魔王、重生的不死鳥、瞬身的全藏都要求玩家追著節奏換位。
+     旋律故意在重拍前先出現，鼓也用 3+3+2 的切分；聽感要往前撲，
+     但不使用通用頭目曲那條半音下行，避免所有快歌仍像同一首。 */
+  TRACKS.boss_trickster = T_({
+    bpm:151, wave:'square', pad:'triangle', cut:3900, lvol:.086, avol:.040,
+    root:[47,50,46,49],
+    chord:[[59,62,66],[62,65,69],[58,62,65],[61,64,68]],
+    bass:[0,3,6,8,11,14], hat:[1,4,7,9,12,15], kick:[0,6,8,11,14], tom:[3,11],
+    lead:[
+      [[0,71,1],[2,78,1],[3,74,2],[6,83,1],[7,78,1],[8,74,2],[11,76,1],[12,71,4]],
+      [[0,74,1],[1,81,1],[3,77,1],[4,83,2],[7,81,1],[8,77,2],[11,74,1],[12,69,4]],
+      [[0,70,1],[2,77,1],[3,73,2],[6,82,1],[7,77,1],[8,73,2],[11,75,1],[12,70,4]],
+      [[0,73,1],[1,80,1],[3,76,1],[4,85,2],[7,80,1],[8,76,2],[10,73,2],[12,68,4]],
+    ],
+  });
+
+  /* ── 術式、鏡面與機關 ──────────────────────────────────────
+     火之術士、鏡之女王、光線人與祕匠守衛的共同點是「看懂規則才有傷害」。
+     琶音像機關循環，主旋律以三全音和全音階跳動，沒有英雄式大調終止；
+     玩家聽見的是裝置啟動，不是另一支軍隊衝過來。 */
+  TRACKS.boss_arcane = T_({
+    bpm:137, wave:'triangle', pad:'sine', cut:4200, lvol:.094, avol:.055,
+    root:[48,54,51,57],
+    chord:[[60,66,72],[66,72,78],[63,69,75],[69,75,81]],
+    bass:[0,2,5,8,10,13], hat:[2,5,7,10,13,15], kick:[0,5,8,13], tom:[3,11],
+    arp:[0,2,5,8,10,13],
+    lead:[
+      [[0,72,2],[2,78,2],[5,74,1],[6,80,2],[8,76,2],[10,82,2],[13,78,3]],
+      [[0,78,2],[2,84,2],[5,80,1],[6,86,2],[8,82,2],[10,76,2],[13,84,3]],
+      [[0,75,2],[2,81,2],[5,77,1],[6,83,2],[8,79,2],[10,85,2],[13,81,3]],
+      [[0,81,2],[2,87,2],[5,83,1],[6,89,2],[8,85,2],[10,79,2],[13,87,3]],
+    ],
+  });
+
+  /* ── 武者、獄卒與最後一道門 ────────────────────────────────
+     這組王靠正面壓迫。慢一點的 6/8 重步、低音銅管感與每小節末的戰鼓，
+     留出讀預告的空拍；若像一般頭目曲一樣塞滿十六分音符，玩家只會焦躁，
+     反而聽不出巨劍落地的重量。 */
+  TRACKS.boss_warlord = T_({
+    bpm:126, wave:'sawtooth', pad:'square', cut:3000, lvol:.088, avol:.038,
+    root:[43,41,46,42],
+    chord:[[55,62,67],[53,60,65],[58,65,70],[54,61,66]],
+    bass:[0,3,6,9,12,15], hat:[3,9,15], kick:[0,6,10,12], tom:[0,5,8,13],
+    lead:[
+      [[0,67,3],[3,70,3],[6,74,2],[9,72,3],[12,67,4]],
+      [[0,65,3],[3,68,3],[6,72,2],[9,70,3],[12,65,4]],
+      [[0,70,3],[3,74,3],[6,77,2],[9,75,3],[12,70,4]],
+      [[0,66,3],[3,69,3],[6,73,2],[9,71,3],[12,66,4]],
+    ],
+  });
+
+  /* ── 最終戰三型態：凝視 → 複寫 → 歸一 ─────────────────────
+     三首共用 D–E♭–F♯ 這個從神殿一路帶上來的音型，但密度逐段增加。
+     因為 bossWatch() 每回合查場上的王，型態更換當下會淡出再從第一拍進入，
+     音樂的進化和畫面、機制是同一個事件。 */
+  TRACKS.mind_gaze = T_({
+    bpm:68, wave:'sine', pad:'sine', cut:1800, lvol:.105, avol:.024, drone:1,
+    root:[38,38,38,38], chord:[[50,56,62],[50,57,63],[50,56,66],[50,57,62]],
+    bass:[0], hat:[7,15], kick:[0,8], tom:[12], arp:[0,8],
+    lead:[
+      [[0,74,6,75,24],[8,78,6,74,20]],
+      [[0,75,4,78,22],[6,74,2],[8,68,8,0,18]],
+      [[0,78,6,80,20],[8,74,6,72,22]],
+      [[0,68,4],[4,74,4,68,20],[8,75,8,74,24]],
+    ],
+  });
+  TRACKS.mind_echo = T_({
+    bpm:132, wave:'triangle', pad:'sine', cut:3300, lvol:.090, avol:.045,
+    root:[38,39,42,38], chord:[[50,56,62],[51,57,63],[54,60,66],[50,56,62]],
+    bass:[0,4,8,12], hat:[1,5,9,13], kick:[0,7,8,15], tom:[3,11],
+    lead:[
+      [[0,74,2],[2,78,2],[4,75,2],[6,68,2],[8,68,2],[10,75,2],[12,78,2],[14,74,2]],
+      [[0,75,2],[2,79,2],[4,76,2],[6,69,2],[8,69,2],[10,76,2],[12,79,2],[14,75,2]],
+      [[0,78,2],[2,82,2],[4,79,2],[6,72,2],[8,72,2],[10,79,2],[12,82,2],[14,78,2]],
+      [[0,74,1],[1,78,1],[2,75,2],[4,68,4],[8,68,2],[10,75,2],[12,78,2],[14,74,2]],
+    ],
+  });
+  TRACKS.mind_unity = T_({
+    bpm:160, wave:'sawtooth', pad:'triangle', cut:4400, lvol:.078, avol:.038,
+    root:[38,39,42,43], chord:[[50,56,62],[51,57,63],[54,60,66],[55,61,67]],
+    bass:[0,2,5,7,8,10,13,15], hat:[0,1,3,4,6,8,9,11,12,14],
+    kick:[0,5,8,11,14], tom:[2,6,10,14],
+    lead:[
+      [[0,74,1],[1,75,1],[2,78,1],[3,80,1],[4,78,2],[6,74,2],[8,86,2],[10,80,2],[12,78,1],[13,75,1],[14,74,2]],
+      [[0,75,1],[1,76,1],[2,79,1],[3,81,1],[4,79,2],[6,75,2],[8,87,2],[10,81,2],[12,79,1],[13,76,1],[14,75,2]],
+      [[0,78,1],[1,79,1],[2,82,1],[3,84,1],[4,82,2],[6,78,2],[8,90,2],[10,84,2],[12,82,1],[13,79,1],[14,78,2]],
+      [[0,79,1],[1,82,1],[2,84,1],[3,87,1],[4,86,1],[5,84,1],[6,82,2],[8,91,2],[10,87,2],[12,84,1],[13,82,1],[14,79,2]],
+    ],
+  });
+
   /* ── 人魚王后：詠嘆調 ──────────────────────────────────────
      使用者：「『人魚皇后』的那個章節，我想要套用類似《第五元素》
      外星女伶唱歌的那一段的音樂」。
@@ -12197,7 +12383,7 @@ const BGM = (()=>{
        伴奏這時才進來，而且是心跳一樣的低鼓。
      那個「從人聲變成不是人聲」的轉折，就是整段的戲。
 
-     這也是全遊戲第一首**指名給某一隻頭目**的曲子（BOSS.bgm）。
+     這是全遊戲唯一把「唱腔本身」當作戰鬥機制的曲子（BOSS.bgm）。
      人魚王后守在塔頂，她唱歌的地方就是玩家聽到這首曲子的地方。 */
   TRACKS.diva = T_({
     bpm:72, wave:'sine', pad:'sine', cut:3000, lvol:.115, avol:.030,
@@ -12285,6 +12471,9 @@ const BGM = (()=>{
     TRACKS,
   };
 })();
+/* 只在 ?qa=... 驗收網址開放音訊量測鉤子。正式遊戲不掛任何全域控制物件；
+   驗收頁則能確認 AudioContext、實際曲目與音量，而不是只看資料表猜有在播。 */
+if(QA_MODE) globalThis.__GAME_QA={audio:{BGM,SFX}};
 
 /* 目前該畫哪一張主角 —— 換裝備立刻反映在畫面上。
    這支函式讀遊戲狀態，所以放在遊戲層，不放美術層。 */
@@ -15150,8 +15339,8 @@ function bossWatch(){
      的那一次切換 —— 音樂會停在章節主題，而大廳裡還有二十隻怪。 */
   BGM.force(G.f.bossSeen ? bossTrack() : ((G.f.hall && G.f.hall.seen) ? 'hall' : null));
 }
-/* 這一場頭目戰要放哪一首。預設是通用的頭目曲，但資料表上寫了 bgm 的
-   那一隻用牠自己的 —— 人魚王后守在塔頂，她的那一場是詠嘆調。
+/* 這一場頭目戰要放哪一首。每隻王都有 bgm：守護、追獵、術式、武者、
+   詠嘆調，以及最終意識三型態。通用 boss 只留給資料遺漏時安全退回。
 
    為什麼查場上的頭目而不是查章節：一章不只有一場頭目戰（混沌之間就是
    三個型態接連上場），而且「這一首是誰的」本來就該寫在那一隻身上。
@@ -15704,26 +15893,45 @@ function villageStyle(){
   return VSTYLES[Math.min(2, Math.floor(a / 5))];
 }
 const VNAME = {euro:'爐火村', cave:'岩窟聚落', edo:'燈籠町', spire:'中繼之村'};
+/* 村莊不是一張可以隨便縮放的裝飾圖。這份規格同時給畫圖、無頭測試與
+   美術驗收頁讀，避免之後只換顏色就被誤認成「四個不同的村莊」。 */
+const VILLAGE_SCENE_SPEC={
+  version:11,w:256,h:144,
+  feature:{
+    euro:{building:'timber',landmark:'well',ground:'cobbled-road'},
+    cave:{building:'tuff-arch',landmark:'cistern-fire',ground:'rock-cut-path'},
+    edo:{building:'machiya',landmark:'bridge-lantern',ground:'stone-lane'},
+    spire:{building:'glazed-arch',landmark:'ascending-gate',ground:'tower-plinth'},
+  },
+};
 const VPAL = {
   euro: {sky:['#243051','#4a4460','#8a6a4c'], far:'#232c3e', mid:'#2f3a4a',
          wall:'#cdb894', wall2:'#a8916d', beam:'#4a3324', roof:'#8a3f2f', roof2:'#5f2a20',
          road:'#7a6446', grass:'#3f5334', grass2:'#33452b', tree:'#38562f', trunk:'#432f22',
-         pond:'#3a5f7e', lit:'#f5a95e'},
+         pond:'#3a5f7e', lit:'#f5a95e', ink:'#17100c', roofHi:'#bf6548', stone:'#665b49',
+         stoneHi:'#a99678', pathHi:'#b69b70', pathLo:'#4a3827', accent:'#d8a34e',
+         metal:'#708997', waterHi:'#8ebbd0', leafHi:'#668454'},
   cave: {sky:['#171d2c','#2a2620','#43331f'], far:'#1e1a17', mid:'#2c241c',
          wall:'#c6a677', wall2:'#9d7f56', beam:'#4a3524', roof:'#b18f63', roof2:'#7d6244',
          // 地底沒有草坪。這兩格是苔與碎岩，不是草地 —— 綠得太乾淨會讓人以為在地面上
          road:'#8a7350', grass:'#57503a', grass2:'#464031', tree:'#42583a', trunk:'#3a2c1e',
-         pond:'#2f5a6b', lit:'#f5c268'},
+         pond:'#2f5a6b', lit:'#f5c268', ink:'#17110d', roofHi:'#d2b181', stone:'#695b46',
+         stoneHi:'#b9a173', pathHi:'#c4ab78', pathLo:'#4a3c2b', accent:'#d9a953',
+         metal:'#738a88', waterHi:'#77aeb8', leafHi:'#6f7c4b'},
   edo:  {sky:['#101a35','#1d2a4a','#3b3c58'], far:'#141d33', mid:'#1e2740',
          wall:'#d3c7ae', wall2:'#a89b84', beam:'#3a2a20', roof:'#414a5c', roof2:'#2b3140',
          road:'#5d5a52', grass:'#33452f', grass2:'#293a27', tree:'#2b4030', trunk:'#3a2a20',
-         pond:'#25415e', lit:'#f2b45a'},
+         pond:'#25415e', lit:'#f2b45a', ink:'#12131a', roofHi:'#68758c', stone:'#625f59',
+         stoneHi:'#aaa59a', pathHi:'#aaa394', pathLo:'#363636', accent:'#b84235',
+         metal:'#7c8791', waterHi:'#6b9bb6', leafHi:'#4e674d'},
   // 中繼之村用的是塔的色 —— 深藍釉磚與赭金。玩家在這裡抬頭看到的顏色，
   // 就是接下來二十層要住的顏色。地上沒有草，只有被磨平的塔基石。
   spire:{sky:['#0b1226','#152146','#2c3a63'], far:'#101a34', mid:'#1a2748',
          wall:'#5f7fb8', wall2:'#3c568a', beam:'#a87a1e', roof:'#dcae35', roof2:'#a87a1e',
          road:'#4c5566', grass:'#2c3446', grass2:'#232a3a', tree:'#59657e', trunk:'#3c4356',
-         pond:'#2f57a0', lit:'#f5dc7a'},
+         pond:'#2f57a0', lit:'#f5dc7a', ink:'#080e20', roofHi:'#f0ce68', stone:'#3f4a62',
+         stoneHi:'#8396bd', pathHi:'#8491a8', pathLo:'#252c3c', accent:'#c88c28',
+         metal:'#9b7731', waterHi:'#77a8dc', leafHi:'#6f7c9a'},
 };
 function paintVillageScene(){
   const c = $('vscene'); if(!c) return;
@@ -16050,6 +16258,211 @@ function paintVillageScene(){
   x.fillStyle = fade; x.fillRect(0, H-10, W, 10);
 }
 
+/* ═══ 村莊場景 v11：真正的 3/4 俯視安全區 ═════════════════════
+   舊場景是四棟房子沿同一條基準線排開，地面也是草／路／草三條橫帶。
+   換再多屋頂顏色，剪影仍是一張側視橫幅；村民另外排在畫外，更像角色選單。
+
+   這版把畫面改成可走進去的空間：道路從前景收束到村心，房子按 y 排出前後，
+   屋頂、正面、右側面、石基與右下投影分開。四座村莊共用左上光源與街道
+   文法，但建材、屋頂、地標和遠景各自獨立；主角與村民直接站進場景裡。 */
+function paintVillageSceneV11(){
+  const c=$('vscene'); if(!c) return;
+  if(c.width!==VILLAGE_SCENE_SPEC.w||c.height!==VILLAGE_SCENE_SPEC.h){
+    c.width=VILLAGE_SCENE_SPEC.w;c.height=VILLAGE_SCENE_SPEC.h;
+  }
+  const x=c.getContext('2d'),W=c.width,H=c.height,st=villageStyle(),P=VPAL[st];
+  x.imageSmoothingEnabled=false; x.clearRect(0,0,W,H);
+  const R=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(Math.round(a),Math.round(b),Math.round(w),Math.round(h));};
+  const Q=(pts,col)=>{x.fillStyle=col;x.beginPath();x.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++)x.lineTo(pts[i][0],pts[i][1]);x.closePath();x.fill();};
+  const h32=(a,b,s=0)=>mix32((a|0)*73856093^(b|0)*19349663,s*83492791)>>>0;
+
+  // ── 天空／洞頂：大塊硬邊色帶，不用柔焦把像素材質沖掉 ─────────
+  R(0,0,W,22,P.sky[0]); R(0,22,W,20,P.sky[1]); R(0,42,W,18,P.sky[2]);
+  if(st==='euro'||st==='edo'){
+    for(let i=0;i<58;i++){
+      const sx=h32(i,3)%W,sy=h32(i,7)%43;
+      R(sx,sy,1+(i%11===0?1:0),1,i%5===0?'#f4ead8':'#a8a0a1');
+    }
+    // 兩層遠山，輪廓節奏不同，避免只是一條水平色塊。
+    Q([[0,51],[0,40],[24,31],[46,43],[70,27],[97,42],[123,29],[150,45],[181,25],[207,40],[235,30],[256,41],[256,58]],P.far);
+    Q([[0,58],[0,48],[30,42],[54,53],[83,39],[113,50],[148,37],[179,51],[213,39],[256,50],[256,61]],P.mid);
+    if(st==='edo'){
+      // 遠方天守：三層屋簷＋白牆，縮小仍讀得到城下町。
+      for(let q=0;q<3;q++){
+        const yy=45-q*9,ww=28-q*7,bx=216-(ww>>1);
+        R(bx,yy,ww,6,P.wall2); Q([[bx-4,yy],[bx+(ww>>1),yy-5],[bx+ww+4,yy]],P.roof2);
+        R(bx-4,yy,ww+8,2,P.roof);
+      }
+    }
+  } else if(st==='cave'){
+    // 岩頂與鐘乳石壓住整個上緣；中央天井用三層硬光而非漸層。
+    Q([[0,0],[256,0],[256,33],[238,27],[220,38],[201,26],[181,36],[157,25],[137,35],[111,24],[89,37],[67,27],[45,39],[22,29],[0,36]],P.ink);
+    for(const [sx,len] of [[12,14],[37,8],[63,17],[91,10],[174,15],[205,9],[235,18]])
+      Q([[sx-4,25],[sx+5,25],[sx,25+len]],P.far);
+    Q([[112,0],[143,0],[162,69],[91,69]],'rgba(245,220,122,.08)');
+    Q([[120,0],[136,0],[149,69],[105,69]],'rgba(245,220,122,.10)');
+  } else {
+    // 塔腳：塔身直接出畫，左右是洞頂破口；釉磚腰帶與窗不是平面柱子。
+    R(0,0,W,54,P.sky[0]);
+    Q([[0,0],[85,0],[82,23],[67,31],[50,27],[33,37],[15,29],[0,34]],P.ink);
+    Q([[171,0],[256,0],[256,36],[238,29],[217,39],[196,28],[178,32]],P.ink);
+    R(96,0,64,67,P.wall2); R(96,0,22,67,P.wall); R(154,0,6,67,P.ink);
+    for(let yy=7;yy<67;yy+=12){R(94,yy,68,3,P.beam);R(98,yy,58,1,P.roofHi);}
+    for(let yy=12;yy<63;yy+=12){R(125,yy,7,6,P.ink);R(126,yy,3,2,P.stoneHi);}
+    Q([[86,0],[96,0],[89,68],[74,68]],'rgba(245,220,122,.08)');
+    Q([[160,0],[170,0],[184,68],[166,68]],'rgba(245,220,122,.06)');
+  }
+
+  // ── 地表與中央道路：前寬後窄，建立真正的景深 ───────────────
+  const horizon=55;
+  R(0,horizon,W,H-horizon,P.grass2);
+  // 左上受光的地表片與右下暗土，不規則邊界比整片純綠更像土地。
+  Q([[0,58],[104,56],[93,112],[0,127]],P.grass);
+  Q([[157,58],[256,56],[256,132],[173,116]],P.pathLo);
+  Q([[116,55],[142,55],[222,144],[36,144]],P.road);
+  Q([[116,55],[126,55],[90,144],[36,144]],P.pathHi);
+  Q([[139,55],[143,55],[222,144],[201,144]],P.pathLo);
+  // 路面分段。遠處短且密，近處長且疏；錯縫讓它讀成鋪面不是條紋。
+  const rows=[60,67,76,87,101,118,139];
+  rows.forEach((yy,ri)=>{
+    const half=8+ri*8,mid=129,step=ri<3?7:ri<5?11:16,off=(ri&1)?step>>1:0;
+    R(mid-half,yy,half*2,1,P.pathLo);
+    for(let xx=mid-half+off;xx<mid+half;xx+=step) R(xx,yy-3-(ri<2?1:0),1,4,P.stoneHi);
+    if(ri>3) R(mid-half+2,yy-1,Math.max(3,half>>2),1,'rgba(255,246,222,.14)');
+  });
+  // 地表只放成簇細節，不灑滿單像素噪點。
+  for(let i=0;i<18;i++){
+    const sx=5+(h32(i,19)%246),sy=61+(h32(i,23)%69);
+    if(sx>92&&sx<170)continue;
+    R(sx,sy,4+(i%3),2,i%2?P.grass:P.pathLo); R(sx,sy,2,1,i%3?P.leafHi:P.stoneHi);
+  }
+
+  const shadow=(bx,base,bw)=>{Q([[bx+4,base],[bx+bw,base],[bx+bw+13,base+7],[bx+11,base+7]],'rgba(7,6,7,.42)');};
+  const arch=(ax,base,aw,ah,col)=>{
+    x.fillStyle=col;x.beginPath();x.moveTo(ax,base);x.lineTo(ax,base-ah+aw/2);
+    x.arc(ax+aw/2,base-ah+aw/2,aw/2,Math.PI,0);x.lineTo(ax+aw,base);x.closePath();x.fill();
+  };
+  const litWindow=(wx,wy,ww=6,hh=6)=>{
+    R(wx-3,wy-3,ww+6,hh+6,'rgba(245,169,94,.08)');R(wx,wy,ww,hh,P.ink);
+    R(wx+1,wy+1,ww-2,hh-2,P.lit);R(wx+1,wy+1,Math.max(1,ww-3),1,'#fff1b1');
+    R(wx+(ww>>1),wy,1,hh,P.beam);
+  };
+  const drawHouse=(bx,base,bw,bh,v=0,shop=false)=>{
+    bx=Math.round(bx);base=Math.round(base); shadow(bx,base,bw);
+    const fy=base-bh,side=Math.max(5,Math.round(bw*.13));
+    if(st==='euro'){
+      // 石基、灰泥立面、右側厚面、半木構與高坡瓦頂。
+      R(bx,fy,bw,bh,P.wall);R(bx+bw-side,fy,side,bh,P.wall2);R(bx,base-5,bw,5,P.stone);
+      R(bx,base-5,bw,1,P.stoneHi);R(bx,fy,bw,2,P.beam);R(bx+5,fy,2,bh-5,P.beam);
+      R(bx+bw-7,fy,2,bh-5,P.beam);R(bx,fy+Math.round(bh*.48),bw,2,P.beam);
+      Q([[bx-5,fy+1],[bx+(bw>>1),fy-15-v*2],[bx+bw+5,fy+1]],P.roof);
+      Q([[bx+(bw>>1),fy-15-v*2],[bx+bw+5,fy+1],[bx+(bw>>1),fy+1]],P.roof2);
+      Q([[bx-3,fy],[bx+(bw>>1),fy-12-v*2],[bx+(bw>>1)-3,fy-8]],P.roofHi);
+      for(let yy=fy-8;yy<fy;yy+=4)R(bx+3,yy,Math.max(5,bw-8),1,'rgba(255,221,183,.12)');
+      litWindow(bx+9,fy+6);if(bw>45)litWindow(bx+bw-18,fy+6);
+      R(bx+(bw>>1)-4,base-11,9,11,P.beam);R(bx+(bw>>1)-2,base-9,4,9,P.ink);
+      if(v&1){R(bx+bw-13,fy-19,5,12,P.stone);R(bx+bw-12,fy-19,3,2,P.stoneHi);}
+    } else if(st==='cave'){
+      // 凝灰岩錐：左面受天井光，右面壓暗；層理和拱洞直接刻進岩體。
+      Q([[bx,base],[bx+4,fy-7],[bx+(bw>>1),fy-22-v*3],[bx+bw-3,fy-6],[bx+bw,base]],P.wall);
+      Q([[bx+(bw>>1),fy-22-v*3],[bx+bw-3,fy-6],[bx+bw,base],[bx+(bw>>1),base]],P.wall2);
+      Q([[bx+4,fy-7],[bx+(bw>>1),fy-22-v*3],[bx+(bw>>1)-4,fy-11]],P.roofHi);
+      for(let yy=fy-7;yy<base-3;yy+=6)R(bx+5+(yy&3),yy,bw-12,1,'rgba(72,52,32,.28)');
+      R(bx,base-4,bw,4,P.stone);R(bx+2,base-4,bw-5,1,P.stoneHi);
+      arch(bx+7,base,10,14,P.ink);if(bw>42)arch(bx+bw-19,base,9,12,P.ink);
+      R(bx+10,base-9,3,5,P.lit);R(bx+10,base-9,1,2,'#fff1b1');
+    } else if(st==='edo'){
+      // 町家：深屋簷、厚瓦端、木格子、暖簾和石基；右側牆面更暗。
+      R(bx,fy,bw,bh,P.wall);R(bx+bw-side,fy,side,bh,P.wall2);R(bx,base-4,bw,4,P.stone);
+      R(bx,fy+3,bw,2,P.beam);for(let xx=bx+4;xx<bx+bw-3;xx+=6)R(xx,fy+4,1,bh-8,P.beam);
+      Q([[bx-7,fy+1],[bx+6,fy-8-v],[bx+bw-5,fy-8-v],[bx+bw+7,fy+1]],P.roof);
+      R(bx-7,fy,bw+14,3,P.roof2);R(bx-5,fy-1,bw+10,1,P.roofHi);
+      for(let xx=bx-2;xx<bx+bw+2;xx+=6)R(xx,fy-4-v,5,1,'rgba(196,212,231,.18)');
+      R(bx+3,base-10,bw-7,5,P.accent);for(let xx=bx+8;xx<bx+bw-5;xx+=9)R(xx,base-10,1,5,P.roof2);
+      litWindow(bx+bw-13,fy+7,5,6);R(bx+(bw>>1)-4,base-9,8,9,P.ink);
+    } else {
+      // 塔腳拱棧：藍釉磚、赭金浮雕帶、厚拱洞與階梯式女兒牆。
+      R(bx,fy,bw,bh,P.wall2);R(bx,fy,Math.max(7,bw>>2),bh,P.wall);R(bx+bw-side,fy,side,bh,P.ink);
+      R(bx,base-5,bw,5,P.stone);R(bx,base-5,bw,1,P.stoneHi);
+      for(let yy=fy+5;yy<base-5;yy+=6){R(bx,yy,bw,1,P.roof2);for(let xx=bx+((yy/6)&1?5:1);xx<bx+bw;xx+=10)R(xx,yy-4,1,4,P.glazeDeep||P.ink);}
+      R(bx-2,fy-4,bw+4,4,P.beam);R(bx,fy-4,bw-4,1,P.roofHi);
+      for(let xx=bx;xx<bx+bw;xx+=9)R(xx,fy-7-(xx%2),7,3,P.wall2);
+      const aw=Math.max(12,Math.round(bw*.34));arch(bx+((bw-aw)>>1),base,aw,Math.round(bh*.68),P.ink);
+      R(bx+(bw>>1)-2,fy+1,4,3,P.accent);R(bx+(bw>>1)-1,fy,2,5,P.roofHi);
+      litWindow(bx+bw-10,fy+7,4,5);
+    }
+    if(shop){
+      // 圖像化的鐵匠招牌：方框、鐵鎚與鍛爐，不用文字也讀得出商店。
+      const sx=bx+bw-2,sy=fy+7;
+      R(sx,sy,13,13,P.ink);R(sx+1,sy+1,11,11,P.accent);R(sx+3,sy+3,7,7,P.ink);
+      R(sx+4,sy+4,5,2,P.metal);R(sx+6,sy+6,2,4,P.metal);R(sx+7,sy+3,2,2,P.stoneHi);
+      R(bx+3,base-5,12,5,P.ink);R(bx+5,base-7,7,3,P.metal);R(bx+8,base-9,3,2,P.stoneHi);
+      R(bx+17,base-6,8,6,'#5c241c');R(bx+19,base-8,4,5,'#e55e36');R(bx+20,base-8,2,3,'#ffd276');
+    }
+  };
+
+  // 遠景小屋先畫，近景主屋後畫；同一套座標在四種建築語彙下仍維持街廓。
+  drawHouse(18,75,43,22,1,false); drawHouse(194,73,39,20,0,false);
+  drawHouse(3,111,68,34,1,false); drawHouse(184,108,65,32,0,true);
+
+  // ── 村心地標 ───────────────────────────────────────────────
+  const lx=130,ly=91;
+  if(st==='euro'){
+    // 六角井台、屋架、汲水軸與桶。
+    shadow(lx-12,ly+8,24);Q([[lx-12,ly+1],[lx-7,ly-4],[lx+9,ly-4],[lx+14,ly+1],[lx+10,ly+8],[lx-8,ly+8]],P.stone);
+    Q([[lx-9,ly],[lx-5,ly-2],[lx+7,ly-2],[lx+10,ly],[lx+7,ly+4],[lx-6,ly+4]],P.ink);
+    R(lx-11,ly-12,2,13,P.beam);R(lx+10,ly-12,2,13,P.beam);Q([[lx-15,ly-12],[lx,ly-19],[lx+16,ly-12]],P.roof);
+    R(lx-2,ly-10,5,2,P.metal);R(lx,ly-9,1,8,P.beam);R(lx-2,ly-2,5,4,P.wall2);
+  } else if(st==='cave'){
+    // 蓄水池與中央火盆：地底聚落真正賴以生存的兩件東西。
+    Q([[lx-18,ly+2],[lx-10,ly-5],[lx+12,ly-5],[lx+20,ly+2],[lx+13,ly+8],[lx-12,ly+8]],P.stone);
+    Q([[lx-13,ly],[lx-7,ly-3],[lx+8,ly-3],[lx+14,ly],[lx+8,ly+4],[lx-8,ly+4]],P.pond);
+    R(lx-6,ly-2,8,1,P.waterHi);R(lx+18,ly+2,9,4,P.ink);R(lx+20,ly-3,5,7,'#e55e36');R(lx+21,ly-4,3,6,'#ffd276');
+  } else if(st==='edo'){
+    // 石燈籠與跨水渠的小橋。
+    Q([[lx-25,ly+5],[lx+26,ly+5],[lx+19,ly+12],[lx-20,ly+12]],P.pond);
+    for(let xx=lx-14;xx<lx+16;xx+=6){R(xx,ly+3,5,12,P.road);R(xx,ly+3,5,1,P.pathHi);}R(lx-17,ly+2,36,2,P.beam);R(lx-17,ly+14,36,2,P.beam);
+    R(lx+21,ly-7,4,15,P.stone);R(lx+17,ly-10,12,3,P.stoneHi);R(lx+19,ly-16,8,7,P.stone);R(lx+20,ly-15,6,5,P.lit);R(lx+16,ly-19,14,3,P.roof2);
+  } else {
+    // 通往塔內的門：階梯、雙柱、拱洞與藍金浮雕，比其他屋子大一級。
+    R(lx-20,ly-11,40,24,P.wall2);R(lx-20,ly-11,11,24,P.wall);R(lx+15,ly-11,5,24,P.ink);
+    R(lx-23,ly-15,46,5,P.beam);R(lx-20,ly-15,37,1,P.roofHi);arch(lx-8,ly+13,16,24,P.ink);
+    R(lx-2,ly-12,4,4,P.accent);R(lx-1,ly-14,2,7,P.roofHi);
+    for(let i=0;i<3;i++){R(lx-18-i*3,ly+13+i*3,36+i*6,3,P.stone);R(lx-16-i*3,ly+13+i*3,31+i*6,1,P.stoneHi);}
+  }
+
+  // 暖光只出現在有火／燈的位置，使用三階硬邊光塊維持 16-bit 質地。
+  const light=(px0,py0,col)=>{
+    R(px0-12,py0-8,24,16,'rgba(245,169,94,.05)');R(px0-7,py0-5,14,10,'rgba(245,169,94,.09)');
+    R(px0-3,py0-3,6,6,'rgba(255,220,122,.15)');R(px0-1,py0-2,2,3,col);
+  };
+  light(211,100,st==='spire'?'#fff0a2':'#ffd276');
+  if(st==='cave')light(lx+22,ly,'#fff0a2');
+
+  // ── 住民直接站在街道上；按腳的位置排序，避免近的人被遠的人蓋住 ───
+  const people=[
+    {px:104,py:85,col:'b',age:'old'}, {px:151,py:101,col:'l',age:'adult'},
+    {px:91,py:118,col:'q',age:'child'}, {px:166,py:124,col:'u',age:'adult'},
+    {px:128,py:128,col:VILLAGE.col||'#',skin:VILLAGE.skin,hero:1},
+  ].sort((a,b)=>a.py-b.py);
+  for(const p of people){
+    const art=p.hero?blobFor(p.col,p.skin):makeBlob(p.col,{age:p.age});
+    R(p.px-6,p.py-1,12,2,'rgba(8,6,5,.46)');
+    x.drawImage(art,p.px-9,p.py-18,18,18);
+    if(p.hero){R(p.px-5,p.py-20,10,1,'rgba(245,220,122,.65)');R(p.px-2,p.py-21,4,1,'#fff1b1');}
+  }
+
+  // 最前景以石塊／草叢／欄杆收邊，告訴眼睛這條路仍往畫面外延伸。
+  R(0,140,W,4,P.ink);R(42,138,48,2,P.pathLo);R(173,137,55,3,P.pathLo);
+  for(const bx of [8,75,204,245]){R(bx,128,3,12,P.trunk);R(bx-5,132,14,2,P.trunk);R(bx-4,131,10,1,P.stoneHi);}
+  if(st==='euro'||st==='edo'){
+    for(const bx of [18,28,228,238]){R(bx,135,2,5,P.tree);R(bx-2,137,6,2,P.leafHi);}
+  }else{
+    for(const bx of [20,31,226,239]){R(bx-2,135,6,4,P.stone);R(bx-1,134,4,2,P.stoneHi);}
+  }
+}
+
 /* ═══ 旅程全圖（塔的側面） ═══════════════════════════════════
    使用者：「遊戲名稱叫通天之塔，但是樓梯是一直往下？？（感覺應該反過來？）
    或是應該有個遊戲的介紹圖面（通天塔與周邊側面圖，和標註主角位置）……
@@ -16236,7 +16649,7 @@ function renderVillage(){
   // 換了建築卻不換名字，玩家會以為是同一個地方換了佈景。
   const vs = villageStyle();
   $('vname').textContent = TX('v.name.' + vs, VNAME[vs]);
-  paintVillageScene();
+  paintVillageSceneV11();
   const t = villagerLine();
   $('vtalk').innerHTML = M('v.talkfmt','<b>{who}</b>：「{body}」<br>—— 下一章：<b>{nx}</b>',
     {who:t.who, body:t.body, nx:locAct(t.act)});
@@ -16284,7 +16697,7 @@ function renderVillage(){
   const shelf = stockNow();
   for(const g of shelf){
     const d = defOf(g.cat, g.id);
-    const row = document.createElement('div'); row.className = 'vrow';
+    const row = document.createElement('div'); row.className = 'vrow'; row.dataset.cat=g.cat;
     const c = villageGearIcon(g.cat, g.id);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d);
@@ -16320,7 +16733,7 @@ function renderVillage(){
   owned.appendChild(h2);
   for(const g of VILLAGE.stock){
     const d = defOf(g.cat, g.id);
-    const row = document.createElement('div'); row.className = 'vrow own';
+    const row = document.createElement('div'); row.className = 'vrow own'; row.dataset.cat=g.cat;
     const c = villageGearIcon(g.cat, g.id);
     const nm = document.createElement('div'); nm.className='nm';
     nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '');
@@ -16754,6 +17167,90 @@ function qaGallery(type){
   }
   el.append(title,sub,nav,grid);
 }
+/* 音樂驗收台：按一次是真正的使用者手勢，因此能啟動瀏覽器 AudioContext。
+   每首播放時接上一個 AnalyserNode，直接量 RMS／尖峰；資料表存在但聽不見、
+   或密度太高造成削波，都會在這裡顯示，不靠「程式沒報錯」猜測。 */
+let qaAudioToken=0;
+function qaAudioAudit(){
+  qaOpenWorld();
+  let el=$('qagallery');if(!el){el=document.createElement('section');el.id='qagallery';document.body.appendChild(el);}
+  el.innerHTML='';
+  const title=document.createElement('h1');title.textContent='遊戲音樂驗收台';
+  const sub=document.createElement('p');sub.className='qasub';sub.textContent='點一首即可播放並量測；合格範圍 RMS −30～−14 dBFS、尖峰不得高於 −1 dBFS。';
+  const nav=document.createElement('p');nav.className='qasub';const home=document.createElement('a');home.href=qaUrl({qa:'menu'});home.textContent='← 回快速測試總表';nav.appendChild(home);
+  const status=document.createElement('div');status.id='qaudiostatus';status.textContent='尚未播放。建議戴耳機，依序比較場景曲與八種頭目語彙。';
+  const label={
+    temple:['巴比倫神殿','Hijaz、持續低音與手鼓'],stone:['礦坑／牢獄','空五度與半音下沉'],forest:['迷霧森林','全音音階、沒有解決感'],
+    greathall:['地下大廣間','前半地底、後半通天塔'],spire:['通天塔','Hijaz 上行與 3+3+2'],hall:['怪物之間','三全音踏板與等待感'],
+    village:['安全村莊','全遊戲唯一明確大調'],boss_guardian:['守護者戰','石、木與水的沉重五度'],boss_trickster:['追獵者戰','切分、瞬身與追逐'],
+    boss_arcane:['術式頭目戰','機關琶音與三全音'],boss_warlord:['武者頭目戰','重步 6/8 與戰鼓'],diva:['人魚王后・詠嘆調','前半人聲、後半超高速大跳'],
+    mind_gaze:['意識Ⅰ・凝視','稀疏、持續低音與顫音'],mind_echo:['意識Ⅱ・複寫','鏡像節奏逐步加速'],mind_unity:['意識Ⅲ・歸一','160 BPM 的最終整合'],
+  };
+  const ids=Object.keys(label),grid=document.createElement('div');grid.className='qaaudio';
+  const measure=(id,nm)=>{
+    const token=++qaAudioToken;status.dataset.ready='0';status.textContent='正在淡入「'+nm+'」並量測……';
+    SFX.unlock();BGM.force(id);BGM.start();
+    setTimeout(()=>{
+      if(token!==qaAudioToken)return;const c=SFX.ctx();if(!c){status.textContent='音訊裝置未啟動。請再按一次。';return;}
+      const an=c.createAnalyser();an.fftSize=2048;SFX.bus().connect(an);
+      const buf=new Float32Array(an.fftSize);let peak=0,sum=0,n=0,t0=performance.now();
+      const tick=()=>{
+        an.getFloatTimeDomainData(buf);for(const v of buf){const a=Math.abs(v);peak=Math.max(peak,a);sum+=v*v;n++;}
+        if(token===qaAudioToken&&performance.now()-t0<3200){requestAnimationFrame(tick);return;}
+        an.disconnect();if(token!==qaAudioToken)return;
+        const db=v=>+(20*Math.log10(v||1e-9)).toFixed(1),rms=db(Math.sqrt(sum/Math.max(1,n))),pk=db(peak);
+        const ok=rms>=-30&&rms<=-14&&pk<=-1;status.dataset.ready='1';status.dataset.ok=ok?'1':'0';
+        status.textContent=(ok?'✓ 合格　':'✗ 需調整　')+nm+'　RMS '+rms+' dBFS　尖峰 '+pk+' dBFS';
+      };requestAnimationFrame(tick);
+    },1700);
+  };
+  for(const id of ids){
+    const card=document.createElement('article');card.className='audiocard';
+    const b=document.createElement('b');b.textContent=label[id][0];const sm=document.createElement('small');sm.textContent=label[id][1]+'　·　'+TRACKSsafe(id);
+    const bt=document.createElement('button');bt.type='button';bt.textContent='播放並量測';bt.onclick=()=>measure(id,label[id][0]);card.append(b,sm,bt);grid.appendChild(card);
+  }
+  function TRACKSsafe(id){const t=BGM.TRACKS[id];return t?t.bpm+' BPM':'缺少曲目';}
+  el.append(title,sub,nav,status,grid);
+}
+/* 全迷宮縮圖牆：每章固定拍入口、中段、章末。它不是行銷頁，而是避免美術
+   回歸漏網的驗收工具；一個網址就能同時看 18 章，不必人工改 54 次參數。 */
+function qaWorldAudit(){
+  qaOpenWorld();
+  let el=$('qagallery');
+  if(!el){el=document.createElement('section');el.id='qagallery';document.body.appendChild(el);}
+  el.innerHTML='';
+  const title=document.createElement('h1');title.textContent='全迷宮美術巡查';
+  const sub=document.createElement('p');sub.className='qasub';
+  sub.textContent='每章依序為入口／中段／章末；同時檢查牆地差異、視野、地標、樓梯與頭目房裁切。';
+  const nav=document.createElement('p');nav.className='qasub';
+  const home=document.createElement('a');home.href=qaUrl({qa:'menu'});home.textContent='← 回快速測試總表';nav.appendChild(home);
+  const grid=document.createElement('div');grid.className='worldgrid';
+  ACTS.forEach((a,i)=>{
+    const row=document.createElement('article');row.className='worldrow';row.id=`world-${i+1}`;
+    const h=document.createElement('h3');h.textContent=`${String(i+1).padStart(2,'0')}　${a.nm}`;
+    const sm=document.createElement('small');sm.textContent=`${ACT_THEME[a.id]||'stone'} · ${a.floors}F`;h.appendChild(sm);
+    const shots=document.createElement('div');shots.className='worldshots';
+    const picks=[1,Math.max(1,Math.ceil(a.floors/2)),a.floors];
+    picks.forEach((f,j)=>{
+      qaEnterFloor(i,f,260822+i*101+j*17);
+      /* refresh() 更新 UI；真正的畫布由下一個 RAF 才重畫。縮圖若立刻複製，
+         54 張都會是上一章最後一幀，而且不會拋錯。驗收牆要在每次換層後
+         同步畫一幀，才是真的巡過 54 個生成結果。 */
+      refresh();draw(0);
+      const fig=document.createElement('figure');fig.className='worldshot';
+      const cp=document.createElement('canvas');cp.width=cv.width;cp.height=cv.height;
+      const cc=cp.getContext('2d');cc.imageSmoothingEnabled=false;cc.drawImage(cv,0,0,cp.width,cp.height);
+      const cap=document.createElement('figcaption');
+      cap.textContent=(j===0?'入口':j===1?'中段':'章末')+' '+floorLabel(i,f);
+      fig.append(cp,cap);shots.appendChild(fig);
+    });
+    row.append(h,shots);grid.appendChild(row);
+  });
+  el.append(title,sub,nav,grid);
+  // 允許驗收連結直接指向某章（例如 #world-11），手機上不用捲十幾屏。
+  const anchor=location.hash&&document.getElementById(location.hash.slice(1));
+  if(anchor) setTimeout(()=>{el.scrollTop=Math.max(0,anchor.offsetTop-el.offsetTop-10);},0);
+}
 function qaMenu(){
   qaOpenWorld();
   let el=$('qagallery');
@@ -16767,6 +17264,8 @@ function qaMenu(){
     ['塔腳中繼之村',qaUrl({qa:'village',act:14})],
     ['全部怪物圖鑑',qaUrl({qa:'gallery',type:'mon'})],
     ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
+    ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
+    ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
   ]){
     const a=document.createElement('a'); a.className='qacard'; a.href=href; a.textContent=label; top.appendChild(a);
   }
@@ -16799,6 +17298,8 @@ function startQa(){
     // 先建立一次遊戲狀態，部分外部精靈載入完成後再畫圖鑑。
     newGame(seed);
     if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')==='boss'?'boss':'mon'),250);
+    else if(kind==='worlds') setTimeout(()=>qaWorldAudit(),250);
+    else if(kind==='audio') setTimeout(()=>qaAudioAudit(),250);
     else qaMenu();
   }
   return true;

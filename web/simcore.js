@@ -78,7 +78,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
   'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
-  'villageStyle, VSTYLES, VNAME, VPAL, migrateAct, VILLAGE_VER, RUN_VER,' +
+  'villageStyle, VSTYLES, VNAME, VPAL, VILLAGE_SCENE_SPEC, migrateAct, VILLAGE_VER, RUN_VER,' +
   'talkOpen, answerTalk, askVillager, npcStep,' +
   'evOK, makeEvent, rubbleAt, digMason, stoneStep, evStep, giveCirclet,' +
   'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS,' +

@@ -78,6 +78,8 @@ ok(api.ACT_THEME.temple !== api.ACT_THEME.mine, '神殿跟礦坑不是同一個�
 ok(api.ACT_THEME.hall !== api.ACT_THEME.crystal, '大廣間跟水晶礦坑不是同一個地貌');
 ok(api.ACT_THEME.hall !== 'hall',
    '大廣間的地貌沒有叫 hall（那個名字已經被「怪物之間」那首曲子佔走了）');
+ok(!api.THEMES[api.ACT_THEME.hall].back,
+   '地下大廣間外圍是岩盤，不會錯露成通天塔的雲海');
 
 /* 四個最容易退回「同一張地磚換色」的區域，必須真的使用不同鋪面結構。
    這裡驗的是材質 id 而非顏色：木板染成灰色仍然是木板，鏡面染成棕色
@@ -405,6 +407,21 @@ ok(api.VSTYLES.includes('spire') && !!api.VNAME.spire && !!api.VPAL.spire,
 // 四個村莊的顏色必須真的不一樣，不然換的只有名字
 const lits = api.VSTYLES.map(s => api.VPAL[s].lit);
 ok(new Set(lits).size === api.VSTYLES.length, '四個村莊的燈火各是各的顏色');
+const VS = api.VILLAGE_SCENE_SPEC;
+ok(VS.version >= 11 && VS.w >= 256 && VS.h >= 144,
+   '村莊用 256×144 的 v11 俯視場景，不會退回扁平橫幅');
+ok(Object.keys(VS.feature).length === api.VSTYLES.length,
+   '四個村莊都有自己的建築、地標與地面文法');
+for(const field of ['building','landmark','ground']){
+  const vals=api.VSTYLES.map(s=>VS.feature[s][field]);
+  ok(new Set(vals).size===api.VSTYLES.length,
+     '四個村莊的'+field+'輪廓互不重複');
+}
+for(const s of api.VSTYLES){
+  const colors=Object.values(api.VPAL[s]).flat();
+  ok(colors.length>=27 && new Set(colors).size>=24,
+     api.VNAME[s]+'有足夠的材質明暗色，不靠同一色票換名字');
+}
 
 /* ═══ 存檔遷移 ═══════════════════════════════════════════════
    VILLAGE.act 存的是章節索引，而序章插在 0、大廣間插在 13 ——
