@@ -12089,7 +12089,7 @@ const BGM = (()=>{
      [步, 音高, 長度, 滑到哪個音高, 顫音深度（音分）]，後兩個可省略。 */
   const T_ = (o) => Object.assign({
     bpm:112, bass:[0,3,6,8,11,14], hat:[2,6,10,14], kick:[0,8],
-    wave:'square', pad:'triangle', lvol:.085, cut:2600, avol:.055,
+    wave:'square', pad:'triangle', lvol:.085, cut:2600, avol:.055, mvol:1,
   }, o);
 
   const TRACKS = {
@@ -12294,7 +12294,8 @@ const BGM = (()=>{
        (3) 快、亮、手鼓密。神殿是一個人在空房間裡吟誦，
            這裡是一群人在敲鼓往上走。 */
     spire: T_({
-      bpm:126, wave:'square', pad:'triangle', cut:3400, lvol:.09, avol:.048, vib:12,
+      /* 密集手鼓、低音、琶音同拍時的總輸出保留 0.7 dB 以上安全餘裕。 */
+      bpm:126, wave:'square', pad:'triangle', cut:3400, lvol:.09, avol:.048, vib:12, mvol:.92,
       bass:[0,3,6,8,11,14], hat:[3,6,11,14], kick:[0,8], tom:[0,3,6,8,11,14],
       root:[50,51,54,55],                       // D – E♭ – F♯ – G：低音自己爬過增二度
       chord:[[62,67,69],[63,67,70],[66,69,73],[67,71,74]],
@@ -12427,6 +12428,7 @@ const BGM = (()=>{
 
   function playStep(i, t){
     const bar = (i / STEPS) | 0, k = i % STEPS, S = spb();
+    const mv = cur.mvol || 1;                 // 單曲總輸出：連鼓與持續低音一起縮放
     /* 章節內越深越低沉：每 5 層降半音、濾波拉低。
        用「本章第幾層」而不是絕對深度 —— 吃絕對深度的話，
        第十三章一開始就已經降了七個半音、悶到聽不出旋律，
@@ -12448,8 +12450,8 @@ const BGM = (()=>{
            照走動低音的音量寫的話尖峰會頂到 -0.2 dBFS —— 那是削波，
            而削波在耳機上是一聲聲的破音，不是「比較大聲」。
            （這是每一首都量之後才看到的：只量開場那一首時它是綠的。） */
-        voice(t, hz(n), S * 15.5, 'triangle', .16, 700 * dim);
-        voice(t, hz(n + 7), S * 15.5, 'sine', .08, 700 * dim);   // 空五度，讓它撐得住
+        voice(t, hz(n), S * 15.5, 'triangle', .16 * mv, 700 * dim);
+        voice(t, hz(n + 7), S * 15.5, 'sine', .08 * mv, 700 * dim);   // 空五度，讓它撐得住
       }
     } else if(bi >= 0){                        // 行進低音
       /* 八度與五度的點綴照「第幾個低音」算，不照步數算。
@@ -12459,28 +12461,28 @@ const BGM = (()=>{
       const n = cur.root[bar] + tr
               + (bi === lane.length - 2 ? 12 : 0)
               + (bi === 2 || bi === lane.length - 1 ? 7 : 0);
-      voice(t, hz(n), S * 2.2, 'triangle', .30, 900 * dim);
+      voice(t, hz(n), S * 2.2, 'triangle', .30 * mv, 900 * dim);
     }
     // 琶音：預設每個偶數步一顆（原本的行為）；arp 指定的話就只在那幾步響
     const onArp = cur.arp ? cur.arp.indexOf(k) : (k % 2 === 0 ? k >> 1 : -1);
     if(onArp >= 0){
       const ch = cur.chord[bar];
       const n = ch[onArp % ch.length] + tr;
-      voice(t, hz(n), S * 1.6, cur.pad === 'sine' ? 'sine' : 'square', cur.avol, 1700 * dim);
+      voice(t, hz(n), S * 1.6, cur.pad === 'sine' ? 'sine' : 'square', cur.avol * mv, 1700 * dim);
     }
     for(const [s3, n, d, gl, vb] of cur.lead[bar]){    // 主旋律
       if(s3 !== k) continue;
-      voice(t, hz(n + tr), S * d * 0.95, cur.wave, cur.lvol, cur.cut * dim,
+      voice(t, hz(n + tr), S * d * 0.95, cur.wave, cur.lvol * mv, cur.cut * dim,
             gl ? hz(gl + tr) : 0, vb || cur.vib || 0);
       // 低八度的墊音不跟著滑也不抖 —— 兩層一起滑會糊成一團
-      voice(t, hz(n + tr - 12), S * d * 0.9, cur.pad, cur.lvol * 0.52, 1400 * dim);
+      voice(t, hz(n + tr - 12), S * d * 0.9, cur.pad, cur.lvol * 0.52 * mv, 1400 * dim);
     }
-    if(hits(cur.kick, bar).includes(k)) perc(t, .12, .30, 160, 45);        // 底鼓
-    if(hits(cur.hat,  bar).includes(k)) perc(t, .045, .10, 7000, 4000, 2); // 腳踏鈸
+    if(hits(cur.kick, bar).includes(k)) perc(t, .12 * mv, .30, 160, 45);        // 底鼓
+    if(hits(cur.hat,  bar).includes(k)) perc(t, .045 * mv, .10, 7000, 4000, 2); // 腳踏鈸
     /* 手鼓（doum）。中亞／中東的節奏是「悶的低音 + 脆的邊擊」，
        而原本只有底鼓與腳踏鈸 —— 那是套鼓，不是手鼓。
        低頻帶通加上快速下滑，聽起來就是手掌打在鼓面中央。 */
-    if(hits(cur.tom, bar).includes(k)) perc(t, .20, .26, 210, 90, 2.4);
+    if(hits(cur.tom, bar).includes(k)) perc(t, .20 * mv, .26, 210, 90, 2.4);
   }
 
   /* 換章時換曲。做法是「壓下去 → 換 → 拉回來」而不是直接切：
@@ -12590,7 +12592,7 @@ const BGM = (()=>{
   TRACKS.boss_arcane = T_({
     /* CI 實錄尖峰曾到 -0.9 dBFS，只超安全線 0.1 dB；兩個旋律層各退約
        4%，聽感不變，但三全音與琶音同拍疊加時保留可靠的防削波餘裕。 */
-    bpm:137, wave:'triangle', pad:'sine', cut:4200, lvol:.090, avol:.052,
+    bpm:137, wave:'triangle', pad:'sine', cut:4200, lvol:.090, avol:.052, mvol:.94,
     root:[48,54,51,57],
     chord:[[60,66,72],[66,72,78],[63,69,75],[69,75,81]],
     bass:[0,2,5,8,10,13], hat:[2,5,7,10,13,15], kick:[0,5,8,13], tom:[3,11],
