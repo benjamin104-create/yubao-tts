@@ -97,6 +97,13 @@ def main():
             pg.goto(HTML)
             pg.wait_for_timeout(350)
             pg.click('#start')
+            # 「重新開始」現在會先進四幕序章；這支測試要檢查的是正式遊戲 HUD、
+            # 地圖與村莊版面，所以像玩家按「跳過序章」一樣進場。若直接探測，
+            # 序章本來就應該覆蓋整個遊戲，反而會被誤判成所有元件都遭遮擋。
+            prologue = pg.locator('#prologue')
+            if prologue.is_visible():
+                pg.click('#proskip')
+                prologue.wait_for(state='hidden')
             pg.wait_for_timeout(900)
 
             r = pg.evaluate(PROBE, MUST_SEE)
