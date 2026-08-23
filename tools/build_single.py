@@ -49,7 +49,7 @@ def key_for(rel):
         return name
     # 主角是分層合成的：身體一層、帽子一層。鍵用「類別#名字」，
     # 跟 art/item 的「類別#編號」同一個形狀 —— adoptArt 那邊也是這樣查的。
-    if cat in ('hero', 'hat', 'weapon', 'shield'):
+    if cat in ('hero', 'hat', 'weapon', 'shield', 'village', 'map'):
         return '%s#%s' % (cat, name)
     if cat == 'item':
         m = re.fullmatch(r'([a-z]+)(\d+)', name)
@@ -69,6 +69,10 @@ def main():
                 continue
             path = pathlib.Path(dirpath) / f
             rel = str(path.relative_to(root))
+            # 宣傳海報不是遊戲執行期資產；單檔版不應為了一張開場外的宣傳圖
+            # 多塞數 MB。它仍留在網站資料夾供 GitHub／宣傳頁直接使用。
+            if rel.replace('\\', '/').startswith('promo/'):
+                continue
             k = key_for(rel)
             if k is None:
                 unknown.append(rel)

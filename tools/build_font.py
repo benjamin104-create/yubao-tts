@@ -228,7 +228,8 @@ def build(name, spec, want, verbose=True):
 （正體是「殘」「滿」），而為了兩個字再內嵌一整套思源宋體日文版
 要多兩百多 KB。讓它們落到系統字型上，只有日文介面的那兩個詞
 會跟旁邊的字差一點點 —— 那個代價比兩百 KB 便宜太多。"""
-SYSTEM_FALLBACK = set('←↑→↓↖↗↘↙≠≡␣Ⓣ✕✗×·　') | set('残満')
+SYSTEM_FALLBACK = (set('←↑→↓↖↗↘↙≠≡␣Ⓣ✕✗×·　ⅠⅡⅢ')
+                   | set('残満戻数継続聴覚険剣壊巻薬静'))
 
 
 def check(want):

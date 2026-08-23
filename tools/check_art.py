@@ -281,6 +281,10 @@ else:
             # 規則本身沒錯，是分不出來這張圖是什麼東西。
             is_sheet = parts[0] == "anim"
             cat = parts[1] if is_sheet and len(parts) >= 3 else parts[0]
+            # 海報、村莊全景、旅程地圖不是精靈，是**整張畫**。
+            # 它們的工作就是填滿畫面，用精靈的規則去驗會把每一張刻意的
+            # 全景都判成「背景沒去乾淨」。
+            is_scene = cat in ("promo", "village", "map")
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -305,15 +309,19 @@ else:
             # 碰到最下面」—— 三十格裡有一格對就過，那條斷言等於沒有。
             # 逐格量之後同一條門檻反而變嚴，而且才問得出真正的問題。
             CELL_OF = {"boss": 48}
+            # 非圖集就是**整張一格**，而且格子要用整張的長寬 ——
+            # 只拿寬度當邊長的話，寬扁的海報會算出 height//c == 0，
+            # 一格都切不出來，然後報「這張圖是空的」。
             c = (CELL_OF.get(cat, 32) if is_sheet else im.width)
+            cw, ch = (c, c) if is_sheet else (im.width, im.height)
             boxes = []          # 每個非空格子的 (欄, 列, bbox, 填充率)
-            for _r in range(im.height // c):
-                for _k in range(im.width // c):
-                    _cell = im.crop((_k * c, _r * c, _k * c + c, _r * c + c))
+            for _r in range(max(1, im.height // ch)):
+                for _k in range(max(1, im.width // cw)):
+                    _cell = im.crop((_k * cw, _r * ch, _k * cw + cw, _r * ch + ch))
                     _bb = _cell.getchannel("A").getbbox()
                     if not _bb:
                         continue          # 空格子：圖集不一定塞滿三十格
-                    _fill = sum(1 for q in _cell.getdata() if q[3] > 0) / float(c * c)
+                    _fill = sum(1 for q in _cell.getdata() if q[3] > 0) / float(cw * ch)
                     boxes.append((_k, _r, _bb, _fill))
             ok(bool(boxes), "%s 不是空的" % rel)
             if not boxes:
@@ -326,15 +334,19 @@ else:
             #（長槍只佔 7%，那就是一把槍的樣子；針尾蜂 14%，那就是一隻蜂）。
             frac = max(b[3] for b in boxes)
             lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.12
-            ok(lo <= frac <= 0.92,
-               "%s 剪影佔比合理（最飽滿的一格 %.0f%%，下限 %.0f%%）"
-               % (rel, frac * 100, lo * 100))
+            if is_scene:
+                ok(frac >= 0.92,
+                   "%s 全景覆蓋畫面（%.0f%%，下限 92%%）" % (rel, frac * 100))
+            else:
+                ok(lo <= frac <= 0.92,
+                   "%s 剪影佔比合理（最飽滿的一格 %.0f%%，下限 %.0f%%）"
+                   % (rel, frac * 100, lo * 100))
             # 「有沒有框到」真正該問的是**跨度**，不是填充率 ——
             # 一把槍很細但橫跨整格，一張沒框好的圖則是縮在角落的一小塊。
             # 實測：所有怪最瘦的一隻仍跨 81%、頭目 88%，所以 60% 是安全的下限，
             # 而它抓得到「主體只佔一個角落」這種轉檔失敗。
             if cat in ("mon", "boss", "hero"):
-                span = max(max(b[2][2] - b[2][0], b[2][3] - b[2][1]) for b in boxes) / float(c)
+                span = max(max((b[2][2]-b[2][0])/float(cw), (b[2][3]-b[2][1])/float(ch)) for b in boxes)
                 ok(span >= 0.60,
                    "%s 主體有框到（最大跨度 %.0f%% 格寬，下限 60%%）" % (rel, span * 100))
 
@@ -391,10 +403,22 @@ else:
                    "%s 待機時不會橫跨整格（寬 %d，上限 %d）"
                    % (rel, bb[2] - bb[0], int(c * 0.62)))
             else:
-                bad = [b for b in boxes if b[2][3] != c]
+                # 容許 1px —— 那**正是動畫規格要求的東西**：
+                # 欄 1「待機 B：只做 1px 呼吸」、欄 3「行走 2：身體下降 1px」、
+                # 欄 5「行走 4：身體回升 1px」。實測三張新的頭目圖集，
+                # 沒貼底的格子全部剛好差 1px，而且全部落在那幾欄上，
+                # check_ground 量到的實際著地距離是 0.5 邏輯單位（合格）。
+                # 要求「每一格都貼死」等於禁止角色呼吸。
+                #
+                # 但仍然要抓「整組被抬高」（那是這條規則本來要防的：
+                # 趴著的洞穴鼠浮在自己的影子上方四格）——
+                # 所以另外要求**至少有一格真的貼到底**。
+                bad = [b for b in boxes if b[2][3] < ch - 1]
                 ok(not bad,
-                   "%s 每一格都貼齊底部（%d/%d 格沒貼到，格高 %d）"
-                   % (rel, len(bad), len(boxes), c))
+                   "%s 每一格都貼齊底部（容許 1px 呼吸；%d/%d 格差太多，格高 %d）"
+                   % (rel, len(bad), len(boxes), ch))
+                ok(any(b[2][3] == ch for b in boxes),
+                   "%s 至少有一格真的貼到底（不然就是整組被抬高了）" % rel)
             if cat == "hero":
                 # 頭頂要落在第 4~9 列之間。六種體型共用同一組帽子圖，
                 # 而帽子畫在固定的位置（drawHat 不做量測）——
