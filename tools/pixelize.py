@@ -94,6 +94,11 @@ def palette_hex_for(rel):
     parts = rel.replace("\\", "/").split("/")
     # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
     cat = parts[1] if len(parts) > 1 and parts[0] == "anim" else parts[0]
+    # Bosses use the same expanded material palette in stills and animation.
+    # Their 48px silhouettes are allowed 8–14 colors, including purple magic,
+    # pale metal and cyan crystal that the 32-color minion palette cannot hold.
+    if cat == "boss":
+        return ANIM_PALETTE_HEX
     if parts[0] == "anim" and cat != "hero":
         return ANIM_PALETTE_HEX
     return PALETTES.get(cat, PALETTE_HEX)

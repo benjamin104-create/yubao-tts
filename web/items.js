@@ -682,7 +682,7 @@ t('打倒頭目一定掉一件裝備，而且不會超出這一層的分級', ()
    無條件去讀 blink[0]，一衝出去就整場當掉（msgs.js 抓到的）。 */
 t('每一章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   const VERBS = ['telegraph','blink','charge','mpburn','quake','adds','rage',
-                 'ward','counter','lives','turret','mind'];
+                 'ward','counter','lives','turret','gearlock','mind'];
   const thin = [];
   for(const d of api.BOSS){
     const has = VERBS.filter(v => d[v]);
@@ -694,6 +694,23 @@ t('每一章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   const used = new Set();
   for(const d of api.BOSS) for(const v of VERBS) if(d[v]) used.add(v);
   assert(used.size >= 8, '整套只用到 ' + used.size + ' 種招：' + [...used].join('/'));
+
+  // 名稱不算獨特，玩家實際需要的應對組合才算。adds 會召什麼、mind 是哪一型
+  // 都寫進指紋；兩隻王若指紋相同，就代表只是換血量與外觀，直接判失敗。
+  const kits = new Map();
+  for(const d of api.BOSS){
+    assert(d.sig, d.nm + ' 沒有專屬招式名稱');
+    const moves = VERBS.filter(v=>d[v]).map(v=>{
+      if(v==='mind') return 'mind:' + d.mind;
+      if(v==='adds') return 'adds:' + (d.adds.id || 'roster');
+      return v;
+    }).sort();
+    const fp=moves.join('/');
+    if(kits.has(fp)) throw new Error(d.nm + ' 與 ' + kits.get(fp) + ' 的應對方法完全相同：' + fp);
+    kits.set(fp,d.nm);
+  }
+  assert.strictEqual(new Set(api.BOSS.map(d=>d.sig)).size, api.BOSS.length,
+    '專屬招式名稱有重複');
 
   // 每一隻實際跑三十回合，確認不會爆
   for(let a = 0; a < api.ACTS.length; a++){

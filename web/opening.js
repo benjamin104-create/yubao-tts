@@ -22,7 +22,7 @@ function pngSize(file){
 const bossIds = [
   'b_keeper','b_warden','b_treant','b_ballista','b_pyro','b_lord',
   'b_phoenix','b_hanzo','b_oni','b_gaoler','b_queen','b_prism',
-  'b_artisan','b_hallking','b_mermaid','b_gate','b_mind1','b_mind2','b_mind'
+  'b_artisan','b_hallking','b_mermaid','b_gate','b_mind1','b_mind'
 ];
 
 ok(/TRACKS\.title\s*=\s*T_\(\{\s*bpm:112/.test(html), 'original title theme is registered at 112 BPM');
@@ -53,5 +53,9 @@ for(const id of bossIds){
   ok(b.width === 480 && b.height === 144, `${id} animation sheet is 10x3 cells`);
   ok(html.includes(`'${id}'`), `${id} is registered in the runtime`);
 }
+
+ok(/m\.d\.mind\s*===\s*2\s*\?\s*heroAnimNow/.test(html), 'Mind Echo reuses the current animated hero by design');
+ok(!fs.existsSync(path.join(ROOT, 'art', 'boss', 'b_mind2.png')), 'Mind Echo has no dedicated still that could break the mimic puzzle');
+ok(!fs.existsSync(path.join(ROOT, 'art', 'anim', 'boss', 'b_mind2.png')), 'Mind Echo has no dedicated animation that could break the mimic puzzle');
 
 console.log(`\nOpening/boss release checks: ${pass} passed, 0 failed.`);

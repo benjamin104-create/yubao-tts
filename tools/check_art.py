@@ -258,6 +258,7 @@ else:
             parts = rel.replace("\\", "/").split("/")
             is_anim = parts[0] == "anim"
             cat = parts[1] if is_anim and len(parts) > 1 else parts[0]
+            is_scene = cat in ("promo", "village", "map")
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -285,8 +286,15 @@ else:
             # 用怪物的下限去要求，只會逼出一頂佔滿整格、把臉蓋掉的帽子。
             lo = (0.06 if cat in ("item", "hat", "weapon", "shield")
                   else 0.10 if is_anim else 0.15)
-            ok(lo <= frac <= 0.92,
-               "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
+            if is_scene:
+                # Full-frame village paintings, posters and journey maps are not
+                # sprites. Their job is to fill the canvas; treating that as an
+                # unremoved background made every deliberate panorama fail.
+                ok(frac >= 0.92,
+                   "%s 全景覆蓋畫面（%.0f%%，下限 92%%）" % (rel, frac * 100))
+            else:
+                ok(lo <= frac <= 0.92,
+                   "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
             # 主體必須碰到方框的最底下那一列。
             #
             # 轉檔工具如果把主體在方框裡上下置中，趴著的洞穴鼠就會在

@@ -1868,75 +1868,75 @@ const BOSS = [
     前一回合就看得到（telegraph）。後面十六隻頭目全部建立在
     「看預告、決定這一回合要不要站在那裡」上面 ——
     在一隻打不死人的門番身上先教會它，比在第十章教便宜太多。 */
- {id:'b_keeper', nm:'神殿門番',   ai:'C', hp:44,atk:4,def:2,exp:120, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_keeper', nm:'神殿門番', sig:'seal_slam', ai:'C', hp:44,atk:4,def:2,exp:120, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1, still:1,
   imm:['睡'], telegraph:1, cadence:4, ward:{cd:12, dur:2},
   line:'門上的浮雕動了 —— 它不追你，但它擋在唯一的路上。'},
- {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_warden', nm:'礦坑守衛', sig:'ore_brood', ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂'], adds:{n:1, cd:10}, ward:{cd:14, dur:3},
   line:'石頭在呼吸。它醒了 —— 而且不只一塊。'},
- {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_treant', nm:'森之主', sig:'root_quake', ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], adds:{n:2, cd:8}, rage:.45, quake:9,
   line:'霧散開了 —— 那不是樹。而且林子裡不只牠一個。'},
  /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
     n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
     投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
     到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
- {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_ballista',nm:'投石小魔王',sig:'stone_battery',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
   rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5}, rage:.4, adds:{n:2, cd:10},
   line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
- {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
+ {id:'b_pyro',   nm:'火之術士', sig:'flame_cross', ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
   rng:10, cadence:3, telegraph:1, quake:7, adds:{n:2, cd:11, id:'imp'}, rage:.35,
   line:'三回合一次。柱子後面是唯一的答案 —— 但別站在牠腳邊。'},
- {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
+ {id:'b_lord',   nm:'湖水之主', sig:'tidal_ram', ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
   telegraph:1, cadence:4, charge:1, blink:[9,14], ward:{cd:12, dur:4},
   line:'湖面立起來了 —— 水不會繞路，它直接撞過來。'},
- {id:'b_phoenix', lives:1,nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1, fly:1,
+ {id:'b_phoenix', lives:1,nm:'不死鳥', sig:'rebirth_nova', ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1, fly:1,
   rage:.5, quake:8, ward:{cd:13, dur:3},
   line:'牠燒起來的時候，是在重生 —— 而且會燒到站得太近的人。'},
- {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
+ {id:'b_hanzo',  nm:'全藏', sig:'shadow_swap', ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
   blink:[3,6], rage:.35, adds:{n:1, cd:13},
   /* 本來叫的是影忍 —— 而影忍挨打會分身，於是牠每十三回合叫兩隻、
      兩隻各自再分裂，走通測試在這一章直接卡住四十次。
      召喚要挑「不會自我繁殖」的東西，這是叫援軍這個動詞的隱藏規格。 */
   line:'「看得見我，就贏得了我。」—— 問題是他不會待在同一個地方。'},
- {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_oni',    nm:'鬼武者', sig:'iaido_counter', ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
   counter:.35, telegraph:1, cadence:5, charge:1, rage:.4, quake:9,
   line:'牠拔刀的速度比你眨眼快 —— 而且牠會連人帶刀衝過來。'},
- {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_gaoler', nm:'牢獄長', sig:'chain_muster', ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], adds:{n:2, cd:9}, rage:.4, ward:{cd:14, dur:4},
   line:'鑰匙掛在牠腰上 —— 但牠不是一個人在看守。'},
  /* 鏡之女王：整章的規則就是「鏡子」—— 她不走路，她換一面鏡子出現。
     停十到十五回合，然後閃到房間裡的另一個位置；停著的時候固定週期
     預告一條直線再射出去。玩家因此永遠有兩件事要決定：
     這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
- {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1, fly:1,
+ {id:'b_queen', lives:2, nm:'鏡之女王', sig:'mirror_trinity', ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1, fly:1,
   rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
- {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1, fly:1,
+ {id:'b_prism',  nm:'光線人', sig:'prism_battery', ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1, fly:1,
   rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  /* 副本迷宮的守衛。石匠把自己最後的作品鎖在裡面，順手做了一個看門的。
     它是**解謎型**（刀砍不動，只有砲座打得動）—— 副本的獎勵是全遊戲
     最強的一把劍與一面盾，所以它不能是「數值夠高就打得贏」，
     得是「看懂機關才過得去」。深度 66，數值排在牢獄長與光線人之間。 */
- {id:'b_artisan',nm:'祕匠的守衛', ai:'R', hp:400,atk:32,def:19,exp:3000,spd:1, sight:13,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_artisan',nm:'祕匠的守衛', sig:'gear_lock', ai:'R', hp:400,atk:32,def:19,exp:3000,spd:1, sight:13,ev:0, fl:[0,0], w:0, boss:1,
   rng:11, still:1, telegraph:1, cadence:3, turret:{n:4, dmg:.17, cool:5},
-  rage:.4, adds:{n:2, cd:11}, imm:['睡','亂','麻'],
+  rage:.4, adds:{n:2, cd:11}, gearlock:{cd:6,dur:3}, imm:['睡','亂','麻'],
   line:'它不是活的 —— 是石匠留下來的機關。刀砍不斷齒輪，砲座可以。'},
  /* 大廣間的小王。使用者的剖面圖寫的是「橫向打敗小王，找到向上前往
     通天塔入口」—— 所以這一場是**橫著打**的：它會助跑撞過來（charge），
     而大廣間有的是橫向的空間可以閃。它是整趟往下的最後一戰，
     數值排在光線人（第 13 章）與人魚王后（第 15 章）之間。 */
- {id:'b_hallking',nm:'廣間之王',  ai:'C', hp:450,atk:37,def:21,exp:3500,spd:1,  sight:11,ev:4, fl:[0,0], w:0, boss:1,
+ {id:'b_hallking',nm:'廣間之王', sig:'royal_charge', ai:'C', hp:450,atk:37,def:21,exp:3500,spd:1,  sight:11,ev:4, fl:[0,0], w:0, boss:1,
   imm:['睡','麻'], charge:1, telegraph:1, cadence:4, quake:8, rage:.4, adds:{n:2, cd:11},
   line:'牠坐在廣間的正中央 —— 背後那道光，就是你要去的地方。'},
  /* 人魚王后保留 diva 詠嘆調。她的機制是 mpburn（唱到你忘記咒文），
     而那件事只有在**聽得到她唱**的時候才成立；她不跟其他施術型頭目共曲。 */
- {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
+ {id:'b_mermaid',nm:'人魚王后', sig:'siren_lament', ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
   rng:9, mpburn:12, quake:8, telegraph:1, cadence:3, ward:{cd:13, dur:4}, adds:{n:2, cd:12},
   bgm:'diva',
   line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
- {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_gate',   nm:'門之守望', sig:'portal_crush', ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
   imm:['睡','亂','麻'], quake:6, rage:.35, adds:{n:2, cd:12}, ward:{cd:12, dur:4}, charge:1, telegraph:1, cadence:5,
   line:'最後一道門 —— 它不需要移動，你自己會走過來。'},
 
@@ -1944,13 +1944,13 @@ const BOSS = [
     設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
     難度來自「要同時記得三件事」，不是來自數值。
     型態之間各補滿一次體力與魔力 —— 最終戰卡在補給不足上不有趣。 */
- {id:'b_mind1', mul:{hp:.7, atk:.9, def:.35},  nm:'意識・凝視', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1, fly:1,
+ {id:'b_mind1', mul:{hp:.7, atk:.9, def:.35}, nm:'意識・凝視', sig:'gaze_line', ai:'R', hp:300,atk:30,def:8, exp:2000,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1, fly:1,
   mind:1, rng:99, cadence:3, telegraph:1, still:1, imm:['睡','亂','麻'],
   line:'它還沒有形體。只有一隻眼睛，正在看你。'},
- {id:'b_mind2', mul:{hp:.8, atk:1.0, def:.8},  nm:'意識・複寫', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_mind2', mul:{hp:.8, atk:1.0, def:.8}, nm:'意識・複寫', sig:'mimic_echo', ai:'C', hp:340,atk:34,def:14,exp:2600,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:2, imm:['睡','亂','麻'],
   line:'三個你。只有一個不會跟著你動。'},
- {id:'b_mind', mul:{hp:1.3, atk:1.2, def:1.6},   nm:'意識・歸一', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
+ {id:'b_mind', mul:{hp:1.3, atk:1.2, def:1.6}, nm:'意識・歸一', sig:'collapse_opening', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:3, opening:1, imm:['睡','亂','麻'],
  line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
 ];
@@ -2604,6 +2604,7 @@ s.rage|{v0} roars — it is serious now.|{v0} が ほえた —— ほんきに 
 s.ward|{v0} raises a ward — nothing can hurt it for {n} turns.|{v0} が ひかりの まくを はった —— {n}ターン むきず。
 s.warded|{v0} is wrapped in light — it cannot be hurt right now.|{v0} は ひかりに つつまれている —— いまは きずつけられない。
 s.adds|{v0} calls in {n} helpers.|{v0} が なかまを {n} たい よんだ。
+s.gearlock|The artisan's blue gear beam seizes a ballista — move to another firing point!|しょくにんの あおい はぐるまこうせんが とうせきだいを ふうじた —— べつの だいへ！
 s.quakew|The ground under {v0} starts to shake — get away from it!|{v0} の あしもとが ゆれはじめた —— はなれろ！
 s.quake|The ground bursts — you are thrown back for {n} damage.|じめんが はじけた —— ふきとばされて {n} ダメージ。
 s.quakemiss|The ground shakes — you are far enough away.|じめんが ゆれた —— じゅうぶん はなれていた。
@@ -3570,6 +3571,11 @@ const ART_DIR = 'art/';
    留這個鉤子，就能同時擁有兩種形態：
    網站上一張一張載（方便一批一批換），要散佈時打包成一個檔。 */
 let ART_DATA = null;
+/* 外部美術的快取版本。GitHub Pages／手機瀏覽器會保留同名 PNG；若只替換
+   圖檔而 URL 不變，玩家可能幾天都還看見舊頭目。每次正式換一批美術只需
+   改這一個值，所有逐張載入的圖與動畫就會取得同一版。ART_DATA 是內嵌
+   data URL，不需要也不能附 query。 */
+const ART_REV = '20260823-babylon-boss-v2';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3583,8 +3589,9 @@ const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
 const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
                   'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
                   'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind',
-                  'b_keeper', 'b_artisan', 'b_hallking', 'b_mind2'];
+                  'b_keeper', 'b_artisan', 'b_hallking'];
 const ownArt = {};
+let qaGalleryRedrawT = 0;
 /* 載一張外部圖，成功了才呼叫 ok(canvas)。載不到什麼都不做 ——
    「還沒畫到」不是錯誤，是這條遷移管線的正常狀態。
 
@@ -3603,7 +3610,8 @@ function artImage(id, url, ok){
     ok(c);
   };
   im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
-  im.src = (ART_DATA && ART_DATA[id]) || url;
+  const embedded = ART_DATA && ART_DATA[id];
+  im.src = embedded || (url + (url.includes('?') ? '&' : '?') + 'v=' + ART_REV);
 }
 
 /* ─── 可選的逐格動畫圖集 ──────────────────────────────────────
@@ -3630,7 +3638,7 @@ const ART_ANIM_AVAILABLE = {
     'b_warden','b_treant','b_ballista','b_pyro','b_lord',
     'b_phoenix','b_hanzo','b_oni','b_gaoler','b_queen',
     'b_prism','b_mermaid','b_gate','b_mind1','b_mind',
-    'b_keeper','b_artisan','b_hallking','b_mind2'
+    'b_keeper','b_artisan','b_hallking'
   ]
 };
 const ANIM_ART = {}, animLoadTried = new Set(), animCellCache = {};
@@ -3704,6 +3712,16 @@ function adoptArt(id, url, own){
     for(const b in BOSS_BASE) if(BOSS_BASE[b] === id && !ownArt[b]){
       delete flashCache[b]; delete charLiftCache[b]; delete footCache[b];
       atlas[b] = crownSprite(id);
+    }
+    /* 驗收畫廊把 atlas 拷進自己的 canvas；如果外部 PNG 比畫廊晚載完，
+       不重畫就會一直顯示載入前的程式造型，讓人誤以為新美術沒有套上。 */
+    if(typeof location !== 'undefined' &&
+       new URLSearchParams(location.search).get('qa') === 'gallery'){
+      clearTimeout(qaGalleryRedrawT);
+      qaGalleryRedrawT = setTimeout(() => {
+        const tp = new URLSearchParams(location.search).get('type') === 'boss' ? 'boss' : 'mon';
+        qaGallery(tp);
+      }, 80);
     }
   });
 }
@@ -9636,6 +9654,15 @@ function decide(m){
             {v0:(locName('mon', m.d)), n:m.ward}),'bad');
     }
   }
+  /* 祕匠守衛的專屬招：封住一座目前能用的砲座，逼玩家真的在四座機關間
+     換位，而不是找到最近的一座原地連按。只有它會改變場上砲座的狀態。 */
+  if(m.d.gearlock && G.seen[key(m.x,m.y)] === 2 && G.f.turrets){
+    m.gearCd = (m.gearCd === undefined) ? m.d.gearlock.cd : m.gearCd - 1;
+    if(m.gearCd <= 0 && G.f.turrets.some(t=>!t.cd)){
+      m.gearCd = m.d.gearlock.cd;
+      return {k:'gearlock'};
+    }
+  }
   if(m.d.adds && G.seen[key(m.x,m.y)] === 2){
     m.addCd = (m.addCd === undefined) ? m.d.adds.cd : m.addCd - 1;
     if(m.addCd <= 0 && G.mons.length < 12){ m.addCd = m.d.adds.cd; return {k:'adds'}; }
@@ -10088,6 +10115,20 @@ function act(m,it){
       SFX.play('read');
       say(M('s.adds','{v0} 叫來了 {n} 個幫手。',{v0:(locName('mon', m.d)), n:born}),'bad');
     }
+    return;
+  }
+  if(it.k==='gearlock'){
+    const ready=(G.f.turrets||[]).filter(t=>!t.cd);
+    if(!ready.length) return;
+    // 優先鎖離玩家最近的那座：玩家剛跑到的機關最可能被盯上，規則才讀得出來。
+    ready.sort((a,b)=>Math.max(Math.abs(a.x-p.x),Math.abs(a.y-p.y))-
+                       Math.max(Math.abs(b.x-p.x),Math.abs(b.y-p.y)));
+    const t=ready[0]; t.cd=Math.max(t.cd||0,m.d.gearlock.dur);
+    wave(t.x,t.y,'#4a86cf',.72); ring(t.x,t.y,'#7cb8ea',30,.50);
+    trail(m.x,m.y,Math.sign(t.x-m.x),Math.sign(t.y-m.y),
+          Math.max(Math.abs(t.x-m.x),Math.abs(t.y-m.y)),'#7cb8ea');
+    SFX.play('curse');
+    say(TX('s.gearlock','祕匠的藍色齒輪光束鎖住了一座砲台 —— 換到另一座！'),'bad');
     return;
   }
   if(it.k==='quake'){
