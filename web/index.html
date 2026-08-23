@@ -558,6 +558,15 @@ body{
 /* ── 名牌：直接把「那是什麼」寫在畫面上 ──
    16px 的精靈再怎麼畫，中文名稱都塞不進去。用 DOM 疊字才銳利。 */
 #tags{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.objective{
+  position:absolute; z-index:3; left:50%; top:9px; transform:translateX(-50%);
+  display:none; max-width:min(78%,390px); padding:5px 10px; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-align:center;
+  color:#f5dc7a; background:rgba(12,10,8,.88); border:1px solid var(--brass-dim);
+  box-shadow:0 2px 9px rgba(0,0,0,.55);
+}
+.objective.show{display:block}
 .tag{
   position:absolute; transform:translate(-50%,-100%);
   white-space:nowrap; font-size:10px; line-height:1.1; padding:2px 4px;
@@ -1533,6 +1542,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div id="screenwrap">
       <canvas id="game" width="448" height="320"></canvas>
       <div id="tags"></div>
+      <!-- 最終層的目的地。神殿中軸很長，樓梯尚未進入視野時也要知道方向 -->
+      <div id="objective" class="objective"></div>
       <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
       <div id="bossbar"><b id="bossnm"></b><span id="bosspips"></span><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
       <div id="vig"></div>
@@ -2524,6 +2535,10 @@ m.pit|A deep collapse blocks the way.|ふかい くずれあとが みちを ふ
 m.mound|A raised pile of earth and rubble blocks the way.|もりあがった つちと がれきが みちを ふさいでいる。
 m.landmark|The massive ruin blocks the way.|きょだいな いせきが みちを ふさいでいる。
 m.lost|(The stairs are to the {d} — about {n} steps.)|（かいだんは {d}のほう —— およそ {n}ぽ。）
+m.templegoal|The inner sanctuary and its stairs are due north. Follow the central aisle.|ないじんと かいだんは まきた。ちゅうおうの ろうかを すすもう。
+m.templegoaln|↑ Inner sanctuary and stairs: due north, about {n} steps.|↑ ないじんと かいだん：まきた、およそ {n}ぽ。
+m.templeboss|Defeat the Temple Keeper to break the seal on the stairs.|しんでんの もんばんを たおし、かいだんの ふういんを とこう。
+m.templeopen|The stairs are open. Stand on them and press A.|かいだんが ひらいた。うえに のって Aを おそう。
 dir.n|north|きた
 dir.s|south|みなみ
 dir.e|east|ひがし
@@ -2837,7 +2852,7 @@ lg.turretcd|Emplacement {n}|ほうざ {n}
 m.bounty|Clear bounty {n} G - spend it on gear back in the village.|クリアしょうきん {n} G —— むらで そうびに かえよう。
 o.relic|A search party returns <b>{n} G</b> from your body to the village.|そうさくたいが みに つけていた <b>{n} G</b> を むらへ とどけた。
 ui.cursed|【cursed】|【のろい】
-skin.blob|Jelly|クラゲスライム
+skin.blob|Round Hero|まるい ゆうしゃ
 skin.biped|Traveller|たびびと
 skin.cat|Cat|ネコ
 skin.bird|Bird|トリ
@@ -3612,7 +3627,7 @@ let ART_DATA = null;
    圖檔而 URL 不變，玩家可能幾天都還看見舊頭目。每次正式換一批美術只需
    改這一個值，所有逐張載入的圖與動畫就會取得同一版。ART_DATA 是內嵌
    data URL，不需要也不能附 query。 */
-const ART_REV = '20260823-babylon-boss-v2';
+const ART_REV = '20260823-hero-four-feet-v3';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3818,14 +3833,14 @@ const BLOB_SKINS = {
   /* 六種體型的差別必須是**比例**，不是細節。
      第一版只在同一團身體上加耳朵、加喙、加天線 —— 放大到六倍才看得出來，
      在 16px 的遊戲畫面上六隻長得一模一樣。
-     所以這一版每一種的整體輪廓都不同：傘冠觸腕 / 瘦高 / 帶耳 / 水滴 / 方正 / 無腳。 */
-  blob: [                                   // 水母軟泥：圓傘冠＋五條接地短觸腕
+     所以這一版每一種的整體輪廓都不同：四腳圓身 / 瘦高 / 帶耳 / 水滴 / 方正 / 無腳。 */
+  blob: [                                   // 海報版主角：圓球身＋四隻寬短腳
     [3,5,6],[4,4,8],[5,3,10],[6,2,12],
     [7,2,12],[8,2,12],[9,3,10],[10,4,8],
-    [11,2,2],[11,5,2],[11,8,2],[11,11,2],[11,14,1],
-    [12,2,2],[12,5,2],[12,8,2],[12,11,2],[12,14,1],
-    [13,2,2],[13,5,2],[13,8,2],[13,11,2],[13,14,1],
-    [14,3,1],[14,6,1],[14,9,1],[14,12,1],[14,14,1],
+    [11,2,2],[11,5,2],[11,8,2],[11,11,2],
+    [12,2,2],[12,5,2],[12,8,2],[12,11,2],
+    [13,2,2],[13,5,2],[13,8,2],[13,11,2],
+    [14,3,1],[14,6,1],[14,9,1],[14,12,1],
   ],
   biped: [                                  // 旅人：瘦高，頭與身體之間有脖子
     [1,5,6],[2,4,8],[3,4,8],[4,4,8],
@@ -3960,7 +3975,7 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 腳的內側再壓一道暗色 —— 四隻腳之間才有厚度，不會變成一排柵欄
   const ly = child ? 11 : 12;
   // 腳縫只有「真的有腳」的體型才畫。幽靈與機械畫上去會變成浮在裙襬上的兩條線。
-  const LEG = {blob:[3,6,9,12,14], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
+  const LEG = {blob:[4,7,10], biped:[], cat:[4,7,10], bird:[6,10], bot:[4,9], ghost:[]};
   for(const lx of (child ? [5,8,11] : (LEG[skin] || LEG.blob))) px(x,PAL[dark],lx,ly,1,2);
 
   // 左上受光：貼著剪影的頂端，不能寫死 y3 —— 矮的體型（史萊姆）
@@ -8707,6 +8722,9 @@ function buildFloor(){
     const mk0 = G.f.mark;
     if(mk0 && x>=mk0.x && x<mk0.x+2 && y>=mk0.y && y<mk0.y+2) continue;
     G.torches.push({x,y});
+  }
+  if(act0.id === 'temple' && G.floor >= act0.floors){
+    say(TX('m.templegoal','內殿與樓梯就在正北方。沿中央長廊一直前進。'),'gold');
   }
   vision();
 }
@@ -14637,7 +14655,12 @@ function paintMap(mcx, mini, MMS){
   }
   // 樓梯：看過就永遠記得，這是玩家最需要的一格
   const st = G.f.stairs;
-  if(G.seen[key(st.x,st.y)]){
+  /* 神殿最終層的樓梯從出生點足足隔了二十多格，而且整條中軸刻意偏暗。
+     目的地在小地圖完全隱形時，正確的直線長廊會被誤讀成「沒有樓梯」。
+     序章不是找路考試，所以這一層從一開始就把終點標出來；其他章仍維持
+     看過才記住的規則。 */
+  const templeGoal = actAt(G.act).id === 'temple' && G.floor >= actAt(G.act).floors;
+  if(G.seen[key(st.x,st.y)] || templeGoal){
     mcx.fillStyle = '#c9973f';
     mcx.fillRect(st.x*MMS+1, st.y*MMS+1, MMS-2, MMS-2);
     mcx.fillStyle = '#14110f';
@@ -14894,6 +14917,34 @@ function refresh(){
      不是每一步都要讀的東西 —— 而它會把招牌擠成兩行。 */
   $('zone').textContent = locAct(actAt(G.act)) + `　${G.floor}/${actAt(G.act).floors}` +
     (innerWidth > 620 ? `　${TX('ui.depth','深度')} ${G.depth}` : '');
+
+  /* 巴比倫神殿 B3F 是一條二十多格的中軸長廊。目的地雖然保證連通，
+     但玩家站在入口看不到最北端時，畫面只剩黑暗與重複柱列，很容易判斷
+     成「樓梯沒有生成」。把方向、距離與封印狀態留在畫面上，直到走到終點。 */
+  const objective = $('objective');
+  if(objective && objective.classList){
+    const templeLast = actAt(G.act).id === 'temple' && G.floor >= actAt(G.act).floors;
+    if(templeLast){
+      const st = G.f.stairs;
+      const dist = Math.max(Math.abs(st.x-p.x), Math.abs(st.y-p.y));
+      let txt;
+      if(G.f.bossLock && G.f.bossSeen){
+        txt = TX('m.templeboss','擊敗神殿門番，解除樓梯封印');
+      } else if(!G.f.bossLock && p.x === st.x && p.y === st.y){
+        txt = TX('m.templeopen','樓梯已開啟・按 A 下樓');
+      } else if(!G.f.bossLock){
+        txt = M('m.lost','樓梯已開啟・{d}約 {n} 步',
+                {d: st.y < p.y ? '↑ ' + TX('dir.n','北') : TX('dir.here','正下'), n:dist});
+      } else {
+        txt = M('m.templegoaln','↑ 內殿與樓梯在正北方・沿中央長廊前進（約 {n} 步）',{n:dist});
+      }
+      objective.textContent = txt;
+      objective.classList.add('show');
+    } else {
+      objective.textContent = '';
+      objective.classList.remove('show');
+    }
+  }
 
   // 狀態異常：原本只在訊息裡閃一行就沒了，玩家根本不知道自己還中著什麼
   const sb = $('stbar'); sb.innerHTML='';
@@ -17304,7 +17355,15 @@ function blobFor(col, skin){
                    makeBlob(col, {star:true, dark: col==='#' ? '@' : '0', skin:sk});
   return blobCache[k];
 }
-heroArtHooks.push(()=>{ for(const k in blobCache) delete blobCache[k]; });
+heroArtHooks.push(()=>{
+  for(const k in blobCache) delete blobCache[k];
+  /* 頭像可能在外部 PNG 載完之前先畫過一次程式版。快取鍵只記裝備與配色，
+     不把「美術剛載入」算進去的話，它會一直停在舊水母輪廓，直到玩家換裝。
+     主畫面每幀都會重取動畫所以早已換新，右欄頭像卻還是舊的 —— 視覺上就像
+     修正完全沒有套進遊戲。美術到齊時強制重畫一次，兩邊才是同一隻角色。 */
+  portLook = null;
+  if(G) refresh();
+});
 function openBoard(){
   const list = $('blist'); list.innerHTML = '';
   if(!VILLAGE.board.length){
