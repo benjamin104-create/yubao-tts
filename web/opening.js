@@ -31,6 +31,11 @@ ok(/LEVEL_FANFARE_DUR\s*=\s*1\.72/.test(html), 'level-up camera timing follows t
 ok(/startLevelUpCelebration/.test(html) && /G\.zoomTo\s*=\s*Math\.max\(1\.43/.test(html), 'level-up action and focus zoom are wired');
 const prologueSource = html.slice(html.indexOf('const PROLOGUE ='), html.indexOf("const pro=$('prologue')"));
 ok((prologueSource.match(/\{title:/g) || []).length === 12, 'four prologue pages exist in all three languages');
+ok(/PROLOGUE_SCENE_MS=\[6500,5200,5200,7000\]/.test(html) && /setTimeout\(nextPrologue/.test(html),
+   'four charcoal scenes auto-advance before gameplay');
+ok(/@keyframes towerBuild/.test(html) && /@keyframes transportDrop/.test(html) &&
+   /@keyframes impactSettle/.test(html) && /@keyframes charcoalAwake/.test(html),
+   'each prologue scene has its own motion language');
 ok(/art\/promo\/deep-learning-tower-cover-landscape\.jpg/.test(html), 'landscape poster is used by the title screen');
 ok(/art\/promo\/deep-learning-tower-cover-square\.jpg/.test(html), 'mobile square poster is used by the title screen');
 
@@ -42,6 +47,20 @@ for(const rel of [
   ok(fs.existsSync(file), `${rel} exists`);
   ok(fs.statSync(file).size < 600000, `${rel} stays below 600 KB`);
 }
+
+for(let i=1;i<=4;i++){
+  const rel = `art/promo/prologue-charcoal-${i}-v1.jpg`;
+  const file = path.join(ROOT, rel);
+  ok(html.includes(rel), `${rel} is wired into the prologue`);
+  ok(fs.existsSync(file), `${rel} exists`);
+  ok(fs.statSync(file).size < 400000, `${rel} stays below 400 KB for mobile`);
+}
+
+const bossRatio = Number((html.match(/const BOSS_SCALE\s*=\s*ACTOR_SCALE\s*\*\s*([\d.]+)/)||[])[1]);
+const gateRatio = Number((html.match(/const GATE_BOSS_SCALE\s*=\s*ACTOR_SCALE\s*\*\s*([\d.]+)/)||[])[1]);
+ok(bossRatio * bossRatio >= 4, 'every standard boss occupies at least four times the hero area');
+ok(gateRatio > bossRatio, 'Gate Watcher is larger than the already-giant standard bosses');
+ok(/const msc = bossVisualScale\(m\.d\)/.test(html), 'runtime rendering uses the enforced boss scale');
 
 for(const id of bossIds){
   const still = path.join(ROOT, 'art', 'boss', `${id}.png`);

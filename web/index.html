@@ -209,43 +209,81 @@ body{
 #covermusic.on{border-color:var(--brass); color:#f5dc7a; background:rgba(43,31,19,.82)}
 
 /* ══ 序章 ════════════════════════════════════════════════════
-   四張短場景，像 16-bit RPG 的開場書頁：圖像佔上半、敘事壓在下半。
-   它不是影片，所以低階手機沒有解碼成本，也能隨時跳過。 */
+   四張炭筆動畫分鏡：建塔 → 傳送 → 昏倒 → 甦醒。不是影片檔，
+   所以低階手機沒有解碼成本；每幕只用一張壓縮圖配 CSS 分段動畫。 */
 #prologue{
   position:absolute; inset:0; z-index:39; display:none; overflow:hidden;
   background:#07080b; color:#f5eddd;
 }
 #prologue.show{display:block}
 #prologuevisual{
-  position:absolute; inset:0; background-color:#090b12; background-repeat:no-repeat;
-  background-position:center; background-size:cover; image-rendering:pixelated;
-  transition:opacity .22s ease, transform .8s ease;
+  position:absolute; inset:0; overflow:hidden; isolation:isolate;
+  background:#8d7149;
 }
 #prologuevisual.scene-0{
-  background-image:url("art/promo/deep-learning-tower-cover-landscape.jpg");
-  background-position:center 42%; transform:scale(1.035);
+  /* 建塔的第一格先留一層淡炭筆底稿，再由上方實圖逐階顯影；
+     這樣既看得到「正在畫／正在蓋」，也不會有半幕空白。 */
+  background-image:
+    linear-gradient(rgba(141,113,73,.66),rgba(141,113,73,.66)),
+    url("art/promo/prologue-charcoal-1-v1.jpg");
+  background-repeat:no-repeat; background-position:center 46%; background-size:cover;
 }
-#prologuevisual.scene-1{
-  background-image:url("art/village/tower-foot.png");
-  background-position:center; transform:scale(1.04);
+#prologueart{
+  position:absolute; inset:-2%; z-index:0;
+  background-repeat:no-repeat; background-position:center 46%; background-size:cover;
+  transform-origin:50% 68%; will-change:transform,opacity,clip-path,filter;
+  filter:contrast(1.05) saturate(.88);
 }
-#prologuevisual.scene-2,#prologuevisual.scene-3{
-  background-image:url("art/village/tower-foot.png");
-  background-position:center; transform:scale(1.02)
+#prologuevisual::before{
+  content:""; position:absolute; z-index:1; inset:-8% 35%; opacity:0; pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(153,207,240,.42) 34%,rgba(238,246,232,.72) 50%,rgba(153,207,240,.42) 66%,transparent);
+  mix-blend-mode:screen;
 }
-#prologuehero{
-  display:none; position:absolute; left:50%; top:53%; width:72px; height:72px;
-  image-rendering:pixelated; image-rendering:crisp-edges; transform-origin:50% 70%;
-  filter:drop-shadow(0 5px 2px rgba(0,0,0,.62));
+#prologuevisual::after{
+  content:""; position:absolute; z-index:2; inset:-4%; pointer-events:none; opacity:.20;
+  background:
+    repeating-linear-gradient(7deg,rgba(25,17,11,.18) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(97deg,transparent 0 11px,rgba(244,224,183,.11) 11px 12px);
+  mix-blend-mode:multiply; animation:charcoalBoil .24s steps(2,end) infinite;
 }
-#prologuevisual.scene-2 #prologuehero{
-  display:block; transform:translate(-50%,-50%) rotate(82deg) scale(.92); opacity:.82;
+#prologuevisual.scene-0 #prologueart{
+  background-image:url("art/promo/prologue-charcoal-1-v1.jpg");
+  animation:towerBuild 6.1s steps(8,end) both;
 }
-#prologuevisual.scene-3 #prologuehero{
-  display:block; transform:translate(-50%,-50%) scale(1); opacity:1;
-  animation:awakebob 1.8s steps(2,end) infinite;
+#prologuevisual.scene-1 #prologueart{
+  background-image:url("art/promo/prologue-charcoal-2-v1.jpg");
+  animation:transportDrop 5.0s steps(7,end) both;
 }
-@keyframes awakebob{50%{transform:translate(-50%,calc(-50% - 3px)) scale(1)}}
+#prologuevisual.scene-1::before{animation:beamPulse 1.05s steps(3,end) 4 both}
+#prologuevisual.scene-2 #prologueart{
+  background-image:url("art/promo/prologue-charcoal-3-v1.jpg");
+  animation:impactSettle 4.9s steps(6,end) both;
+}
+#prologuevisual.scene-3 #prologueart{
+  background-image:url("art/promo/prologue-charcoal-4-v1.jpg");
+  animation:charcoalAwake 6.5s steps(7,end) both;
+}
+@keyframes towerBuild{
+  0%{clip-path:inset(72% 0 0);transform:scale(1.08) translateY(2%);filter:contrast(.72) saturate(.55)}
+  100%{clip-path:inset(0);transform:scale(1.015);filter:contrast(1.05) saturate(.88)}
+}
+@keyframes transportDrop{
+  0%{opacity:.28;transform:scale(1.09) translateY(-4%);filter:contrast(.82) brightness(1.25)}
+  22%{opacity:1} 100%{opacity:1;transform:scale(1.015) translateY(2%);filter:contrast(1.07) brightness(.96)}
+}
+@keyframes beamPulse{0%,100%{opacity:.12;transform:scaleX(.75)}50%{opacity:.72;transform:scaleX(1.08)}}
+@keyframes impactSettle{
+  0%{opacity:.35;transform:scale(1.06) translate(-10px,-5px) rotate(-.35deg);filter:contrast(.75) grayscale(.7)}
+  14%{opacity:1;transform:scale(1.035) translate(7px,2px) rotate(.25deg)}
+  28%{transform:scale(1.025) translate(-4px,0)}
+  100%{opacity:1;transform:scale(1.015);filter:contrast(1.07) grayscale(.1)}
+}
+@keyframes charcoalAwake{
+  0%{opacity:.38;transform:scale(1.045) translateY(14px);filter:contrast(.72) grayscale(.72) brightness(.72)}
+  35%{opacity:.82;transform:scale(1.03) translateY(7px)}
+  100%{opacity:1;transform:scale(1.015);filter:contrast(1.08) grayscale(.04) brightness(1)}
+}
+@keyframes charcoalBoil{0%{transform:translate(-1px,0) rotate(-.04deg)}100%{transform:translate(1px,1px) rotate(.04deg)}}
 #prologue::after{
   content:""; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(180deg,rgba(4,6,10,.04) 8%,rgba(4,6,10,.18) 46%,rgba(5,5,6,.93) 75%,#050506 100%);
@@ -1363,11 +1401,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #credit{font-size:9px}
   #start{padding:13px 30px}
   #prologuebox{bottom:max(12px,env(safe-area-inset-bottom)); width:calc(100% - 20px); padding:15px 15px 12px}
-  #prologuevisual.scene-0{
-    background-image:url("art/promo/deep-learning-tower-cover-square.jpg");
-    background-size:100% auto; background-position:center top; transform:none;
-  }
-  #prologuehero{top:45%;width:64px;height:64px}
+  /* 3:2 分鏡在手機上不要用 cover 撐滿整個直幅，否則昏倒的主角會被
+     對話框蓋住。固定讓圖佔上方 72%，左右只裁掉不重要的建築。 */
+  #prologueart{inset:0;background-size:auto 72%;background-position:center top}
+  #prologuevisual.scene-0{background-size:auto 72%;background-position:center top}
   #prologuebody{min-height:6.2em; font-size:14px; line-height:1.75}
   #prologueactions{gap:7px}
   #pronext,#proskip{padding:8px 12px; font-size:12px}
@@ -1419,7 +1456,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
   <div id="prologue" aria-live="polite">
     <div id="prologuevisual" class="scene-0" aria-hidden="true">
-      <canvas id="prologuehero" width="32" height="32"></canvas>
+      <div id="prologueart"></div>
     </div>
     <div id="prologuebox">
       <div id="prologuekicker">PROLOGUE</div>
@@ -4565,9 +4602,14 @@ function paintEnd(i, x){
 
 const FIELD_ZOOM = 1.12;
 const ACTOR_SCALE = 1.25;
-const BOSS_SCALE = 1.6;
-// 門之守望不是大型人形，而是一座關卡本身；線性放大 40%，視覺面積接近一般頭目的兩倍。
-const GATE_BOSS_SCALE = 2.25;
+/* 一般頭目寬、高各為主角的 2 倍，因此視覺面積至少 4 倍。
+   48px 原圖不代表畫面上的大小；這裡才是正式戰鬥的顯示倍率。
+   碰撞與攻擊判定仍只佔腳下那一格，避免巨型剪影破壞回合制走位。 */
+const BOSS_SCALE = ACTOR_SCALE * 2;
+// 門之守望是一座活門，不只是大型人形；視覺面積約為主角的 7.4 倍。
+const GATE_BOSS_SCALE = ACTOR_SCALE * 2.72;
+const bossVisualScale = d => d && d.id === 'b_gate' ? GATE_BOSS_SCALE
+                          : (d && d.boss ? BOSS_SCALE : ACTOR_SCALE);
 
 /* 會飛的怪離地多高（邏輯單位）。3 是試出來的：再低看不出來跟站著的差別，
    再高就會蓋掉上一格的東西、也讓「牠在哪一格」變得難判斷 ——
@@ -14186,8 +14228,7 @@ function draw(dt){
       cx.beginPath(); cx.arc(gx, gy, T*0.46, 0, Math.PI*2); cx.stroke();
       cx.restore();
     }
-    const msc = m.d.id === 'b_gate' ? GATE_BOSS_SCALE
-              : (m.d.boss ? BOSS_SCALE : ACTOR_SCALE);
+    const msc = bossVisualScale(m.d);
     // 睡著或被麻痺的飛行生物會落地 —— 昏過去還在半空是說不通的
     const mfly = !!m.d.fly && !(m.st['睡'] || m.st['麻']);
     shadow(mx, my, msc, img, artName, mfly);
@@ -14219,7 +14260,7 @@ function draw(dt){
     cx.restore();
     if(m.st['睡']){ cx.fillStyle=PAL['r']; cx.fillRect(ox+m.x*T+11, oy+m.y*T+1, 3,1); cx.fillRect(ox+m.x*T+12, oy+m.y*T+2, 1,1); }
     // 血條（只在受傷時出現，不佔用畫面）
-    if(m.hp < m.mhp){
+    if(m.hp < m.mhp && !m.d.boss){
       const w = Math.max(1, Math.round(12*m.hp/m.mhp));
       cx.fillStyle='#000'; cx.fillRect(ox+m.x*T+2, oy+m.y*T+14, 12, 2);
       cx.fillStyle= m.hp/m.mhp>.5 ? PAL['l'] : PAL['g'];
@@ -14413,14 +14454,17 @@ function updateTags(){
       // 名牌會疊成一面看不懂的字牆 —— 那比沒有名牌更糟。
       const want = [];
       const near = (x,y,r)=> Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) <= r;
-      const push = (wx, wy, txt, cls, owner)=>{
-        const sx = zx(lastOx + wx*T + T/2), sy = zy(lastOy + wy*T);
+      const push = (wx, wy, txt, cls, owner, visualScale=1)=>{
+        const lift = Math.max(0, visualScale-1) * T;
+        const sx = zx(lastOx + wx*T + T/2),
+              sy = zy(lastOy + wy*T - lift),
+              foot = zy(lastOy + (wy+1)*T);
         if(sx < -20 || sy < -20 || sx > SW+20 || sy > SH+20) return;
         // 中文約 11px、其他約 6.4px，加上左右內距與框線
         let w = 10;
         for(const ch of txt) w += ch.charCodeAt(0) > 0x2e80 ? 10.5 : 6.2;
         // 上方是首選，下方是備位 —— 兩個都被佔了才往上疊
-        want.push({x:sx*s, y:sy*s - 5, alt:(sy + T)*s + 18, w, txt, cls, owner});
+        want.push({x:sx*s, y:sy*s - 5, alt:foot*s + 18, w, txt, cls, owner});
       };
 
       for(const m of G.mons){
@@ -14429,7 +14473,8 @@ function updateTags(){
         const mn = locName('mon', m.d);
         // 狀態後綴也要翻。少了這一句，英文版的畫面上會出現
         // 「Cave Rat·睡」—— 名字翻了、狀態沒翻，比整句沒翻更刺眼。
-        push(m.x, m.y, stx ? `${mn}·${TX('st.' + stx, stx)}` : mn, 'mon', 'm'+m.id);
+        push(m.x, m.y, stx ? `${mn}·${TX('st.' + stx, stx)}` : mn,
+             'mon', 'm'+m.id, bossVisualScale(m.d));
       }
       // 道具名牌只標「走幾步就到得了」的範圍。整個房間的道具全標出來，
       // 畫面會變成一張型錄，反而看不到怪物。
@@ -14491,14 +14536,17 @@ function updateTags(){
       // 精靈本身也是障礙物。只讓名牌彼此閃避的話，名牌會準確地
       // 停在上一格那隻怪的臉上 —— 沒有撞到別的名牌，但擋住了角色。
       const placed = [];
-      const tw = T*s*lastZ;
-      const block = (x,y,owner)=>{
-        const bx = zx(lastOx + x*T + T/2)*s, top = zy(lastOy + y*T)*s;
-        placed.push({x:bx, y:top + H,  w:tw, blocker:1, owner});
-        placed.push({x:bx, y:top + tw, w:tw, blocker:1, owner});
+      const block = (x,y,owner,visualScale=1)=>{
+        const bw = T*s*lastZ*visualScale,
+              bx = zx(lastOx + x*T + T/2)*s,
+              top = zy(lastOy + y*T - Math.max(0,visualScale-1)*T)*s,
+              foot = zy(lastOy + (y+1)*T)*s;
+        placed.push({x:bx, y:top + H, w:bw, blocker:1, owner});
+        placed.push({x:bx, y:foot,    w:bw, blocker:1, owner});
       };
       block(G.p.x, G.p.y, 'p');
-      for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2) block(m.x, m.y, 'm'+m.id);
+      for(const m of G.mons) if(G.seen[key(m.x,m.y)]===2)
+        block(m.x, m.y, 'm'+m.id, bossVisualScale(m.d));
       for(const a of G.allies) block(a.x, a.y, 'a'+a.id);
 
       want.sort((a,b)=> a.y - b.y);
@@ -17445,26 +17493,34 @@ heroArtHooks.push(paintCover);
 
   const PROLOGUE = {
     zh:[
-      {title:'泥板上的星辰',body:'很久以前，兩河之間的巴比倫人，把星辰、數字與眾神的名字刻進泥板，盼望知識能比王朝活得更久。'},
-      {title:'未完成的通天塔',body:'他們建起一座直抵天空的塔，想把世間所有知識帶到神明面前。塔尚未完成，城與語言便已四散。'},
-      {title:'被遺忘的神殿',body:'千年後，封閉的神殿重新亮起藍光。沒有人知道，塔底那扇門為何甦醒，也沒有人看見一道身影墜入前庭。'},
-      {title:'甦醒',body:'「……這裡是哪裡？我只記得一道光，然後——」\n「先站起來。若答案在塔上，我就一路找上去。」'},
+      {title:'巴比倫築起天梯',body:'兩河之間的人們，把泥磚一層層送向天空。塔身越過城牆，越過雲層，像要把人間的知識親手交到眾神面前。'},
+      {title:'塔底亮起一道光',body:'千年後，未完成的塔再次甦醒。青藍色的光貫穿神殿，一名陌生的旅人被捲入其中，直直送往地面。'},
+      {title:'墜落神殿前庭',body:'光熄滅時，四周只剩炭灰般的寂靜。旅人倒在殘破的釉磚前庭，武器與盾牌散落身旁，沒有任何人看見。'},
+      {title:'甦醒',body:'「……這是哪裡？我只記得一道光，然後——」\n「那座塔……也許答案就在上面。先站起來再說。」'},
     ],
     en:[
-      {title:'Stars on Clay',body:'Long ago, the people of Babylon carved stars, numbers, and the names of gods into clay, hoping knowledge would outlive every kingdom.'},
-      {title:'The Unfinished Tower',body:'They raised a tower toward the heavens, carrying all human knowledge to the gods. Before it was finished, the city and its languages scattered.'},
-      {title:'The Forgotten Temple',body:'A thousand years later, blue light returned to the sealed sanctuary. No one knew why the gate beneath the tower had awakened—or saw a figure fall into the forecourt.'},
-      {title:'Awakening',body:'“Where am I? I remember a flash of light, and then—”\n“Stand up. If the answer waits above, I will climb until I find it.”'},
+      {title:'Babylon Builds a Stairway',body:'Between the rivers, people carried mud bricks layer by layer into the sky. The tower rose beyond the walls and clouds, bearing human knowledge toward the gods.'},
+      {title:'A Light Beneath the Tower',body:'A thousand years later, the unfinished tower awoke. Blue light pierced the sanctuary, caught an unknown traveller, and carried them down toward the earth.'},
+      {title:'Fallen in the Forecourt',body:'When the light vanished, only charcoal silence remained. The traveller lay unconscious on the broken glazed bricks, unseen, with sword and shield beside them.'},
+      {title:'Awakening',body:'“Where am I? I remember a flash of light, and then—”\n“That tower… perhaps the answer is above. First, get up.”'},
     ],
     ja:[
-      {title:'粘土板の星',body:'はるか昔、バビロンの人々は星と数、神々の名を粘土板に刻んだ。知識が王国より長く残ることを願って。'},
-      {title:'未完の塔',body:'人々はすべての知を神々へ届けようと、天まで続く塔を築いた。だが完成より先に、都と言葉は散り散りになった。'},
-      {title:'忘れられた神殿',body:'千年後、閉ざされた神殿に青い光が戻った。塔の下の門がなぜ目覚めたのか、前庭へ落ちた影を見た者もいない。'},
-      {title:'目覚め',body:'「……ここは？　光が見えて、それから——」\n「立とう。答えが塔の上にあるなら、見つけるまで登るだけだ。」'},
+      {title:'バビロン、天への階を築く',body:'二つの川のあいだで、人々は泥レンガを一段ずつ空へ運んだ。塔は城壁と雲を越え、人の知を神々へ届けようとしていた。'},
+      {title:'塔の下に青い光',body:'千年後、未完の塔が再び目覚めた。青い光が神殿を貫き、見知らぬ旅人を巻き込んで地上へ運んでいく。'},
+      {title:'前庭への落下',body:'光が消えると、炭のような静けさだけが残った。旅人は壊れた釉薬レンガの上に倒れ、剣と盾がその傍らに転がった。'},
+      {title:'目覚め',body:'「……ここはどこだ？　光が見えて、それから——」\n「あの塔……答えは上にあるのかもしれない。まず立とう。」'},
     ],
   };
   const pro=$('prologue'), proVisual=$('prologuevisual');
-  let proIndex=0;
+  const PROLOGUE_SCENE_MS=[6500,5200,5200,7000];
+  const PROLOGUE_ART=[1,2,3,4].map(i=>`art/promo/prologue-charcoal-${i}-v1.jpg`);
+  let proIndex=0, proTimer=0, prologueArtWarmed=false;
+
+  function warmPrologueArt(){
+    if(prologueArtWarmed) return;
+    prologueArtWarmed=true;
+    for(const src of PROLOGUE_ART){ const im=new Image(); im.src=src; }
+  }
 
   function titleMusic(){
     SFX.unlock();
@@ -17486,28 +17542,34 @@ heroArtHooks.push(paintCover);
       ? TX('ui.prostart','開始冒險') : TX('ui.pronext','下一頁');
     $('proskip').textContent=TX('ui.proskip','跳過序章');
     $('prologuedots').innerHTML=pages.map((_,i)=>`<i class="${i===proIndex?'on':''}"></i>`).join('');
+    /* 拿掉再加回 class，連續快速點擊時同一段 CSS 分鏡也會從第一格重播。 */
+    proVisual.className=''; void proVisual.offsetWidth;
     proVisual.className='scene-'+proIndex;
-    const hc=$('prologuehero'), hx=hc.getContext('2d');
-    hx.imageSmoothingEnabled=false; hx.clearRect(0,0,hc.width,hc.height);
-    if(G){
-      const hi=heroNow();
-      if(hi) hx.drawImage(hi,0,0,hc.width,hc.height);
-    }
-    SFX.play('open',60);
+    SFX.play(['open','stairs','fell','open'][proIndex],60);
+    clearTimeout(proTimer);
+    /* 不喜歡動態的系統設定就保留手動翻頁；其他玩家可像看短片一樣自動播完。 */
+    if(!matchMedia('(prefers-reduced-motion:reduce)').matches)
+      proTimer=setTimeout(nextPrologue,PROLOGUE_SCENE_MS[proIndex]);
+  }
+
+  function nextPrologue(){
+    const pages=PROLOGUE[LANG]||PROLOGUE.zh;
+    if(proIndex>=pages.length-1){ enterDungeon(); return; }
+    proIndex++; renderPrologue();
   }
 
   function beginPrologue(){
     titleMusic();
+    warmPrologueArt();
     coverUp=true; cov.classList.add('gone');
     pro.classList.add('show'); pro.setAttribute('aria-hidden','false');
     proIndex=0;
-    /* 後兩幕沿用正式遊戲的神殿廣場與玩家當下選的主角造型；不是宣傳用假角色，
-       換色、裝備與輪廓會原樣出現在甦醒畫面。 */
     renderPrologue();
   }
 
   /* 開場的共通動作。重新開始先看序章；讀取紀錄點直接回到正在進行的樓層。 */
   function enterDungeon(){
+    clearTimeout(proTimer); proTimer=0;
     coverUp = false;
     cov.classList.add('gone');
     pro.classList.remove('show'); pro.setAttribute('aria-hidden','true');
@@ -17519,11 +17581,7 @@ heroArtHooks.push(paintCover);
     showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
   }
-  $('pronext').onclick=()=>{
-    const pages=PROLOGUE[LANG]||PROLOGUE.zh;
-    if(proIndex>=pages.length-1){ enterDungeon(); return; }
-    proIndex++; renderPrologue();
-  };
+  $('pronext').onclick=nextPrologue;
   $('proskip').onclick=enterDungeon;
   $('start').onclick = ()=>{
     clearRun();                   // 重新開始就是放棄紀錄點，講明白就好
