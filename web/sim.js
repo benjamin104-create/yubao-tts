@@ -93,9 +93,21 @@ for(let r=0; r<RUNS; r++){
     if(tboss && G.f.turrets){
       const here = G.f.turrets.find(t => t.x === p.x && t.y === p.y);
       if(here && here.cd <= 0){ api.fireTurret(); api.endTurn(); t++; continue; }
+      /* 目標要**黏住**，不能每回合重挑。
+         舊版每回合挑「曼哈頓距離最近的一座」，可是移動是八方向（切比雪夫）——
+         兩種距離不一致，走斜線的時候「最近的那一座」會在兩座之間跳來跳去，
+         於是機器人走到剩四格就掉頭。實測距離序列：5 4 4 4 6 6 5 5 5 6 7 8 9…
+         五十回合走了五十步，一發砲都沒開過。
+
+         這是**測試自己的 bug**，不是遊戲的：走通測試因此回報
+         「第 13 章死亡 40 次」，而真正的原因是它從來沒有玩到那個謎題。
+         挑一次就走到底，除非那一座冷卻了或已經站上去。 */
       const hot = G.f.turrets.filter(t2 => t2.cd <= 0);
-      const aim = (hot.length ? hot : G.f.turrets)
-        .reduce((a, b) => !a || (Math.abs(b.x-p.x)+Math.abs(b.y-p.y)) < (Math.abs(a.x-p.x)+Math.abs(a.y-p.y)) ? b : a, null);
+      if(aimT && (aimT.cd > 0 || (aimT.x === p.x && aimT.y === p.y))) aimT = null;
+      if(!aimT) aimT = (hot.length ? hot : G.f.turrets)
+        .reduce((a, b) => !a || Math.max(Math.abs(b.x-p.x), Math.abs(b.y-p.y))
+                              < Math.max(Math.abs(a.x-p.x), Math.abs(a.y-p.y)) ? b : a, null);
+      const aim = aimT;
       if(aim){
         const st2 = api.nextStep(G, {x:p.x, y:p.y}, aim);
         if(st2){ api.tryMove(st2[0], st2[1]); t++; continue; }
