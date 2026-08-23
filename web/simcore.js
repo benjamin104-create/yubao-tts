@@ -81,7 +81,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'villageStyle, VSTYLES, VNAME, VPAL, VILLAGE_SCENE_SPEC, migrateAct, VILLAGE_VER, RUN_VER,' +
   'talkOpen, answerTalk, askVillager, npcStep,' +
   'evOK, makeEvent, rubbleAt, digMason, stoneStep, evStep, giveCirclet,' +
-  'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS,' +
+  'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS, REGEN_TURNS, needExp,' +
   'THEMES, PAL,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +

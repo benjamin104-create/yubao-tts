@@ -907,5 +907,86 @@ t('店員認得出來的爛東西只給四分之一，認不出來的照樣全�
     '正常的草還是半價');
 });
 
+/* ── 傷害留不留得住 ─────────────────────────────────────────
+   使用者：「為什麼主角被打到都不會受傷，包含踩到陷阱也是，沒掉 hp，
+   請恢復到正常應該受傷的狀況，這樣遊戲才有真實性」。
+
+   查出來是兩件事疊在一起，而且**兩件都不會報錯**：
+     升級補滿血　　量出來佔了「回到身上的血」的絕大部分
+     自然回復太快　門檻 350 的意思是「回滿一條血 350 回合」，跟等級無關，
+                   所以體力上限 400 的時候是每回合回 1.14 點
+
+   下面三條把修好的狀態釘住。第三條是行為層的：讓機器人主動去找架打，
+   然後問「回到身上的血有沒有少於挨打的血」—— 那才是「傷害留得住」
+   真正的定義，前兩條只是它的兩個成因。 */
+t('升級不會把血補滿（只加上限漲的那幾點）', ()=>{
+  V.act = 0; V.stock = []; V.pots = [];
+  api.newGame(777);
+  const G = api.G(), p = G.p;
+  p.hp = Math.max(1, p.mhp - 12);            // 先受傷
+  const hp0 = p.hp, mhp0 = p.mhp;
+  /* 升級是在「打死東西」之後結算的（gainExp 沒有單獨匯出），
+     所以這裡真的放一隻怪、把經驗值補到剛好差一隻，然後打死牠 ——
+     走的是玩家真正會走的那條路，不是直接改 p.lv。 */
+  let sp = null;
+  for(const dd of api.DIRS){ const x=p.x+dd[0], y=p.y+dd[1]; if(api.walkable(x,y)){ sp=[x,y]; break; } }
+  assert(sp, '找不到放怪的空地');
+  const mo = api.spawnMon(api.i18n.MONS[0], sp[0], sp[1]);
+  if(mo && G.mons.indexOf(mo) < 0) G.mons.push(mo);
+  p.exp = api.needExp(p.lv);                  // 差這一隻就升級
+  api.kill(mo);
+  assert(p.lv >= 2, '應該有升級（實際 LV' + p.lv + '）');
+  assert(p.mhp > mhp0, '上限應該變高（' + mhp0 + ' → ' + p.mhp + '）');
+  assert(p.hp < p.mhp,
+    '升級把血補滿了 —— 那正是「被打到都不會受傷」的主因（' + p.hp + '/' + p.mhp + '）');
+  assert(p.hp > hp0, '升級還是要有獎勵：上限漲的那幾點要算成實血（' + hp0 + ' → ' + p.hp + '）');
+  assert.strictEqual(p.hp - hp0, p.mhp - mhp0,
+    '加的血要剛好等於上限漲的量');
+});
+
+t('自然回復：後期不會超過每回合 1 點', ()=>{
+  // 門檻 = 回滿一條血要幾回合，跟等級無關。遊戲裡的體力上限最高約 500，
+  // 一旦每回合回超過 1 點，多數雜魚的削血就追不上「走一走就全好了」。
+  assert(typeof api.REGEN_TURNS === 'number', 'REGEN_TURNS 要匯出來才驗得到');
+  const MAX_MHP = 560;                       // 走通測試量到的最高上限約 500
+  assert(MAX_MHP / api.REGEN_TURNS <= 1,
+    '體力上限 ' + MAX_MHP + ' 時每回合回 ' + (MAX_MHP/api.REGEN_TURNS).toFixed(2) +
+    ' 點 —— 超過 1 點就等於打不動他（REGEN_TURNS=' + api.REGEN_TURNS + '）');
+  // 另一頭也要顧：太慢等於沒有自然回復（當初 15000 就是這樣被否決的）
+  assert(api.REGEN_TURNS <= 1500,
+    '回滿一條血要 ' + api.REGEN_TURNS + ' 回合 —— 太慢的話任何受傷都是永久的');
+});
+
+t('主動找架打的時候，回血要少於挨打', ()=>{
+  /* 這一條是行為層的定義：不管血是從哪裡回來的（自然回復、升級、草），
+     總量都必須少於挨打的量，不然玩家永遠磨不死。
+     修之前量到的是 **150%** —— 回到身上的血比挨的還多五成。 */
+  let dmg = 0, healed = 0, turns = 0;
+  for(let s = 0; s < 12; s++){
+    V.act = 0; V.stock = []; V.pots = [];
+    api.newGame(9000 + s);
+    const G = api.G(), p = G.p;
+    let prev = p.hp;
+    for(let i = 0; i < 400 && !G.over; i++){
+      let best = null, bd = 1e9;
+      for(const m of G.mons){ if(m.hp <= 0) continue;
+        const d = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
+        if(d < bd){ bd = d; best = m; } }
+      const st = api.nextStep(G, p, best || G.f.stairs);
+      if(st) api.tryMove(st[0], st[1]); else api.endTurn();
+      turns++;
+      const d = prev - p.hp;
+      if(d > 0) dmg += d; else if(d < 0) healed += -d;
+      prev = p.hp;
+      if(p.hp <= 0) break;
+      if(api.tileAt(p.x,p.y) === api.DOWN && G.floor < api.ACTS[G.act].floors) api.descend();
+    }
+  }
+  const pct = 100 * healed / Math.max(1, dmg);
+  assert(dmg > 300, '樣本要夠大（' + turns + ' 回合、挨打 ' + dmg + ' 點）');
+  assert(pct < 85,
+    '回血是挨打的 ' + pct.toFixed(0) + '%（上限 85%）—— 超過就代表傷害留不住');
+});
+
 console.log('\n通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);
