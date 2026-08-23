@@ -87,10 +87,22 @@ body{
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:clamp(14px,3.4vh,30px);
   padding:26px 20px calc(26px + env(safe-area-inset-bottom));
-  background:radial-gradient(120% 90% at 50% 42%, #241d18 0%, #120e0c 48%, #070605 100%);
+  background:#070605;
   text-align:center; overflow:hidden;
 }
 #cover.gone{display:none}
+#coverposter{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:url("art/promo/deep-learning-tower-cover-landscape.jpg");
+  background-size:cover; background-position:center; background-repeat:no-repeat;
+}
+#coverrock,#covershaft,#coverdust,#coverglow,#coverart{display:none}
+/* 海報本身負責第一眼的世界觀；下方漸暗只為了讓開始按鈕在最亮的場景上
+   仍有足夠對比，不再疊一個與海報互相競爭的第二張封面。 */
+#cover::after{
+  content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(180deg,rgba(5,6,11,.04) 30%,rgba(7,6,5,.18) 54%,rgba(7,6,5,.92) 82%,#070605 100%);
+}
 /* 岩壁：直接用遊戲裡的岩盤圖樣，封面與遊戲是同一種材質 */
 #coverrock{position:absolute; inset:0; opacity:.5; background-repeat:repeat}
 /* 從上方灑下來的光井 —— 主角站在光裡，眼睛就會先看到主角 */
@@ -126,7 +138,7 @@ body{
 }
 @keyframes breathe{50%{opacity:.62; transform:translate(-50%,-50%) scale(1.09)}}
 
-#covertext{position:relative; display:grid; gap:12px; justify-items:center; max-width:520px}
+#covertext{display:none}
 #cover h1{
   margin:0; font-family:var(--display); font-weight:600;
   font-size:clamp(30px,7.2vw,50px); letter-spacing:.2em; text-indent:.2em;
@@ -144,7 +156,11 @@ body{
 #cover .lede b{color:#f2e3c4; font-weight:600}
 #coverrule{width:66px; height:1px; background:linear-gradient(90deg,transparent,var(--brass-dim),transparent)}
 
-#coverfoot{position:relative; display:grid; gap:14px; justify-items:center}
+#coverfoot{
+  position:relative; z-index:2; display:grid; gap:11px; justify-items:center;
+  width:min(520px,100%); margin-top:auto; padding:14px 18px 4px;
+  background:linear-gradient(180deg,transparent,rgba(7,6,5,.36));
+}
 #start{
   font-family:var(--display); font-size:16px; letter-spacing:.28em; text-indent:.28em;
   color:#1a120d; background:linear-gradient(180deg,#e8a06f,var(--brass));
@@ -185,6 +201,75 @@ body{
   font-family:var(--display); font-size:10px; letter-spacing:.13em; color:var(--parch-dim);
 }
 #covermeta span{border:1px solid var(--edge); padding:4px 9px; white-space:nowrap}
+#covermusic{
+  border:1px solid rgba(232,220,192,.42); background:rgba(7,6,5,.68);
+  color:#f0dfbd; min-height:38px; padding:7px 16px; cursor:pointer;
+  font:12px var(--sans); letter-spacing:.08em; touch-action:manipulation;
+}
+#covermusic.on{border-color:var(--brass); color:#f5dc7a; background:rgba(43,31,19,.82)}
+
+/* ══ 序章 ════════════════════════════════════════════════════
+   四張短場景，像 16-bit RPG 的開場書頁：圖像佔上半、敘事壓在下半。
+   它不是影片，所以低階手機沒有解碼成本，也能隨時跳過。 */
+#prologue{
+  position:absolute; inset:0; z-index:39; display:none; overflow:hidden;
+  background:#07080b; color:#f5eddd;
+}
+#prologue.show{display:block}
+#prologuevisual{
+  position:absolute; inset:0; background-color:#090b12; background-repeat:no-repeat;
+  background-position:center; background-size:cover; image-rendering:pixelated;
+  transition:opacity .22s ease, transform .8s ease;
+}
+#prologuevisual.scene-0{
+  background-image:url("art/promo/deep-learning-tower-cover-landscape.jpg");
+  background-position:center 42%; transform:scale(1.035);
+}
+#prologuevisual.scene-1{
+  background-image:url("art/village/tower-foot.png");
+  background-position:center; transform:scale(1.04);
+}
+#prologuevisual.scene-2,#prologuevisual.scene-3{
+  background-image:url("art/village/tower-foot.png");
+  background-position:center; transform:scale(1.02)
+}
+#prologuehero{
+  display:none; position:absolute; left:50%; top:53%; width:72px; height:72px;
+  image-rendering:pixelated; image-rendering:crisp-edges; transform-origin:50% 70%;
+  filter:drop-shadow(0 5px 2px rgba(0,0,0,.62));
+}
+#prologuevisual.scene-2 #prologuehero{
+  display:block; transform:translate(-50%,-50%) rotate(82deg) scale(.92); opacity:.82;
+}
+#prologuevisual.scene-3 #prologuehero{
+  display:block; transform:translate(-50%,-50%) scale(1); opacity:1;
+  animation:awakebob 1.8s steps(2,end) infinite;
+}
+@keyframes awakebob{50%{transform:translate(-50%,calc(-50% - 3px)) scale(1)}}
+#prologue::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,6,10,.04) 8%,rgba(4,6,10,.18) 46%,rgba(5,5,6,.93) 75%,#050506 100%);
+}
+#prologuebox{
+  position:absolute; z-index:2; left:50%; bottom:max(24px,env(safe-area-inset-bottom));
+  width:min(760px,calc(100% - 32px)); transform:translateX(-50%);
+  padding:20px 22px 16px; text-align:left;
+  border:1px solid rgba(201,151,63,.52); border-top:2px solid var(--brass);
+  background:rgba(12,10,9,.90); box-shadow:0 16px 45px rgba(0,0,0,.55);
+}
+#prologuekicker{font:10px var(--display); color:var(--brass); letter-spacing:.28em}
+#prologuetitle{margin:7px 0 8px; font:600 clamp(20px,4.5vw,32px) var(--display); letter-spacing:.08em}
+#prologuebody{margin:0; max-width:45em; min-height:4.4em; font:clamp(14px,2.5vw,17px)/1.9 var(--serif); color:#e8dcc0}
+#prologueactions{display:flex; align-items:center; gap:10px; margin-top:13px}
+#pronext,#proskip{
+  min-height:42px; padding:9px 18px; touch-action:manipulation; cursor:pointer;
+  font:13px var(--sans); letter-spacing:.08em;
+}
+#pronext{border:1px solid var(--brass); color:#15100b; background:#d5a451; font-weight:700}
+#proskip{border:1px solid #655746; color:#bcae98; background:transparent}
+#prologuedots{margin-left:auto; display:flex; gap:6px}
+#prologuedots i{width:6px;height:6px;border-radius:50%;background:#5f5548}
+#prologuedots i.on{background:#f0c96b;box-shadow:0 0 8px rgba(240,201,107,.7)}
 /* 署名。壓得比 covermeta 更輕 —— 落款該是最後才被看到的那一行，
    但它必須在，因為它是這款遊戲跟做它的人之間唯一的連結。 */
 #nostore{
@@ -1265,9 +1350,28 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
      點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
      招牌與狀態列全被捲到螢幕外。使用者回報的「畫面被切掉」就是這個。 */
-  #cover{justify-content:flex-start; padding-top:20px; gap:14px}
-  #coverart{width:88px; height:88px}
-  #coverglow{top:20%}
+  #cover{justify-content:flex-end; padding:0 12px calc(12px + env(safe-area-inset-bottom)); gap:0}
+  #coverposter{
+    bottom:auto; height:min(100vw,560px);
+    background-image:url("art/promo/deep-learning-tower-cover-square.jpg");
+    background-size:cover; background-position:center top;
+  }
+  #cover::after{background:linear-gradient(180deg,transparent 28%,rgba(7,6,5,.12) 48%,#070605 72%)}
+  #coverfoot{margin-top:min(100vw,560px); padding:10px 8px 0; gap:8px}
+  #ident{margin-top:0}
+  #covermeta{display:none}
+  #credit{font-size:9px}
+  #start{padding:13px 30px}
+  #prologuebox{bottom:max(12px,env(safe-area-inset-bottom)); width:calc(100% - 20px); padding:15px 15px 12px}
+  #prologuevisual.scene-0{
+    background-image:url("art/promo/deep-learning-tower-cover-square.jpg");
+    background-size:100% auto; background-position:center top; transform:none;
+  }
+  #prologuehero{top:45%;width:64px;height:64px}
+  #prologuebody{min-height:6.2em; font-size:14px; line-height:1.75}
+  #prologueactions{gap:7px}
+  #pronext,#proskip{padding:8px 12px; font-size:12px}
+  #prologuedots{gap:4px}
 }
 /* 最窄的一段（360px 以下）。英文與日文的狀態列標籤比中文寬，
    同一組間距在 393 放得下、在 360 就會溢出一行 ——
@@ -1282,6 +1386,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 
 <div id="cabinet">
   <div id="cover">
+    <div id="coverposter"></div>
     <div id="coverrock"></div>
     <div id="covershaft"></div>
     <div id="coverdust"></div>
@@ -1302,12 +1407,29 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       </div>
       <button id="resume" hidden>繼續冒險</button>
       <button id="start">開始下潛</button>
+      <button id="covermusic" type="button">♫ 播放標題曲</button>
       <div id="langpick"></div>
       <div id="covermeta">
         <span>回合制</span><span>隨機地牢</span><span>死亡即歸零</span>
       </div>
       <div id="nostore" hidden>此瀏覽器不允許存檔 —— 這一趟的進度不會被保留。</div>
       <div id="credit">潔米爸 × 小潔米株式會社　出品</div>
+    </div>
+  </div>
+
+  <div id="prologue" aria-live="polite">
+    <div id="prologuevisual" class="scene-0" aria-hidden="true">
+      <canvas id="prologuehero" width="32" height="32"></canvas>
+    </div>
+    <div id="prologuebox">
+      <div id="prologuekicker">PROLOGUE</div>
+      <h2 id="prologuetitle"></h2>
+      <p id="prologuebody"></p>
+      <div id="prologueactions">
+        <button id="pronext" type="button">下一頁</button>
+        <button id="proskip" type="button">跳過序章</button>
+        <span id="prologuedots" aria-hidden="true"></span>
+      </div>
     </div>
   </div>
 
@@ -2304,6 +2426,11 @@ const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamine’s Dad × Little Jamine Inc.|ジャミンパパ × リトルジャミン株式会社 おくり
+ui.covermusic|Play title theme|タイトル曲を聴く
+ui.coverplaying|Title theme playing|タイトル曲 再生中
+ui.pronext|Next|つぎへ
+ui.prostart|Begin the adventure|冒険をはじめる
+ui.proskip|Skip prologue|プロローグをスキップ
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
@@ -3455,7 +3582,8 @@ const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
    那種 bug 只在網路慢的時候出現，本機永遠測不到。 */
 const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
                   'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
-                  'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind'];
+                  'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind',
+                  'b_keeper', 'b_artisan', 'b_hallking', 'b_mind2'];
 const ownArt = {};
 /* 載一張外部圖，成功了才呼叫 ok(canvas)。載不到什麼都不做 ——
    「還沒畫到」不是錯誤，是這條遷移管線的正常狀態。
@@ -3501,7 +3629,8 @@ const ART_ANIM_AVAILABLE = {
   ], boss: [
     'b_warden','b_treant','b_ballista','b_pyro','b_lord',
     'b_phoenix','b_hanzo','b_oni','b_gaoler','b_queen',
-    'b_prism','b_mermaid','b_gate','b_mind1','b_mind'
+    'b_prism','b_mermaid','b_gate','b_mind1','b_mind',
+    'b_keeper','b_artisan','b_hallking','b_mind2'
   ]
 };
 const ANIM_ART = {}, animLoadTried = new Set(), animCellCache = {};
@@ -5272,7 +5401,7 @@ let clock = 0;                       // 全域動畫時鐘（秒）
 const flashCache = {};
 const charLiftCache = {};
 function characterLiftOf(img, name){
-  const darkArt = /#(?:ash|tengu|shinobi|knight|shadow|unnamed|b_warden|b_treant|b_pyro|b_hanzo|b_oni|b_gaoler|b_gate)@/.test(name);
+  const darkArt = /#(?:ash|tengu|shinobi|knight|shadow|unnamed|b_warden|b_treant|b_pyro|b_hanzo|b_oni|b_gaoler|b_gate|b_artisan|b_hallking)@/.test(name);
   const key = name + (darkArt ? '@character-lift-dark-v2' : '@character-lift-v1');
   if(charLiftCache[key]) return charLiftCache[key];
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
@@ -7750,7 +7879,7 @@ function newGame(seed){
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
     log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[],
-    zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM,
+    zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
   };
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
   // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
@@ -8839,6 +8968,23 @@ function startHurtPose(o, fromX, fromY, dur){
   o.recoil = {dx, dy, t:0, dur:dur || .20};
 }
 
+/* 升級是一個完整的小事件，不只是一行字：角色連跳兩次、金色環往外展開、
+   鏡頭推近，原創短樂句播完才退回原本倍率。只保存演出狀態，不碰回合規則。 */
+function startLevelUpCelebration(o){
+  if(!G || !o) return;
+  // 一次擊殺跨兩級時只播一段完整樂句；第二次只加一束粒子，避免兩首疊成爆音。
+  if(G.levelFx){ burst(o.x,o.y,14,'#fff2b0',36,24,.72); return; }
+  const returnZoom = Number.isFinite(G.zoomTo) ? G.zoomTo : FIELD_ZOOM;
+  G.anim = G.anim.filter(a=>a.o!==o);
+  G.anim.push({o,t:0,dur:LEVEL_FANFARE_DUR,kind:'level'});
+  G.levelFx = {t:0,dur:LEVEL_FANFARE_DUR,returnZoom,mid:false,crest:false};
+  if(!REDUCED) G.zoomTo = Math.max(1.43,G.zoom||FIELD_ZOOM);
+  ring(o.x,o.y,'#f5dc7a',T*2.0,.62);
+  burst(o.x,o.y,28,'#f5dc7a',44,30,.88);
+  SFX.play('levelup');
+  BGM.duck(LEVEL_FANFARE_DUR);
+}
+
 /* ─── 玩家行動 ─────────────────────────────────────────────── */
 function tryMove(dx,dy){
   if(G.over) return;
@@ -9248,8 +9394,7 @@ function kill(m){
     p.exp -= needExp(p.lv); p.lv++;
     const g = G.rng.i(6,11); p.mhp += g; p.hp = p.mhp;
     p.mmp = maxMp(p); p.mp = p.mmp;
-    SFX.play('level');
-    burst(p.x, p.y, 22, '#f5dc7a', 40, 26, .8);
+    startLevelUpCelebration(p);
     say(M('m.levelup','等級提升到 {n}！',{n:p.lv}),'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
     jobLevelUp();                       // 只有戴著的那頂帽子的職業會前進
     if(p.lv >= SP_FROM_LV){
@@ -11674,6 +11819,7 @@ function death(){
 /* 主音量。音效與音樂都掛在它下面，所以它同時是「總開關」。
    只能有這一份 —— 寫死在兩個地方的音量遲早會對不起來。 */
 const MASTER_VOL = 1.0;
+const LEVEL_FANFARE_DUR = 1.72;
 const SFX = (()=>{
   let ctx=null, master=null, noiseBuf=null, on=true;
   let lastAt = {};                       // 同一種音效的最小間隔，避免同回合疊成爆音
@@ -11749,6 +11895,16 @@ const SFX = (()=>{
     hurt:  ()=>{ tone(150,55,.20,'sawtooth',.15); hiss(.10,.12, 500, 140); },
     kill:  ()=>{ tone(420,70,.24,'triangle',.14); hiss(.16,.12, 900, 160, .02); },
     level: ()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,0,.16,'square',.11,i*.075)); },
+    /* 升級不是把參考遊戲的旋律搬過來，而是用同世代主機常見的語彙重新寫：
+       方波主旋律、三角波低音、兩段上行後落在主音。1.72 秒播完，鏡頭才退回。 */
+    levelup:()=>{
+      [[523,0,.13],[659,.14,.13],[784,.28,.16],[1047,.45,.23],
+       [880,.72,.12],[988,.86,.12],[1175,1.00,.18],[1047,1.22,.42]]
+        .forEach(([f,d,n])=>tone(f,0,n,'square',.090,d));
+      [[262,0,.32],[349,.42,.28],[392,.78,.26],[523,1.16,.48]]
+        .forEach(([f,d,n])=>tone(f,0,n,'triangle',.070,d));
+      tone(1319,0,.34,'triangle',.045,1.25);
+    },
     stairs:()=>{ [392,294,220,165].forEach((f,i)=>tone(f,0,.20,'triangle',.11,i*.085)); },
     death: ()=>{ tone(220,55,.9,'sawtooth',.16); tone(110,40,1.2,'triangle',.13,.06); },
     pick:  ()=>{ tone(660,0,.06,'square',.09); tone(990,0,.09,'square',.09,.055); },
@@ -12259,6 +12415,35 @@ const BGM = (()=>{
     fadeAt = now;
   }
 
+  /* 慶祝音播放時把場景曲壓低，不把它停掉。停掉再重播會永遠從第一拍開始，
+     玩家連續升級時很快就會發現背景曲像壞掉；duck 只讓出聲音空間。 */
+  function duck(seconds){
+    if(typeof window==='undefined') return;
+    const c=ctx(), g=bus(); if(!c || !g) return;
+    const now=c.currentTime, dur=Math.max(.35,seconds||LEVEL_FANFARE_DUR);
+    g.gain.cancelScheduledValues(now);
+    g.gain.setValueAtTime(Math.max(.0001,g.gain.value),now);
+    g.gain.linearRampToValueAtTime(MUSIC_GAIN*.20,now+.07);
+    g.gain.setValueAtTime(MUSIC_GAIN*.20,now+Math.max(.10,dur-.24));
+    g.gain.linearRampToValueAtTime(MUSIC_GAIN,now+dur);
+  }
+
+  /* 標題畫面的主題：神殿的 Hijaz 增二度留在旋律裡，但改成寬的八度上行、
+     低鼓與明亮高音，先把「塔很巨大」說出來，再把玩家帶進較安靜的序章。
+     旋律為本作新寫，不重製任何既有遊戲的標題曲。 */
+  TRACKS.title = T_({
+    bpm:112, wave:'sawtooth', pad:'triangle', cut:4300, lvol:.086, avol:.044,
+    bass:[0,4,8,12], hat:[2,6,10,14], kick:[0,8], tom:[0,6,10,14],
+    root:[38,46,48,50],
+    chord:[[50,57,62],[58,65,70],[60,67,72],[62,69,74]],
+    lead:[
+      [[0,62,2],[2,63,2],[4,66,2],[6,69,2],[8,74,4],[12,69,4]],
+      [[0,70,2],[2,69,2],[4,67,2],[6,70,2],[8,77,4],[12,74,4]],
+      [[0,72,2],[2,74,2],[4,79,4],[8,76,2],[10,74,2],[12,72,4]],
+      [[0,74,2],[2,78,2],[4,81,4],[8,86,4],[12,74,4]],
+    ],
+  });
+
   /* 頭目戰。整套裡最快、鼓最密的一首。它跟礦坑那一首都用半音下行，
      但兩者要的東西相反：礦坑是慢的、空五度的、往下沉；
      這一首是快的、實心三和弦的、往前逼。同一個手法，兩種速度，
@@ -12483,6 +12668,7 @@ const BGM = (()=>{
        這裡刻意不自己 start() —— 音訊必須由使用者手勢啟動，
        而且在無頭測試裡根本沒有 AudioContext。跑著就換，沒跑就等。 */
     force(id){ forced = id; },
+    duck,
     // 測試要看得到「現在被指定成哪一首」—— track 只有在音訊真的跑起來
     // 之後才會更新，無頭環境裡永遠停在 stone，驗不到任何東西。
     get forced(){ return forced; },
@@ -13747,6 +13933,8 @@ function draw(dt){
     const a = G.anim.find(v=>v.o===o);
     if(o.recoil) return {kind:'hurt', phase:Math.min(1,o.recoil.t/(o.recoil.dur||.20))};
     if(o.lunge) return {kind:'attack', phase:Math.min(1,o.lunge.t/(o.lunge.dur||.26))};
+    if(a && a.kind==='level')
+      return {kind:'level', phase:Math.min(1,a.t/(a.dur||LEVEL_FANFARE_DUR))};
     if(a && a.kind==='slide')
       return {kind:'slide', phase:Math.min(1,a.t/(a.dur||.18))};
     if(a && ['walk','charge'].includes(a.kind||'walk'))
@@ -13767,6 +13955,20 @@ function draw(dt){
      每半只移動一個實體像素（0.5 邏輯 px × RS=2），仍保持硬邊像素，
      但走動時能看到雙腳交替，不再是整張站姿在地板上滑。 */
   const drawPosed = (img, PX, PY, w2, pose, o, name, fly)=>{
+    if(pose.kind === 'level'){
+      /* 兩次離散跳躍。四條水平切片在最高點稍微向外展開，形成抬胸／張手的
+         讀感；每個位移都取整數或半像素，放大後仍是硬邊而不是縮放模糊。 */
+      const hop=Math.round(Math.abs(Math.sin(pose.phase*Math.PI*2))*3);
+      const open=Math.round(Math.abs(Math.sin(pose.phase*Math.PI*2))*2)/2;
+      const bands=4;
+      for(let i=0;i<bands;i++){
+        const sy0=Math.floor(i*img.height/bands), sy1=Math.floor((i+1)*img.height/bands);
+        const dy0=PY-hop+i*w2/bands, dh=i===bands-1?PY-hop+w2-dy0:w2/bands;
+        const spread=(bands-1-i)*open*.34;
+        cx.drawImage(img,0,sy0,img.width,sy1-sy0,PX-spread,dy0,w2+spread*2,dh);
+      }
+      return;
+    }
     if(pose.kind === 'slide'){
       // 滑行時腳不交替：下半身貼地，上半身沿行進方向微傾，讀成失去抓地力。
       const f=o.face||[0,1], side=Math.sign(f[0]);
@@ -14537,6 +14739,21 @@ function loop(ts){
       p.vx *= (1 - 1.6*dt);
     }
     G.parts = G.parts.filter(p=>p.t < p.life);
+    if(G.levelFx){
+      const fx=G.levelFx; fx.t+=dt;
+      if(!fx.mid && fx.t>=.48){
+        fx.mid=true; ring(G.p.x,G.p.y,'#fff2b0',T*2.6,.58);
+        burst(G.p.x,G.p.y,18,'#fff2b0',38,34,.72);
+      }
+      if(!fx.crest && fx.t>=1.08){
+        fx.crest=true; ring(G.p.x,G.p.y,'#8fd7ff',T*3.1,.62);
+      }
+      if(fx.t>=fx.dur){
+        const bossStillHere=!!(G.f && G.f.bossLock && G.mons.some(m=>m.d && m.d.boss));
+        G.zoomTo=bossStillHere ? Math.max(1.2,fx.returnZoom||FIELD_ZOOM) : FIELD_ZOOM;
+        G.levelFx=null;
+      }
+    }
     if(G.shake>0){
       G.shake = Math.max(0, G.shake - dt*46);
       const s = G.shake;
@@ -15704,6 +15921,10 @@ function applyLangText(){
   if(eyebrow) eyebrow.textContent = TX('ui.sub','DEEP LEARNING');
   const cred = document.getElementById('credit');
   if(cred) cred.textContent = TX('ui.credit','潔米爸 × 小潔米株式會社　出品');
+  const cm = $('covermusic');
+  if(cm) cm.textContent = cm.classList.contains('on')
+    ? '♫ ' + TX('ui.coverplaying','標題曲播放中')
+    : '♫ ' + TX('ui.covermusic','播放標題曲');
   // 兩顆開場按鈕的字會跟著存檔狀態變，不能只靠 STATIC_T 那張表
   if(typeof refreshResume === 'function') refreshResume();
   // 狀態列的標籤
@@ -15778,7 +15999,10 @@ function setLang(code){
      不重開的話，玩家選了日文、按下開始，看到的第一段還是英文。 */
   const cov = $('cover');
   const onCover = cov && cov.classList && !cov.classList.contains('gone');
-  if(G && onCover){ newGame(G.seed); }
+  if(G && onCover){
+    newGame(G.seed);
+    if(typeof BGM!=='undefined' && BGM.running) BGM.force('title');
+  }
   else if(G && !G.over) refresh();
 }
 setLang(VILLAGE.lang || autoLang());
@@ -17176,22 +17400,91 @@ heroArtHooks.push(paintCover);
     }
   }
 
-  /* 開場的共通動作。兩顆按鈕（重新開始 / 繼續）只差在
-     「進去之前要不要先把上次的狀態讀回來」。 */
+  const PROLOGUE = {
+    zh:[
+      {title:'泥板上的星辰',body:'很久以前，兩河之間的巴比倫人，把星辰、數字與眾神的名字刻進泥板，盼望知識能比王朝活得更久。'},
+      {title:'未完成的通天塔',body:'他們建起一座直抵天空的塔，想把世間所有知識帶到神明面前。塔尚未完成，城與語言便已四散。'},
+      {title:'被遺忘的神殿',body:'千年後，封閉的神殿重新亮起藍光。沒有人知道，塔底那扇門為何甦醒，也沒有人看見一道身影墜入前庭。'},
+      {title:'甦醒',body:'「……這裡是哪裡？我只記得一道光，然後——」\n「先站起來。若答案在塔上，我就一路找上去。」'},
+    ],
+    en:[
+      {title:'Stars on Clay',body:'Long ago, the people of Babylon carved stars, numbers, and the names of gods into clay, hoping knowledge would outlive every kingdom.'},
+      {title:'The Unfinished Tower',body:'They raised a tower toward the heavens, carrying all human knowledge to the gods. Before it was finished, the city and its languages scattered.'},
+      {title:'The Forgotten Temple',body:'A thousand years later, blue light returned to the sealed sanctuary. No one knew why the gate beneath the tower had awakened—or saw a figure fall into the forecourt.'},
+      {title:'Awakening',body:'“Where am I? I remember a flash of light, and then—”\n“Stand up. If the answer waits above, I will climb until I find it.”'},
+    ],
+    ja:[
+      {title:'粘土板の星',body:'はるか昔、バビロンの人々は星と数、神々の名を粘土板に刻んだ。知識が王国より長く残ることを願って。'},
+      {title:'未完の塔',body:'人々はすべての知を神々へ届けようと、天まで続く塔を築いた。だが完成より先に、都と言葉は散り散りになった。'},
+      {title:'忘れられた神殿',body:'千年後、閉ざされた神殿に青い光が戻った。塔の下の門がなぜ目覚めたのか、前庭へ落ちた影を見た者もいない。'},
+      {title:'目覚め',body:'「……ここは？　光が見えて、それから——」\n「立とう。答えが塔の上にあるなら、見つけるまで登るだけだ。」'},
+    ],
+  };
+  const pro=$('prologue'), proVisual=$('prologuevisual');
+  let proIndex=0;
+
+  function titleMusic(){
+    SFX.unlock();
+    BGM.force('title'); BGM.start();
+    const b=$('covermusic');
+    if(b){ b.classList.add('on'); b.textContent='♫ '+TX('ui.coverplaying','標題曲播放中'); }
+  }
+  /* 瀏覽器禁止未經手勢自動播放。玩家第一次碰封面的任何地方，就視為允許；
+     若只想先聽，可以按明確的音樂按鈕，不必先開始遊戲。 */
+  cov.addEventListener('pointerdown',titleMusic,{once:true});
+  $('covermusic').onclick=e=>{ e.preventDefault(); e.stopPropagation(); titleMusic(); };
+
+  function renderPrologue(){
+    const pages=PROLOGUE[LANG]||PROLOGUE.zh, page=pages[proIndex];
+    $('prologuekicker').textContent='PROLOGUE  '+(proIndex+1)+' / '+pages.length;
+    $('prologuetitle').textContent=page.title;
+    $('prologuebody').innerHTML=page.body.replace(/\n/g,'<br>');
+    $('pronext').textContent=proIndex===pages.length-1
+      ? TX('ui.prostart','開始冒險') : TX('ui.pronext','下一頁');
+    $('proskip').textContent=TX('ui.proskip','跳過序章');
+    $('prologuedots').innerHTML=pages.map((_,i)=>`<i class="${i===proIndex?'on':''}"></i>`).join('');
+    proVisual.className='scene-'+proIndex;
+    const hc=$('prologuehero'), hx=hc.getContext('2d');
+    hx.imageSmoothingEnabled=false; hx.clearRect(0,0,hc.width,hc.height);
+    if(G){
+      const hi=heroNow();
+      if(hi) hx.drawImage(hi,0,0,hc.width,hc.height);
+    }
+    SFX.play('open',60);
+  }
+
+  function beginPrologue(){
+    titleMusic();
+    coverUp=true; cov.classList.add('gone');
+    pro.classList.add('show'); pro.setAttribute('aria-hidden','false');
+    proIndex=0;
+    /* 後兩幕沿用正式遊戲的神殿廣場與玩家當下選的主角造型；不是宣傳用假角色，
+       換色、裝備與輪廓會原樣出現在甦醒畫面。 */
+    renderPrologue();
+  }
+
+  /* 開場的共通動作。重新開始先看序章；讀取紀錄點直接回到正在進行的樓層。 */
   function enterDungeon(){
     coverUp = false;
     cov.classList.add('gone');
+    pro.classList.remove('show'); pro.setAttribute('aria-hidden','true');
     try{ scrollTo(0,0); if(parent !== window) parent.scrollTo(0,0); }catch(e){}
     SFX.unlock();                 // 按鈕本身就是瀏覽器要求的那個「使用者手勢」
     SFX.play('stairs');
-    BGM.start();
+    BGM.force(null); BGM.start();
     refresh();
     showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
   }
+  $('pronext').onclick=()=>{
+    const pages=PROLOGUE[LANG]||PROLOGUE.zh;
+    if(proIndex>=pages.length-1){ enterDungeon(); return; }
+    proIndex++; renderPrologue();
+  };
+  $('proskip').onclick=enterDungeon;
   $('start').onclick = ()=>{
     clearRun();                   // 重新開始就是放棄紀錄點，講明白就好
-    enterDungeon();
+    beginPrologue();
   };
   $('resume').onclick = ()=>{
     const q = loadedRun();
@@ -17357,6 +17650,7 @@ function qaAudioAudit(){
   const nav=document.createElement('p');nav.className='qasub';const home=document.createElement('a');home.href=qaUrl({qa:'menu'});home.textContent='← 回快速測試總表';nav.appendChild(home);
   const status=document.createElement('div');status.id='qaudiostatus';status.textContent='尚未播放。建議戴耳機，依序比較場景曲與八種頭目語彙。';
   const label={
+    title:['標題畫面','磅礴上行、Hijaz 動機與低鼓'],
     temple:['巴比倫神殿','Hijaz、持續低音與手鼓'],stone:['礦坑／牢獄','空五度與半音下沉'],forest:['迷霧森林','全音音階、沒有解決感'],
     greathall:['地下大廣間','前半地底、後半通天塔'],spire:['通天塔','Hijaz 上行與 3+3+2'],hall:['怪物之間','三全音踏板與等待感'],
     village:['安全村莊','全遊戲唯一明確大調'],boss_guardian:['守護者戰','石、木與水的沉重五度'],boss_trickster:['追獵者戰','切分、瞬身與追逐'],
@@ -17443,6 +17737,7 @@ function qaMenu(){
     ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
+    ['升級演出驗收',qaUrl({qa:'levelup',act:'temple',floor:1,seed:260822})],
   ]){
     const a=document.createElement('a'); a.className='qacard'; a.href=href; a.textContent=label; top.appendChild(a);
   }
@@ -17467,6 +17762,14 @@ function startQa(){
   if(!QA_MODE) return false;
   const kind=QA_QUERY.get('qa')||'menu', seed=Number(QA_QUERY.get('seed'))||260822;
   if(kind==='floor') qaEnterFloor(qaActIndex(QA_QUERY.get('act')||'mine'),Number(QA_QUERY.get('floor'))||1,seed);
+  else if(kind==='levelup'){
+    qaEnterFloor(qaActIndex(QA_QUERY.get('act')||'temple'),Number(QA_QUERY.get('floor'))||1,seed);
+    setTimeout(()=>{
+      startLevelUpCelebration(G.p);
+      float(G.p.x,G.p.y,'LEVEL UP','#f5dc7a');
+      say(M('m.levelup','等級提升到 {n}！',{n:G.p.lv+1}),'good');
+    },320);
+  }
   else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
   else if(kind==='village'){
     const a=qaActIndex(QA_QUERY.get('act')||0); VILLAGE.act=a; VILLAGE.gold=99999;

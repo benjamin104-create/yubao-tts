@@ -9,7 +9,8 @@ import {fileURLToPath} from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const port = Number(process.argv[2] || 8765);
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
-               '.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml'};
+               '.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg',
+               '.jpeg':'image/jpeg','.svg':'image/svg+xml'};
 
 http.createServer((req,res)=>{
   const pathname = decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
