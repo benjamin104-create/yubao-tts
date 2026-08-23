@@ -272,6 +272,33 @@ B1~B3 十五隻的專屬靜態造型與逐格動畫已全部完成；
 
 ---
 
+## B6：祕匠的守衛（`b_artisan`）
+
+祕匠的副本（`vault`）的頭目。它是**解謎型**的：刀砍不動，要站上房間裡
+四座砲座去打。所以它的造型要看起來「不該用刀砍」——沒有肉、沒有臉、
+是一台被啟動的裝置，而不是一頭野獸。
+
+地貌是 `spire`（青金石釉磚 + 金），跟通天塔同一組色。
+
+```
+Pixel art sprite sheet, 16-bit SNES JRPG style, single row, 1 character,
+transparent background, 48x48 pixel character, hard pixel edges,
+no anti-aliasing, no gradients, dark outline, light from upper-left,
+shadow on lower-right.
+
+一隻：祕匠的守衛 —— 一座立起來的巴比倫式石造裝置，
+由三段可轉動的環形石盤疊成，每一段的邊緣刻著楔形文字並鑲青金石釉磚；
+最上段中央是一顆金色的鏡片狀「眼」，正在發光。
+沒有手腳、沒有臉，靠底座浮空一點點（底座本身貼齊格子底部）。
+整體是縱長的塔狀剪影，跟前面每一隻頭目（獸形、人形）都不一樣。
+
+站姿：身體最下緣（底座）貼齊該格底部，不要畫地面陰影或倒影 ——
+影子由遊戲畫。
+不要文字、不要編號、不要背景元素、不要漸層、不要邊框。
+```
+
+---
+
 ## 檔名對照（我這邊用的）
 
 | 批 | 檔名 |
@@ -280,5 +307,6 @@ B1~B3 十五隻的專屬靜態造型與逐格動畫已全部完成；
 | B2 | `b_phoenix` `b_hanzo` `b_oni` `b_gaoler` `b_queen` |
 | B3 | `b_prism` `b_mermaid` `b_gate` `b_mind1` `b_mind` |
 | B5 | `b_keeper` `b_hallking` |
+| B6 | `b_artisan` |
 
 不畫：`b_mind2`（用主角造型）

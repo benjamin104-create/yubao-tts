@@ -66,6 +66,29 @@ PALETTE_HEX = [
 # 反過來也要成立：這四個陶土色**不在**通用色盤裡，所以怪物與道具
 # 永遠不會被量化成主角的顏色 —— 整張地牢裡只有主角是這個色調。
 HERO_HEX = ["0d0d12", "a8452c", "d97757", "eaa88c", "f2efe7"]
+
+# 逐格動畫圖集額外准用的 12 個色。
+#
+# 這一組不是「放寬」，是**把已經在用的東西寫下來**。動作表那一批是後來
+# 由另一條管線生的，量出來的事實是：68 張圖集加起來，色盤外的顏色
+# 總共只有 12 種 —— 而且它們排成三條乾淨的漸層加兩個高光，
+# 不是四散的近似色。那是刻意畫的，不是量化漂移。
+#
+#   冷白 / 暖白   高光
+#   青綠四階　　  發光的東西：稜光體、折射獸、水晶砲台、淺灘鰻、鎧甲蟹
+#   紫四階　　　  公理、悖論、幻光蝶、熾天使（遊戲裡就有 glow 欄位）
+#   粉兩階　　　  人魚王后、天空之劍、通天之劍這幾件會發光的高階裝備
+#
+# 為什麼**只給動作表**，不給單張的靜態精靈：靜態那一批目前在 32 色底下
+# 一張都沒有超標。一起放寬等於白白讓那一批也可以開始漂。
+# 色盤仍然是**封閉**的 —— 第 13 個顏色照樣會紅。
+GLOW_HEX = [
+    "f7f5eb", "e8edf4",                          # 暖白 / 冷白高光
+    "a5ebeb", "58c2cf", "2f90a6", "1d6475",      # 青綠四階
+    "a85aaa", "75407f", "573060", "382044",      # 紫四階
+    "f2b2df", "d978c4",                          # 粉兩階
+]
+ANIM_HEX = PALETTE_HEX + GLOW_HEX
 # 分類 → 專用色盤。沒列到的用上面那 32 色。
 PALETTES = {"hero": HERO_HEX}
 
@@ -78,8 +101,11 @@ def palette_hex_for(rel):
     """這個檔案該用哪一組色盤，看它放在哪個資料夾。"""
     parts = rel.replace("\\", "/").split("/")
     # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
-    cat = parts[1] if len(parts) > 1 and parts[0] == "anim" else parts[0]
-    return PALETTES.get(cat, PALETTE_HEX)
+    is_anim = len(parts) > 1 and parts[0] == "anim"
+    cat = parts[1] if is_anim else parts[0]
+    if cat in PALETTES:
+        return PALETTES[cat]                 # 主角的五色不因為是動作表就放寬
+    return ANIM_HEX if is_anim else PALETTE_HEX
 
 
 PALETTE_RGB = tuple(hex_to_rgb(h) for h in PALETTE_HEX)

@@ -101,9 +101,27 @@ for name in sheets:
     W, H = im.size
     for i, (x0, y0, x1, y1) in enumerate(boxes):
         frac = (x1 - x0) * (y1 - y0) / float(W * H)
-        # 上限擋的是「兩個角色被併成一塊」，下限擋的是「把雜點當成角色」。
-        ok(0.005 <= frac <= 0.45,
-           "%s 第 %d 個主體佔比合理（%.1f%%）" % (name, i, frac * 100))
+        # 下限擋的是「把雜點當成角色」，上限擋的是「兩個角色被併成一塊」。
+        #
+        # 上限要分兩種情況。45% 是給**多角色的一張大圖**用的：那種圖上
+        # 一個角色不可能佔到快一半，佔到就是併框了。但整張圖只框到
+        # **一個**主體時，那多半就是一張單角色的圖 —— 它本來就會填滿畫面
+        # （實測有一張 1254x1254 的單角色圖，主體佔 66.7%）。
+        # 對這種圖，「有沒有併框」要改用**長寬比**問：兩個角色並排併成一塊
+        # 會變成又扁又寬（大約 2:1 以上），單一個角色不會。
+        # 面積上限仍然留著，只是放到 0.90 —— 那一條擋的是另一件事：
+        # 背景沒去乾淨，整張圖被當成主體。
+        if len(boxes) > 1:
+            ok(0.005 <= frac <= 0.45,
+               "%s 第 %d 個主體佔比合理（%.1f%%）" % (name, i, frac * 100))
+        else:
+            ar = (x1 - x0) / float(y1 - y0)
+            ok(0.005 <= frac <= 0.90,
+               "%s 唯一的主體佔比合理（%.1f%%，單角色圖上限 90%%）"
+               % (name, frac * 100))
+            ok(0.35 <= ar <= 2.2,
+               "%s 唯一的主體不是兩個併成一塊（長寬比 %.2f，要 0.35~2.2）"
+               % (name, ar))
     for i in range(len(boxes)):
         for j in range(i + 1, len(boxes)):
             a, b = boxes[i], boxes[j]
@@ -240,6 +258,7 @@ else:
            "%s 的編號是 0~%d 連續不重複（文件有 %d 個）"
            % (_k, _want[_k] - 1, len(_nums)))
 
+SIDES = {}
 print("\n轉檔成品")
 if not os.path.isdir(ART):
     ok(False, "web/art/ 存在")
@@ -252,7 +271,16 @@ else:
                 continue
             n += 1
             rel = os.path.relpath(os.path.join(dirpath, name), ART)
-            cat = rel.replace("\\", "/").split("/")[0]
+            parts = rel.replace("\\", "/").split("/")
+            # 動畫圖集是三層：anim/<類別>/<id>.png。只取第一段的話，
+            # **每一張圖集的類別都會變成 "anim"** —— 於是底下那些
+            # 「帽子要待在上半格」「武器要待在右半邊」的規則一條都跑不到，
+            # 全部掉進最後那個 else，被當成一隻站在地上的怪來驗。
+            # 症狀就是：九張帽子圖集全部報「主體沒有貼齊底部」，
+            # 而帽子本來就**不該**貼齊底部 —— 它戴在頭上。
+            # 規則本身沒錯，是分不出來這張圖是什麼東西。
+            is_sheet = parts[0] == "anim"
+            cat = parts[1] if is_sheet and len(parts) >= 3 else parts[0]
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -270,18 +298,47 @@ else:
                 ok(bool(shade), "%s 有明暗（暗面或亮面至少一階）" % rel)
             else:
                 ok(len(cols) >= 5, "%s 至少五色（實際 %d）" % (rel, len(cols)))
+            # ── 幾何：一律**逐格**量 ──────────────────────────────
+            # 動畫圖集是 10 欄 x 3 列的 30 格，而下面每一條門檻
+            #（帽子只佔上半格、主體貼齊底部）寫的都是**一格**的座標。
+            # 拿整張圖集的 bbox 去比，等於問「這三十格裡有沒有任何一格
+            # 碰到最下面」—— 三十格裡有一格對就過，那條斷言等於沒有。
+            # 逐格量之後同一條門檻反而變嚴，而且才問得出真正的問題。
+            CELL_OF = {"boss": 48}
+            c = (CELL_OF.get(cat, 32) if is_sheet else im.width)
+            boxes = []          # 每個非空格子的 (欄, 列, bbox, 填充率)
+            for _r in range(im.height // c):
+                for _k in range(im.width // c):
+                    _cell = im.crop((_k * c, _r * c, _k * c + c, _r * c + c))
+                    _bb = _cell.getchannel("A").getbbox()
+                    if not _bb:
+                        continue          # 空格子：圖集不一定塞滿三十格
+                    _fill = sum(1 for q in _cell.getdata() if q[3] > 0) / float(c * c)
+                    boxes.append((_k, _r, _bb, _fill))
+            ok(bool(boxes), "%s 不是空的" % rel)
+            if not boxes:
+                continue
+
             # 剪影佔比：太少代表主體沒框到，太多代表背景沒去掉。
-            # 下限分類別：怪物與頭目一定是一團有體積的東西，佔不到 15% 就是
-            # 沒框好；但**道具本來就有細長的**——長槍只佔 11%，那不是缺陷，
-            # 那就是一把槍的樣子。原本的下限把「主體沒框到」跟「這東西本來就細」
-            # 混為一談了。
-            frac = solid / float(len(px))
-            # 帽子跟道具一樣：它本來就只佔畫面上方那一條，
-            # 用怪物的下限去要求，只會逼出一頂佔滿整格、把臉蓋掉的帽子。
-            lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.15
+            # 量的是**最飽滿的那一格**，不是平均 —— 攻擊的蓄力格本來就縮成
+            # 一團，拿三十格的平均去比，等於用最瘦的姿勢去判「有沒有框到」。
+            # 下限分類別：怪物與頭目是一團有體積的東西；但**細長的東西不是缺陷**
+            #（長槍只佔 7%，那就是一把槍的樣子；針尾蜂 14%，那就是一隻蜂）。
+            frac = max(b[3] for b in boxes)
+            lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.12
             ok(lo <= frac <= 0.92,
-               "%s 剪影佔比合理（%.0f%%，下限 %.0f%%）" % (rel, frac * 100, lo * 100))
-            # 主體必須碰到方框的最底下那一列。
+               "%s 剪影佔比合理（最飽滿的一格 %.0f%%，下限 %.0f%%）"
+               % (rel, frac * 100, lo * 100))
+            # 「有沒有框到」真正該問的是**跨度**，不是填充率 ——
+            # 一把槍很細但橫跨整格，一張沒框好的圖則是縮在角落的一小塊。
+            # 實測：所有怪最瘦的一隻仍跨 81%、頭目 88%，所以 60% 是安全的下限，
+            # 而它抓得到「主體只佔一個角落」這種轉檔失敗。
+            if cat in ("mon", "boss", "hero"):
+                span = max(max(b[2][2] - b[2][0], b[2][3] - b[2][1]) for b in boxes) / float(c)
+                ok(span >= 0.60,
+                   "%s 主體有框到（最大跨度 %.0f%% 格寬，下限 60%%）" % (rel, span * 100))
+
+            # 主體必須碰到**自己那一格**的最底下那一列。
             #
             # 轉檔工具如果把主體在方框裡上下置中，趴著的洞穴鼠就會在
             # 下方留四格空白 —— 牠因此不是站在地磚上，是站在格子中間一道
@@ -291,44 +348,69 @@ else:
             # 遊戲那邊的影子會跟著精靈實際的腳走，所以圖畫歪了影子也跟著歪，
             # 兩者永遠貼在一起 —— check_ground 量的是「身體與影子的距離」，
             # 它看不到「這一組整個被抬高了」。一條斷言只看得到它量的東西。
-            bot = im.getchannel("A").getbbox()
             if cat == "hat":
                 # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
-                # 身體畫在下面。所以這裡問的正好相反：它有沒有乖乖待在頭頂那一段。
+                # 身體畫在下面。所以這裡問的正好相反：它有沒有待在頭那一段。
                 #
-                # 上限 16 是「上半格」，不是「不遮到眼睛」——
-                # 後者沒辦法用一頂帽子自己的方框判斷，因為六種體型的眼睛
-                # 高度各不相同。那一條在下面用**疊起來實際量**的方式驗。
-                ok(bot is not None and bot[3] <= 16,
-                   "%s 只佔上半格（最下緣在第 %s 列，上限 16）"
-                   % (rel, bot[3] if bot else "—"))
-                ok(bot is not None and (bot[2] - bot[0]) >= 12,
+                # 兩個門檻分開寫，因為它們防的是兩件不同的事：
+                #   上緣要靠近格子頂　→ 帽子沒有整頂往下掉
+                #   下緣不可以到底　　→ 帽子沒有被轉檔工具當成「站在地上的東西」
+                #                       而貼齊底部（那正是這一支原本誤報的那條）
+                # 為什麼不是「只佔上半格」：實測頭盔、頭巾、鬼面兜的下緣到
+                # 第 25~28 列 —— 它們本來就包到臉頰。用 16 去卡會逼出一頂
+                # 只蓋住頭頂一小片的帽子。單張的靜態帽子仍然用 16（實測 14~16）。
+                topmax = max(b[2][1] for b in boxes)
+                botmax = max(b[2][3] for b in boxes)
+                hat_bot = int(c * 0.90) if is_sheet else 16
+                ok(topmax <= c * 0.32,
+                   "%s 從頭頂開始（最低的上緣在第 %d 列，上限 %d）"
+                   % (rel, topmax, int(c * 0.32)))
+                ok(botmax <= hat_bot,
+                   "%s 沒有掉到腳邊（最下緣在第 %d 列，上限 %d）"
+                   % (rel, botmax, hat_bot))
+                ok(max(b[2][2] - b[2][0] for b in boxes) >= 12,
                    "%s 夠寬，戴得住（寬 %s，下限 12）"
-                   % (rel, (bot[2] - bot[0]) if bot else "—"))
+                   % (rel, max(b[2][2] - b[2][0] for b in boxes)))
             elif cat in ("weapon", "shield"):
-                # 武器與盾也是**疊在角色身上的一層**，不是站在地上的東西 ——
-                # 「貼齊底部」對它們沒有意義。它們要驗的是「有沒有待在自己那一側」：
-                # 武器在右、盾在左，中間那一條留給臉。
-                # （會不會遮到眼睛在下面用疊起來實際量的方式驗。）
-                side = "右" if cat == "weapon" else "左"
-                inside = (bot is not None and
-                          (bot[0] >= im.width * 0.42 if cat == "weapon"
-                           else bot[2] <= im.width * 0.58))
-                ok(inside, "%s 待在%s半邊（左緣 %s、右緣 %s，共 %d 欄）"
-                   % (rel, side, bot[0] if bot else "—", bot[2] if bot else "—", im.width))
+                # 武器與盾也是**疊在角色身上的一層**，「貼齊底部」對它們
+                # 沒有意義。原本驗的是「武器在右、盾在左」——
+                # 那條在動畫圖集上是錯的，而且錯在兩個地方：
+                #   1. 揮擊的那幾格本來就會橫過中線，那正是動畫的用途
+                #   2. 動畫圖集第 0 列是**正面朝向鏡頭**，角色的右手在觀眾的
+                #      左邊 —— 所以圖集的慣例跟單張的正好相反（實測：
+                #      圖集的武器在 x 1~13、盾在 x 15~32）
+                # 真正該成立的是：**待機格裡兩者分別在相反的半邊**（中間那一條
+                # 留給臉），而且同一類的每一件都站在同一側。哪一側由資產自己
+                # 決定，不由這支檢查規定 —— 規定側別只會把某一批的慣例寫死。
+                idle = [b for b in boxes if b[0] == 0 and b[1] == 0] or boxes[:1]
+                bb = idle[0][2]
+                mid = (bb[0] + bb[2]) / 2.0
+                SIDES.setdefault(cat, []).append((rel, mid < c / 2.0, bb))
+                ok(bb[2] - bb[0] <= c * 0.62,
+                   "%s 待機時不會橫跨整格（寬 %d，上限 %d）"
+                   % (rel, bb[2] - bb[0], int(c * 0.62)))
             else:
-                ok(bot is not None and bot[3] == im.height,
-                   "%s 主體貼齊底部（最下緣在第 %s 列，共 %d 列）"
-                   % (rel, bot[3] if bot else "—", im.height))
+                bad = [b for b in boxes if b[2][3] != c]
+                ok(not bad,
+                   "%s 每一格都貼齊底部（%d/%d 格沒貼到，格高 %d）"
+                   % (rel, len(bad), len(boxes), c))
             if cat == "hero":
                 # 頭頂要落在第 4~9 列之間。六種體型共用同一組帽子圖，
                 # 而帽子畫在固定的位置（drawHat 不做量測）——
                 # 頭頂高了帽子會陷進頭裡，低了帽子會浮在半空。
                 # 這是六張圖之間唯一**必須**對齊的一件事。
-                ok(bot is not None and 4 <= bot[1] <= 9,
-                   "%s 頭頂落在帽子接得上的高度（第 %s 列，要 4~9）"
-                   % (rel, bot[1] if bot else "—"))
+                #
+                # 動畫圖集放寬到 4~12：實測 anim/hero/blob 的三十格是 7~11
+                #（走路與受擊本來就會讓身體上下浮一兩格，那是動畫該有的）。
+                # 用單張的 4~9 去卡，等於要求走路時頭不准動。
+                # 「戴上去會不會對齊」那一條由下面**疊起來實際量**的檢查負責，
+                # 那才是真正要成立的事；這裡只擋「整組畫得太高或太低」。
+                hi = 12 if is_sheet else 9
+                tops = [b[2][1] for b in boxes]
+                ok(4 <= min(tops) and max(tops) <= hi,
+                   "%s 頭頂落在帽子接得上的高度（第 %d~%d 列，要 4~%d）"
+                   % (rel, min(tops), max(tops), hi))
 
             # 每張精靈都要有一個真正被照亮的地方。
             #
@@ -392,6 +474,26 @@ else:
                 left = eyes(c)
                 ok(left >= 6, "hero/%s 疊上 %s 之後眼睛還看得見（剩 %d 格，下限 6）"
                    % (f[:-4], hn, left))
+
+# ── 武器與盾必須在相反的兩側，而且同類要一致 ────────────────────
+# 側別本身不由這支檢查規定：單張的靜態圖與動作表的慣例是**相反的**
+#（動作表第 0 列是正面朝鏡頭，角色的右手在觀眾的左邊），
+# 硬性規定哪一側只會把其中一批的慣例寫死。
+# 真正必須成立的是兩件事，而且兩件都會直接影響畫面：
+#   1. 同一類的每一件都在同一側 —— 有一把劍畫反了，換武器時它會跳到另一邊
+#   2. 武器與盾在相反側 —— 同一側的話兩層會疊在一起，中間那條臉就沒了
+for _grp, _rows in sorted(SIDES.items()):
+    if not _rows:
+        continue
+    _l = [r for r in _rows if r[1]]
+    ok(not _l or len(_l) == len(_rows),
+       "%s 每一件都在同一側（靠左 %d／靠右 %d）"
+       % (_grp, len(_l), len(_rows) - len(_l)))
+if "weapon" in SIDES and "shield" in SIDES and SIDES["weapon"] and SIDES["shield"]:
+    _w = SIDES["weapon"][0][1]
+    _s = SIDES["shield"][0][1]
+    ok(_w != _s, "武器與盾在相反的兩側（武器靠%s、盾靠%s）"
+       % ("左" if _w else "右", "左" if _s else "右"))
 
 print("\n%d 項檢查，%d 項失敗" % (total, len(fails)))
 sys.exit(1 if fails else 0)
