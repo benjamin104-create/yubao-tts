@@ -1,4 +1,4 @@
-// 音樂資料檢查：十五章各自該有一首，而且資料要長得對。
+// 音樂資料檢查：十八章各自該有一首，而且資料要長得對。
 //
 // 曲子聽不聽得出來要靠耳朵，但「這一章根本沒配到曲子」「第三小節少了旋律」
 // 這種錯不需要耳朵 —— 而且它不會報錯，只會安靜地退回礦坑主題。
@@ -68,9 +68,9 @@ t('所有音符都落在一小節之內、音高在可聽範圍', ()=>{
   }
 });
 
-t('十五章至少聽得到五首不同的曲子', ()=>{
+t('十八章至少聽得到十首不同的迷宮主題', ()=>{
   const used = new Set(api.ACTS.map(a => ACT_THEME[a.id]));
-  assert(used.size >= 5, '只有 ' + used.size + ' 首 —— 整趟聽起來會像同一首');
+  assert(used.size >= 10, '只有 ' + used.size + ' 首 —— 整趟聽起來會像同一首');
 });
 
 t('鏡像世界的曲子真的是礦坑主題的倒影', ()=>{
@@ -176,6 +176,21 @@ t('礦坑的和弦沒有三音，低音半音往下（往地底下去的聲音�
   }
 });
 
+t('十九位頭目都有對應戰鬥配樂，而且至少八種戰鬥語彙', ()=>{
+  assert.strictEqual(api.BOSS.length, 19, '頭目表數量改了，音樂驗收也要一起更新');
+  const used = new Set();
+  for(const d of api.BOSS){
+    assert(d.bgm, d.nm + ' 沒有 bgm，會悄悄退回通用快歌');
+    assert(TRACKS[d.bgm], d.nm + ' 的 bgm 指向不存在的曲子：' + d.bgm);
+    used.add(d.bgm);
+  }
+  assert(used.size >= 8, '十九位王只有 ' + used.size + ' 種配樂語彙');
+  const mind=['b_mind1','b_mind2','b_mind'].map(id=>api.BOSS.find(d=>d.id===id).bgm);
+  assert.strictEqual(new Set(mind).size,3,'意識三型態沒有隨型態進化音樂：'+mind.join('/'));
+  assert.strictEqual(api.BOSS.find(d=>d.id==='b_mermaid').bgm,'diva',
+    '人魚王后沒有保留詠嘆調');
+});
+
 t('人魚王后有自己的一首，而且前半讓開、後半才進伴奏', ()=>{
   const q = api.BOSS.find(d => d.id === 'b_mermaid');
   assert(q, '找不到人魚王后');
@@ -241,7 +256,22 @@ t('踏進怪物之間，音樂會切成緊張的那一首', ()=>{
    而這個專案最常見的失效方式正是「寫了但沒有人讀」：
    bossWatch() 裡如果還是寫死 force('boss')，資料表那一行就完全沒有效果，
    遊戲照跑、頭目照打，只是那一場放的是跟前面十五場一樣的鼓點。 */
-t('打到人魚王后時，音樂真的換成她的那一首', ()=>{
+t('進入每個頭目房，音樂都真的切到那隻王指定的曲子', ()=>{
+  const BGM=api.BGM,V=api.VILLAGE();
+  for(let a=0;a<api.ACTS.length;a++){
+    if(!api.ACTS[a].boss)continue;
+    V.act=a;V.stock=[];V.pots=[];api.newGame(4242+a);
+    const G=api.G();G.act=a;G.floor=api.ACTS[a].floors;api.buildFloor();
+    const b=G.mons.find(m=>m.d.boss);
+    assert(b,api.ACTS[a].nm+'的頭目層沒有王');
+    BGM.force(null);G.f.bossLock=1;G.seen[api.key(b.x,b.y)]=2;api.bossWatch();
+    assert.strictEqual(BGM.forced,b.d.bgm,
+      b.d.nm+'看見了，但實際播放 '+BGM.forced+'（應為 '+b.d.bgm+'）');
+  }
+  BGM.force(null);
+});
+
+t('人魚王后的詠嘆調與守護者戰鼓不會互相外洩', ()=>{
   const BGM = api.BGM, V = api.VILLAGE();
   const a = api.ACTS.findIndex(x => x.id === 'tower');
   V.act = a; V.stock = []; V.pots = [];
@@ -257,8 +287,7 @@ t('打到人魚王后時，音樂真的換成她的那一首', ()=>{
   assert.strictEqual(BGM.forced, 'diva',
     '看見人魚王后了，音樂還是 ' + BGM.forced);
 
-  // 對照組：沒有指定 bgm 的頭目照樣要放通用的那一首，
-  // 不然「全部頭目都變成詠嘆調」也會通過上面那一條
+  // 對照組：礦坑守衛要回到厚重的守護者戰鼓，不能沿用詠嘆調。
   const m = api.ACTS.findIndex(x => x.id === 'mine');
   V.act = m; api.newGame(4242);
   const G2 = api.G();
@@ -268,8 +297,8 @@ t('打到人魚王后時，音樂真的換成她的那一首', ()=>{
   BGM.force(null);
   G2.p.x = b2.x + 1; G2.p.y = b2.y; api.vision();
   api.bossWatch();
-  assert.strictEqual(BGM.forced, 'boss',
-    '礦坑守衛放的是 ' + BGM.forced + ' —— 專屬曲子外洩到別的頭目身上了');
+  assert.strictEqual(BGM.forced, 'boss_guardian',
+    '礦坑守衛放的是 ' + BGM.forced + ' —— 詠嘆調外洩到別的頭目身上了');
   BGM.force(null);
 });
 

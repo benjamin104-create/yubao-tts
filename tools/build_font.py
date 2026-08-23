@@ -88,6 +88,16 @@ def wanted_chars():
     head, script = src.split('<script>\n"use strict";', 1)
     script = script.rsplit('</script>', 1)[0]
 
+    # 美術／音樂驗收頁（?qa=...）整段不算。跟 web/strings.js 同一條規矩：
+    # 那是開發用的工具頁，只有帶 ?qa= 參數才進得去，玩家永遠看不到。
+    # 把它的字算進來的話，字型會為了一個沒有玩家的畫面多內嵌三十個字 ——
+    # 而其中「ⅠⅡⅢ」這種羅馬數字思源宋體根本沒有，於是檢查會永遠紅，
+    # 紅得沒有道理（子集裡補不進一個來源字型就沒有的字）。
+    a = script.find('/* ═══ 美術驗收入口（?qa=...）')
+    b = script.find('/* ─── 啟動 ───', a + 1) if a >= 0 else -1
+    if a >= 0 and b > a:
+        script = script[:a] + script[b:]
+
     lit = ''.join(m.group(1) or m.group(2) or m.group(3) or '' for m in re.finditer(
         r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"|`((?:[^`\\]|\\.)*)`", script))
     body = re.sub(r'<style[\s\S]*?</style>', '', head)

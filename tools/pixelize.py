@@ -55,6 +55,10 @@ PALETTE_HEX = [
     "6b4a12", "a87a1e", "dcae35", "f5dc7a",
 ]
 
+# 動畫精靈需要比 32px 靜態圖多一點階調，否則連續動作裡的金屬、魔法與
+# 半透明材質會在量化後跳色。import_animation.mjs 已用這組擴充色盤輸出；
+# 檢查器也必須讀同一份契約，不能拿舊 32 色規格把合格動畫誤判成雜色。
+
 
 # 主角的身體只准用這五個色：描邊、三階陶土、眼白。
 #
@@ -88,7 +92,7 @@ GLOW_HEX = [
     "a85aaa", "75407f", "573060", "382044",      # 紫四階
     "f2b2df", "d978c4",                          # 粉兩階
 ]
-ANIM_HEX = PALETTE_HEX + GLOW_HEX
+ANIM_PALETTE_HEX = PALETTE_HEX + GLOW_HEX
 # 分類 → 專用色盤。沒列到的用上面那 32 色。
 PALETTES = {"hero": HERO_HEX}
 
@@ -105,7 +109,7 @@ def palette_hex_for(rel):
     cat = parts[1] if is_anim else parts[0]
     if cat in PALETTES:
         return PALETTES[cat]                 # 主角的五色不因為是動作表就放寬
-    return ANIM_HEX if is_anim else PALETTE_HEX
+    return ANIM_PALETTE_HEX if is_anim else PALETTE_HEX
 
 
 PALETTE_RGB = tuple(hex_to_rgb(h) for h in PALETTE_HEX)

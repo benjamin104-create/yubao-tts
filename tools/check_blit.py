@@ -72,6 +72,7 @@ def exempt(rel, line):
 
 bad = []
 for SRC in SRCS:
+  rel = SRC.relative_to(ROOT).as_posix()  # Windows 的反斜線不該讓整份豁免表失效
   for i, line in enumerate(SRC.read_text(encoding='utf-8').split('\n'), 1):
     for m in re.finditer(r'drawImage\(', line):
         # 從左括號開始配對括號，取出整個呼叫
@@ -85,7 +86,7 @@ for SRC in SRCS:
                     break
             j += 1
         call = line[m.start():j + 1]
-        if exempt(str(SRC.relative_to(ROOT)), line.strip()):
+        if exempt(rel, line.strip()):
             continue
         # 只數最外層的逗號 —— 內層的 makeBlob('l',{...}) 不算
         depth, commas = 0, 0
@@ -101,7 +102,7 @@ for SRC in SRCS:
         args = commas + 1
         # 3 個參數 = 省略了尺寸；5 或 9 個才是有指定的形式
         if args == 3:
-            bad.append((SRC.relative_to(ROOT), i, line.strip()[:96]))
+            bad.append((rel, i, line.strip()[:96]))
 
 if bad:
     print('有 %d 處 drawImage 省略了目的地尺寸：' % len(bad))
