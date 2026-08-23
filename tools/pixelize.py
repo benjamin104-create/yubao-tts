@@ -478,6 +478,12 @@ def check_assets(root, size):
             checked += 1
             w, h = im.size
             rel = os.path.relpath(path, root)
+            top = rel.replace("\\", "/").split("/")[0]
+            # 宣傳海報、村莊場景與旅程剖面圖是刻意填滿畫面的全景資產，
+            # 不是 32/48px 透明精靈。它們仍會在 check_art.py 驗覆蓋率、
+            # 色數與亮度，但不應被「正方形、限定精靈色盤、必須透明」攔下。
+            if top in ("promo", "village", "map"):
+                continue
             want = size_for(rel, size)
             is_anim = rel.replace("\\", "/").startswith("anim/")
 
