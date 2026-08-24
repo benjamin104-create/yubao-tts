@@ -1961,7 +1961,15 @@ const BOSS = [
   rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
   line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人', sig:'prism_battery', ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1, fly:1,
-  rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
+  /* still:1 —— 這是牠跟另外兩隻砲座解謎頭目唯一的差別，而它值 7/20 的勝率。
+     投石小魔王與祕匠的守衛都站在自己的房間裡等你；只有牠會追、而且會飛，
+     於是玩家從進場那一步就開始挨打，一路挨到砲座前面（第一座平均要走
+     2.35 倍的直線距離）。牠自己的登場白也是「光走直線 —— 所以不要站在
+     直線上」，那描述的本來就是一座固定的光束發射器。
+     量出來（每組 20 場）：修好冰面之後 8/20，再加 still:1 變 15/20，
+     跟投石小魔王的 17/20 齊平。砲座的傷害與冷卻**不動** —— 試過對齊成
+     .17/5，勝率一點都沒變（8/20），那不是問題所在。 */
+  rng:12, still:1, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  /* 副本迷宮的守衛。石匠把自己最後的作品鎖在裡面，順手做了一個看門的。
     它是**解謎型**（刀砍不動，只有砲座打得動）—— 副本的獎勵是全遊戲
@@ -7971,8 +7979,17 @@ function newGame(seed){
      係數 0.5 是從模擬量出來的：機器人自然打到深度 d 時大約是 d/2 級。 */
   /* 係數 0.75 是量出來的：0.6 的時候，第十三章開場等級 12、
      攻 34、體力 109，而那一層已經有深淵騎士（70 血、攻 48、防 18）——
-     一對一就打不贏。玩家的成長必須追得上怪物表的尾段。 */
-  const startLv = Math.max(1, Math.round(scaleDepth(absDepth(G.act, 1)) * 0.75));
+     一對一就打不贏。玩家的成長必須追得上怪物表的尾段。
+
+     ★ 0.75 → 0.90：那個 0.75 是在「升級會補滿血」的年代量出來的。
+     拿掉補滿之後同一個等級實際上弱得多 —— 實測第十三章開場等級 17、
+     體力 167，機器人連續四十趟**死在第 1、2 層**，連頭目層都走不到。
+     0.90 之後開場等級 19～21，同樣兩顆種子變成 20 趟與 7 趟通過。
+     第一章完全不受影響（那裡的起始等級本來就是 1）。
+
+     這裡要留一句給下一個人：**動了回血規則就要重量這個係數**。
+     兩者量的是同一件事 —— 玩家撐不撐得住那個深度。 */
+  const startLv = Math.max(1, Math.round(scaleDepth(absDepth(G.act, 1)) * 0.90));
   for(let i=1;i<startLv;i++){
     G.p.lv++; G.p.mhp += rng.i(6,11);
   }
@@ -8909,6 +8926,24 @@ function cornerOK(fx,fy,tx,ty){
 }
 
 function iceRoughAt(x,y){
+  /* 「非站上去不可」的格子一律當成粗糙面。
+     滑過去就等於那個東西**不存在** —— 而水晶礦坑正好同時有滑冰與
+     砲座解謎頭目，兩個功能各自都對，湊在一起就把那一章關死了：
+
+       量出來（種子 5002）：四座砲座裡三座蓋在滑冰上，
+       從旁邊往砲座踏一步，人會直接滑過去停在另一邊。
+       機器人因此在距離 1 的地方左右來回了 64 個回合，砲一直是熱的，
+       它就是站不上去。主角設成無敵也一樣 —— 那一章不是難，是解不開。
+       走通測試回報的「第 13 章死亡 40 次」，真正的原因是這個。
+
+     樓梯本來就安全（DOWN 不是 ROOM），紀錄之環與回村出口跟砲座同一類：
+     它們是「你必須停在上面」的東西，一起收進來。 */
+  if(G && G.f){
+    if(G.f.turrets && G.f.turrets.some(t => t.x === x && t.y === y)) return true;
+    const sh = G.f.shrine;
+    if(sh && sh.x === x && sh.y === y) return true;
+    if(G.f.exit && G.f.exit.x === x && G.f.exit.y === y) return true;
+  }
   return !!(G && G.f && G.f.iceRough && G.f.iceRough[key(x,y)]);
 }
 /* 冰原不再用「八個鄰格全是房間」這種玩家看不見的判斷。地圖生成時已把
@@ -9760,7 +9795,22 @@ function decide(m){
   }
   if(m.d.adds && G.seen[key(m.x,m.y)] === 2){
     m.addCd = (m.addCd === undefined) ? m.d.adds.cd : m.addCd - 1;
-    if(m.addCd <= 0 && G.mons.length < 12){ m.addCd = m.d.adds.cd; return {k:'adds'}; }
+    /* 上限要算「**這一隻叫來的還活著幾個**」，不是「整層有幾隻怪」。
+       舊的條件是 G.mons.length < 12 —— 那是整層的數量，於是頭目會
+       一路把場面補到十二隻為止。對會動的幫手還撐得住，對**不會動的**
+       就是災難：光線人叫的是水晶砲台（atk 40、射程 8、原地不動），
+       量出來一場仗結束時場上有 11～12 隻，而且牠們會**站在砲座上**。
+
+       把主角設成無敵再量一次，證據就很乾淨：160 回合裡機器人只開得了
+       0～7 發砲（中位數 1），瞄準的那一座被佔住 147 次 ——
+       打不打得贏根本還沒進場，玩家連謎題都玩不到。
+
+       改成每隻頭目最多同時有 max 個活著的幫手（預設 4）。殺掉就能再叫，
+       所以「一直有人來」這件事還在；不會再疊成一道牆。 */
+    const live = G.mons.filter(q => q.hp > 0 && q.bornOf === m.id).length;
+    if(m.addCd <= 0 && live < (m.d.adds.max || 4) && G.mons.length < 12){
+      m.addCd = m.d.adds.cd; return {k:'adds'};
+    }
   }
   if(m.d.quake && G.seen[key(m.x,m.y)] === 2){
     if(m.qWarn){ m.qWarn = 0; return {k:'quake'}; }
@@ -10201,7 +10251,8 @@ function act(m,it){
       const sp = nearestFree(m.x, m.y);
       if(!sp) break;
       const nd = G.rng.pick(src);
-      spawnMon(nd, sp.x, sp.y);
+      const born2 = spawnMon(nd, sp.x, sp.y);
+      if(born2) born2.bornOf = m.id;      // 上限只數這一隻叫來的
       burst(sp.x, sp.y, 12, '#79c97a', 60, 10, .5);
       born++;
     }

@@ -791,6 +791,78 @@ console.log('\n=== 究極裝備只有這兩條路 ===');
   ok(dropped === 0, '走了幾千層，地上一件究極裝備都沒有掉（' + dropped + ' 件）');
 }
 
+/* ═══ 砲座解謎在冰上也要解得開 ═══════════════════════════════
+   水晶礦坑同時有兩個各自都對的東西：冰原的滑行，與砲座解謎型頭目。
+   湊在一起就把那一章關死了 —— 砲座蓋在滑冰上，往它踏一步會**滑過去**
+   停在另一邊，於是那座砲永遠站不上去。
+
+   量出來（種子 5002）：四座裡三座在滑冰上；把主角設成無敵，機器人在
+   距離 1 的地方左右來回了 64 個回合，砲一直是熱的。走通測試回報的
+   「第 13 章死亡 40 次」，真正的原因是這個，跟血量平衡無關。
+
+   這一條驗的是行為，不是實作：**從四個方向踏向任何一座砲座，都要停在
+   它上面**。紀錄之環與回村出口同一類（你必須停在上面），一起驗。 */
+console.log('\n=== 冰上的砲座站得上去 ===');
+{
+  const CR = AI('crystal');
+  const V4 = api.VILLAGE();
+  let tot = 0, land = 0, slick = 0, maps = 0, shrines = 0, shrineOK = 0;
+  for(let seed = 5000; seed < 5016; seed++){
+    V4.act = CR; V4.stock = []; V4.pots = [];
+    api.newGame(seed);
+    const g = api.G();
+    g.act = CR; g.floor = ALL_ACTS[CR].floors; api.buildFloor();
+    const T = g.f.turrets || [];
+    if(!T.length) continue;
+    maps++;
+    for(const t of T){
+      // 沒有這一行的話，等哪天砲座剛好都長在粗面上，這條測試會通過得沒有意義
+      if(g.f.iceRough && !g.f.iceRough[api.key(t.x, t.y)]) slick++;
+      for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const f = {x: t.x - d[0], y: t.y - d[1]};
+        if(!api.walkable(f.x, f.y)) continue;
+        tot++;
+        const z = api.iceMoveTarget(f.x, f.y, d[0], d[1], true);
+        if(z.x === t.x && z.y === t.y) land++;
+      }
+    }
+    // 頭目層的前一層才有紀錄之環
+    g.floor = ALL_ACTS[CR].floors - 1; api.buildFloor();
+    const sh = g.f.shrine;
+    if(sh){
+      shrines++;
+      let okAll = true;
+      for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const f = {x: sh.x - d[0], y: sh.y - d[1]};
+        if(!api.walkable(f.x, f.y)) continue;
+        const z = api.iceMoveTarget(f.x, f.y, d[0], d[1], true);
+        if(z.x !== sh.x || z.y !== sh.y) okAll = false;
+      }
+      if(okAll) shrineOK++;
+    }
+  }
+  ok(maps >= 12, '掃到夠多張冰原頭目層（' + maps + ' 張）');
+  ok(tot >= 100, '量了夠多個「踏向砲座」的方向（' + tot + ' 個）');
+  ok(slick > 0, '砲座**真的**會蓋在滑冰上（' + slick +
+     ' 座）—— 沒有的話這條測試會通過得沒有意義');
+  ok(land === tot,
+     '從每個方向踏向砲座都停得住（' + land + '/' + tot + '）');
+  ok(shrines > 0 && shrineOK === shrines,
+     '紀錄之環也停得住（' + shrineOK + '/' + shrines + '）');
+}
+
+/* ═══ 砲座解謎頭目的共同語彙 ═══════════════════════════════
+   三隻都是「刀砍不動，要站上砲座打」。那個正解是**走過去站上去**，
+   所以頭目不能追著你跑 —— 追的那一隻等於整場仗都在挨打。
+   實測（每組 20 場）：光線人沒有 still 的時候 8/20，加上之後 15/20，
+   跟投石小魔王的 17/20 齊平。 */
+console.log('\n=== 砲座頭目都站著不動 ===');
+{
+  const roam = api.i18n.BOSS.filter(b => b.turret && !b.still);
+  ok(!roam.length,
+     '解謎型頭目不會追著玩家跑（會追的：' + (roam.map(b => b.id).join('、') || '無') + '）');
+}
+
 /* Token 金庫要撐得過重新整理。這一條是踩出來的：loadVillage() 會用
    白名單重建一整個 VILLAGE，而 vault 不在白名單裡 —— 護送成功的人
    只要重整一次分頁，金庫就消失了，而且不會有任何錯誤訊息。 */
