@@ -14300,9 +14300,12 @@ function draw(dt){
     const [lx2,ly2] = lungeOf(o);
     const [rx2,ry2] = recoilOf(o);
     const pose = motionOf(o);
-    // 會飛的往上浮 FLY_H —— 影子留在地上，中間那段就是高度
+    // 會飛的往上浮 FLY_H —— 影子留在地上，中間那段就是高度。
+    // 投石妖精的蝠翼／腳在 32px 動畫格裡一路畫到最下列；跟其他飛行怪
+    // 用同一個位移仍只剩 0.5 格空隙，所以再抬高 3 格，讀得出是真的離地。
+    const flyLift = fly ? FLY_H - ((o.d && o.d.id === 'imp') ? 3 : 0) : 0;
     const X = Math.round((ox+dx*T + lx2 + rx2)*2)/2,
-          Y = Math.round((oy+dy*T + ly2 + ry2 + bobOf(o, ph||0) + (fly ? FLY_H : 0))*2)/2;
+          Y = Math.round((oy+dy*T + ly2 + ry2 + bobOf(o, ph||0) + flyLift)*2)/2;
     const s = sc || 1, w2 = T*s;
     const PX = X - Math.round((s-1)*T/2), PY = Y - Math.round((s-1)*T);
     if(nativePose) cx.drawImage(img,PX,PY,w2,w2);
