@@ -5380,7 +5380,7 @@ const TILE_SLOTS = ['floor0','floor1','floor2','floor3',
    所以主控台不會被一整排 404 洗掉。
    打包成單檔之後由 ART_DATA 接手，這份清單就不影響了。
    規格與檔名見 docs/art_tile_spec.md。 */
-const ART_TILE_AVAILABLE = { stone:['floor0','floor1','floor2'] };
+const ART_TILE_AVAILABLE = { stone:['floor0','floor1','floor2','floor3'] };
 const tileSlotPut = (ts, slot, c) => {
   const m = /^(floor|corr|blocker)(\d)$/.exec(slot);
   if(m){ ts[m[1]][+m[2]] = c; return; }
