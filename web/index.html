@@ -2242,7 +2242,7 @@ const MASTER_PASSIVE = {
   sum: '幻獸的持續回合 +50%',
   wht: '自然回復速度加倍',
   hnt: '視野 +2',
-  nin: '不會踩中陷阱',
+  nin: '陷阱傷害減半',
   oni: '擊殺敵人時回復少量體力',
   sor: '魔力上限 +20%',
 };
@@ -2836,7 +2836,7 @@ mp.red|All skills cost 1 less MP|すべての わざの MPしょうひ -1
 mp.sum|Summons last 50% longer|げんじゅうの じぞくターン +50%
 mp.wht|Natural regeneration doubled|しぜんかいふくが 2ばい
 mp.hnt|Sight +2|しかい +2
-mp.nin|Traps never trigger under you|トラップを ふまなくなる
+mp.nin|Trap damage is halved|トラップの ダメージが はんぶんになる
 mp.oni|Regain a little HP on each kill|てきを たおすと HPが すこし かいふく
 mp.sor|Max MP +20%|さいだいMP +20%
 p.dir2|Choose a direction|ほうこうを えらぶ
@@ -5380,7 +5380,7 @@ const TILE_SLOTS = ['floor0','floor1','floor2','floor3',
    所以主控台不會被一整排 404 洗掉。
    打包成單檔之後由 ART_DATA 接手，這份清單就不影響了。
    規格與檔名見 docs/art_tile_spec.md。 */
-const ART_TILE_AVAILABLE = {};
+const ART_TILE_AVAILABLE = { stone:['floor0'] };
 const tileSlotPut = (ts, slot, c) => {
   const m = /^(floor|corr|blocker)(\d)$/.exec(slot);
   if(m){ ts[m[1]][+m[2]] = c; return; }
@@ -7966,7 +7966,7 @@ function newGame(seed){
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
-    log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[],
+    log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[], tookDamage:0,
     zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
   };
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
@@ -9039,6 +9039,17 @@ function rollDmg(atk, def, crit, mult){
   raw *= (0.9375 + G.rng()*0.125) * (mult||1);
   return Math.max(1, Math.floor(raw));
 }
+/* 玩家受傷一律走這裡。除了扣血，也記住「這一回合確實受傷了」：
+   以前高防禦玩家只會被打 1 點，而白魔導士 Master 的自然回復緊接在
+   怪物行動後面，立刻把那 1 點補回去。畫面最後仍顯示滿血，玩家看到的
+   就是「攻擊命中了，但完全沒受傷」。受傷回合不自然回復，下一回合才回，
+   傷害才既真實存在、又看得見。 */
+function hurtPlayer(amount, nonlethal){
+  const p = G.p, dmg = Math.max(1, Math.floor(Number(amount) || 0));
+  p.hp = nonlethal ? Math.max(1, p.hp - dmg) : p.hp - dmg;
+  G.tookDamage = 1;
+  return dmg;
+}
 const needExp = lv => 6*lv*lv;
 /* 自然回復：累積滿這個數字回 1 點體力，每回合累積「體力上限」點。
    換句話說**這個數字就是「回滿一整條血要幾回合」**，而且跟等級無關。 */
@@ -9261,9 +9272,7 @@ function stepOn(){
   }
   evStep();                         // 石板／石碑：走過去就是踩上去
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
-  // 忍者 Master：踩上去也不會觸發
-  if(G.traps[k] && hasMaster('nin')){ delete G.traps[k]; say(TX('s.004','腳步輕得沒有觸動機關。'),'good'); }
-  else if(G.traps[k]){
+  if(G.traps[k]){
     /* 兩種陷阱。舊的存檔裡值是 1，所以 1 一定要是原本那種傷害陷阱 ——
        換個意思的話，讀舊檔的人會在同一格踩到不一樣的東西。 */
     const kind = G.traps[k]; delete G.traps[k]; SFX.play('trap');
@@ -9271,12 +9280,16 @@ function stepOn(){
     startHurtPose(p, p.x, p.y-1, .18);
     if(kind === 2){
       // 毒針：傷害很小，但中毒。痛的是接下來那二十回合，不是這一下
-      const d = Math.max(1, Math.floor(p.mhp/20)); p.hp -= d;
+      const base = Math.max(1, Math.floor(p.mhp/20));
+      const d = hasMaster('nin') ? Math.max(1, Math.ceil(base/2)) : base;
+      hurtPlayer(d);
       burst(p.x, p.y, 10, '#4aa85e', 40, 10);
       float(p.x,p.y,'-'+d,'#4aa85e');
       if(poison(20)) say(M('m.ptrap','毒針陷阱！針上有毒，受到 {n} 點傷害。',{n:d}),'bad');
     } else {
-      const d = Math.max(1, Math.floor(p.mhp/8)); p.hp -= d;
+      const base = Math.max(1, Math.floor(p.mhp/8));
+      const d = hasMaster('nin') ? Math.max(1, Math.ceil(base/2)) : base;
+      hurtPlayer(d);
       burst(p.x, p.y, 10, '#c94a3a', 40, 10);
       say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32');
     }
@@ -9356,7 +9369,7 @@ function attack(m, mult){
   }
   if(m.d.counter && G.rng.chance(m.d.counter)){
     const back = rollDmg(m.d.atk, pDef(), false, .5);
-    p.hp -= back; say(M('s.008','{v0} 發動了反擊！',{v0:(locName('mon', m.d))}),'bad'); float(p.x,p.y,'-'+back,'#a83c32');
+    hurtPlayer(back); say(M('s.008','{v0} 發動了反擊！',{v0:(locName('mon', m.d))}),'bad'); float(p.x,p.y,'-'+back,'#a83c32');
   }
   m.aggro = 15;
   /* 天空之劍：橫掃所有其他相鄰的敵人（半傷）。
@@ -9574,7 +9587,7 @@ function endTurn(){
      而訊息簿是這款遊戲唯一的旁白 —— 每三回合講一次就夠了。 */
   if(p.st['毒']){
     const d = Math.max(1, Math.round(p.mhp / 28));
-    p.hp -= d;
+    hurtPlayer(d);
     float(p.x, p.y, '-' + d, '#4aa85e');
     if(p.st['毒'] % 3 === 0 || p.hp <= p.mhp * 0.25)
       say(M('m.poison','毒在體內擴散 —— 受到 {n} 點傷害。',{n:d}), 'bad');
@@ -9613,8 +9626,8 @@ function endTurn(){
   if(before>30000 && p.sat<=30000) say(TX('m.hungry1','肚子有點餓了。'),'gold');
   if(before>10000 && p.sat<=10000) say(TX('m.hungry2','肚子餓得咕咕叫！'),'bad');
   if(before>0 && p.sat<=0) say(TX('m.hungry3','肚子餓扁了！再不吃東西就……'),'bad');
-  if(p.sat<=0){ p.hp -= 1; }
-  else if(!p.st['痛']){
+  if(p.sat<=0){ hurtPlayer(1); }
+  else if(!p.st['痛'] && !G.tookDamage){
     // 門檻原本是 15000 —— 等級 1（上限 19）要 789 回合才回 1 點血，
     // 等於完全沒有自然回復，任何受傷都是永久的。350 的話等級 1 約 18 回合
     // 回 1 點、上限 100 時約 4 回合回 1 點，體力上限成長才有意義。
@@ -9652,6 +9665,7 @@ function endTurn(){
   vision();
   dwellCheck();
   if(p.hp<=0) death();
+  G.tookDamage = 0;
   refresh();
 }
 
@@ -10189,7 +10203,7 @@ function act(m,it){
     p.flash = 0.11;
     startHurtPose(p, m.x, m.y);
     burst(p.x, p.y, 7, '#a83c32', 34, 6);
-    p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
+    hurtPlayer(dmg); float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
     // 邊緣泛紅：一下打掉一成血就已經看得出來，打掉三成就是滿的
     G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
     if(heavy){
@@ -10204,7 +10218,7 @@ function act(m,it){
       const k2 = knockPlayer(kx, ky, Math.max(1, Math.round(1 + 2 * ts2)));
       if(k2.slam){
         const extra = rollDmg(m.d.atk * 0.5, pDef(), false, 1);
-        p.hp -= extra;
+        hurtPlayer(extra);
         float(p.x, p.y, '-' + extra, '#a83c32');
         burst(p.x + kx, p.y + ky, 14, '#d9b98a', 80, 4, .5);
       }
@@ -10298,7 +10312,7 @@ function act(m,it){
       return;
     }
     const dmg2 = rollDmg(m.d.atk * 0.9, pDef(), false, 1);
-    p.hp -= dmg2;
+    hurtPlayer(dmg2);
     p.flash = 0.14;
     startHurtPose(p, m.x, m.y);
     G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg2 / Math.max(1, p.mhp * 0.3)));
@@ -10361,7 +10375,7 @@ function act(m,it){
     const {tiles, slam} = knockPlayer(dx, dy, 6);
     let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
     if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
-    p.hp -= dmg;
+    hurtPlayer(dmg);
     p.flash = 0.14;
     startHurtPose(p, m.x, m.y, .24);
     G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
@@ -10694,7 +10708,7 @@ function useItem(it, fromGround){
     if(d.full){ p.hp=p.mhp; say(TX('s.036','體力完全恢復了。'),'good'); }
     if(d.mhp){ p.mhp+=d.mhp; p.hp+=d.mhp; say(M('s.037','體力上限 +{v0}。',{v0:(d.mhp)}),'good'); }
     if(d.str){ p.strb+=d.str; say(M('s.038','力量 {v0}{v1}。',{v0:(d.str>0?'+':''), v1:(d.str)}), d.str>0?'good':'bad'); }
-    if(d.dmg){ p.hp-=d.dmg; say(M('s.039','受到 {v0} 點傷害。',{v0:(d.dmg)}),'bad'); float(p.x,p.y,'-'+d.dmg,'#a83c32'); }
+    if(d.dmg){ hurtPlayer(d.dmg); say(M('s.039','受到 {v0} 點傷害。',{v0:(d.dmg)}),'bad'); float(p.x,p.y,'-'+d.dmg,'#a83c32'); }
     if(d.psn && poison(d.psn)) say(M('m.ston','你陷入了{nm}的狀態！',{nm:TX('st.毒','毒')}),'bad');
     /* 只解壞的。原本是 p.st={} 全清 —— 那會把加速、力量、堅守一起洗掉，
        於是「中毒時喝解毒草」反而讓玩家更弱。有了毒之後這件事天天發生。 */
@@ -11098,7 +11112,7 @@ function doAbil(a, dx, dy){
       startAttackPose(p, dx, dy, 'melee');
       hurtMon(front, rollDmg(pAtk()*3, front.d.def, false, 1), '#a83c32');
       const back = Math.max(1, Math.floor(p.mhp/8));
-      p.hp = Math.max(1, p.hp - back); p.flash = .14;
+      hurtPlayer(back, true); p.flash = .14;
       startHurtPose(p, p.x-dx, p.y-dy, .18);
       G.shake = Math.max(G.shake, 12);
       say(M('s.083','鬼斬！反噬了自己 {v0} 點體力。',{v0:(back)}),'good'); break;
