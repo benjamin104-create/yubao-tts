@@ -96,6 +96,49 @@ ANIM_PALETTE_HEX = PALETTE_HEX + GLOW_HEX
 # 分類 → 專用色盤。沒列到的用上面那 32 色。
 PALETTES = {"hero": HERO_HEX}
 
+# ── 地磚的色盤 ────────────────────────────────────────────────────
+# 地形**不能**跟角色共用那 32 色。量出來的事實：遊戲畫地形實際在用的
+# 七個泥土色（#17100d…#d4ad75，index.html 的 PAL.earth*），
+# 在角色的 32 色裡是 **0 / 7** —— 一個都沒有。
+#
+# 沒有這一段的話，照 docs/art_prompts_tile.md 生出來的地磚會被量化到
+# 角色色盤，於是每一張都跟遊戲既有的地形差一點點色。畫面不會壞、
+# 不會報錯，只會「就是不太對」—— 而那是最難查的一種。
+#
+# 色值全部取自 index.html 的 PAL（材質色）與既有的中性灰階，
+# 不是另外發明的顏色，所以手繪磚跟程式畫的磚會落在同一個色域裡。
+NEUTRAL_HEX = ["0d0d12", "1a1a24", "2b2b38", "3d3d4d", "565668", "757589", "c8c8d4"]
+WOOD_HEX = ["2a1d14", "43301f", "5e442c", "7d5c3c", "9c7850", "bb9668", "ecd3ae"]
+EARTH_HEX = ["17100d", "2b1c13", "432a1a", "654127", "8a6240", "b4895a", "d4ad75", "34231d"]
+FOREST_HEX = ["07130d", "241b14", "45311e", "2d2117", "5b4027", "8b6841",
+              "173820", "2c6b3c", "58a05b", "9abd73"]
+ICE_HEX = ["08172b", "123557", "28648c", "5798bd", "9ed0e3", "e5f5f7", "c5ddea", "79b5d2"]
+TEMPLE_HEX = ["211e1b", "615b50", "928977", "d0c8b9", "0e2b5d", "1d58a0",
+              "5793c8", "c58b2a", "f0ce68"]
+BLUE_HEX = ["101c3a", "1d3468", "2f57a0", "4a86cf", "7cb8ea"]
+RED_HEX = ["6b1a1e", "9c2b2b", "c94a3a"]
+
+# 每個地貌用哪一組。都補上 NEUTRAL 的暗端，讓陰影有地方可去 ——
+# 只給四階骨架色的話會量化成一片死平，那正是現在要修的毛病。
+TILE_PALETTES = {
+    "stone":     EARTH_HEX + NEUTRAL_HEX[:3],
+    "forest":    FOREST_HEX + NEUTRAL_HEX[:2],
+    "beast":     FOREST_HEX + NEUTRAL_HEX[:2],
+    "mountain":  NEUTRAL_HEX + ICE_HEX[:4],
+    "mirror":    NEUTRAL_HEX + BLUE_HEX,
+    "void":      NEUTRAL_HEX + BLUE_HEX[:2],
+    "wood":      WOOD_HEX + NEUTRAL_HEX[:3],
+    "greathall": WOOD_HEX + TEMPLE_HEX[4:] + NEUTRAL_HEX[:2],
+    "briar":     RED_HEX + WOOD_HEX + NEUTRAL_HEX[:2],
+    "lake":      ICE_HEX + BLUE_HEX,
+    "crystal":   ICE_HEX + NEUTRAL_HEX[:3],
+    "spire":     BLUE_HEX + ICE_HEX[3:] + NEUTRAL_HEX[:2],
+    "temple":    TEMPLE_HEX + NEUTRAL_HEX[:3],
+}
+# 地貌名字打錯不能安靜退回角色色盤 —— 那會生出一整批色調錯掉的磚，
+# 而且看起來「差不多」。退回一組中性的地形色，並在 main() 出聲。
+TILE_FALLBACK_HEX = EARTH_HEX + NEUTRAL_HEX
+
 
 def hex_to_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -104,6 +147,9 @@ def hex_to_rgb(h):
 def palette_hex_for(rel):
     """這個檔案該用哪一組色盤，看它放在哪個資料夾。"""
     parts = rel.replace("\\", "/").split("/")
+    # 地磚：tile/<地貌>/<部位>.png。地形有自己的材質色，不跟角色共用。
+    if parts[0] == "tile" and len(parts) >= 3:
+        return TILE_PALETTES.get(parts[1], TILE_FALLBACK_HEX)
     # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
     is_anim = len(parts) > 1 and parts[0] == "anim"
     cat = parts[1] if is_anim else parts[0]
@@ -122,7 +168,33 @@ PALETTE_RGB = tuple(hex_to_rgb(h) for h in PALETTE_HEX)
 
 def palette_rgb_for(name):
     """分類名 → 那一組色盤的 RGB。名字對不上就用通用的。"""
-    return tuple(hex_to_rgb(h) for h in (PALETTES.get(name) or PALETTE_HEX))
+    return tuple(hex_to_rgb(h) for h in
+                 (PALETTES.get(name) or TILE_PALETTES.get(name) or PALETTE_HEX))
+
+
+def palette_for_output(out_path, explicit):
+    """轉檔時要用哪一組色盤。
+
+    沒有這一支的話會有一個很難發現的洞：`palette_hex_for()` 只有 --check
+    在用，真正**轉檔**的路徑走的是 palette_rgb_for(args.palette)，
+    而它只認得 hero。也就是說地磚照樣會被量化到角色的 32 色 ——
+    檔案生得出來、檢查也過，只是每一張的色調都跟遊戲既有的地形差一點。
+
+    所以這裡從輸出路徑認地貌：.../art/tile/<地貌>/ → 那一組地形色。
+    """
+    if explicit:
+        return palette_rgb_for(explicit), explicit
+    parts = os.path.normpath(out_path or ".").replace("\\", "/").split("/")
+    if "tile" in parts:
+        i = parts.index("tile")
+        theme = parts[i + 1] if i + 1 < len(parts) else None
+        if theme in TILE_PALETTES:
+            return palette_rgb_for(theme), theme
+        # 地貌名打錯就直接停。安靜退回角色色盤的話，會生出一整批
+        # 色調錯掉但「看起來差不多」的磚，而那要鋪進遊戲才看得出來。
+        sys.exit("輸出路徑寫著 tile/%s，但沒有這個地貌。\n可用的有：%s"
+                 % (theme, "、".join(sorted(TILE_PALETTES))))
+    return tuple(hex_to_rgb(h) for h in PALETTE_HEX), None
 _NEAR_CACHE = {}
 _LAB_CACHE = {}
 
@@ -561,8 +633,10 @@ def main():
                     help="左右與上面留一點空隙（下緣不動）。方形的東西會塞滿整格，在格子鋪成的畫面上讀起來像地磚")
     ap.add_argument("--band", type=float, default=0.0,
                     help="改成靠上對齊，主體最多佔這個比例的高度（帽子用 0.5）")
-    ap.add_argument("--palette", choices=sorted(PALETTES),
-                    help="改用某個分類的專用色盤（hero：主角身體的五色）")
+    ap.add_argument("--palette", choices=sorted(set(PALETTES) | set(TILE_PALETTES)),
+                    help="改用某個分類／地貌的專用色盤（hero：主角身體的五色；"
+                         "地貌名：那一章的地形材質色）。"
+                         "輸出路徑是 art/tile/<地貌>/ 的話會自動判斷，不必給。")
     ap.add_argument("--check", help="檢查資產目錄是否合規")
     args = ap.parse_args()
 
@@ -572,7 +646,10 @@ def main():
     if not args.src:
         ap.error("需要來源圖，或用 --check")
 
-    palette = palette_rgb_for(args.palette)
+    palette, theme = palette_for_output(args.out_dir or os.path.dirname(args.out or ""),
+                                        args.palette)
+    if theme:
+        print("地貌 %s：用地形色盤（%d 色）" % (theme, len(palette)))
     zone = None
     if args.zone:
         zone = tuple(float(v) for v in args.zone.split(","))
