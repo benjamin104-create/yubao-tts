@@ -605,7 +605,13 @@ def check_assets(root, size):
                 problems += 1
 
             alpha = [c[3] for c in im.getdata()]
-            if top == "tile":
+            # tile/ 裡有兩種完全不同的資產：
+            #   floor/corr/wall* 是會鋪滿一格的地磚，必須滿版不透明；
+            #   blocker* 是站在地板上的獨立障礙物，規格要求透明背景、四周留白。
+            # 以前只看第一層目錄，把 blocker 也當無縫地磚，會把正確的透明石柱
+            # 判成錯誤，跟 docs/art_tile_spec.md 的規格正好相反。
+            is_tile_blocker = top == "tile" and name.startswith("blocker")
+            if top == "tile" and not is_tile_blocker:
                 # 無縫地磚的四邊必須完整覆蓋；透明像素會露出底色並形成接縫。
                 if any(a != 255 for a in alpha):
                     print("  [透明] %s 含有透明像素，無縫地磚必須完全不透明" % rel)
@@ -613,6 +619,18 @@ def check_assets(root, size):
             elif all(a == 255 for a in alpha):
                 print("  [透明] %s 完全不透明，背景可能沒去乾淨" % rel)
                 problems += 1
+
+            if is_tile_blocker:
+                # 障礙物不得碰到圖邊；否則擺在地板上時會像被方框裁斷，
+                # 也無法保留規格要求的透明呼吸空間。
+                edge = []
+                for x in range(w):
+                    edge.extend((im.getpixel((x, 0))[3], im.getpixel((x, h - 1))[3]))
+                for y in range(h):
+                    edge.extend((im.getpixel((0, y))[3], im.getpixel((w - 1, y))[3]))
+                if any(a != 0 for a in edge):
+                    print("  [邊界] %s 的障礙物碰到圖邊，四周必須保留透明空間" % rel)
+                    problems += 1
 
     print("檢查 %d 個檔案，%d 個問題" % (checked, problems))
     return problems
