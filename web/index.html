@@ -5380,8 +5380,11 @@ const TILE_SLOTS = ['floor0','floor1','floor2','floor3',
    所以主控台不會被一整排 404 洗掉。
    打包成單檔之後由 ART_DATA 接手，這份清單就不影響了。
    規格與檔名見 docs/art_tile_spec.md。 */
-const ART_TILE_AVAILABLE = { stone:['floor0','floor1','floor2','floor3','corr0','wall','wallface'] };
+const ART_TILE_AVAILABLE = { stone:['floor0','floor1','floor2','floor3','corr0','wall','wallface','blocker0'] };
 const tileSlotPut = (ts, slot, c) => {
+  // 外部手繪阻擋物已自帶輪廓、受光面與接觸陰影；標記來源，避免繪圖時
+  // 再套一圈給舊程式圖使用的整格碰撞補線，否則透明邊會浮出四條線。
+  c._externalTile = true;
   const m = /^(floor|corr|blocker)(\d)$/.exec(slot);
   if(m){ ts[m[1]][+m[2]] = c; return; }
   if(slot === 'wall') ts.wall = c;
@@ -13545,13 +13548,16 @@ function draw(dt){
                     cx.fillRect(px_,py+1,T,1); cx.globalAlpha=1; }
     } else if(t===WALL && interiorBlockerAt(x,y)){
       // 房間裡的不可通行格改畫成深坑／土丘／冰脊／柱座，不再假裝是地板。
-      blit(TS.blocker[blockerVariantAt(x,y)], px_, py);
-      // 阻擋物一律有亮的左上唇與深的右下腳，碰撞邊界要比表面紋理優先。
-      cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.42;
-      cx.fillRect(px_+2,py+1,T-5,1); cx.fillRect(px_+1,py+2,1,T-5);
-      cx.fillStyle=PAL['0']; cx.globalAlpha=.78;
-      cx.fillRect(px_+3,py+14,T-4,2); cx.fillRect(px_+14,py+4,2,T-4);
-      cx.globalAlpha=1;
+      const blockerTile = TS.blocker[blockerVariantAt(x,y)];
+      blit(blockerTile, px_, py);
+      if(!blockerTile._externalTile){
+        // 程式素材需要補一圈高度提示；手繪透明素材本身已經畫好，不能再蓋。
+        cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.globalAlpha=.42;
+        cx.fillRect(px_+2,py+1,T-5,1); cx.fillRect(px_+1,py+2,1,T-5);
+        cx.fillStyle=PAL['0']; cx.globalAlpha=.78;
+        cx.fillRect(px_+3,py+14,T-4,2); cx.fillRect(px_+14,py+4,2,T-4);
+        cx.globalAlpha=1;
+      }
     } else if(t===WALL){
       const face = walkable(x,y+1);
       blit(face ? TS.wallFace : TS.wall, px_, py);
