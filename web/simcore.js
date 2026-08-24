@@ -93,25 +93,41 @@ eval(m[1] + '\n;globalThis.__api = {' +
   '};');
 const api = globalThis.__api;
 
-// BFS 尋路，規則與實際移動一致（8 向 + 牆角規則）
+// BFS 尋路，規則與實際移動一致（8 向 + 牆角規則 + 冰面滑行）
+//
+// 「按一個方向」與「移動一格」在這款遊戲裡不是同一件事：冰原上直走會滑到
+// 第二格。所以 BFS 展開的必須是**實際落點**，回傳的則是按下去的方向。
+//
+// 舊版把兩者當成同一件事，於是在水晶礦坑整個失效：它規劃一步、遊戲滑兩步，
+// 從新的位置規劃回來的那一步又滑回原地 —— 完美的來回。
+// 實測（種子 122～131）：機器人在一樓兩格之間各站了一千三百多回合，
+// 三千回合後餓死，一樓總共只踏到六格；而樓梯全程都是走得到的。
+// 走通測試因此回報「第 13 章死亡 40 次」，看起來像數值太難，
+// 真正的原因是**測試自己不會走路**。
+//
+// 斜走不會滑（遊戲刻意保留的微調手段），所以照實際規則展開之後路一定找得到。
 api.nextStep = function(G, from, goal){
   if(from.x===goal.x && from.y===goal.y) return null;
   const came = new Map([[api.key(from.x,from.y), null]]);
-  const q = [from]; let h = 0;
+  const q = [{x:from.x, y:from.y}]; let h = 0;
   while(h < q.length){
     const cur = q[h++];
     for(const d of api.DIRS){
-      const nx = cur.x+d[0], ny = cur.y+d[1], k = api.key(nx,ny);
+      const ax = cur.x+d[0], ay = cur.y+d[1];
+      if(!api.walkable(ax,ay) || !api.cornerOK(cur.x,cur.y,ax,ay)) continue;
+      // 落點用遊戲自己的函式算。ignoreActors=true：規劃路線時不必管
+      // 這一刻誰站在哪，怪物下一回合就不在那裡了。
+      const lz = api.iceMoveTarget(cur.x, cur.y, d[0], d[1], true);
+      const nx = lz.x, ny = lz.y, k = api.key(nx,ny);
       if(came.has(k) || !api.walkable(nx,ny)) continue;
-      if(!api.cornerOK(cur.x,cur.y,nx,ny)) continue;
-      came.set(k, cur);
+      came.set(k, {p:cur, d:d});
       if(nx===goal.x && ny===goal.y){
-        let node = {x:nx,y:ny};
+        let node = {x:nx, y:ny};
         while(true){
           const par = came.get(api.key(node.x,node.y));
           if(!par) break;
-          if(par.x===from.x && par.y===from.y) return [node.x-from.x, node.y-from.y];
-          node = par;
+          if(par.p.x===from.x && par.p.y===from.y) return par.d;
+          node = par.p;
         }
         return null;
       }

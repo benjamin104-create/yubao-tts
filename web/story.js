@@ -863,6 +863,76 @@ console.log('\n=== 砲座頭目都站著不動 ===');
      '解謎型頭目不會追著玩家跑（會追的：' + (roam.map(b => b.id).join('、') || '無') + '）');
 }
 
+/* ═══ 冰原上走得到樓梯 ═════════════════════════════════════
+   這一條測的是**走通測試自己**，而它就是被踩出來的：nextStep() 規劃
+   「一格」，冰面上直走卻會滑「兩格」，於是規劃的那一步把人送到別的地方，
+   再從那裡規劃回來的那一步又滑回原地 —— 完美的來回。
+
+     實測（種子 122～131，第 13 章一樓）：機器人在兩格之間各站了
+     一千三百多回合，三千回合後餓死；一樓總共只踏到六格，
+     而樓梯全程 BFS 都說走得到。走通測試回報「第 13 章死亡 40 次」，
+     看起來像數值太難，真正的原因是測試不會在冰上走路。
+
+   壞掉的是尋路而不是遊戲，所以沒有任何一條既有測試會紅 —— 它只會讓
+   「那一章過不去」這個假結論一直成立。這裡直接量：照著 nextStep()
+   一步一步走，到底走不走得到樓梯。 */
+console.log('\n=== 冰原上走得到樓梯 ===');
+{
+  const CR = AI('crystal');
+  const V5 = api.VILLAGE();
+  const CAP = 600;
+  let maps = 0, arrived = 0, slickMaps = 0, worst = 0, slideUsed = 0, revisit = 0;
+  for(let seed = 6000; seed < 6016; seed++){
+    V5.act = CR; V5.stock = []; V5.pots = [];
+    api.newGame(seed);
+    const g = api.G();
+    g.act = CR; g.floor = 1; api.buildFloor();
+    if(!g.f.stairs) continue;
+    maps++;
+    let sl = 0;
+    for(let y = 0; y < api.MH; y++) for(let x = 0; x < api.MW; x++)
+      if(api.iceSlickAt(x, y)) sl++;
+    if(sl) slickMaps++;
+    /* 量的是「走不走得到」，不是「撐不撐得住」：清掉怪，並且每一步都把血
+       與飽食補回去，免得測試因為戰鬥、陷阱或餓死而紅 —— 那會指向完全
+       錯誤的地方。**不要**去改 mhp：陷阱傷害是 mhp/8，把上限灌成 9999
+       的話一個陷阱就打 1249，走到一半就「死」了，看起來像走不到。 */
+    g.mons.length = 0;
+    const p = g.p;
+    let steps = 0;
+    const seen = {};
+    while(steps < CAP && !(p.x === g.f.stairs.x && p.y === g.f.stairs.y)){
+      p.hp = p.mhp; p.sat = 40000; g.over = false;
+      const st = api.nextStep(g, {x:p.x, y:p.y}, g.f.stairs);
+      if(!st) break;
+      const ox = p.x, oy = p.y, kk = api.key(ox, oy);
+      seen[kk] = (seen[kk] || 0) + 1;
+      if(seen[kk] > revisit) revisit = seen[kk];
+      api.tryMove(st[0], st[1]);
+      // 真的滑了兩格：確認這些地圖上滑行機制確實有在作用
+      if(Math.abs(p.x - ox) > 1 || Math.abs(p.y - oy) > 1) slideUsed++;
+      steps++;
+    }
+    if(p.x === g.f.stairs.x && p.y === g.f.stairs.y){
+      arrived++; if(steps > worst) worst = steps;
+    }
+  }
+  ok(maps >= 12, '掃到夠多張冰原一樓（' + maps + ' 張）');
+  ok(slickMaps === maps,
+     '每一張都真的有滑冰（' + slickMaps + '/' + maps +
+     '）—— 沒有的話這條測試會通過得沒有意義');
+  ok(slideUsed > 0,
+     '路上**真的**滑到過（' + slideUsed + ' 次）—— 一次都沒滑等於沒測到冰');
+  ok(arrived === maps,
+     '照著尋路走，每一張都走得到樓梯（' + arrived + '/' + maps +
+     '，最多 ' + worst + ' 步）');
+  /* 走得到還不夠 —— 壞掉的版本是在**原地來迴**，而它偶爾也會誤打誤撞
+     走到。真正的病徵是「同一格踩了幾百次」，所以直接量它。
+     實測：照實際落點規劃時最多 3 次；天真版本會衝到上限 600。 */
+  ok(revisit <= 10,
+     '不會在同一格來回打轉（同一格最多踩 ' + revisit + ' 次）');
+}
+
 /* Token 金庫要撐得過重新整理。這一條是踩出來的：loadVillage() 會用
    白名單重建一整個 VILLAGE，而 vault 不在白名單裡 —— 護送成功的人
    只要重整一次分頁，金庫就消失了，而且不會有任何錯誤訊息。 */
