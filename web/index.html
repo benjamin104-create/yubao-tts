@@ -3671,6 +3671,11 @@ function artImage(id, url, ok){
   };
   im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
   const embedded = ART_DATA && ART_DATA[id];
+  /* 單檔版（ART_DATA 有值）裡，凡是**存在**的圖都已經內嵌了；查不到就代表
+     那張圖根本還沒畫。這時候再去要一次相對路徑，離線一定失敗，只會在主控台
+     堆出一長串 404 —— 畫面其實是對的（退回程式畫的版本），但看到紅字的人
+     會以為單檔壞了。單檔的賣點就是「完全不碰網路」，這裡把它兌現。 */
+  if(ART_DATA && !embedded) return;
   im.src = embedded || (url + (url.includes('?') ? '&' : '?') + 'v=' + ART_REV);
 }
 
