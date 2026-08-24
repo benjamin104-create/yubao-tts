@@ -17677,7 +17677,12 @@ heroArtHooks.push(paintCover);
   };
   const pro=$('prologue'), proVisual=$('prologuevisual');
   const PROLOGUE_SCENE_MS=[6500,5200,5200,7000];
-  const PROLOGUE_ART=[1,2,3,4].map(i=>`art/promo/prologue-charcoal-${i}-v1.jpg`);
+  /* 預載只對「網站版」有意義：那時候這四張是四個要走網路的檔案。
+     單檔版（ART_DATA 有值）裡，它們已經以 data URI 的形式躺在 CSS 裡，
+     沒有什麼可以先抓的；再列一次只會讓打包程式把同樣四張**再內嵌一份**，
+     單檔平白多 1.3 MB。所以那邊直接給空清單。 */
+  const PROLOGUE_ART = ART_DATA ? []
+    : [1,2,3,4].map(i=>`art/promo/prologue-charcoal-${i}-v1.jpg`);
   let proIndex=0, proTimer=0, prologueArtWarmed=false;
 
   function warmPrologueArt(){
