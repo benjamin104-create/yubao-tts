@@ -578,10 +578,16 @@ def check_assets(root, size):
                 print("  [動畫尺寸] %s 是 %dx%d，應為 %dx%d（10 欄 x 3 列）"
                       % (rel, w, h, anim_size[0], anim_size[1]))
                 problems += 1
-            elif not is_anim and (h != want or w % want != 0):
-                print("  [尺寸] %s 是 %dx%d，應為 %d 的倍數 x %d"
-                      % (rel, w, h, want, want))
-                problems += 1
+            elif not is_anim:
+                # 地磚可以用 32、64… 的正方形提供更多材質細節；遊戲會把它
+                # 縮放到一格使用。精靈則仍維持固定格高，避免角色尺寸漂移。
+                size_bad = (w != h or w < want or w % want != 0) if top == "tile" \
+                    else (h != want or w % want != 0)
+                if size_bad:
+                    expect = "%d 以上的正方形（且為 %d 的整數倍）" % (want, want) \
+                        if top == "tile" else "%d 的倍數 x %d" % (want, want)
+                    print("  [尺寸] %s 是 %dx%d，應為 %s" % (rel, w, h, expect))
+                    problems += 1
 
             anim_budget = (64 if is_boss_anim else 32) * 1024
             if is_anim and os.path.getsize(path) > anim_budget:
@@ -598,7 +604,13 @@ def check_assets(root, size):
                       % (rel, len(off), list(off)[:3]))
                 problems += 1
 
-            if all(c[3] == 255 for c in im.getdata()):
+            alpha = [c[3] for c in im.getdata()]
+            if top == "tile":
+                # 無縫地磚的四邊必須完整覆蓋；透明像素會露出底色並形成接縫。
+                if any(a != 255 for a in alpha):
+                    print("  [透明] %s 含有透明像素，無縫地磚必須完全不透明" % rel)
+                    problems += 1
+            elif all(a == 255 for a in alpha):
                 print("  [透明] %s 完全不透明，背景可能沒去乾淨" % rel)
                 problems += 1
 

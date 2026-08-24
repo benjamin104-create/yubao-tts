@@ -284,7 +284,10 @@ else:
             # 海報、村莊全景、旅程地圖不是精靈，是**整張畫**。
             # 它們的工作就是填滿畫面，用精靈的規則去驗會把每一張刻意的
             # 全景都判成「背景沒去乾淨」。
-            is_scene = cat in ("promo", "village", "map")
+            # 地磚也必須填滿整張：透明背景或外圍留白反而會在重複鋪設時
+            # 露出接縫。把 tile 當精靈驗「剪影最多 92%」會強迫正確地磚
+            # 挖掉至少 8%，跟無縫規格正好相反。
+            is_scene = cat in ("promo", "village", "map", "tile")
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
