@@ -177,12 +177,70 @@ def main():
         b.close()
     srv.shutdown()
 
+    fails += check_prompt_palettes()
+
     print()
     if fails:
         print('%d 項不合格' % len(fails))
         return 1
     print('全部通過')
     return 0
+
+
+def check_prompt_palettes():
+    """提示詞裡寫的色盤，要跟 pixelize.py 真正量化過去的那一組**逐字相同**。
+
+    這兩份東西天生會分家：`docs/art_prompts_tile.md` 是給影像模型看的，
+    `TILE_PALETTES` 是轉檔時真正用的。哪天有人只改其中一邊，
+    生圖時瞄準 A 組顏色、轉檔時被吸到 B 組，出來的磚就整批偏色 ——
+    而且尺寸、色數、登記全部合格，沒有任何一條既有規則會叫。
+
+    所以這裡直接把兩邊拿來對。
+    """
+    import re
+    doc_path = ROOT / 'docs' / 'art_prompts_tile.md'
+    tool_path = ROOT / 'tools' / 'pixelize.py'
+    if not doc_path.exists() or not tool_path.exists():
+        return []
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('_pz', tool_path)
+    pz = importlib.util.module_from_spec(spec)
+    argv, sys.argv = sys.argv, ['_pz']
+    try:
+        spec.loader.exec_module(pz)
+    except SystemExit:
+        pass
+    finally:
+        sys.argv = argv
+
+    doc = doc_path.read_text(encoding='utf-8')
+    secs = re.findall(r'### \d+\. `([a-z]+)`(.*?)(?=\n### |\n## )', doc, re.S)
+    print('\n提示詞的色盤與轉檔色盤（%d 個地貌）' % len(secs))
+
+    bad = []
+    for theme, body in secs:
+        m = re.search(r'Palette anchored to:(.*?)—', body, re.S)
+        code = pz.TILE_PALETTES.get(theme)
+        if not m:
+            bad.append('%s：提示詞裡找不到 Palette 那一行' % theme)
+            print('  ✗ %-10s 找不到 Palette 那一行' % theme); continue
+        if code is None:
+            bad.append('%s：pixelize.py 沒有這個地貌' % theme)
+            print('  ✗ %-10s pixelize.py 沒有這個地貌' % theme); continue
+        want = [c.lower() for c in re.findall(r'#([0-9a-fA-F]{6})', m.group(1))]
+        if want != [c.lower() for c in code]:
+            bad.append('%s：提示詞與轉檔色盤不一致' % theme)
+            print('  ✗ %-10s 色盤不一致\n      提示詞：%s\n      轉檔　：%s'
+                  % (theme, ' '.join(want), ' '.join(code)))
+        else:
+            print('  ✓ %-10s %d 色一致' % (theme, len(code)))
+
+    missing = sorted(set(pz.TILE_PALETTES) - {t for t, _ in secs})
+    if missing:
+        bad.append('提示詞漏了地貌：%s' % '、'.join(missing))
+        print('  ✗ pixelize.py 有、但提示詞沒寫：%s' % '、'.join(missing))
+    return bad
 
 
 sys.exit(main())

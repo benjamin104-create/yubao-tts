@@ -3,11 +3,11 @@
 給影像模型用的提示詞。跟 `art_prompts_mon.md`／`art_prompts_boss.md` 同一份規矩，
 規格本體在 `docs/art_tile_spec.md`，這一份只負責「怎麼叫模型畫出來」。
 
-> **關於參考**：下面描述的是 1990 年代家用主機 RPG 地牢圖磚的**技法**——
-> 每磚十六色的限制、單一左上光源、硬邊色塊、無抗鋸齒。技法與風格本來就是
-> 公共的作法，照著做完全沒問題；提示詞裡不寫任何一款遊戲的名字、
-> 不指名畫師、也不要求模型重現特定素材，因為那樣產出的會是別人的圖，
-> 而且反而**不精準**——真正決定質感的是下面那些技法，不是那個名字。
+> **關於參考**：下面 A 段描述的是 1990 年代家用主機 RPG 地牢圖磚的**技法**——
+> 每磚十六色的限制、單一左上光源、硬邊色塊、無抗鋸齒、四邊不畫框。
+> 那一段就是那個年代畫面好看的全部原因，照著做就會是那個味道。
+> 提示詞裡不寫遊戲名、不指名畫師：模型看到遊戲名會把構圖、角色、UI
+> 一起腦補進來，而你要的只是一塊地板 —— 寫技法比寫名字**更準**。
 
 ---
 
@@ -37,14 +37,14 @@ python3 tools/check_tile.py
 
 ---
 
-## A. 共用前綴（每一張都貼這一段）
+## A. 共用前綴（每一張都要貼）
 
 ```
 16-bit console RPG dungeon tileset, single square terrain tile, top-down
 three-quarter view. Authentic 1993-era pixel art discipline:
 
 - Hard-edged flat color clusters. NO anti-aliasing, NO soft gradients,
-  NO airbrush blur, NO outer glow.
+  NO airbrush blur, NO outer glow, NO bloom.
 - Strictly limited palette, roughly 12-24 colors total, organized as
   3-4 value steps per material plus a dark base.
 - Single light source from the TOP-LEFT: top and left edges catch the light,
@@ -61,123 +61,259 @@ three-quarter view. Authentic 1993-era pixel art discipline:
   beyond what is described.
 ```
 
-**最重要的兩條**（現有畫面就是敗在這裡）：
+**三條救命的**（現有畫面就是敗在這裡，量測見 `docs/art_gap_terrain.md`）：
 
-- `Do NOT draw a border` —— 目前程式畫的地磚四邊有深色框，鋪起來變成一張網格。
-- `matte, low-saturation` + 下面每張都指定「比角色暗」—— 目前神殿和水晶礦坑
-  的地板比主角還亮，玩家會找不到自己。
-
----
-
-## B. 色帶（換地貌只換這一段）
-
-貼在共用前綴後面，直接給模型 hex。這幾組**就是遊戲現在正在用的顏色**，
-所以生出來的圖跟既有畫面天生同一套色。
-
-| 地貌 | 貼這一段 |
-|---|---|
-| `stone` 礦坑／牢獄 | `Palette anchored to: #17100d #2b1c13 #432a1a #654127 #8a6240 #b4895a #d4ad75 #34231d — damp brown earth and cut stone.` |
-| `forest` 迷霧森林 | `Palette anchored to: #07130d #241b14 #45311e #5b4027 #8b6841 #173820 #2c6b3c #58a05b #9abd73 — wet soil, bark, moss.` |
-| `crystal` 水晶礦坑 | `Palette anchored to: #08172b #123557 #28648c #5798bd #9ed0e3 #c5ddea #79b5d2 — blue ice and packed snow.` |
-| `temple` 巴比倫神殿 | `Palette anchored to: #211e1b #615b50 #928977 #d0c8b9 #1d58a0 #5793c8 #c58b2a — weathered limestone with lapis and ochre glaze.` |
-
-其餘地貌的四階骨架色見 `docs/art_tile_spec.md` 的表，寫法照抄上面即可。
+- `Do NOT draw a border` —— 目前地磚四邊有深色框，鋪起來變成一張網格。
+- `Detail is ... SHAPES, never per-pixel speckle` —— 目前地板灑滿單像素亮點。
+- 每張都寫的 **MID-DARK** —— 目前神殿、水晶、通天塔的地板比主角還亮，
+  玩家會找不到自己。**亮色只准當高光，不准當地板主體。**
 
 ---
 
-## C. 每個部位的提示詞（以 `stone` 為例）
-
-### `floor0` ~ `floor3` —— 房間地板（面積最大，最先畫）
-
-一次生四張，用同一句加尾綴，**四張必須是同一塊石頭的四種磨損**，
-不是四種不同的石頭。
+## B. 通用結構（每個地貌四張，換的只有材質名詞）
 
 ```
-[共用前綴] + [stone 色帶] +
-
-A dungeon room floor tile: large irregular cut flagstones of damp brown
-stone, tightly fitted, mortar lines worn shallow. The surface is MID-DARK
-overall — noticeably darker than any character who will stand on it —
-so that a bright character sprite reads instantly against it.
-Keep the interior quiet: most of the tile is flat mid-tone stone.
+[A 共用前綴]
+[該地貌的 Palette 那一行]
+[下面四種之一]
 ```
 
-四張的尾綴：
+| 檔名 | 講什麼 | 固定要求 |
+|---|---|---|
+| `floor0`~`floor3` | 房間地板 | MID-DARK，內部安靜，四張是同一材質的四種磨損 |
+| `corr0`~`corr2` | 走道地板 | 比房間**暗一階、粗一階**（玩家分辨房間／走廊的唯一線索）|
+| `wall` | 牆的頂面 | 比地板**再暗**（「不能走」要用明度讀，不能只靠花紋）|
+| `wallface` | 牆的正面 | 垂直面，上緣受光、下半沉入陰影，要讀得出牆有高度 |
 
-| 檔名 | 尾綴 |
+四張 floor 的尾綴固定這樣加（**不要**換成四種不同材質）：
+
+| | 尾綴 |
 |---|---|
 | `floor0` | `Variant 1: the plainest, almost featureless. This is the base tile.` |
 | `floor1` | `Variant 2: one chipped corner and a short hairline crack.` |
-| `floor2` | `Variant 3: a faint dark damp stain across one third of the tile.` |
-| `floor3` | `Variant 4: a scatter of small grit and two tiny pebbles in the seams.` |
+| `floor2` | `Variant 3: a faint dark stain across one third of the tile.` |
+| `floor3` | `Variant 4: a scatter of small grit and two small fragments in the seams.` |
 
-> 「最平的那張當基準」是刻意的：`floor0` 會鋪掉最多面積，
-> 它越安靜，角色越跳得出來。
+三張 corr 的尾綴：`Variant 1: plain.` / `Variant 2: a diagonal crack.` /
+`Variant 3: loose rubble along one edge.`
 
-### `corr0` ~ `corr2` —— 走道地板
+> `floor0` 會鋪掉最多面積，所以它是**最平的那張**。它越安靜，角色越跳得出來。
 
-```
-[共用前綴] + [stone 色帶] +
+---
 
-A dungeon CORRIDOR floor tile, same stone family as the room floor but
-one step DARKER and one step ROUGHER: smaller broken slabs, more grit,
-more visible wear from foot traffic. Cramped and utilitarian.
-```
+## C. 十三個地貌
 
-尾綴：`Variant 1: plain.` / `Variant 2: a diagonal crack.` / `Variant 3: loose rubble along one edge.`
+每一段的 `Palette anchored to:` 就是 `pixelize.py` 會量化過去的那一組，
+所以照著寫，轉檔時幾乎不會掉色。
 
-> 走道比房間暗一階，是玩家分辨「我在房間還是走廊」的**唯一**線索，不能省。
+---
 
-### `wall` —— 牆的頂面
+### 1. `temple` —— 巴比倫神殿（第 1 章）
 
 ```
-[共用前綴] + [stone 色帶] +
-
-The TOP surface of a dungeon wall seen from above: rough packed earth and
-embedded stone rubble, clearly a different material from the walkable floor.
-Darker in overall value than the floor tile — the player must read
-"cannot walk here" from BRIGHTNESS alone, not just from pattern.
+Palette anchored to: #211e1b #615b50 #928977 #d0c8b9 #0e2b5d #1d58a0
+#5793c8 #c58b2a #f0ce68 #0d0d12 #1a1a24 #2b2b38 — weathered limestone,
+lapis blue glaze, ochre gold.
 ```
 
-### `wallface` —— 牆的正面
+- **floor**：`A temple floor tile of weathered limestone slabs, precisely cut and tightly fitted, edges softened by centuries of feet. Keep the stone body MID-DARK (use #615b50 as the main body, NOT the pale #d0c8b9) — the pale tones are for narrow highlights on the top-left edge only. Rare, sparse fragments of lapis-blue glazed brick set flush into the stone.`
+- **corr**：`Same limestone one step darker and rougher, slabs smaller and more broken, sand drifted into the joints.`
+- **wall**：`The TOP surface of a temple wall: packed rubble and broken limestone core, clearly coarser than the finished floor, and darker in overall value.`
+- **wallface**：`The FRONT FACE of a temple wall: horizontal courses of dressed limestone blocks with a single band of lapis-blue glazed brick and a thin ochre relief line near the top. Top edge catches light, lower half in deep shadow.`
+
+> 這一章目前地板是**全畫面最亮**的東西（量到 151.9，主角才 111）。
+> 主體色一定要壓在 `#615b50`，不要用 `#d0c8b9`。
+
+---
+
+### 2. `stone` —— 礦坑洞穴（第 2 章）、深淵牢獄（第 11 章）
 
 ```
-[共用前綴] + [stone 色帶] +
-
-The FRONT FACE of a dungeon wall — the vertical band seen below the wall
-top, showing that the wall has height. Horizontal courses of cut stone
-blocks, top edge catching the light, the lower part falling into deep
-shadow. Reads as a vertical surface, not as ground.
+Palette anchored to: #17100d #2b1c13 #432a1a #654127 #8a6240 #b4895a
+#d4ad75 #34231d #0d0d12 #1a1a24 #2b2b38 — damp brown earth and cut stone.
 ```
 
-### `blocker0`、`blocker1` —— 房間裡的柱子／巨石
+- **floor**：`A dungeon room floor tile: large irregular flagstones of damp brown stone, tightly fitted, mortar lines worn shallow. MID-DARK overall, clearly darker than any character standing on it. Keep the interior quiet — most of the tile is flat mid-tone stone.`
+- **corr**：`Same stone, one step darker and rougher: smaller broken slabs, more grit, heavy foot wear. Cramped and utilitarian.`
+- **wall**：`The TOP surface of a dungeon wall: rough packed earth with embedded stone rubble, obviously a different material from the walkable floor and darker in value.`
+- **wallface**：`The FRONT FACE of a dungeon wall: horizontal courses of rough-cut stone blocks, damp at the base, top edge catching light, lower part sinking into deep shadow.`
 
-這兩張跟地磚不同：**背景要透明**，而且**要有落地陰影**。
+---
+
+### 3. `forest` —— 迷霧森林（第 3 章）
 
 ```
-[共用前綴（把 SEAMLESS TILING 那一條拿掉）] + [stone 色帶] +
-
-A single free-standing obstacle resting on the ground, centered, on a fully
-TRANSPARENT background. Solid volume with a clear lit top-left and shaded
-bottom-right, plus a soft dark contact shadow pooled at its base so it sits
-on the floor instead of floating. It must not touch the edges of the image.
+Palette anchored to: #07130d #241b14 #45311e #2d2117 #5b4027 #8b6841
+#173820 #2c6b3c #58a05b #9abd73 #0d0d12 #1a1a24 — wet soil, bark, moss.
 ```
 
-尾綴：`blocker0: a broken stone pillar stump.` / `blocker1: a heap of fallen boulders.`
+- **floor**：`A forest floor tile of packed wet dark soil with pressed-in bark fragments and flat roots. MID-DARK and matte. Moss appears as a FEW deliberate clumps of 4-8 pixels at the edges, never as scattered green dots across the whole tile.`
+- **corr**：`Same soil one step darker and rougher, deeper leaf litter, exposed root ridges.`
+- **wall**：`The TOP surface of a forest wall: a dense mass of fallen logs and root tangle packed with dark earth, darker than the floor.`
+- **wallface**：`The FRONT FACE of a forest wall: a muddy earth bank held by horizontal fallen logs, moss along the lit top edge, deep shadow at the base.`
 
-生這兩張時，`pixelize.py` **不要**加 `--keep-bg`（要去背），但仍要 `--no-trim`
-以外的預設裁切——它們是物件不是地磚，照角色的規矩走。
+> 這一章目前是**做得最好的**（接縫 1.41×，全遊戲最低）。手繪版要守住這個水準。
+
+---
+
+### 4. `mountain` —— 試煉的山道（第 4 章）
+
+```
+Palette anchored to: #0d0d12 #1a1a24 #2b2b38 #3d3d4d #565668 #757589
+#c8c8d4 #08172b #123557 #28648c #5798bd — cold grey rock and thin snow.
+```
+
+- **floor**：`A mountain path tile of cold grey fractured rock with thin wind-packed snow caught in the low seams. MID-DARK: the rock body sits at #3d3d4d–#565668, and the pale #c8c8d4 is used ONLY for thin snow lines on top-left edges.`
+- **corr**：`Same rock one step darker and rougher, loose scree and gravel, less snow.`
+- **wall**：`The TOP surface of a cliff wall: raw broken grey rock, angular fracture planes, darker than the path.`
+- **wallface**：`The FRONT FACE of a cliff: near-vertical strata of grey stone in horizontal bands, a rim of snow catching light along the top edge, deep cold shadow below.`
+
+---
+
+### 5. `briar` —— 魔王的考驗（第 5 章）、荊棘城堡（第 6 章）
+
+```
+Palette anchored to: #6b1a1e #9c2b2b #c94a3a #2a1d14 #43301f #5e442c
+#7d5c3c #9c7850 #bb9668 #ecd3ae #0d0d12 #1a1a24 — dark red brick and wood.
+```
+
+- **floor**：`A castle hall floor tile of dark red-brown brick laid in a tight running bond, worn smooth at the centre. MID-DARK and matte — deep oxblood reds, not bright scarlet. Keep the interior quiet.`
+- **corr**：`Same brick one step darker and rougher, more chipped edges, dried briar thorns drifted into the joints.`
+- **wall**：`The TOP surface of a castle wall: dark red masonry core matted with dry thorny briar, darker than the floor.`
+- **wallface**：`The FRONT FACE of a castle wall: courses of dark red brick with a wooden beam band, dry briar creeping up from the base, top edge lit.`
+
+---
+
+### 6. `lake` —— 南湖畔（第 7 章）
+
+```
+Palette anchored to: #08172b #123557 #28648c #5798bd #9ed0e3 #e5f5f7
+#c5ddea #79b5d2 #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea — wet stone and
+shallow water.
+```
+
+- **floor**：`A lakeside temple floor tile of wet dark blue-grey stone, a thin film of water pooling in the low seams. MID-DARK: body at #123557–#28648c. The pale #e5f5f7 is used ONLY as a few short highlight glints on the top-left edge of wet spots, never as a large area.`
+- **corr**：`Same stone one step darker and rougher, silt and small pebbles, more standing water.`
+- **wall**：`The TOP surface of a lakeside wall: dark waterlogged stone rubble with algae in the cracks, darker than the floor.`
+- **wallface**：`The FRONT FACE of a lakeside wall: courses of wet blue-grey stone with a darker waterline stain across the lower third, lit top edge.`
+
+---
+
+### 7. `beast` —— 幻獸洞窟（第 8 章）
+
+```
+Palette anchored to: #07130d #241b14 #45311e #2d2117 #5b4027 #8b6841
+#173820 #2c6b3c #58a05b #9abd73 #0d0d12 #1a1a24 — cave soil, root, lichen.
+```
+
+- **floor**：`A beast-den cave floor tile of trodden dark earth mixed with bone fragments and dry bedding straw. MID-DARK and matte. Lichen appears as a FEW deliberate 4-8 pixel patches, not scattered dots.`
+- **corr**：`Same earth one step darker and rougher, deep claw-scored ruts.`
+- **wall**：`The TOP surface of a cave wall: dark earth packed with thick roots pushing through, darker than the floor.`
+- **wallface**：`The FRONT FACE of a cave wall: a raw earth bank with exposed root ends and a few embedded bones, lit along the top edge.`
+
+---
+
+### 8. `wood` —— 幻忍之里（第 9 章）、平安京三橋（第 10 章）
+
+```
+Palette anchored to: #2a1d14 #43301f #5e442c #7d5c3c #9c7850 #bb9668
+#ecd3ae #0d0d12 #1a1a24 #2b2b38 — aged timber.
+```
+
+- **floor**：`An interior floor tile of aged wooden planks laid parallel, tight joints, visible straight grain, worn darker along the walking line. MID-DARK: body at #5e442c–#7d5c3c, the pale #ecd3ae only as a thin lit edge on the top-left of each plank. The plank direction must continue across tile edges so the floor reads continuous.`
+- **corr**：`Same planks one step darker and rougher, narrower boards, a few cupped and splintered.`
+- **wall**：`The TOP surface of a wooden wall: the cut top of a timber frame packed with dark plaster, darker than the floor.`
+- **wallface**：`The FRONT FACE of a wooden wall: a lattice of dark timber posts over pale plaster panels, lit along the top edge, shadow pooling at the base.`
+
+---
+
+### 9. `mirror` —— 鏡像世界（第 12 章）
+
+```
+Palette anchored to: #0d0d12 #1a1a24 #2b2b38 #3d3d4d #565668 #757589
+#c8c8d4 #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea — dark polished stone
+and cold blue reflection.
+```
+
+- **floor**：`A hall floor tile of dark polished stone in a diamond-set pattern, faintly reflective. MID-DARK: body at #2b2b38–#3d3d4d. Reflection is suggested by a FEW straight, hard-edged pale streaks along the top-left of each panel — NOT by making the whole tile bright, and NOT by a soft gradient.`
+- **corr**：`Same stone one step darker, the polish dulled and scuffed, hairline fractures.`
+- **wall**：`The TOP surface of a mirror-hall wall: dark stone core with embedded shard fragments, darker than the floor.`
+- **wallface**：`The FRONT FACE of a mirror-hall wall: tall dark panels with narrow vertical mirror strips catching a single cold blue highlight at the top.`
+
+---
+
+### 10. `crystal` —— 水晶礦坑（第 13 章）
+
+```
+Palette anchored to: #08172b #123557 #28648c #5798bd #9ed0e3 #e5f5f7
+#c5ddea #79b5d2 #0d0d12 #1a1a24 #2b2b38 — blue ice and packed snow.
+```
+
+- **floor**：`An ice-cavern floor tile of thick blue glacial ice, smooth but not glassy, with faint frozen strata visible under the surface. MID-DARK — this is the single most important instruction here: the body must sit at #123557–#28648c, deep blue, NOT white. The pale #e5f5f7 and #9ed0e3 are used ONLY as thin highlight lines on the top-left edge and a couple of small glints. The tile must read clearly DARKER than a character standing on it.`
+- **corr**：`Same ice one step darker and rougher: wind-scoured, matte, packed snow gritted into the surface.`
+- **wall**：`The TOP surface of an ice wall: fractured blue ice and packed snow, darker than the floor.`
+- **wallface**：`The FRONT FACE of an ice cliff: a clean vertical cut through blue ice showing horizontal strata, a rim of bright frost catching light along the very top edge, deep blue shadow below.`
+
+> 這一章目前**最吵**（鄰格對比 7.00，是最好那幾章的三倍），而且地板比主角亮。
+> 生完務必做 D 段的第 2 項檢查。
+
+---
+
+### 11. `greathall` —— 地下大廣間（第 14 章）
+
+```
+Palette anchored to: #2a1d14 #43301f #5e442c #7d5c3c #9c7850 #bb9668
+#ecd3ae #0e2b5d #1d58a0 #5793c8 #c58b2a #f0ce68 #0d0d12 #1a1a24 —
+sandstone with lapis and gold inlay.
+```
+
+- **floor**：`A great hall floor tile of large sandstone slabs, precisely cut, with a thin inlaid line of lapis blue and gold running along one edge as a repeating border motif. MID-DARK sandstone body at #5e442c–#7d5c3c; gold #f0ce68 only as a 1-2 pixel inlay line, never as a filled area.`
+- **corr**：`Same sandstone one step darker and rougher, no inlay, sand drifted into the joints.`
+- **wall**：`The TOP surface of a great hall wall: sandstone rubble core, darker than the floor.`
+- **wallface**：`The FRONT FACE of a great hall wall: dressed sandstone courses with a lapis-and-gold banded frieze near the top, lit top edge, deep shadow at the base.`
+
+---
+
+### 12. `spire` —— 通天塔（第 15 章）、祕匠的副本
+
+```
+Palette anchored to: #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea #5798bd
+#9ed0e3 #e5f5f7 #c5ddea #79b5d2 #0d0d12 #1a1a24 — lapis-glazed brick.
+```
+
+- **floor**：`A tower floor tile of lapis-blue glazed brick laid in a tight grid, the glaze slightly uneven from firing. MID-DARK: body at #1d3468–#2f57a0. The pale #e5f5f7 is used ONLY as a thin specular line on the top-left of a few bricks — the glaze reads as glossy through hard-edged highlights, never through overall brightness.`
+- **corr**：`Same brick one step darker, the glaze worn away in patches showing the raw clay beneath.`
+- **wall**：`The TOP surface of a tower wall: unglazed clay brick core, matte and darker than the glazed floor.`
+- **wallface**：`The FRONT FACE of a tower wall: courses of lapis-glazed brick with a gold relief band, top edge catching a hard specular line, deep shadow below.`
+
+> 這一章目前主角與地板的亮度差只有 **+5.9**，等於沒有對比。務必壓暗。
+
+---
+
+### 13. `void` —— 最後的迷宮（第 16 章）、混沌之間（第 17 章）
+
+```
+Palette anchored to: #0d0d12 #1a1a24 #2b2b38 #3d3d4d #565668 #757589
+#c8c8d4 #101c3a #1d3468 — near-black geometric substrate.
+```
+
+- **floor**：`A void floor tile: a near-black geometric substrate of hard-edged interlocking panels with thin recessed seam lines, like the inside of a machine. Very dark and matte overall. A single thin cold-blue line traces one panel edge. No glow, no gradient.`
+- **corr**：`Same substrate one step darker, panels smaller and denser, seams tighter.`
+- **wall**：`The TOP surface of a void wall: solid near-black material with a faint panel grid, darker still than the floor.`
+- **wallface**：`The FRONT FACE of a void wall: tall dark panels with a single cold-blue seam line running along the top edge, everything below falling to near-black.`
+
+> 這一章目前的圖地分離是全遊戲最好的（**+67.5**）。手繪版守住「很暗」就對了。
 
 ---
 
 ## D. 生完之後怎麼判斷「有沒有到位」
 
-不用靠感覺，`tools/check_tile.py` 會擋掉硬性的（尺寸、色數、登記）。
-軟性的自己看三件事：
+硬性的 `tools/check_tile.py` 會擋（尺寸、色數、登記）。軟性的自己看三件事：
 
 1. **把 `floor0` 複製九份排成 3×3** —— 看得到格線就是四邊畫了框，重生。
-2. **把主角圖疊上去** —— 如果要找一下才看得到主角，地板太亮或太吵，重生。
-3. **四張 floor 並排** —— 如果看起來像四種不同的石頭而不是同一種的四塊，重生。
+2. **把主角圖疊上去** —— 要找一下才看得到主角，就是地板太亮或太吵，重生。
+   （水晶、通天塔、神殿這三章特別容易犯。）
+3. **四張 floor 並排** —— 看起來像四種不同材質而不是同一種的四塊，重生。
 
 ---
 
@@ -187,14 +323,51 @@ on the floor instead of floating. It must not touch the edges of the image.
 |---|---|---|
 | 色數爆掉（幾百色） | 沒跑 `pixelize.py` | 一定要跑第 2 步 |
 | 邊緣一圈雜點 | 模型加了抗鋸齒 | 提示詞已寫 NO anti-aliasing；仍發生就靠 pixelize 量化 |
-| 鋪起來像磁磚牆 | 四邊有深色框 | 提示詞的 `Do NOT draw a border` 要留著 |
-| 地板搶走視線 | 太亮或細節太碎 | 加強 `MID-DARK` 與 `keep the interior quiet` |
-| 地磚被裁掉一圈 | `pixelize.py` 少了 `--no-trim` | 地磚一定要 `--keep-bg --no-trim` |
+| 鋪起來像磁磚牆 | 四邊有深色框 | `Do NOT draw a border` 那一條要留著 |
+| 地板搶走視線 | 太亮或細節太碎 | 加強 `MID-DARK`，並明講「亮色只准當高光」 |
+| 地磚被裁掉一圈 | 少了 `--no-trim` | 地磚一定要 `--keep-bg --no-trim` |
+| 整批偏色 | 地貌名打錯 | 會直接中止，照訊息改路徑 |
 
 ---
 
-## F. 順序建議
+## F. `blocker0`、`blocker1` —— 房間裡的柱子／巨石
+
+這兩張跟地磚不同：**背景要透明**，而且**要有落地陰影**。
+
+```
+[A 共用前綴（把 SEAMLESS TILING 那一條拿掉）] + [該地貌的 Palette 那一行] +
+
+A single free-standing obstacle resting on the ground, centered, on a fully
+TRANSPARENT background. Solid volume with a clear lit top-left and shaded
+bottom-right, plus a soft dark contact shadow pooled at its base so it sits
+on the floor instead of floating. It must not touch the edges of the image.
+```
+
+各地貌的物件：
+
+| 地貌 | `blocker0` | `blocker1` |
+|---|---|---|
+| `temple` | a broken fluted limestone column stump | a heap of fallen carved masonry |
+| `stone` | a broken stone pillar stump | a heap of fallen boulders |
+| `forest` | a mossy tree stump | a tangle of fallen logs |
+| `mountain` | a jagged standing rock | a cairn of stacked stones |
+| `briar` | a scorched wooden post | a dense ball of dry briar |
+| `lake` | a worn stone bollard | a pile of wet river boulders |
+| `beast` | a great rib bone arch | a mound of bones and bedding |
+| `wood` | a thick timber post | a stack of crates and barrels |
+| `mirror` | a tall dark mirror panel | a heap of angular shards |
+| `crystal` | a jagged ice pillar | a mound of broken ice blocks |
+| `greathall` | a squared sandstone column stump | a pile of inlaid rubble |
+| `spire` | a glazed brick pillar stump | a heap of fallen glazed brick |
+| `void` | a floating black monolith | a cluster of dark panels |
+
+生這兩張時 `pixelize.py` **不要**加 `--keep-bg`（要去背），照角色的規矩走。
+
+---
+
+## G. 順序建議
 
 先做 `stone` 一整套 11 張（礦坑洞穴＋深淵牢獄，全戰役出現最久的地貌），
-在遊戲裡看過效果、確認流程走得通，再推 `crystal` → `temple` → `spire`
-（這三個是目前量出來問題最明顯的）。
+在遊戲裡看過效果、確認流程走得通，再照量測到的嚴重度往下推：
+
+`crystal` → `temple` → `spire` → 其餘。
