@@ -43,6 +43,11 @@ def load():
     # F 段的柱子／巨石：表格 + 通用敘述
     f = doc.index('## F.')
     blocker_body = re.search(r'```(.*?)```', doc[f:], re.S).group(1).strip()
+    # 文件裡那一行 `[A 共用前綴（…）] + [該地貌的 Palette 那一行] +` 是寫給人看的
+    # 組裝說明，不是給模型的指令。組好之後那幾段已經真的接在上面了，
+    # 留著的話模型會把「把 SEAMLESS TILING 那一條拿掉」當成畫圖要求。
+    blocker_body = '\n'.join(
+        l for l in blocker_body.splitlines() if not l.lstrip().startswith('[')).strip()
     blockers = {}
     for th, b0, b1 in re.findall(
             r'\|\s*`([a-z]+)`\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|', doc[f:]):
