@@ -17867,6 +17867,18 @@ heroArtHooks.push(paintCover);
     refresh();
     showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
+    /* 進到迷宮就先存一次。
+       踩出來的：使用者「昨天試玩打半天，結果沒有紀錄」。
+       中途存檔本來只在「下樓梯」與「踩到紀錄之環」時寫 —— 也就是說
+       **第一層從來沒有存檔點**。在第一層探索一小時再關掉分頁，
+       localStorage 裡是空的，重開連「繼續冒險」都不會出現。
+       實測：第一層走六十步後關掉分頁，重開 → 沒有紀錄。
+
+       存在這裡而不是「離開分頁時存當下狀態」：後者看起來更貼心，
+       但實測會**複製道具** —— 讀檔是用種子重建整層，地上的東西會復活，
+       而背包裡撿走的那一份還在。實測 7 件變 13 件。
+       樓層起點才是安全的存檔點，因為那一刻玩家還沒撿走任何東西。 */
+    saveRun();
   }
   $('pronext').onclick=nextPrologue;
   $('proskip').onclick=enterDungeon;
