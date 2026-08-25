@@ -5380,7 +5380,16 @@ const TILE_SLOTS = ['floor0','floor1','floor2','floor3',
    所以主控台不會被一整排 404 洗掉。
    打包成單檔之後由 ART_DATA 接手，這份清單就不影響了。
    規格與檔名見 docs/art_tile_spec.md。 */
-const ART_TILE_AVAILABLE = { stone:['floor0','floor1','floor2','floor3','corr0','wall','wallface','blocker0'] };
+const ART_TILE_AVAILABLE = {
+  stone:['floor0','floor1','floor2','floor3','corr0','wall','wallface','blocker0'],
+  /* 序章巴比倫神殿：四種完成石地、三種積沙粗糙走道、牆頂／立面與兩種遺跡。 */
+  temple:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 迷霧森林：房間用四種濕土變體，狹窄走道用三種較粗糙的落葉／根系地面。
+     blocker1 尚未完稿，所以只登記倒木 blocker0；另一種會安全退回程式素材。 */
+  forest:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0'],
+  /* 冰原：深藍冰面保持角色對比，走道較粗糙，冰崖與兩種冰塊都是完整外部素材。 */
+  crystal:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+};
 const tileSlotPut = (ts, slot, c) => {
   // 外部手繪阻擋物已自帶輪廓、受光面與接觸陰影；標記來源，避免繪圖時
   // 再套一圈給舊程式圖使用的整格碰撞補線，否則透明邊會浮出四條線。
