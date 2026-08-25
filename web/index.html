@@ -7766,6 +7766,16 @@ function unpackItem(q){
 }
 
 function saveRun(){
+  /* 驗收頁「完全不寫進正式存檔」—— saveVillage() 一直守著這條，
+     這兩支卻漏了，於是驗收網址會偷偷吃掉玩家真正的進度：
+
+       實測：玩到第 6 章、中途存檔在第 2 層，開一個 ?qa=floor&act=crystal
+       的網址進去走一段樓梯，中途存檔就變成 act=12 floor=3；
+       在裡面死一次，整份存檔直接消失。
+
+     而驗收網址正是拿來到處亂走亂死的 —— 那是它的用途。
+     村莊那一份守住了、這一份沒守，等於守了一半。 */
+  if(QA_MODE) return;
   if(!G || G.over || G.won) return;
   const p = G.p;
   try{
@@ -7798,7 +7808,10 @@ function loadedRun(){
     return Object.assign(q, {act, floor});
   }catch(e){ return null; }
 }
-function clearRun(){ try{ localStorage.removeItem(RUN_KEY); }catch(e){} }
+function clearRun(){
+  if(QA_MODE) return;              // 同上：在驗收頁死掉不該清掉玩家的進度
+  try{ localStorage.removeItem(RUN_KEY); }catch(e){}
+}
 
 /* 存檔到底能不能用。有些情境下（無痕視窗、被沙箱擋住的 iframe、
    關閉第三方儲存的瀏覽器）localStorage 會直接丟例外。
