@@ -1,0 +1,158 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ground:#16221E;
+  --cream:#F1E9D9;
+  --dim:#8E9790;
+  --brick:#C4623C;
+  --rule:rgba(241,233,217,.14);
+  --serif:"Noto Serif CJK TC",serif;
+  --sans:"Noto Sans CJK TC",sans-serif;
+}
+body{background:#000;font-family:var(--sans)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--cream);
+  padding:100px 92px;display:flex;flex-direction:column}
+
+/* 頁首／頁尾 */
+.head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:22px}
+.head .k{font-size:23px;letter-spacing:.4em;color:var(--brick);font-weight:500}
+.head .n{font-size:21px;letter-spacing:.3em;color:var(--dim);font-variant-numeric:tabular-nums}
+.foot{border-top:1px solid var(--rule);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center}
+.foot span,.foot b{font-size:22px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+
+/* 內頁主體：他說 / 其實 */
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+.scene{font-size:32px;color:var(--dim);letter-spacing:.06em;font-weight:300;margin-bottom:46px}
+.said{font-family:var(--serif);font-size:82px;font-weight:700;line-height:1.42;
+  letter-spacing:.02em;color:var(--cream)}
+.bridge{display:flex;align-items:center;gap:26px;margin:60px 0 46px}
+.bridge .ln{flex:1;height:1px;background:var(--rule)}
+.bridge .t{font-size:27px;letter-spacing:.34em;color:var(--brick)}
+.mean{font-family:var(--serif);font-size:52px;font-weight:400;line-height:1.76;
+  letter-spacing:.03em;color:var(--cream);opacity:.94}
+.mean em{font-style:normal;color:var(--brick)}
+
+/* 封面 */
+.cover .kick{font-size:24px;letter-spacing:.46em;color:var(--brick);font-weight:500;margin-bottom:62px}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:104px;line-height:1.34;letter-spacing:.02em}
+.cover h1 .hl{color:var(--brick)}
+.cover .sub{font-size:35px;line-height:1.9;color:var(--dim);margin-top:46px;font-weight:300}
+.cover .list{margin-top:auto;border-top:1px solid var(--rule);padding-top:8px}
+.cover .list .r{padding:19px 0;border-bottom:1px solid rgba(241,233,217,.06);
+  font-family:var(--serif);font-size:38px;color:var(--dim);letter-spacing:.03em}
+.cover .list .r:nth-child(n+3){opacity:.62}
+.cover .list .r:nth-child(n+4){opacity:.34}
+.swipe{margin-top:32px;display:flex;justify-content:flex-end;
+  font-size:26px;letter-spacing:.2em;color:var(--brick)}
+
+/* 結尾 */
+.end .q{font-family:var(--serif);font-weight:700;font-size:80px;line-height:1.54;letter-spacing:.02em}
+.end .q .dim{color:var(--dim)}
+.end .q .hl{color:var(--brick)}
+.end .sign{margin-top:58px;font-size:33px;line-height:1.95;color:var(--dim);font-weight:300}
+.end .handle{margin-top:auto;border-top:1px solid var(--rule);padding-top:30px;
+  display:flex;justify-content:space-between;align-items:center}
+.end .handle b{font-size:30px;letter-spacing:.12em;color:var(--cream);font-weight:500}
+.end .handle span{font-size:24px;letter-spacing:.16em;color:var(--brick)}
+</style></head><body>
+
+<!-- 1 封面 -->
+<div class="slide cover">
+  <div class="kick">小 事 考 古 · 育 兒</div>
+  <h1>他還不會<br>說完整的話，<br><span class="hl">但他都在說。</span></h1>
+  <div class="sub">6 句小孩常講的話。<br>翻成大人聽得懂的版本。</div>
+  <div class="list">
+    <div class="r">「我還不想睡。」</div>
+    <div class="r">「我不要你抱！」</div>
+    <div class="r">「你走開！」</div>
+    <div class="r">「再一次就好。」</div>
+  </div>
+  <div class="swipe">往右滑 →</div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="head"><div class="k">第 一 句</div><div class="n">01 / 06</div></div>
+  <div class="body">
+    <div class="scene">燈關了，你以為終於結束了。</div>
+    <div class="said">「我還不<br>想睡。」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">我怕我睡著以後，<br><em>你就不在了</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="head"><div class="k">第 二 句</div><div class="n">02 / 06</div></div>
+  <div class="body">
+    <div class="scene">你伸手要抱他，他把你推開。</div>
+    <div class="said">「我不要<br>你抱！」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">我想自己試試看。<br>但<em>你不要走遠</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="head"><div class="k">第 三 句</div><div class="n">03 / 06</div></div>
+  <div class="body">
+    <div class="scene">為了一件很小的事，他忽然爆炸。</div>
+    <div class="said">「你走開！」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">我現在很不舒服，<br>可是我還<em>不知道這個叫生氣</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 5 -->
+<div class="slide">
+  <div class="head"><div class="k">第 四 句</div><div class="n">04 / 06</div></div>
+  <div class="body">
+    <div class="scene">同一件事，他已經做了第十一次。</div>
+    <div class="said">「再一次<br>就好。」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">這件事我<em>終於會了</em>，<br>我想讓你多看幾次。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 6 -->
+<div class="slide">
+  <div class="head"><div class="k">第 五 句</div><div class="n">05 / 06</div></div>
+  <div class="body">
+    <div class="scene">出門前五分鐘，他說他不舒服。</div>
+    <div class="said">「我肚子<br>痛。」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">那裡有一件事我不會處理，<br>但我<em>還沒有那個詞可以講</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 7 -->
+<div class="slide">
+  <div class="head"><div class="k">第 六 句</div><div class="n">06 / 06</div></div>
+  <div class="body">
+    <div class="scene">一天之內，他喊了你八十次。</div>
+    <div class="said">「你看！<br>你看我！」</div>
+    <div class="bridge"><div class="ln"></div><div class="t">他真正的意思</div><div class="ln"></div></div>
+    <div class="mean">我做的事，<br><em>要被你看到才算數</em>。</div>
+  </div>
+  <div class="foot"><span>小事考古</span><b>@i_jamine_pa</b></div>
+</div>
+
+<!-- 8 結尾 -->
+<div class="slide end">
+  <div class="head"><div class="k">所 以</div><div class="n">—</div></div>
+  <div class="body">
+    <div class="q"><span class="dim">他不是在鬧。</span><br><br>他是在用<br>他<span class="hl">現有的詞</span>，<br>講一件很大的事。</div>
+    <div class="sign">大人生氣的時候會說「我很累」。<br>他還沒有那三個字，<br>所以只好用丟東西。</div>
+  </div>
+  <div class="handle"><b>@i_jamine_pa</b><span>你家那句是什麼？留言告訴我</span></div>
+</div>
+
+</body></html>
