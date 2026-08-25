@@ -5022,6 +5022,55 @@ function macroFloorsFor(theme){
   return MACRO_FLOORS[theme]=[0,1,2].flatMap(v=>
     [0,1,2,3].map(i=>tileHi(makeMacroFloor(th.macro,i&1,i>>1,th.ramp,v))));
 }
+/* 房間地板的唯一選擇規則。
+
+   外部手繪地磚已經把石縫、冰層、根與受光面畫在同一張成品裡，必須優先。
+   以前 draw() 只要看到章節有 macro，就先拿程式畫的 2x2 大板；結果檔案確實
+   載入、檢查也通過，畫面上卻完全看不到它。神殿仍是一地重複日輪、冰原仍是
+   舊的大冰片，正是這個靜默退回造成的。
+
+   只有還沒換成外部美術的地貌才使用 macro，讓遷移可以一章一章完成。 */
+function externalTileQuarter(img,x,y){
+  if(!img || !img._externalTile || img.width < TP*2 || img.height < TP*2) return img;
+  if(!img._tileQuarters){
+    const q=[];
+    const sw=Math.floor(img.width/2), sh=Math.floor(img.height/2);
+    for(let iy=0;iy<2;iy++) for(let ix=0;ix<2;ix++){
+      const c=document.createElement('canvas'); c.width=c.height=TP;
+      const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+      g.drawImage(img,ix*sw,iy*sh,sw,sh,0,0,TP,TP);
+      c._externalTile=true;
+      q.push(c);
+    }
+    img._tileQuarters=q;
+  }
+  return img._tileQuarters[((y&1)<<1)|(x&1)];
+}
+function roomFloorFor(ts,mf,x,y){
+  const handDrawn = ts.floor.filter(c=>c && c._externalTile);
+  if(handDrawn.length){
+    /* 生成圖是 64x64，而遊戲一格的實際畫布是 32x32。以前把整張圖塞進
+       一格，等於先丟掉四分之三細節，再放大到螢幕。現在一張 64 圖鋪成
+       2x2 格，每一個來源像素都保留下來；大旗石、長根與冰層也能跨格延伸，
+       不會每一格重複同一團小圖案。 */
+    const src=handDrawn[terrainDetailHash(x>>1,y>>1,73)%handDrawn.length];
+    return externalTileQuarter(src,x,y);
+  }
+  if(mf){
+    const v=terrainDetailHash(x>>1,y>>1,73)%3;
+    return mf[v*4+(((y&1)<<1)|(x&1))];
+  }
+  return ts.floor[(x*7+y*13)%ts.floor.length];
+}
+function corridorFloorFor(ts,x,y){
+  const handDrawn = ts.corr.filter(c=>c && c._externalTile);
+  if(handDrawn.length){
+    const src=handDrawn[terrainDetailHash(x>>1,y>>1,91)%handDrawn.length];
+    return externalTileQuarter(src,x,y);
+  }
+  return ts.corr[(x*7+y*13)%ts.corr.length];
+}
+const tileNeedsProceduralDetail = img => !(img && img._externalTile);
 function makeWall(face, ramp){
   const R4 = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
@@ -13569,16 +13618,27 @@ function draw(dt){
       }
     } else if(t===WALL){
       const face = walkable(x,y+1);
-      blit(face ? TS.wallFace : TS.wall, px_, py);
+      const wallSource = face ? TS.wallFace : TS.wall;
+      const wallTile = externalTileQuarter(wallSource,x,y);
+      const wallIsFinished = !tileNeedsProceduralDetail(wallTile);
+      blit(wallTile, px_, py);
       // 暗度用來分牆地，但不能把剛增加的土層、木紋與冰切面全部壓回黑色。
       // 正面保留中間色，牆頂與轉角再承擔最深陰影。
-      const wallDark = THEME_ID==='stone' ? (face?.23:.40)
-                     : (THEME_ID==='forest'||THEME_ID==='beast') ? (face?.20:.37)
-                     : THEME_ID==='crystal' ? (face?.12:.29)
-                     : CAVE ? (face?.28:.46) : (face?.22:.40);
+      /* 外部牆磚本身已經依左上光源畫完三到四階明度。舊版仍在上面蓋
+         20%～40% 黑色，又補一道制式橫線與程序裂紋，等於把冰切面、石灰岩
+         砌層、倒木根系全抹成同一團黑。成品只留很薄的環境暗度；尚未換圖
+         的程式牆才沿用較重的遮罩。 */
+      const wallDark = wallIsFinished
+        ? (THEME_ID==='forest' ? (face?.08:.20)
+          : THEME_ID==='crystal' ? (face?.05:.15)
+          : face ? .07 : .18)
+        : THEME_ID==='stone' ? (face?.23:.40)
+        : (THEME_ID==='forest'||THEME_ID==='beast') ? (face?.20:.37)
+        : THEME_ID==='crystal' ? (face?.12:.29)
+        : CAVE ? (face?.28:.46) : (face?.22:.40);
       cx.fillStyle = `rgba(1,2,4,${wallDark})`;
       cx.fillRect(px_,py,T,T);
-      if(face){
+      if(face && !wallIsFinished){
         cx.save();
         cx.globalAlpha=.82; cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_,py+7,T,2);
         cx.globalAlpha=CAVE ? .94 : .84; cx.fillStyle=PAL['0']; cx.fillRect(px_,py+13,T,3);
@@ -13597,7 +13657,7 @@ function draw(dt){
         if(walkable(x-1,y)){ cx.fillRect(px_,py+5,3,11); cx.fillRect(px_+3,py+10,1,6); }
         if(walkable(x+1,y)){ cx.fillRect(px_+13,py+5,3,11); cx.fillRect(px_+12,py+10,1,6); }
       }
-      drawWallPatina(THEME_ID,x,y,px_,py,face);
+      if(!wallIsFinished) drawWallPatina(THEME_ID,x,y,px_,py,face);
     } else if(t===DOWN){
       blit(TILE_ART.stairs, px_, py);
       /* 時空之門：兩圈反向旋轉的光環，中間是一團看不透的白。
@@ -13627,12 +13687,10 @@ function draw(dt){
         cx.restore();
       }
     } else {
-      const arr = t===CORR ? TS.corr : TS.floor;
       // 大廳、冰原與儀式空間用 2x2 格才拼完的一整塊板；走道仍用窄小鋪面。
       // 這個尺寸差本身就會告訴玩家「房間」與「通道」是兩種空間。
-      const macroV = MF ? terrainDetailHash(x>>1,y>>1,73)%3 : 0;
-      const floorImg = t===ROOM && MF ? MF[macroV*4 + (((y&1)<<1)|(x&1))]
-                                     : arr[(x*7+y*13)%arr.length];
+      const floorImg = t===ROOM ? roomFloorFor(TS,MF,x,y)
+                                : corridorFloorFor(TS,x,y);
       blit(floorImg, px_, py);
       if(t===CORR){
         // 走道是比房間低一階、磨損較連續的帶狀空間，不再只是「窄房間」。
@@ -13644,11 +13702,16 @@ function draw(dt){
         cx.save(); cx.globalAlpha=.16; cx.fillStyle=PAL[THEME_CFG.ramp[3]];
         if(vertical) cx.fillRect(px_+2,py,1,T); else cx.fillRect(px_,py+2,T,1);
         cx.restore();
-        drawCorridorDamage(THEME_ID,x,y,px_,py);
+        // 外部成品已經有磨損、裂縫與碎石；再畫一次只會變成椒鹽雜訊。
+        if(tileNeedsProceduralDetail(floorImg))
+          drawCorridorDamage(THEME_ID,x,y,px_,py);
       } else {
-        // 房間地面略提亮並保持連續，與暗牆、暗走道形成三段明度。
-        cx.fillStyle='rgba(255,239,210,.055)'; cx.fillRect(px_,py,T,T);
-        drawMaterialSurface(THEME_ID,x,y,px_,py);
+        // 程式地面需要略提亮與補材質；外部手繪成品的色階已完成，不能再
+        // 泛白一次，否則提示詞要求的「MID-DARK」會在遊戲裡變成灰白地板。
+        if(tileNeedsProceduralDetail(floorImg)){
+          cx.fillStyle='rgba(255,239,210,.055)'; cx.fillRect(px_,py,T,T);
+          drawMaterialSurface(THEME_ID,x,y,px_,py);
+        }
       }
       drawFloorThreshold(THEME_ID,x,y,t,px_,py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍

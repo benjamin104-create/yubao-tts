@@ -159,6 +159,29 @@ def main():
                 if '%s/%s.png' % (th, fn) not in have:
                     fails.append('ART_TILE_AVAILABLE 登記了不存在的 %s/%s.png' % (th, fn))
                     print('  ✗ 登記了 %s/%s.png，但檔案不在' % (th, fn))
+        # 有 macro 的章節以前會「檔案載到了，遊戲卻仍畫舊的 2x2 大板」。
+        # 直接問正式的房間地板選擇函式，確認外部成品真的走到畫面上；同時
+        # 確認它不會再被程序材質疊第二遍。這不是檔案檢查能抓到的錯。
+        for th, slist in (avail or {}).items():
+            if not any(fn.startswith('floor') for fn in slist):
+                continue
+            routed = pg.evaluate("""th=>{
+              const ts=tilesFor(th), img=roomFloorFor(ts,macroFloorsFor(th),4,4);
+              const corr=corridorFloorFor(ts,4,4), wall=externalTileQuarter(ts.wall,4,4);
+              return {external:!!(img&&img._externalTile), decorate:tileNeedsProceduralDetail(img),
+                      corrExternal:!!(corr&&corr._externalTile), wallExternal:!!(wall&&wall._externalTile)};
+            }""", th)
+            if not routed.get('external'):
+                fails.append('%s：房間仍被舊 macro 地板蓋住' % th)
+                print('  ✗ %-28s 已載入，但房間仍選到舊的程序地板' % (th + '/floor*.png'))
+            elif routed.get('decorate'):
+                fails.append('%s：手繪房間仍被程序材質覆寫' % th)
+                print('  ✗ %-28s 仍會疊上舊的程序材質' % (th + '/floor*.png'))
+            elif not routed.get('corrExternal') or not routed.get('wallExternal'):
+                fails.append('%s：走道或牆面未走外部成品路徑' % th)
+                print('  ✗ %-28s 走道或牆面沒有使用手繪成品' % th)
+            else:
+                print('  ✓ %-28s 房間、走道、牆面實際使用手繪成品' % th)
         if have:
             from PIL import Image
             for rel in have:
