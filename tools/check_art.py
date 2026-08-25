@@ -281,10 +281,15 @@ else:
             # 規則本身沒錯，是分不出來這張圖是什麼東西。
             is_sheet = parts[0] == "anim"
             cat = parts[1] if is_sheet and len(parts) >= 3 else parts[0]
+            is_tile_blocker = (not is_sheet and cat == "tile" and
+                               parts[-1].startswith("blocker"))
             # 海報、村莊全景、旅程地圖不是精靈，是**整張畫**。
             # 它們的工作就是填滿畫面，用精靈的規則去驗會把每一張刻意的
             # 全景都判成「背景沒去乾淨」。
-            is_scene = cat in ("promo", "village", "map")
+            # 地板、走道與牆面也必須填滿整張：透明背景或外圍留白反而會在
+            # 重複鋪設時露出接縫。blocker* 則相反 —— 它是疊在地板上的
+            # 獨立障礙物，規格要求透明背景、四周留白與落地接觸陰影。
+            is_scene = cat in ("promo", "village", "map") or (cat == "tile" and not is_tile_blocker)
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
@@ -360,7 +365,24 @@ else:
             # 遊戲那邊的影子會跟著精靈實際的腳走，所以圖畫歪了影子也跟著歪，
             # 兩者永遠貼在一起 —— check_ground 量的是「身體與影子的距離」，
             # 它看不到「這一組整個被抬高了」。一條斷言只看得到它量的東西。
-            if cat == "hat":
+            if is_tile_blocker:
+                # blocker 是一格裡的獨立立體物，不該像角色那樣把腳貼到圖片
+                # 最下列；底部要保留少量透明空間，讓接觸陰影完整留在格內。
+                # 但它也不能被放在格子中央漂浮：陰影下緣必須進入底部 12%。
+                for _k, _r, bb, _fill in boxes:
+                    x0, y0, x1, y1 = bb
+                    ok(x0 > 0 and y0 > 0 and x1 < cw and y1 < ch,
+                       "%s 障礙物四周都有透明留白（bbox %s，畫布 %dx%d）"
+                       % (rel, bb, cw, ch))
+                    center = (x0 + x1) / 2.0
+                    ok(abs(center - cw / 2.0) <= cw * 0.08,
+                       "%s 障礙物水平置中（中心 %.1f，畫布中心 %.1f）"
+                       % (rel, center, cw / 2.0))
+                    gap = ch - y1
+                    ok(gap <= ch * 0.12,
+                       "%s 接觸陰影靠近格底、沒有漂浮（底部留白 %dpx，上限 %.1fpx）"
+                       % (rel, gap, ch * 0.12))
+            elif cat == "hat":
                 # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
                 # 身體畫在下面。所以這裡問的正好相反：它有沒有待在頭那一段。

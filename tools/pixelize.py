@@ -578,10 +578,16 @@ def check_assets(root, size):
                 print("  [動畫尺寸] %s 是 %dx%d，應為 %dx%d（10 欄 x 3 列）"
                       % (rel, w, h, anim_size[0], anim_size[1]))
                 problems += 1
-            elif not is_anim and (h != want or w % want != 0):
-                print("  [尺寸] %s 是 %dx%d，應為 %d 的倍數 x %d"
-                      % (rel, w, h, want, want))
-                problems += 1
+            elif not is_anim:
+                # 地磚可以用 32、64… 的正方形提供更多材質細節；遊戲會把它
+                # 縮放到一格使用。精靈則仍維持固定格高，避免角色尺寸漂移。
+                size_bad = (w != h or w < want or w % want != 0) if top == "tile" \
+                    else (h != want or w % want != 0)
+                if size_bad:
+                    expect = "%d 以上的正方形（且為 %d 的整數倍）" % (want, want) \
+                        if top == "tile" else "%d 的倍數 x %d" % (want, want)
+                    print("  [尺寸] %s 是 %dx%d，應為 %s" % (rel, w, h, expect))
+                    problems += 1
 
             anim_budget = (64 if is_boss_anim else 32) * 1024
             if is_anim and os.path.getsize(path) > anim_budget:
@@ -598,9 +604,33 @@ def check_assets(root, size):
                       % (rel, len(off), list(off)[:3]))
                 problems += 1
 
-            if all(c[3] == 255 for c in im.getdata()):
+            alpha = [c[3] for c in im.getdata()]
+            # tile/ 裡有兩種完全不同的資產：
+            #   floor/corr/wall* 是會鋪滿一格的地磚，必須滿版不透明；
+            #   blocker* 是站在地板上的獨立障礙物，規格要求透明背景、四周留白。
+            # 以前只看第一層目錄，把 blocker 也當無縫地磚，會把正確的透明石柱
+            # 判成錯誤，跟 docs/art_tile_spec.md 的規格正好相反。
+            is_tile_blocker = top == "tile" and name.startswith("blocker")
+            if top == "tile" and not is_tile_blocker:
+                # 無縫地磚的四邊必須完整覆蓋；透明像素會露出底色並形成接縫。
+                if any(a != 255 for a in alpha):
+                    print("  [透明] %s 含有透明像素，無縫地磚必須完全不透明" % rel)
+                    problems += 1
+            elif all(a == 255 for a in alpha):
                 print("  [透明] %s 完全不透明，背景可能沒去乾淨" % rel)
                 problems += 1
+
+            if is_tile_blocker:
+                # 障礙物不得碰到圖邊；否則擺在地板上時會像被方框裁斷，
+                # 也無法保留規格要求的透明呼吸空間。
+                edge = []
+                for x in range(w):
+                    edge.extend((im.getpixel((x, 0))[3], im.getpixel((x, h - 1))[3]))
+                for y in range(h):
+                    edge.extend((im.getpixel((0, y))[3], im.getpixel((w - 1, y))[3]))
+                if any(a != 0 for a in edge):
+                    print("  [邊界] %s 的障礙物碰到圖邊，四周必須保留透明空間" % rel)
+                    problems += 1
 
     print("檢查 %d 個檔案，%d 個問題" % (checked, problems))
     return problems
