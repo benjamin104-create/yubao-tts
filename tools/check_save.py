@@ -56,14 +56,14 @@ def serve():
 
 def enter(pg, url):
     """開新分頁 → 按下開始 → 跳過開場 → 站在第一層。"""
+    # 用 id 點而不是用文字點：介面會依瀏覽器語言自動切中／英／日，
+    # 用 'DESCEND' 找按鈕的話，換一台語言不同的機器這支就找不到東西，
+    # 而錯誤訊息會是「找不到元素」，看起來像存檔壞了。
     pg.goto(url)
     pg.wait_for_timeout(1600)
-    pg.get_by_text('DESCEND').first.click()
+    pg.click('#start')
     pg.wait_for_timeout(1400)
-    try:
-        pg.get_by_text('Skip prologue').first.click()
-    except Exception:
-        pass
+    pg.click('#proskip')
     pg.wait_for_timeout(1600)
 
 
