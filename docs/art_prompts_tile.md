@@ -67,6 +67,37 @@ three-quarter view. Authentic 1993-era pixel art discipline:
 - `Detail is ... SHAPES, never per-pixel speckle` —— 目前地板灑滿單像素亮點。
 - 每張都寫的 **MID-DARK** —— 目前神殿、水晶、通天塔的地板比主角還亮，
   玩家會找不到自己。**亮色只准當高光，不准當地板主體。**
+---
+
+## A2. 亮度校準（**這一段是第二批才加的，用第一批的實測結果校準**）
+
+第一批交了四個地貌，量出來成功與失敗的差別只有一個數字 —— **地板的平均亮度**：
+
+| 地貌 | 地板平均亮度 | 主角與地板的差 | 結果 |
+|---|---|---|---|
+| `forest` 迷霧森林 | **33.5** | +77.5 | ✓ 最好 |
+| `stone` 礦坑 | **44.5** | +66.5 | ✓ |
+| `crystal` 水晶礦坑 | **80.5** | +30.5 | ✓ 及格邊緣 |
+| `temple` 巴比倫神殿 | **92.9** | +18.1 | ✗ 主角認不出來 |
+
+（亮度 = 0～255 的感知明度；主角本體是 111。）
+
+**所以規則是**：地板四張的平均亮度要落在 **35～75**，**絕對不要超過 85**。
+神殿就是唯一超過的那一個，也是唯一失敗的那一個。
+
+反過來，「鄰格對比」不是預測因子 —— `stone` 高達 13.8 卻很好看，
+因為那是石板的結構邊緣，不是雜訊。所以**不要**為了壓對比而把地板畫平；
+要壓的是**亮度**，不是細節。
+
+把這一句直接放進每一張 floor 的提示詞：
+
+```
+The finished tile must be DARK: its average perceived brightness should land
+around 40-70 on a 0-255 scale, and must never exceed 85. A bright character
+sprite (brightness ~111) stands on this tile and must read instantly against
+it. Bright colors from the palette are for narrow highlight lines only,
+never for the body of the tile.
+```
 
 ---
 

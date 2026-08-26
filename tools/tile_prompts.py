@@ -39,6 +39,13 @@ def load():
     # A 段的共用前綴：'## A.' 之後的第一個 ``` 區塊
     a = doc.index('## A.')
     prefix = re.search(r'```(.*?)```', doc[a:], re.S).group(1).strip()
+    # A2 的亮度校準：第一批四個地貌交出來之後量到的唯一預測因子。
+    # 神殿是唯一亮度超過 85 的，也是唯一失敗的 —— 所以這一段要跟著每一張走。
+    a2 = doc.find('## A2.')
+    if a2 >= 0:
+        m2 = re.search(r'```(.*?)```', doc[a2:doc.index('## B.')], re.S)
+        if m2:
+            prefix = prefix + '\n' + m2.group(1).strip()
 
     # F 段的柱子／巨石：表格 + 通用敘述
     f = doc.index('## F.')
