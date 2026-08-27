@@ -309,7 +309,9 @@ sandstone with lapis and gold inlay.
 
 ```
 Palette anchored to: #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea #5798bd
-#9ed0e3 #e5f5f7 #c5ddea #79b5d2 #0d0d12 #1a1a24 — lapis-glazed brick.
+#9ed0e3 #e5f5f7 #c5ddea #79b5d2 #2a1d14 #43301f #5e442c #7d5c3c
+#9c7850 #c58b2a #f0ce68 #0d0d12 #1a1a24 — lapis-glazed brick, exposed
+raw clay, and a narrow ochre-gold relief band.
 ```
 
 - **floor**：`A tower floor tile of lapis-blue glazed brick laid in a tight grid, the glaze slightly uneven from firing. MID-DARK: body at #1d3468–#2f57a0. The pale #e5f5f7 is used ONLY as a thin specular line on the top-left of a few bricks — the glaze reads as glossy through hard-edged highlights, never through overall brightness.`

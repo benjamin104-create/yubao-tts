@@ -3638,7 +3638,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260827-all-terrain-v3';
+const ART_REV = '20260827-all-terrain-v4';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -5572,7 +5572,7 @@ const flashCache = {};
 const charLiftCache = {};
 function characterLiftOf(img, name){
   const darkArt = /#(?:ash|tengu|shinobi|knight|shadow|unnamed|b_warden|b_treant|b_pyro|b_hanzo|b_oni|b_gaoler|b_gate|b_artisan|b_hallking)@/.test(name);
-  const key = name + (darkArt ? '@character-lift-dark-v2' : '@character-lift-v1');
+  const key = name + (darkArt ? '@character-depth-dark-v3' : '@character-depth-v3');
   if(charLiftCache[key]) return charLiftCache[key];
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
@@ -5585,7 +5585,15 @@ function characterLiftOf(img, name){
     const lum=d.data[i]*.2126+d.data[i+1]*.7152+d.data[i+2]*.0722;
     const floor = darkArt ? 28 : 44;
     if(lum <= floor) continue; // keep the darkest outline firm
-    const add = darkArt ? (lum<120?17:lum<205?13:5) : (lum<120?8:lum<205?10:4);
+    /* 原本只把整隻一起提亮，角色雖然比較看得到，左上亮面與右下暗面的
+       距離卻沒有變大，結果像一張貼紙。現在保留提亮，同時依固定光源加
+       一個很小的方向差：左上最多 +7、右下最多 -7。這不是柔焦漸層，
+       最後仍直接寫回原本的整數像素；原圖的輪廓與材質色塊都不會移動。 */
+    const p=i>>2, px0=p%c.width, py0=Math.floor(p/c.width);
+    const nx=c.width>1?px0/(c.width-1):.5, ny=c.height>1?py0/(c.height-1):.5;
+    const directional=Math.round((1-nx-ny)*(darkArt?7:5));
+    const add = (darkArt ? (lum<120?17:lum<205?13:5) : (lum<120?8:lum<205?10:4))
+                + directional;
     const gain = darkArt ? 1.10 : 1.06;
     for(let k=0;k<3;k++) d.data[i+k]=Math.max(0,Math.min(255,Math.round((d.data[i+k]-96)*gain+96+add)));
   }
@@ -14397,9 +14405,19 @@ function draw(dt){
        而「沒有影子」讀起來是圖沒對齊，不是牠在飛。
        要讀出高度，地上那一塊必須看得出來，才有東西可以跟本體拉開距離。 */
     if(SHADOW <= 0) return;
-    cx.fillStyle = 'rgba(0,0,0,' + (SHADOW * (fly ? .32 : .42)).toFixed(3) + ')';
-    cx.fillRect(x0, y0, w2, 3);
+    /* 一條等寬黑槓只會強調「剪紙貼在地面」，不是體積。改成三層硬邊
+       像素接觸影：兩端收窄、腳底核心最深，右下一格是固定左上光源留下
+       的短投影。全是 fillRect，沒有模糊與漸層。 */
+    const a = SHADOW * (fly ? .30 : .40);
+    cx.fillStyle = 'rgba(0,0,0,' + (a*.52).toFixed(3) + ')';
     cx.fillRect(x0-1, y0+1, w2+2, 1);
+    cx.fillRect(x0+1, y0+2, w2, 1);
+    cx.fillStyle = 'rgba(0,0,0,' + a.toFixed(3) + ')';
+    cx.fillRect(x0, y0, w2, 2);
+    if(w2 > 3) cx.fillRect(x0+1, y0-1, w2-2, 1);
+    const core = Math.max(2, Math.round(w2*.52));
+    cx.fillStyle = 'rgba(0,0,0,' + Math.min(.78,a*1.28).toFixed(3) + ')';
+    cx.fillRect(Math.round(cxm-core/2), y0, core, 1);
   };
   /* sc = 放大倍率。頭目用 2 ——
      使用者：「我希望魔王本身在畫面上大隻一點，比較有威嚇性，
