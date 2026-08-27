@@ -126,7 +126,11 @@ TILE_PALETTES = {
     "beast":     FOREST_HEX + NEUTRAL_HEX[:2],
     "mountain":  NEUTRAL_HEX + ICE_HEX[:4],
     "mirror":    NEUTRAL_HEX + BLUE_HEX,
-    "void":      NEUTRAL_HEX + BLUE_HEX[:2],
+    # 終章要「混沌中的一線光」，而灰階＋兩個暗藍裡沒有任何一個能當光。
+    # 補到 BLUE_HEX[:4]（多 #2f57a0 #4a86cf）—— 只多兩個色，
+    # 而且是既有的藍色帶，不是新發明的顏色。地板仍然要很暗，
+    # 這兩個色是給「貫穿的光線」用的，不是給地板主體。
+    "void":      NEUTRAL_HEX + BLUE_HEX[:4],
     "wood":      WOOD_HEX + NEUTRAL_HEX[:3],
     "greathall": WOOD_HEX + TEMPLE_HEX[4:] + NEUTRAL_HEX[:2],
     "briar":     RED_HEX + WOOD_HEX + NEUTRAL_HEX[:2],

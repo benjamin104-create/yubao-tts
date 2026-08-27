@@ -295,5 +295,53 @@ t('五系滿了之後，多的點數換得到永久的身體，而且撐得過�
   V().hpBonus = 0; V().strBonus = 0; V().defBonus = 0; api.saveVillage();
 });
 
+/* ═══ 驗收網址不准碰玩家的存檔 ═══════════════════════════════
+   saveVillage() 一直守著 QA_MODE，saveRun()／clearRun() 卻漏了 ——
+   於是「完全不寫進正式存檔」只做到一半。
+
+   踩出來的樣子：玩家玩到第 6 章、中途存檔在第 2 層，開一個
+   ?qa=floor&act=crystal 的驗收網址進去走一段樓梯，中途存檔就變成
+   act=12 floor=3；在裡面死一次，整份存檔直接不見。
+   而驗收網址正是拿來到處亂走亂死的 —— 那是它的用途。
+
+   QA_MODE 是腳本載入當下算出來的常數，事後改不了，
+   所以這一段要另外開一個行程，用 QA_SEARCH 把 location.search 換掉。 */
+t('驗收網址（?qa=）不會動到玩家的存檔', () => {
+  const { execFileSync } = require('child_process');
+  const src = `
+    const { api } = require('${__dirname.replace(/\\/g, '/')}/simcore.js');
+    const assert = require('assert');
+    // 先放一份「玩家的存檔」進去
+    localStorage.setItem('claude-abyss-run', JSON.stringify({sentinel:1}));
+    api.newGame(4242);
+    api.saveRun();
+    const after = localStorage.getItem('claude-abyss-run');
+    assert.strictEqual(after, JSON.stringify({sentinel:1}),
+      'QA 模式下 saveRun() 蓋掉了玩家的存檔');
+    api.clearRun();
+    assert.strictEqual(localStorage.getItem('claude-abyss-run'),
+      JSON.stringify({sentinel:1}), 'QA 模式下 clearRun() 刪掉了玩家的存檔');
+    console.log('QA-OK');
+  `;
+  const out = execFileSync(process.execPath, ['-e', src],
+    { env: Object.assign({}, process.env, { QA_SEARCH: '?qa=floor&act=crystal' }),
+      encoding: 'utf8' });
+  assert(out.includes('QA-OK'), '子行程沒有跑完');
+});
+
+/* 反過來也要成立：一般入口（沒有 ?qa=）**必須**真的存得下去。
+   只驗上面那一條的話，把 saveRun() 整支改成 return 也會全綠 ——
+   而那等於所有玩家都不能存檔了。 */
+t('一般入口照樣存得下去（上面那條不能把存檔關掉）', () => {
+  api.clearRun();
+  api.newGame(4243);
+  api.saveRun();
+  const raw = localStorage.getItem('claude-abyss-run');
+  assert(raw, '一般模式下 saveRun() 沒有寫進去');
+  assert.strictEqual(JSON.parse(raw).seed, 4243, '存進去的不是這一趟');
+  api.clearRun();
+  assert(!localStorage.getItem('claude-abyss-run'), '一般模式下 clearRun() 沒有清掉');
+});
+
 console.log('\n通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);

@@ -67,6 +67,37 @@ three-quarter view. Authentic 1993-era pixel art discipline:
 - `Detail is ... SHAPES, never per-pixel speckle` —— 目前地板灑滿單像素亮點。
 - 每張都寫的 **MID-DARK** —— 目前神殿、水晶、通天塔的地板比主角還亮，
   玩家會找不到自己。**亮色只准當高光，不准當地板主體。**
+---
+
+## A2. 亮度校準（**這一段是第二批才加的，用第一批的實測結果校準**）
+
+第一批交了四個地貌，量出來成功與失敗的差別只有一個數字 —— **地板的平均亮度**：
+
+| 地貌 | 地板平均亮度 | 主角與地板的差 | 結果 |
+|---|---|---|---|
+| `forest` 迷霧森林 | **33.5** | +77.5 | ✓ 最好 |
+| `stone` 礦坑 | **44.5** | +66.5 | ✓ |
+| `crystal` 水晶礦坑 | **80.5** | +30.5 | ✓ 及格邊緣 |
+| `temple` 巴比倫神殿 | **92.9** | +18.1 | ✗ 主角認不出來 |
+
+（亮度 = 0～255 的感知明度；主角本體是 111。）
+
+**所以規則是**：地板四張的平均亮度要落在 **35～75**，**絕對不要超過 85**。
+神殿就是唯一超過的那一個，也是唯一失敗的那一個。
+
+反過來，「鄰格對比」不是預測因子 —— `stone` 高達 13.8 卻很好看，
+因為那是石板的結構邊緣，不是雜訊。所以**不要**為了壓對比而把地板畫平；
+要壓的是**亮度**，不是細節。
+
+把這一句直接放進每一張 floor 的提示詞：
+
+```
+The finished tile must be DARK: its average perceived brightness should land
+around 40-70 on a 0-255 scale, and must never exceed 85. A bright character
+sprite (brightness ~111) stands on this tile and must read instantly against
+it. Bright colors from the palette are for narrow highlight lines only,
+never for the body of the tile.
+```
 
 ---
 
@@ -288,21 +319,46 @@ Palette anchored to: #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea #5798bd
 
 > 這一章目前主角與地板的亮度差只有 **+5.9**，等於沒有對比。務必壓暗。
 
+> **神像（`blocker0` / `blocker1`）**：這一章的簡介是「往上二十層，塔頂有一道門，
+> 門後不是一個地方，而是一個時間」，而終章是「只有意識，而你即將成為它」。
+> 兩尊神像各說一句話 ——
+> `blocker0` **未完成**：上半身還是粗胚，綁著木鷹架。他們在造神，而且沒造完。
+> `blocker1` **已傾倒**：巨大的頭側躺著、半埋進地板，閉著眼、面容安詳。
+> 他們要去見的神，早就倒了。
+> 兩尊都要跟第一章神殿的有翼守衛（lamassu）明顯不同 —— 那是門口的守衛，
+> 這是神本身。
+
 ---
 
 ### 13. `void` —— 最後的迷宮（第 16 章）、混沌之間（第 17 章）
 
 ```
 Palette anchored to: #0d0d12 #1a1a24 #2b2b38 #3d3d4d #565668 #757589
-#c8c8d4 #101c3a #1d3468 — near-black geometric substrate.
+#c8c8d4 #101c3a #1d3468 #2f57a0 #4a86cf — near-black substrate with a
+single cold-blue light running through it.
 ```
 
-- **floor**：`A void floor tile: a near-black geometric substrate of hard-edged interlocking panels with thin recessed seam lines, like the inside of a machine. Very dark and matte overall. A single thin cold-blue line traces one panel edge. No glow, no gradient.`
-- **corr**：`Same substrate one step darker, panels smaller and denser, seams tighter.`
-- **wall**：`The TOP surface of a void wall: solid near-black material with a faint panel grid, darker still than the floor.`
-- **wallface**：`The FRONT FACE of a void wall: tall dark panels with a single cold-blue seam line running along the top edge, everything below falling to near-black.`
+- **floor**：`A void floor tile: nested hard-edged geometric panels of near-black material, each step recessed deeper than the last, so the tile reads as looking DOWN into depth rather than at a flat surface. Running straight across it is a single cold-blue light thread, 1-2 pixels wide, that continues off BOTH opposite edges so neighbouring tiles link into one continuous web of light across the whole room. The substrate stays very dark and matte — the blue is a thread, never a glow, never a halo, never a lit pool.`
+- **corr**：`Same substrate one step darker and tighter, panels smaller, the blue thread thinner and broken in a place or two, as if the current is failing.`
+- **wall**：`The TOP surface of a void wall: solid near-black material with a faint panel grid and NO blue thread at all — the light does not run through the walls. Darker still than the floor.`
+- **wallface**：`The FRONT FACE of a void wall: tall dark panels receding into black, a single cold-blue line tracing the very top edge like a distant horizon, everything below falling to near-black.`
 
 > 這一章目前的圖地分離是全遊戲最好的（**+67.5**）。手繪版守住「很暗」就對了。
+
+> **時空感與「混沌中的光明」**（使用者指定的方向）：
+> 這一章的簡介是「沒有地圖、沒有商店，你不再需要它們」與
+> 「這裡沒有牆，也沒有天花板，只有意識，而你即將成為它」。
+>
+> 兩個要求跟「無縫鋪貼＋地板要暗」會打架，解法是：
+> · **時空感** 靠**層層內縮的幾何板** —— 讀起來是「往下看進一個很深的東西」，
+>   而不是看著一個平面。不要用光暈或霧來做深度，那會破壞平鋪。
+> · **光明** 做成**貫穿整塊磚的細光線**（1～2 像素），而且要從對邊接出去，
+>   鋪起來會在整個房間連成一張光網。**不能做成光暈** —— 每塊磚中央一團光
+>   會讓地板變成一格一格的光點陣，那正是我們花了半天在修的網格感。
+> · 牆上**沒有**光線：光只走地板。玩家因此讀得出「可以走的地方有光」。
+>
+> 色盤為此補了 `#2f57a0` `#4a86cf` 兩個亮一階的藍（原本只有兩個暗藍，
+> 沒有任何一個能當光）。那兩個色**只給光線用**，不是給地板主體。
 
 ---
 
@@ -358,8 +414,8 @@ on the floor instead of floating. It must not touch the edges of the image.
 | `mirror` | a tall dark mirror panel | a heap of angular shards |
 | `crystal` | a jagged ice pillar | a mound of broken ice blocks |
 | `greathall` | a squared sandstone column stump | a pile of inlaid rubble |
-| `spire` | a glazed brick pillar stump | a heap of fallen glazed brick |
-| `void` | a floating black monolith | a cluster of dark panels |
+| `spire` | an unfinished standing deity statue, its upper half still rough-hewn, wooden scaffolding lashed around it | a colossal toppled statue head lying on its side, half sunk into the floor, its face serene and eyes closed |
+| `void` | a tall black monolith standing upright, a single cold-blue seam of light running down its centre | a broken arch of dark panels with cold-blue light spilling out through the fracture |
 
 生這兩張時 `pixelize.py` **不要**加 `--keep-bg`（要去背），照角色的規矩走。
 

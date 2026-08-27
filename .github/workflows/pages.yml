@@ -86,6 +86,11 @@ jobs:
           python -m playwright install --with-deps chromium
           python tools/check_tags.py
           python tools/check_screens.py
+          # 存檔在真的瀏覽器裡存不存得住。web/save.js 是 node，沒有畫面，
+          # 掃不到「關掉分頁再打開，封面有沒有『繼續冒險』」——
+          # 而使用者踩到的正是那個：第一層從來沒有存檔點，
+          # 玩了半天關掉分頁，localStorage 裡什麼都沒有。
+          python tools/check_save.py
           # 版面：玩家非看到不可的東西有沒有真的在畫面上（九種視窗尺寸）。
           # 這一類 bug 不報錯、字也是對的、其他測試全綠 —— 只是看不到。
           python tools/check_layout.py

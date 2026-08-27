@@ -47,8 +47,12 @@ global.document = {
   documentElement: { lang: '', style:{}, scrollWidth:1280, scrollHeight:900 },
 };
 global.addEventListener = () => {};
-// QA 快速入口會讀 location.search；無頭測試等同一般遊戲入口，查詢字串為空。
-global.location = { search:'', href:'http://localhost/game/' };
+/* QA 快速入口會讀 location.search。預設為空 —— 無頭測試等同一般遊戲入口。
+   QA_SEARCH 環境變數可以把它換掉，因為「驗收網址不准動玩家存檔」這件事
+   只有在 QA_MODE 為真的時候才測得到，而 QA_MODE 是在腳本載入的當下
+   從 location.search 算出來的常數，事後改不了。 */
+global.location = { search: process.env.QA_SEARCH || '',
+                    href:'http://localhost/game/' };
 // 視窗尺寸：遊戲會依螢幕方向切換視野格數，打樁成一般桌機尺寸
 global.innerWidth = 1280;
 global.innerHeight = 900;

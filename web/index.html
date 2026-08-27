@@ -7848,6 +7848,16 @@ function unpackItem(q){
 }
 
 function saveRun(){
+  /* 驗收頁「完全不寫進正式存檔」—— saveVillage() 一直守著這條，
+     這兩支卻漏了，於是驗收網址會偷偷吃掉玩家真正的進度：
+
+       實測：玩到第 6 章、中途存檔在第 2 層，開一個 ?qa=floor&act=crystal
+       的網址進去走一段樓梯，中途存檔就變成 act=12 floor=3；
+       在裡面死一次，整份存檔直接消失。
+
+     而驗收網址正是拿來到處亂走亂死的 —— 那是它的用途。
+     村莊那一份守住了、這一份沒守，等於守了一半。 */
+  if(QA_MODE) return;
   if(!G || G.over || G.won) return;
   const p = G.p;
   try{
@@ -7880,7 +7890,10 @@ function loadedRun(){
     return Object.assign(q, {act, floor});
   }catch(e){ return null; }
 }
-function clearRun(){ try{ localStorage.removeItem(RUN_KEY); }catch(e){} }
+function clearRun(){
+  if(QA_MODE) return;              // 同上：在驗收頁死掉不該清掉玩家的進度
+  try{ localStorage.removeItem(RUN_KEY); }catch(e){}
+}
 
 /* 存檔到底能不能用。有些情境下（無痕視窗、被沙箱擋住的 iframe、
    關閉第三方儲存的瀏覽器）localStorage 會直接丟例外。
@@ -17872,6 +17885,18 @@ heroArtHooks.push(paintCover);
     refresh();
     showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
+    /* 進到迷宮就先存一次。
+       踩出來的：使用者「昨天試玩打半天，結果沒有紀錄」。
+       中途存檔本來只在「下樓梯」與「踩到紀錄之環」時寫 —— 也就是說
+       **第一層從來沒有存檔點**。在第一層探索一小時再關掉分頁，
+       localStorage 裡是空的，重開連「繼續冒險」都不會出現。
+       實測：第一層走六十步後關掉分頁，重開 → 沒有紀錄。
+
+       存在這裡而不是「離開分頁時存當下狀態」：後者看起來更貼心，
+       但實測會**複製道具** —— 讀檔是用種子重建整層，地上的東西會復活，
+       而背包裡撿走的那一份還在。實測 7 件變 13 件。
+       樓層起點才是安全的存檔點，因為那一刻玩家還沒撿走任何東西。 */
+    saveRun();
   }
   $('pronext').onclick=nextPrologue;
   $('proskip').onclick=enterDungeon;
