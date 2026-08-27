@@ -3638,7 +3638,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260825-tile-routing-v1';
+const ART_REV = '20260827-all-terrain-v2';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -5445,6 +5445,20 @@ const ART_TILE_AVAILABLE = {
   mountain:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
   /* 荊棘城堡：暗紅磚、木樑與枯荊棘的完整手繪組；兩種障礙物保留透明接地陰影。 */
   briar:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 湖畔神殿：積水藍灰石板、水線牆面與兩種濕石障礙物。 */
+  lake:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 獸窟：獸群踩實的泥土、骨屑與根系洞壁；兩種骨骸障礙物都有透明接地陰影。 */
+  beast:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 木造內部：平行舊木板、較窄的破損走道與木架牆頂；目前沒有獨立牆面立圖。 */
+  wood:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','blocker0','blocker1'],
+  /* 鏡之廳：暗色菱形拋光石、鏡條牆與兩種碎鏡障礙物。 */
+  mirror:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 地下大廣間：砂岩大板、青金與金線鑲嵌、帶飾帶的立面。 */
+  greathall:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 通天塔：青金釉磚、裸露陶土、金色浮雕帶與兩尊巨型殘像。 */
+  spire:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
+  /* 終章虛空：下陷幾何板、跨格冷藍光線、無光牆體與黑色遺跡。 */
+  void:['floor0','floor1','floor2','floor3','corr0','corr1','corr2','wall','wallface','blocker0','blocker1'],
 };
 const tileSlotPut = (ts, slot, c) => {
   // 外部手繪阻擋物已自帶輪廓、受光面與接觸陰影；標記來源，避免繪圖時

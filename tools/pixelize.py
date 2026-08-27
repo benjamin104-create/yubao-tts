@@ -132,7 +132,8 @@ TILE_PALETTES = {
     "briar":     RED_HEX + WOOD_HEX + NEUTRAL_HEX[:2],
     "lake":      ICE_HEX + BLUE_HEX,
     "crystal":   ICE_HEX + NEUTRAL_HEX[:3],
-    "spire":     BLUE_HEX + ICE_HEX[3:] + NEUTRAL_HEX[:2],
+    # 通天塔的舊釉磚會磨出下層生陶土；保留前五階木土色，讓磨耗不是錯誤的灰色。
+    "spire":     BLUE_HEX + ICE_HEX[3:] + WOOD_HEX[:5] + TEMPLE_HEX[7:] + NEUTRAL_HEX[:2],
     "temple":    TEMPLE_HEX + NEUTRAL_HEX[:3],
 }
 # 地貌名字打錯不能安靜退回角色色盤 —— 那會生出一整批色調錯掉的磚，
