@@ -37,15 +37,25 @@ from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# 色數的上下限。下限 8：一張磚至少要有底色 + 亮邊 + 暗邊 + 縫。
-# 上限 72：對照組是 4bpp 一組調色盤 16 色的年代，我們有多組色帶疊在
-# 一張磚上，所以放寬，但不能放到「每個像素都差一點點」那一邊去。
-COL_MIN, COL_MAX = 8, 72
+# 色數只留**上限**。上限 72：對照組是 4bpp 一組調色盤 16 色的年代，
+# 我們有多組色帶疊在一張磚上，所以放寬，但不能放到「每個像素都差一點點」
+# 那一邊去。
+#
+# 下限本來是 8，理由寫著「太少＝沒有明暗層次」。那個推論對，但**色數是
+# 錯的代理**，而且是在只量得到程式畫的磚的年代訂的。手繪磚交進來之後
+# 量出來：水晶／山道／荊棘的 floor0 都只有 5 色，卻各自有 5 個乾淨的
+# 明度階、跨度 124~196 —— 那不是平，那正是那個年代的做法
+# （一張地磚四到六色是常態）。
+#
+# 所以改成直接量它本來就想量的東西：明暗階數與明度跨度。
+COL_MAX = 72
+# 至少四階、跨度至少 40，才算「有光有影」。
+STEP_MIN, SPAN_MIN = 4, 40
 # 終章的虛空刻意是平的。那一章的 intro 就寫著「這裡沒有牆，也沒有天花板」——
 # 一面有磚縫與風化的牆會把那句話講反。所以只有它的下限放寬，
 # 而且**指名放寬**：全面調低下限的話，哪一天別的地貌變成一片死板，
 # 這條檢查也不會叫了。
-FLAT_OK = {'void': 5}
+FLAT_OK = {'void': 2}
 # 2x2 同色率上限。平坦的走道磚本來就沒什麼結構可以浮雕，所以不要求
 # 每一張都低 —— 要求的是**整組的中位數**夠低，以及沒有整組都是平的。
 UNI_MEDIAN_MAX = 0.80
@@ -84,7 +94,16 @@ MEASURE = """(theme)=>{
       tot++;
       if(a===at(bx+1,by) && a===at(bx,by+1) && a===at(bx+1,by+1)) same++;
     }
-    return {w:c.width, h:c.height, cols:cols.size, uni: tot ? same/tot : 1};
+    // 明度階數與跨度：這兩個才是「有沒有明暗層次」的直接量法。
+    // 色數只是代理，而且對手繪磚是錯的代理 —— 見下面 COL_MIN 的註解。
+    const ls = [...new Set([...cols].map(v =>
+      Math.round(0.2126*((v>>16)&255) + 0.7152*((v>>8)&255) + 0.0722*(v&255))))]
+      .sort((a,b)=>a-b);
+    let steps = ls.length ? 1 : 0;
+    for(let i=1;i<ls.length;i++) if(ls[i]-ls[i-1] >= 4) steps++;
+    const span = ls.length ? ls[ls.length-1]-ls[0] : 0;
+    return {w:c.width, h:c.height, cols:cols.size, uni: tot ? same/tot : 1,
+            steps, span};
   };
   const out = {};
   t.floor.forEach((c,i)=> out['floor'+i] = one(c));
@@ -93,6 +112,49 @@ MEASURE = """(theme)=>{
   t.blocker.forEach((c,i)=> out['blocker'+i] = one(c));
   return out;
 }"""
+
+
+READY = """() => {
+  if(typeof ART_TILE_AVAILABLE === 'undefined') return false;
+  for(const th in ART_TILE_AVAILABLE){
+    const slist = ART_TILE_AVAILABLE[th] || [];
+    if(!slist.length) continue;
+    const ts = tilesFor(th);
+    if(slist.some(f => f.indexOf('floor') === 0)){
+      const img = roomFloorFor(ts, macroFloorsFor(th), 4, 4);
+      if(!(img && img._externalTile)) return false;
+    }
+    if(slist.some(f => f.indexOf('corr') === 0)){
+      const c = corridorFloorFor(ts, 4, 4);
+      if(!(c && c._externalTile)) return false;
+    }
+    if(slist.indexOf('wall') >= 0){
+      const w = externalTileQuarter(ts.wall, 4, 4);
+      if(!(w && w._externalTile)) return false;
+    }
+  }
+  return true;
+}"""
+
+
+def wait_for_tiles(pg):
+    """等到手繪地磚**真的**載完再開始量。
+
+    這一段是踩出來的：檢查原本只等固定的 2.3 秒就問「有沒有用到手繪成品」，
+    但地磚是非同步載入的（artImage 的 im.onload）。六十幾張圖沒載完的時候，
+    那一題的答案是「沒有」—— 於是同一份程式碼、同一批圖，
+    跑十次紅兩次。實測：crystal 的走道與牆面隨機報「沒有使用手繪成品」。
+
+    CI 紅就不部署，所以不穩定的檢查等於「有時候推不上去，重跑一次又好了」，
+    那比沒有檢查更糟 —— 大家會開始習慣性重跑，真的壞掉那次也照重跑。
+
+    超時不當成錯：真的沒接上的話，後面逐一地貌的檢查會指名是哪一個、
+    哪一個部位，那個訊息比這裡丟一個例外有用得多。
+    """
+    try:
+        pg.wait_for_function(READY, timeout=20000)
+    except Exception:
+        print('（等手繪地磚載入逾時 —— 下面會指出是哪一個地貌沒接上）')
 
 
 def main():
@@ -105,6 +167,7 @@ def main():
         pg.wait_for_timeout(900)
         pg.click('#start')
         pg.wait_for_timeout(1400)
+        wait_for_tiles(pg)
 
         TP = pg.evaluate('()=>TP')
         themes = pg.evaluate('()=>Object.keys(THEMES)')
@@ -120,12 +183,16 @@ def main():
             sizes = {v['w'] for v in m.values()}
             cols = [v['cols'] for v in m.values()]
             bad = []
-            lo = FLAT_OK.get(th, COL_MIN)
+            lo = FLAT_OK.get(th, STEP_MIN)
             for slot, v in m.items():
                 if v['w'] < TP or v['h'] < TP:
                     bad.append('%s 只有 %dx%d' % (slot, v['w'], v['h']))
-                if not (lo <= v['cols'] <= COL_MAX):
-                    bad.append('%s %d 色（要 %d~%d）' % (slot, v['cols'], lo, COL_MAX))
+                if v['cols'] > COL_MAX:
+                    bad.append('%s %d 色（上限 %d）—— 那不是精緻，是噪點'
+                               % (slot, v['cols'], COL_MAX))
+                if v['steps'] < lo or (lo > 2 and v['span'] < SPAN_MIN):
+                    bad.append('%s 沒有明暗層次：%d 階、跨度 %d（要 %d 階、跨度 %d）'
+                               % (slot, v['steps'], v['span'], lo, SPAN_MIN))
             if med > UNI_MEDIAN_MAX:
                 bad.append('整組都是平的：2x2 同色中位 %.0f%%（上限 %.0f%%）'
                            % (med * 100, UNI_MEDIAN_MAX * 100))
