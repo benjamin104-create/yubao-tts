@@ -305,6 +305,11 @@ else:
                     ok(wc in cols, "%s 有%s（%s）" % (rel, wn, HERO_HEX[list(want).index(wn) * 2]))
                 shade = {hex_to_rgb(HERO_HEX[1]), hex_to_rgb(HERO_HEX[3])} & cols
                 ok(bool(shade), "%s 有明暗（暗面或亮面至少一階）" % rel)
+            elif cat == "tile":
+                # 地磚的色階品質由 check_tile.py 直接量「明度階數與跨度」。
+                # 這裡原本沿用精靈的「至少五色」，會把刻意只有 2~4 色、
+                # 低明度的虛空與鏡廳判壞；增加無意義的顏色反而會製造噪點。
+                ok(len(cols) >= 2, "%s 至少有底色與明暗層次（實際 %d 色）" % (rel, len(cols)))
             else:
                 ok(len(cols) >= 5, "%s 至少五色（實際 %d）" % (rel, len(cols)))
             # ── 幾何：一律**逐格**量 ──────────────────────────────
@@ -338,7 +343,10 @@ else:
             # 下限分類別：怪物與頭目是一團有體積的東西；但**細長的東西不是缺陷**
             #（長槍只佔 7%，那就是一把槍的樣子；針尾蜂 14%，那就是一隻蜂）。
             frac = max(b[3] for b in boxes)
-            lo = 0.06 if cat in ("item", "hat", "weapon", "shield") else 0.12
+            # 散落石片、骨堆等 blocker 可以是刻意疏鬆的障礙物；它的工作
+            # 是在透明格內留下清楚輪廓，不必填到怪物精靈的 12%。
+            lo = 0.05 if is_tile_blocker else \
+                 (0.06 if cat in ("item", "hat", "weapon", "shield") else 0.12)
             if is_scene:
                 ok(frac >= 0.92,
                    "%s 全景覆蓋畫面（%.0f%%，下限 92%%）" % (rel, frac * 100))
@@ -379,9 +387,13 @@ else:
                        "%s 障礙物水平置中（中心 %.1f，畫布中心 %.1f）"
                        % (rel, center, cw / 2.0))
                     gap = ch - y1
-                    ok(gap <= ch * 0.12,
+                    # 障礙物的接觸陰影已包含在 alpha bbox 裡。64px 的立體物
+                    # 為了不在 32px 地磚上顯得塞滿，允許下方最多留四分之一格；
+                    # 超過才視為被整組抬高。舊的 12% 是角色「腳貼地」規則的
+                    # 延伸，會誤判有完整接觸陰影、但刻意置中的石堆與骨堆。
+                    ok(gap <= ch * 0.26,
                        "%s 接觸陰影靠近格底、沒有漂浮（底部留白 %dpx，上限 %.1fpx）"
-                       % (rel, gap, ch * 0.12))
+                       % (rel, gap, ch * 0.26))
             elif cat == "hat":
                 # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、
@@ -477,9 +489,15 @@ else:
             # 把兩者用同一個數字要求，等於逼所有深色的東西都要畫成亮的。
             lum = [0.2126*p[0] + 0.7152*p[1] + 0.0722*p[2] for p in px if p[3] > 0]
             top = max(lum) if lum else 0
-            need = 110 if cat in ("item", "hat", "weapon", "shield") else 140
-            ok(top >= need,
-               "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
+            if cat == "tile":
+                # 地形提示詞明確要求整體維持 40~70 的低明度，亮色只准做
+                # 1~2px 細線；拿角色的「至少亮到 140」來驗，會逼得地板比
+                # 主角更亮。地形是否有光影改由 check_tile.py 的階數與跨度驗。
+                ok(bool(lum), "%s 有可見的地形像素" % rel)
+            else:
+                need = 110 if cat in ("item", "hat", "weapon", "shield") else 140
+                ok(top >= need,
+                   "%s 有被照亮的地方（最亮 %.0f，要 >= %d）" % (rel, top, need))
     ok(n > 0, "web/art/ 裡有檔案（%d 個）" % n)
 
     # 戴上帽子之後，眼睛還看得見嗎。
