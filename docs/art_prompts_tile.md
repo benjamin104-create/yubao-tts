@@ -319,6 +319,15 @@ Palette anchored to: #101c3a #1d3468 #2f57a0 #4a86cf #7cb8ea #5798bd
 
 > 這一章目前主角與地板的亮度差只有 **+5.9**，等於沒有對比。務必壓暗。
 
+> **神像（`blocker0` / `blocker1`）**：這一章的簡介是「往上二十層，塔頂有一道門，
+> 門後不是一個地方，而是一個時間」，而終章是「只有意識，而你即將成為它」。
+> 兩尊神像各說一句話 ——
+> `blocker0` **未完成**：上半身還是粗胚，綁著木鷹架。他們在造神，而且沒造完。
+> `blocker1` **已傾倒**：巨大的頭側躺著、半埋進地板，閉著眼、面容安詳。
+> 他們要去見的神，早就倒了。
+> 兩尊都要跟第一章神殿的有翼守衛（lamassu）明顯不同 —— 那是門口的守衛，
+> 這是神本身。
+
 ---
 
 ### 13. `void` —— 最後的迷宮（第 16 章）、混沌之間（第 17 章）
@@ -389,7 +398,7 @@ on the floor instead of floating. It must not touch the edges of the image.
 | `mirror` | a tall dark mirror panel | a heap of angular shards |
 | `crystal` | a jagged ice pillar | a mound of broken ice blocks |
 | `greathall` | a squared sandstone column stump | a pile of inlaid rubble |
-| `spire` | a glazed brick pillar stump | a heap of fallen glazed brick |
+| `spire` | an unfinished standing deity statue, its upper half still rough-hewn, wooden scaffolding lashed around it | a colossal toppled statue head lying on its side, half sunk into the floor, its face serene and eyes closed |
 | `void` | a floating black monolith | a cluster of dark panels |
 
 生這兩張時 `pixelize.py` **不要**加 `--keep-bg`（要去背），照角色的規矩走。
