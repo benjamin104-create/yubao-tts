@@ -60,16 +60,19 @@ PALETTE_HEX = [
 # 檢查器也必須讀同一份契約，不能拿舊 32 色規格把合格動畫誤判成雜色。
 
 
-# 主角的身體只准用這五個色：描邊、三階陶土、眼白。
+# 主角的身體只准用這十個色：描邊、八階陶土、眼白。
 #
 # 為什麼要另外開一組，而不是併進上面那 32 色：主角有十種顏色可選，
-# 而換顏色是**色階置換**（遊戲裡的 BLOB_RAMP）—— 只有這三階陶土會被換掉。
+# 而換顏色是**色階置換**（遊戲裡的 heroTintMap）—— 只有陶土色會被換掉。
 # 身體上多出來的任何一個顏色都換不到，於是玩家選了苔綠，
 # 身上還是會留幾塊陶土色。多一個色不會報錯，只會讓九種顏色都髒掉。
 #
-# 反過來也要成立：這四個陶土色**不在**通用色盤裡，所以怪物與道具
+# 反過來也要成立：這八個陶土色**不在**通用色盤裡，所以怪物與道具
 # 永遠不會被量化成主角的顏色 —— 整張地牢裡只有主角是這個色調。
-HERO_HEX = ["0d0d12", "a8452c", "d97757", "eaa88c", "f2efe7"]
+HERO_HEX = [
+    "0d0d12", "6b2618", "a8452c", "c95b31", "d97757",
+    "e87a4a", "f5a95e", "eaa88c", "f6c4a2", "f2efe7",
+]
 
 # 逐格動畫圖集額外准用的 12 個色。
 #
@@ -155,11 +158,11 @@ def palette_hex_for(rel):
     # 地磚：tile/<地貌>/<部位>.png。地形有自己的材質色，不跟角色共用。
     if parts[0] == "tile" and len(parts) >= 3:
         return TILE_PALETTES.get(parts[1], TILE_FALLBACK_HEX)
-    # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的五色。
+    # 動畫圖集多包一層 anim/<類別>/；主角身體仍只能使用可換色的十色。
     is_anim = len(parts) > 1 and parts[0] == "anim"
     cat = parts[1] if is_anim else parts[0]
     if cat in PALETTES:
-        return PALETTES[cat]                 # 主角的五色不因為是動作表就放寬
+        return PALETTES[cat]                 # 主角的專用色不因為是動作表就放寬
     # 頭目的**靜態圖也**用擴充色盤：48px 的剪影要放得下紫色魔法、冷白金屬
     # 與青色水晶，32 色的雜魚色盤裝不下。動作表與靜態圖同一組，
     # 不然同一隻頭目在圖鑑與戰鬥裡會是兩種顏色。
@@ -577,8 +580,10 @@ def check_assets(root, size):
             want = size_for(rel, size)
             is_anim = rel.replace("\\", "/").startswith("anim/")
 
-            is_boss_anim = rel.replace("\\", "/").startswith("anim/boss/")
-            anim_size = (480, 144) if is_boss_anim else (320, 96)
+            anim_rel = rel.replace("\\", "/")
+            is_boss_anim = anim_rel.startswith("anim/boss/")
+            is_hero_anim = anim_rel.startswith("anim/hero/")
+            anim_size = (480, 144) if (is_boss_anim or is_hero_anim) else (320, 96)
             if is_anim and (w, h) != anim_size:
                 print("  [動畫尺寸] %s 是 %dx%d，應為 %dx%d（10 欄 x 3 列）"
                       % (rel, w, h, anim_size[0], anim_size[1]))
@@ -594,13 +599,13 @@ def check_assets(root, size):
                     print("  [尺寸] %s 是 %dx%d，應為 %s" % (rel, w, h, expect))
                     problems += 1
 
-            anim_budget = (64 if is_boss_anim else 32) * 1024
+            anim_budget = (64 if (is_boss_anim or is_hero_anim) else 32) * 1024
             if is_anim and os.path.getsize(path) > anim_budget:
                 print("  [動畫容量] %s 是 %.1f KB，單張上限 %d KB"
                       % (rel, os.path.getsize(path) / 1024.0, anim_budget // 1024))
                 problems += 1
 
-            # 色盤也是分類的屬性：主角的身體只准用那五個色，
+            # 色盤也是分類的屬性：主角的身體只准用那十個色，
             # 因為換顏色是色階置換，換不到的顏色會在九種顏色裡留成髒塊。
             palette = {hex_to_rgb(h) for h in palette_hex_for(rel)}
             off = {c[:3] for c in im.getdata() if c[3] > 0} - palette
@@ -669,7 +674,7 @@ def main():
     ap.add_argument("--band", type=float, default=0.0,
                     help="改成靠上對齊，主體最多佔這個比例的高度（帽子用 0.5）")
     ap.add_argument("--palette", choices=sorted(set(PALETTES) | set(TILE_PALETTES)),
-                    help="改用某個分類／地貌的專用色盤（hero：主角身體的五色；"
+                    help="改用某個分類／地貌的專用色盤（hero：主角身體的十色；"
                          "地貌名：那一章的地形材質色）。"
                          "輸出路徑是 art/tile/<地貌>/ 的話會自動判斷，不必給。")
     ap.add_argument("--check", help="檢查資產目錄是否合規")

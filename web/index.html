@@ -3638,7 +3638,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260827-all-terrain-v4';
+const ART_REV = '20260827-character-volume-v5';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3683,12 +3683,15 @@ function artImage(id, url, ok){
 }
 
 /* ─── 可選的逐格動畫圖集 ──────────────────────────────────────
-   正式美術採 10 欄 × 3 列、每格 32px（總尺寸 320×96）。
+   正式美術採 10 欄 × 3 列。一般怪／裝備每格 32px，主角與頭目每格 48px；
+   主角使用 48px 是為了讓球面亮暗、四腳遮擋與眼睛不必先被壓到 32px，
+   再以 1.5 倍不規則放大。遊戲畫面上的主角現在直接 48→48px 顯示。
    沒有圖集時，遊戲仍會使用下方的程式化腳步／揮擊／受擊後仰；所以可以逐隻替換，
    不必等整批資產都完成才上線。單檔版會從 ART_DATA 自動找到圖集；開發版若直接
    開 web/index.html，則把已完成的 id 加進 ART_ANIM_AVAILABLE，避免不存在的圖造成
    一長串 404。完整欄列約定見 docs/art_animation_spec.md。 */
-const ANIM_CELL = 32, ANIM_BOSS_CELL = 48, ANIM_COLS = 10, ANIM_ROWS = 3;
+const ANIM_CELL = 32, ANIM_HERO_CELL = 48, ANIM_BOSS_CELL = 48,
+      ANIM_COLS = 10, ANIM_ROWS = 3;
 const ART_ANIM_AVAILABLE = {
   hero: ['blob'],
   hat: ['helm','beret','rhat','crown','hood','plume','band','oni','cone'],
@@ -3711,7 +3714,9 @@ const ART_ANIM_AVAILABLE = {
 };
 const ANIM_ART = {}, animLoadTried = new Set(), animCellCache = {};
 function animArtKey(cat, id){ return 'anim:' + cat + '#' + id; }
-function animCellSize(cat){ return cat === 'boss' ? ANIM_BOSS_CELL : ANIM_CELL; }
+function animCellSize(cat){
+  return cat === 'hero' ? ANIM_HERO_CELL : (cat === 'boss' ? ANIM_BOSS_CELL : ANIM_CELL);
+}
 function animArtKnown(cat, id){
   const k = animArtKey(cat, id);
   return !!(ART_DATA && ART_DATA[k]) ||
@@ -4100,11 +4105,12 @@ const WEAP_ART = {};      // 武器 id → 32px 圖（握在右手的那一層�
 const SHLD_ART = {};      // 盾 id → 32px 圖（立在左手的那一層）
 const HERO_PX = T * 2;    // 主角合成畫布的邊長：32，跟外部圖同一個尺度
 
-/* 身體只准用這五個色：描邊、三階陶土、眼白。
-   換顏色就是把中間三階換掉 —— 描邊與眼白不在表裡，
+/* 48px 預設身體使用八階陶土色，再加描邊與眼白。
+   換色時把八階收斂到各配色原有的暗／中／亮三階 —— 描邊與眼白不在表裡，
    所以十種顏色的輪廓都還是暗的、眼睛都還是亮的。
    （直接做色相位移的話，眼白與星芒會跟著染色，十種顏色有九種是壞的。） */
-const BLOB_SRC = ['@', '#', '*'];
+const HERO_TONE_HEX = ['6b2618','a8452c','c95b31','d97757',
+                       'e87a4a','f5a95e','eaa88c','f6c4a2'];
 const BLOB_RAMP = {
   '#': ['@','#','*'],                 // 陶土（原色，不用換）
   'l': ['j','k','l'],                 // 苔綠
@@ -4117,6 +4123,16 @@ const BLOB_RAMP = {
   'r': ['p','q','r'],                 // 天青
   'v': ['t','u','v'],                 // 鎏金
 };
+function heroTintMap(ramp){
+  const map={};
+  for(let i=0;i<HERO_TONE_HEX.length;i++){
+    const band=i<3?0:(i<6?1:2), to=PAL[ramp[band]];
+    map[HERO_TONE_HEX[i]]=[parseInt(to.slice(1,3),16),
+                           parseInt(to.slice(3,5),16),
+                           parseInt(to.slice(5,7),16)];
+  }
+  return map;
+}
 const tintCache = {};
 /* 回傳染好色的身體；染不了就回 null，讓呼叫端退回程式畫的版本。
    染不了只有一種情形：file:// 底下外部 PNG 汙染畫布，getImageData 會丟
@@ -4138,13 +4154,7 @@ function tintHero(sk, col){
   let d;
   try { d = x.getImageData(0, 0, c.width, c.height); }
   catch(e){ return tintCache[k] = null; }
-  const map = {};
-  for(let i = 0; i < BLOB_SRC.length; i++){
-    const from = PAL[BLOB_SRC[i]], to = PAL[ramp[i]];
-    map[from.slice(1).toLowerCase()] = [parseInt(to.slice(1,3),16),
-                                        parseInt(to.slice(3,5),16),
-                                        parseInt(to.slice(5,7),16)];
-  }
+  const map = heroTintMap(ramp);
   const p = d.data;
   for(let i = 0; i < p.length; i += 4){
     if(p[i+3] < 8) continue;
@@ -4632,7 +4642,11 @@ function paintEnd(i, x){
 }
 
 const FIELD_ZOOM = 1.12;
-const ACTOR_SCALE = 1.25;
+/* 48px 主角在 RS=2 的正式畫布上以 48px 原寸顯示：16 邏輯 px × 1.5 × 2。
+   舊版 32px 圖被放成 40px，像素列只能不規則地重複成 1、2、1、2，
+   再好的明暗也會被那個節奏切碎。1.5 同時讓人形與怪物更接近一格高，
+   但腳底錨點與碰撞仍只佔原本一格。 */
+const ACTOR_SCALE = 1.5;
 /* 一般頭目寬、高各為主角的 2 倍，因此視覺面積至少 4 倍。
    48px 原圖不代表畫面上的大小；這裡才是正式戰鬥的顯示倍率。
    碰撞與攻擊判定仍只佔腳下那一格，避免巨型剪影破壞回合制走位。 */
@@ -5572,7 +5586,7 @@ const flashCache = {};
 const charLiftCache = {};
 function characterLiftOf(img, name){
   const darkArt = /#(?:ash|tengu|shinobi|knight|shadow|unnamed|b_warden|b_treant|b_pyro|b_hanzo|b_oni|b_gaoler|b_gate|b_artisan|b_hallking)@/.test(name);
-  const key = name + (darkArt ? '@character-depth-dark-v3' : '@character-depth-v3');
+  const key = name + (darkArt ? '@character-depth-dark-v4' : '@character-depth-v4');
   if(charLiftCache[key]) return charLiftCache[key];
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
@@ -5580,6 +5594,9 @@ function characterLiftOf(img, name){
   let d;
   try { d = x.getImageData(0,0,c.width,c.height); }
   catch(e){ return charLiftCache[key] = img; }
+  const original = new Uint8ClampedArray(d.data);
+  const alphaAt = (px,py) => px<0||py<0||px>=c.width||py>=c.height
+    ? 0 : original[(py*c.width+px)*4+3];
   for(let i=0;i<d.data.length;i+=4){
     if(d.data[i+3] < 8) continue;
     const lum=d.data[i]*.2126+d.data[i+1]*.7152+d.data[i+2]*.0722;
@@ -5591,7 +5608,16 @@ function characterLiftOf(img, name){
        最後仍直接寫回原本的整數像素；原圖的輪廓與材質色塊都不會移動。 */
     const p=i>>2, px0=p%c.width, py0=Math.floor(p/c.width);
     const nx=c.width>1?px0/(c.width-1):.5, ny=c.height>1?py0/(c.height-1):.5;
-    const directional=Math.round((1-nx-ny)*(darkArt?7:5));
+    let directional=Math.round((1-nx-ny)*(darkArt?9:7));
+    /* 輪廓內側再做一圈真正的像素斜面。左／上外緣內側加亮，右／下
+       外緣內側壓暗；只看 alpha，不把眼睛或花紋誤當成外輪廓。
+       這補的是「球面／盔甲厚度」，不是全身色相濾鏡。 */
+    let bevel=0;
+    if(alphaAt(px0-2,py0)<16) bevel+=3;
+    if(alphaAt(px0,py0-2)<16) bevel+=3;
+    if(alphaAt(px0+2,py0)<16) bevel-=3;
+    if(alphaAt(px0,py0+2)<16) bevel-=3;
+    directional += bevel;
     const add = (darkArt ? (lum<120?17:lum<205?13:5) : (lum<120?8:lum<205?10:4))
                 + directional;
     const gain = darkArt ? 1.10 : 1.06;
@@ -13021,19 +13047,14 @@ function tintHeroAnimFrame(frame, frameKey, col){
   if(heroAnimTintCache[cacheKey] !== undefined) return heroAnimTintCache[cacheKey];
   const ramp = BLOB_RAMP[col];
   if(!ramp) return heroAnimTintCache[cacheKey] = frame;
-  const c = document.createElement('canvas'); c.width = c.height = ANIM_CELL;
+  const cell = animCellSize('hero');
+  const c = document.createElement('canvas'); c.width = c.height = cell;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   x.drawImage(frame,0,0);
   let d;
   try { d = x.getImageData(0,0,c.width,c.height); }
   catch(e){ return heroAnimTintCache[cacheKey] = frame; }
-  const map = {};
-  for(let i=0;i<BLOB_SRC.length;i++){
-    const from=PAL[BLOB_SRC[i]], to=PAL[ramp[i]];
-    map[from.slice(1).toLowerCase()] = [parseInt(to.slice(1,3),16),
-                                        parseInt(to.slice(3,5),16),
-                                        parseInt(to.slice(5,7),16)];
-  }
+  const map = heroTintMap(ramp);
   for(let i=0;i<d.data.length;i+=4){
     if(d.data[i+3] < 8) continue;
     const k=((d.data[i]<<16|d.data[i+1]<<8|d.data[i+2])+0x1000000).toString(16).slice(1);
@@ -13059,27 +13080,28 @@ function heroAnimNow(o, pose, phaseSeed){
                shldFrame?shldFrame.key:'shield:'+String(shldId),
                weapFrame?weapFrame.key:'weapon:'+String(weapId)].join('|');
   if(heroAnimCache[key]) return {img:heroAnimCache[key], key:'hero-anim@'+key};
-  const c=document.createElement('canvas'); c.width=c.height=ANIM_CELL;
+  const cell=animCellSize('hero');
+  const c=document.createElement('canvas'); c.width=c.height=cell;
   const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
   const legacyFlip = dir.row===0 || (dir.row===1 && dir.flip);
   const legacyLayer = img => {
     x.save();
-    if(legacyFlip){ x.translate(ANIM_CELL,0); x.scale(-1,1); }
-    x.drawImage(img,0,0,ANIM_CELL,ANIM_CELL);
+    if(legacyFlip){ x.translate(cell,0); x.scale(-1,1); }
+    x.drawImage(img,0,0,cell,cell);
     x.restore();
   };
-  x.drawImage(tintHeroAnimFrame(bodyFrame.img,bodyFrame.key,col),0,0);
+  x.drawImage(tintHeroAnimFrame(bodyFrame.img,bodyFrame.key,col),0,0,cell,cell);
   if(hatId){
-    if(hatFrame) x.drawImage(hatFrame.img,0,0);
-    else drawHat(x,hatId,ANIM_CELL);
+    if(hatFrame) x.drawImage(hatFrame.img,0,0,cell,cell);
+    else drawHat(x,hatId,cell);
   }
   if(shldId){
-    if(shldFrame) x.drawImage(shldFrame.img,0,0);
+    if(shldFrame) x.drawImage(shldFrame.img,0,0,cell,cell);
     else if(SHLD_ART[shldId]) legacyLayer(SHLD_ART[shldId]);
     else { const t=document.createElement('canvas'); t.width=t.height=T; drawHeroShield(t.getContext('2d'),si); legacyLayer(t); }
   }
   if(weapId){
-    if(weapFrame) x.drawImage(weapFrame.img,0,0);
+    if(weapFrame) x.drawImage(weapFrame.img,0,0,cell,cell);
     else if(WEAP_ART[weapId]) legacyLayer(WEAP_ART[weapId]);
     else { const t=document.createElement('canvas'); t.width=t.height=T; drawHeroWeapon(t.getContext('2d'),wi); legacyLayer(t); }
   }

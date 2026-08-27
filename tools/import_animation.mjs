@@ -46,7 +46,11 @@ if(map.length!==10 || map.some(n=>!Number.isInteger(n)||n<0||n>=srcCols))
   throw new Error('--map must contain ten valid zero-based source columns');
 
 const PALETTES={
-  hero:['0d0d12','a8452c','d97757','eaa88c','f2efe7'],
+  /* 主角不是一塊橘色剪影：十色保留球面由左上亮面到右下暗面的
+     連續色階，也保留四腳彼此遮擋時需要的深色。舊版只有五色，
+     高解析原稿裡的體積資訊在縮成 32px 時幾乎全部被合併掉了。 */
+  hero:['0d0d12','6b2618','a8452c','c95b31','d97757',
+        'e87a4a','f5a95e','eaa88c','f6c4a2','f2efe7'],
   game:['0d0d12','1a1a24','2b2b38','3d3d4d','565668','757589','c8c8d4','e8edf4','f7f5eb',
         '2a1d14','43301f','5e442c','7d5c3c','9c7850','bb9668','ecd3ae',
         '6b1a1e','9c2b2b','c94a3a','e87a4a','f5a95e','1e5230','2f7d45','4aa85e','79c97a',

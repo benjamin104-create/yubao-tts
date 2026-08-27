@@ -296,14 +296,13 @@ else:
             solid = sum(1 for p in px if p[3] > 0)
             # 只有兩三色的精靈代表降取樣把東西吃掉了 —— 檔案照樣寫得出來
             if cat == "hero":
-                # 主角的色盤只有五個色，其中亮面是一小塊高光，不是每種體型都有。
-                # 拿「至少五色」去要求它，等於要求每一隻都畫出高光 ——
-                # 那是把通用門檻套到一個色數本來就少的分類上。
-                # 換成問真正要成立的三件事：外框在、主色在、至少有一階陰影。
-                want = {"外框": hex_to_rgb(HERO_HEX[0]), "主色": hex_to_rgb(HERO_HEX[2])}
+                # 48px 預設主角保留八階陶土；舊的 32px fallback 可以只用其中
+                # 三階，所以驗「必要色＋至少一階明暗」，不強迫 fallback 灌滿十色。
+                want = {"外框": hex_to_rgb(HERO_HEX[0]),
+                        "主色": hex_to_rgb("d97757")}
                 for wn, wc in want.items():
-                    ok(wc in cols, "%s 有%s（%s）" % (rel, wn, HERO_HEX[list(want).index(wn) * 2]))
-                shade = {hex_to_rgb(HERO_HEX[1]), hex_to_rgb(HERO_HEX[3])} & cols
+                    ok(wc in cols, "%s 有%s" % (rel, wn))
+                shade = {hex_to_rgb(h) for h in HERO_HEX[1:-1] if h != "d97757"} & cols
                 ok(bool(shade), "%s 有明暗（暗面或亮面至少一階）" % rel)
             elif cat == "tile":
                 # 地磚的色階品質由 check_tile.py 直接量「明度階數與跨度」。
@@ -318,7 +317,7 @@ else:
             # 拿整張圖集的 bbox 去比，等於問「這三十格裡有沒有任何一格
             # 碰到最下面」—— 三十格裡有一格對就過，那條斷言等於沒有。
             # 逐格量之後同一條門檻反而變嚴，而且才問得出真正的問題。
-            CELL_OF = {"boss": 48}
+            CELL_OF = {"boss": 48, "hero": 48}
             # 非圖集就是**整張一格**，而且格子要用整張的長寬 ——
             # 只拿寬度當邊長的話，寬扁的海報會算出 height//c == 0，
             # 一格都切不出來，然後報「這張圖是空的」。
@@ -459,16 +458,16 @@ else:
                 # 頭頂高了帽子會陷進頭裡，低了帽子會浮在半空。
                 # 這是六張圖之間唯一**必須**對齊的一件事。
                 #
-                # 動畫圖集放寬到 4~12：實測 anim/hero/blob 的三十格是 7~11
+                # 48px 動畫圖集放寬到 6~18：實測新版三十格是 15~17
                 #（走路與受擊本來就會讓身體上下浮一兩格，那是動畫該有的）。
                 # 用單張的 4~9 去卡，等於要求走路時頭不准動。
                 # 「戴上去會不會對齊」那一條由下面**疊起來實際量**的檢查負責，
                 # 那才是真正要成立的事；這裡只擋「整組畫得太高或太低」。
-                hi = 12 if is_sheet else 9
+                lo_top, hi = ((6, 18) if is_sheet else (4, 9))
                 tops = [b[2][1] for b in boxes]
-                ok(4 <= min(tops) and max(tops) <= hi,
-                   "%s 頭頂落在帽子接得上的高度（第 %d~%d 列，要 4~%d）"
-                   % (rel, min(tops), max(tops), hi))
+                ok(lo_top <= min(tops) and max(tops) <= hi,
+                   "%s 頭頂落在帽子接得上的高度（第 %d~%d 列，要 %d~%d）"
+                   % (rel, min(tops), max(tops), lo_top, hi))
 
             # 每張精靈都要有一個真正被照亮的地方。
             #
