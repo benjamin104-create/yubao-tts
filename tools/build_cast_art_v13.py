@@ -243,6 +243,15 @@ def build_gold(out_root: Path) -> None:
 
     coin(9, 24)
     coin(21, 23)
+    # Pickups are rendered as objects resting on the dungeon floor.  Ground
+    # the finished cluster instead of leaving decorative transparent padding
+    # below it; otherwise the icon reads as hovering when scaled on mobile.
+    bb = im.getchannel("A").getbbox()
+    if bb:
+        cut = im.crop(bb)
+        grounded = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+        grounded.alpha_composite(cut, ((32 - cut.width) // 2, 32 - cut.height))
+        im = grounded
     target = out_root / "item"
     target.mkdir(parents=True, exist_ok=True)
     im.save(target / "gold00.png", optimize=True)
@@ -278,7 +287,9 @@ def build_mind_echo(out_root: Path) -> None:
         cut2 = im.crop(bb).resize((max(1, width), max(1, height)), Image.Resampling.NEAREST)
         stage = Image.new("RGBA", (48, 48), (0, 0, 0, 0))
         x = (48 - cut2.width) // 2 + dx
-        y = 47 - cut2.height + dy
+        # PIL's bounding-box bottom is exclusive, so 48-height (not
+        # 47-height) places the final opaque row at pixel 47.
+        y = 48 - cut2.height + dy
         stage.alpha_composite(cut2, (x, y))
         return stage
 
@@ -287,13 +298,13 @@ def build_mind_echo(out_root: Path) -> None:
     frames = []
     for col in range(10):
         if col == 0: frame = anchored_resize(base, bw, bh)
-        elif col == 1: frame = anchored_resize(base, bw, bh, dy=-1)          # breath
+        elif col == 1: frame = anchored_resize(base, bw, bh)                 # grounded breath
         elif col == 2: frame = anchored_resize(base, bw, bh, dx=-1)          # ripple left
         elif col == 3: frame = anchored_resize(base, bw + 1, bh - 2)         # compress
         elif col == 4: frame = anchored_resize(base, bw, bh, dx=1)           # ripple right
         elif col == 5: frame = anchored_resize(base, bw - 1, bh - 1)
         elif col == 6: frame = anchored_resize(base, bw + 2, bh - 4)         # gather copies
-        elif col == 7: frame = anchored_resize(base, min(46, bw + 5), min(47, bh + 3), dy=-1)  # echo burst
+        elif col == 7: frame = anchored_resize(base, min(46, bw + 5), min(47, bh + 3))  # echo burst
         elif col == 8: frame = anchored_resize(base, bw + 2, bh, dx=2)       # recoil
         else:
             # Hurt frame: upper body recoils while the lowest eight rows keep
