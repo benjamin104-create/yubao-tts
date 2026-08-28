@@ -57,7 +57,7 @@ for(const lang of ['en', 'ja']){
     if(a.intro)           check(lang, 'acti.' + a.id, T.TX('acti.' + a.id, a.intro), a.intro);
     if(a.reward)          check(lang, 'actr.' + a.id, T.TX('actr.' + a.id, a.reward), a.reward);
   }
-  for(const st of ['毒','睡','亂','麻','盲','速','燒','怒','守','界','影','雷','鏡'])
+  for(const st of ['毒','睡','亂','麻','夾','咬','盲','速','燒','怒','守','界','影','雷','鏡'])
                           check(lang, 'st.'   + st, T.TX('st.' + st, st), st);
   // 未鑑定道具的外觀名（「赤紅的草」「螺旋的杖」）
   for(const k in T.LOOK)

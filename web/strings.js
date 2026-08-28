@@ -19,7 +19,7 @@ const fs = require('fs');
 
 const HAN = /[㐀-鿿]/;
 const src = fs.readFileSync(__dirname + '/index.html', 'utf8');
-const m = src.match(/<script>\n"use strict";([\s\S]*)<\/script>/);
+const m = src.match(/<script>\r?\n"use strict";([\s\S]*)<\/script>/);
 if(!m){ console.error('index.html 裡找不到遊戲腳本'); process.exit(2); }
 
 /* 字典本身整段拿掉。它就是中文與譯文並排的地方，掃它只會得到一堆假警報。 */

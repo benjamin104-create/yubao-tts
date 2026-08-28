@@ -87,6 +87,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'evOK, makeEvent, rubbleAt, digMason, stoneStep, evStep, giveCirclet,' +
   'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS, REGEN_TURNS, needExp,' +
   'THEMES, PAL,' +
+  'crispCssWidth, crispPortraitGrid, FIELD_ZOOM,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +

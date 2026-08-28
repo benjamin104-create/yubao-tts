@@ -35,6 +35,9 @@ jobs:
           node web/connect.js
           node web/items.js
           node web/damage.js
+          # 手機像素輸出：1x／2x／3x 螢幕都必須落在整數裝置像素，
+          # 也禁止常態鏡頭恢復成會二次取樣的 1.12 倍。
+          node web/render.js
           node web/i18n.js
           # 靜態掃：有沒有中文直接送到玩家眼前而沒有經過 TX()。
           # 前面每一支多語言檢查都是「跑起來才掃得到」，

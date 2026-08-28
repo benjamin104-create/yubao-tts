@@ -2537,6 +2537,12 @@ m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
 m.ptrap|A poison-needle trap! The needle is coated — you take {n} damage.|どくばりの わな！ はりに どくが ぬられている —— {n} の ダメージ。
+m.trap.bear|A round jaw trap snaps shut! You take {n} damage and are pinned for one turn.|まるいトラバサミが とじた！ {n} ダメージ、1ターン うごけない。
+m.trap.poison|The green mine vents toxic fog! You take {n} damage and are poisoned.|みどりの どくスイッチから どくぎり！ {n} ダメージ、どくになった。
+m.trap.arrow|The white mechanism clicks — an arrow flies in from the left! You take {n} damage.|しろい しかけが うごいた —— ひだりから やが とんできた！ {n} ダメージ。
+m.trap.plant|The man-eating plant clamps down! You take {n} damage and will be held for {t} turns.|ひとくいそうが かみついた！ {n} ダメージ、{t}ターン うごけない。
+m.trap.acid|The purple switch sprays strong acid! You take {n} damage; your shield's defence is permanently reduced by 1.|むらさきの スイッチから きょうさん！ {n} ダメージ、たての ぼうぎょが ずっと 1 さがった。
+m.trap.acidbare|The purple switch sprays strong acid! With no shield to catch it, you take {n} damage.|むらさきの スイッチから きょうさん！ たてがなく、{n} ダメージ。
 m.poison|The poison spreads — you take {n} damage.|どくが まわる —— {n} の ダメージ。
 m.wall|There is a wall ahead.|まえは かべだ。
 m.pit|A deep collapse blocks the way.|ふかい くずれあとが みちを ふさいでいる。
@@ -3448,6 +3454,8 @@ st.歌|Anthem|せんいのうた
 st.影|Clones|かげぶんしん
 st.睡|Asleep|すいみん
 st.麻|Paralysed|まひ
+st.夾|Snared|はさまれ
+st.咬|Bitten|かみつき
 st.亂|Confused|こんらん
 st.盲|Blind|しつめい
 st.毒|Poison|どく
@@ -3638,7 +3646,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260827-character-volume-v5';
+const ART_REV = '20260828-traps-scroll-pixel-pipeline-v1';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -4641,7 +4649,10 @@ function paintEnd(i, x){
   }
 }
 
-const FIELD_ZOOM = 1.12;
+/* 常態鏡頭不再做 1.12 倍的二次取樣。靠手機選擇較少的可見欄數來拉近，
+   讓 32px 美術仍是一個來源像素對一個畫布像素；只有升級／頭目登場的
+   短演出允許暫時縮放。 */
+const FIELD_ZOOM = 1;
 /* 48px 主角在 RS=2 的正式畫布上以 48px 原寸顯示：16 邏輯 px × 1.5 × 2。
    舊版 32px 圖被放成 40px，像素列只能不規則地重複成 1、2、1、2，
    再好的明暗也會被那個節奏切碎。1.5 同時讓人形與怪物更接近一格高，
@@ -5538,14 +5549,31 @@ const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   coin(3,9); coin(8,8); coin(6,4);
   px(x,PAL['v'],12,3,2,1); px(x,PAL['v'],13,2,1,3); px(x,PAL['+'],13,3,1,1);
   return c; })();
-/* 陷阱是「嵌進地板的機關」，不是一個放在地上的紅色盒子。
-   普通陷阱用內縮壓板＋四向尖齒；毒針陷阱用圓形針孔座。
-   外圈沿用章節色帶，金屬與危險色才跨章節固定，既融入環境又能辨識。 */
+/* 五種陷阱。數字 1、2 要保留舊存檔的語意：1 仍是直接傷害型、2 仍是中毒型。
+   新的 32px 外部圖會優先使用；載入前仍有完整的 16px 程式圖，不會閃成空白。 */
+const TRAP_IDS = ['bear','poison','arrow','plant','acid'];
+const TRAP_ART = {};
 const TRAP_SETS = {};
 function makeTrap(kind, ramp){
   const R = ramp || RAMP;
   const c=document.createElement('canvas'); c.width=T;c.height=T; const x=c.getContext('2d');
-  if(kind === 2){
+  if(kind === 5){
+    // 強酸開關：紫色儲液槽、四個噴口。
+    px(x,PAL['0'],3,5,10,8); px(x,PAL[R[1]],4,6,8,6); px(x,PAL['p'],5,7,6,4);
+    px(x,PAL['v'],6,7,3,2); px(x,PAL['0'],3,4,2,3); px(x,PAL['0'],11,4,2,3);
+    px(x,PAL['v'],4,3,1,3); px(x,PAL['v'],11,3,1,3);
+  } else if(kind === 4){
+    // 食人草：左右兩片帶牙葉，中間留出踩踏口。
+    px(x,PAL['0'],1,4,5,10); px(x,PAL['k'],2,5,4,8); px(x,PAL['m'],3,5,3,4);
+    px(x,PAL['0'],10,4,5,10); px(x,PAL['k'],10,5,4,8); px(x,PAL['m'],10,5,3,4);
+    px(x,PAL['+'],5,6,2,2); px(x,PAL['+'],9,6,2,2); px(x,PAL['+'],5,10,2,2); px(x,PAL['+'],9,10,2,2);
+    px(x,PAL['0'],6,7,4,6); px(x,PAL['f'],7,8,2,4);
+  } else if(kind === 3){
+    // 白色箭機關：象牙壓板與朝左的發射刻槽。
+    px(x,PAL['0'],2,4,12,10); px(x,PAL['6'],3,4,10,9); px(x,PAL['+'],3,4,9,2);
+    px(x,PAL['d'],4,6,8,5); px(x,PAL['0'],4,7,3,2); px(x,PAL['0'],9,7,3,2);
+    px(x,PAL['b'],6,10,4,2);
+  } else if(kind === 2){
     // 毒針座：大黑孔、厚金屬環、四根綠紫毒針。中央不再像白紅花朵。
     px(x,PAL['0'],3,5,10,7); px(x,PAL['0'],5,3,6,11);
     px(x,PAL[R[2]],4,5,8,7); px(x,PAL[R[3]],5,4,5,2); px(x,PAL[R[0]],10,6,2,5);
@@ -5555,23 +5583,24 @@ function makeTrap(kind, ramp){
     px(x,PAL['j'],8,4,1,3); px(x,PAL['j'],10,8,3,1);
     px(x,PAL['5'],8,8,2,2); px(x,PAL['6'],8,8,1,1);
   } else {
-    // 普通陷阱改成已張開的尖刺坑：整塊黑洞與石框先被讀到，尖刺才是細節。
-    px(x,PAL['0'],2,4,12,10); px(x,PAL[R[1]],3,4,10,2); px(x,PAL[R[2]],3,4,8,1);
-    px(x,PAL[R[0]],2,6,2,7); px(x,PAL[R[0]],12,6,2,7); px(x,PAL[R[0]],3,12,10,2);
-    px(x,'#050609',4,6,8,6);
-    // 四枚寬底三角刺，亮面朝左上、根部沉在洞裡。
-    px(x,PAL['6'],5,7,2,4); px(x,PAL['+'],5,7,1,2);
-    px(x,PAL['6'],9,6,2,5); px(x,PAL['+'],9,6,1,2);
-    px(x,PAL['6'],7,9,2,3); px(x,PAL['4'],8,10,1,2);
-    px(x,PAL['e'],4,11,8,1); px(x,PAL['g'],7,10,2,1);
+    // 圓形捕獸器：中央踏板、左右弧形鉗齒，輪廓不能再讀成方形尖刺坑。
+    px(x,PAL['0'],2,5,12,8); px(x,PAL['4'],3,6,10,6); px(x,PAL['6'],4,5,8,2);
+    px(x,PAL['0'],4,4,2,4); px(x,PAL['+'],4,4,1,2); px(x,PAL['0'],7,3,2,4);
+    px(x,PAL['0'],10,4,2,4); px(x,PAL['0'],4,10,2,4); px(x,PAL['0'],7,11,2,4); px(x,PAL['0'],10,10,2,4);
+    px(x,PAL['b'],6,7,4,4); px(x,PAL['d'],6,7,3,2); px(x,PAL['0'],7,9,2,2);
   }
   return c;
 }
 function trapsFor(theme){
   if(TRAP_SETS[theme]) return TRAP_SETS[theme];
   const R = (THEMES[theme] || THEMES.stone).ramp;
-  return TRAP_SETS[theme] = [makeTrap(1,R), makeTrap(2,R)];
+  return TRAP_SETS[theme] = TRAP_IDS.map((id,i)=>TRAP_ART[id] || makeTrap(i+1,R));
 }
+for(const id of TRAP_IDS)
+  artImage('trap#'+id, ART_DIR+'trap/'+id+'.png', c=>{
+    TRAP_ART[id]=c;
+    for(const k in TRAP_SETS) delete TRAP_SETS[k];
+  });
 
 /* ═══ 動態美術層 ═════════════════════════════════════════════
    一款遊戲看起來「像半成品」跟像素畫得好不好幾乎無關 ——
@@ -7867,7 +7896,7 @@ const RUN_VER = 2;
 // 舊存檔就會帶著舊數值復活。
 const packItem = it => it && ({
   cat:it.cat, id:it.id, up:it.up|0, uses:it.uses|0, cap:it.cap|0,
-  known:!!it.known, cursed:!!it.cursed,
+  known:!!it.known, cursed:!!it.cursed, acid:it.acid|0,
   contents:(it.contents||[]).map(packItem).filter(Boolean),
 });
 function unpackItem(q){
@@ -7875,7 +7904,8 @@ function unpackItem(q){
   // 一個 {"cat":"xxx"} 會讓 mk() 直接爆掉，而爆掉的地方是「讀檔」，
   // 也就是玩家最不能接受壞掉的那一步。
   if(!q || !q.id || !ALL_DEF()[q.cat]) return null;
-  const it = mk(q.cat, q.id, {up:q.up|0, uses:q.uses|0, known:!!q.known, cursed:!!q.cursed});
+  const it = mk(q.cat, q.id, {up:q.up|0, uses:q.uses|0, known:!!q.known,
+                              cursed:!!q.cursed, acid:q.acid|0});
   if(q.cap) it.cap = q.cap;
   it.contents = (q.contents||[]).map(unpackItem).filter(Boolean);
   return it;
@@ -8095,7 +8125,7 @@ function newGame(seed){
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
-    log:[], anim:[], shake:0, floats:[], parts:[], rings:[], corpses:[], tookDamage:0,
+    log:[], anim:[], shake:0, floats:[], parts:[], rings:[], trapFx:[], corpses:[], tookDamage:0,
     zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
   };
   // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
@@ -8516,11 +8546,16 @@ function buildFloor(){
   }
   for(let i=0;i<rng.i(3,6)+Math.floor(G.md/8);i++){ const p=free(0); if(p) G.items[key(p.x,p.y)]=rollItem(rng,G.md); }
   for(let i=0;i<rng.i(2,4);i++){ const p=free(0); if(p) G.gold[key(p.x,p.y)] = rng.i(30,90)*(1+Math.floor(G.md/2)); }
-  /* 兩種陷阱，毒針佔四成。深度越深毒針越多 —— 前幾層的玩家還沒有解毒草，
-     一開場就被毒到見底不是難度，是趕人走。 */
+  /* 五種陷阱依深度逐步加入。前兩層以捕獸器、毒霧與箭機關教規則；
+     食人草從中段才出現，永久酸蝕盾牌的紫色機關則留到更深處。 */
   for(let i=0;i<rng.i(1,2)+Math.floor(G.md/5);i++){
     const p=free(0);
-    if(p) G.traps[key(p.x,p.y)] = rng.chance(Math.min(.45, .15 + G.md*0.03)) ? 2 : 1;
+    if(p){
+      const pool=[{k:1,w:34},{k:2,w:26},{k:3,w:26},
+                  {k:4,w:G.md>=3?18:0},{k:5,w:G.md>=7?12:0}];
+      const q=rng.weight(pool,v=>v.w);
+      G.traps[key(p.x,p.y)] = q ? q.k : 1;
+    }
   }
   spawnNpc(rng, free);
   /* 休息層：長章節每 N 層一個。沒有休息層的三十層一口氣打完，
@@ -9157,7 +9192,7 @@ function pAtk(){ const p=G.p; let a=STR(p);
   if(p.st['熔']) a = Math.round(a * 1.5);                    // 熔心
   return Math.max(1,a); }
 function pDef(){ const p=G.p;
-  let d = p.shld ? Math.max(0, p.shld.d.def + p.shld.up*2) : 0;
+  let d = p.shld ? Math.max(0, p.shld.d.def + p.shld.up*2 - (p.shld.acid|0)) : 0;
   if(hasMaster('war')) d += 3;                               // 戰士 Master
   d += VILLAGE.defBonus | 0;                                 // 勇者的頭盔
   return d; }
@@ -9255,7 +9290,10 @@ function tryMove(dx,dy){
      這裡是所有入口的匯流點，守這裡才守得完。 */
   if(talkOpen()) return;
   const p=G.p;
-  if(p.st['睡']||p.st['麻']){ say(TX('s.002','身體動不了……'),'bad'); endTurn(); return; }
+  if(p.st['睡']||p.st['麻']||p.st['夾']||p.st['咬']){
+    const why=p.st['咬']?'食人草仍咬著你！':p.st['夾']?'捕獸器仍夾著腳！':'身體動不了……';
+    say(TX('s.002',why),'bad'); endTurn(); return;
+  }
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
   const nx=p.x+dx, ny=p.y+dy;
   p.face = [dx,dy];
@@ -9402,25 +9440,50 @@ function stepOn(){
   evStep();                         // 石板／石碑：走過去就是踩上去
   if(G.gold[k]!==undefined){ SFX.play('coin'); p.gold += G.gold[k]; say(M('m.gold','撿到了 {n} G。',{n:G.gold[k]}),'gold'); delete G.gold[k]; }
   if(G.traps[k]){
-    /* 兩種陷阱。舊的存檔裡值是 1，所以 1 一定要是原本那種傷害陷阱 ——
-       換個意思的話，讀舊檔的人會在同一格踩到不一樣的東西。 */
+    /* 1、2 保留舊存檔的傷害／中毒語意；3～5 是箭、食人草與強酸。 */
     const kind = G.traps[k]; delete G.traps[k]; SFX.play('trap');
     p.flash = 0.12; G.shake = 6;
     startHurtPose(p, p.x, p.y-1, .18);
-    if(kind === 2){
-      // 毒針：傷害很小，但中毒。痛的是接下來那二十回合，不是這一下
-      const base = Math.max(1, Math.floor(p.mhp/20));
-      const d = hasMaster('nin') ? Math.max(1, Math.ceil(base/2)) : base;
-      hurtPlayer(d);
-      burst(p.x, p.y, 10, '#4aa85e', 40, 10);
-      float(p.x,p.y,'-'+d,'#4aa85e');
-      if(poison(20)) say(M('m.ptrap','毒針陷阱！針上有毒，受到 {n} 點傷害。',{n:d}),'bad');
+    const trapDmg=div=>{
+      const base=Math.max(1,Math.floor(p.mhp/div));
+      return hasMaster('nin')?Math.max(1,Math.ceil(base/2)):base;
+    };
+    const showHit=(d,col)=>{
+      hurtPlayer(d); float(p.x,p.y,'-'+d,col); G.hurtFx=Math.max(G.hurtFx||0,.42);
+    };
+    const fx=(name,dur,extra)=>{
+      (G.trapFx=G.trapFx||[]).push(Object.assign({kind:name,x:p.x,y:p.y,t:0,dur:dur||.6},extra||{}));
+    };
+    if(kind===2){
+      const d=trapDmg(22); showHit(d,'#58b85f');
+      fx('poison',.82); burst(p.x,p.y,26,'#58b85f',34,34,.82); ring(p.x,p.y,'#82d85f',T*1.2,.42);
+      const poisoned=poison(20);
+      say(poisoned
+        ? M('m.trap.poison','綠色毒地雷噴出毒霧！受到 {n} 點傷害並中毒。',{n:d})
+        : M('m.trap','毒霧被結界擋下，但仍受到 {n} 點傷害。',{n:d}),'bad');
+    } else if(kind===3){
+      const d=trapDmg(7); showHit(d,'#d9d4c6');
+      startHurtPose(p,p.x-4,p.y,.24); fx('arrow',.42); SFX.play('throw');
+      burst(p.x,p.y,12,'#e8dcc0',54,5,.42);
+      say(M('m.trap.arrow','白色機關喀噠一聲——箭從畫面左側射來！受到 {n} 點傷害。',{n:d}),'bad');
+    } else if(kind===4){
+      const d=trapDmg(14); showHit(d,'#80a84e');
+      const turns=G.rng.i(4,6); p.st['咬']=Math.max(p.st['咬']||0,turns);
+      fx('plant',.68); burst(p.x,p.y,18,'#80a84e',38,13,.65);
+      say(M('m.trap.plant','綠色食人草猛然合起！受到 {n} 點傷害，將被咬住 {t} 回合。',{n:d,t:turns-1}),'bad');
+    } else if(kind===5){
+      const d=trapDmg(18); showHit(d,'#b65ad1');
+      fx('acid',.78); burst(p.x,p.y,28,'#b65ad1',42,38,.78); ring(p.x,p.y,'#d57bea',T*1.25,.46);
+      if(p.shld){
+        const maxCorrode=Math.max(1,p.shld.d.def+p.shld.up*2);
+        p.shld.acid=Math.min(maxCorrode,(p.shld.acid|0)+1);
+        say(M('m.trap.acid','紫色開關噴出強酸！受到 {n} 點傷害，盾牌防禦長效降低 1 點。',{n:d}),'bad');
+      }else say(M('m.trap.acidbare','紫色開關噴出強酸！沒有盾牌阻擋，受到 {n} 點傷害。',{n:d}),'bad');
     } else {
-      const base = Math.max(1, Math.floor(p.mhp/8));
-      const d = hasMaster('nin') ? Math.max(1, Math.ceil(base/2)) : base;
-      hurtPlayer(d);
-      burst(p.x, p.y, 10, '#c94a3a', 40, 10);
-      say(M('m.trap','踩到了陷阱！受到 {n} 點傷害。',{n:d}),'bad'); float(p.x,p.y,'-'+d,'#a83c32');
+      const d=trapDmg(8); showHit(d,'#c9c4b8');
+      p.st['夾']=Math.max(p.st['夾']||0,2); fx('bear',.56);
+      burst(p.x,p.y,14,'#c9c4b8',36,8,.48);
+      say(M('m.trap.bear','圓型捕獸器猛然合起！受到 {n} 點傷害，腳被夾住 1 回合。',{n:d}),'bad');
     }
   }
   if(G.shop && roomOf(p.x,p.y) === G.shop.room && !G.shopSeen){
@@ -9561,7 +9624,7 @@ function bossDown(m){
   if(act.id === 'final' && G.floor >= act.floors){
     G.f.gate = 1;
     const st = G.f.stairs;
-    if(!REDUCED){ G.zoom = 1.5; G.zoomTo = 1.15; }
+    if(!REDUCED){ G.zoom = 1.5; G.zoomTo = FIELD_ZOOM; }
     G.shake = Math.max(G.shake, 18);
     SFX.play('level');
     wave(st.x, st.y, '#7cb8ea', 1.1);
@@ -10608,6 +10671,7 @@ function nameOf(it){
   if(it.cat==='pot') n += potGauge(it);
   if((it.cat==='weap'||it.cat==='shld') && it.known){
     if(it.up) n += ` ${it.up>0?'+':''}${it.up}`;
+    if(it.cat==='shld' && (it.acid|0)>0) n += `【酸蝕 −${it.acid|0}】`;
     if(it.cursed) n += TX('ui.cursed','【詛咒】');
   }
   return n;
@@ -13182,6 +13246,49 @@ function castFx(dx, dy, col){
   ring(p.x, p.y, col, T*1.7, .36);
 }
 
+/* 陷阱的短演出。圖示負責「踩之前看懂是什麼」，這層負責「踩下去真的發生了」。
+   全部以硬邊矩形與整張像素圖繪製，不用漸層、濾鏡或半像素。 */
+function drawTrapFx(f, ox, oy){
+  const q=Math.max(0,Math.min(1,f.t/f.dur));
+  const bx=Math.round(ox+f.x*T), by=Math.round(oy+f.y*T);
+  cx.save(); cx.imageSmoothingEnabled=false;
+  if(f.kind==='arrow'){
+    const ease=1-Math.pow(1-q,3), tx=bx+T/2;
+    const ax=Math.round(-22+(tx+22)*ease), ay=by+7;
+    cx.fillStyle='#241b14'; cx.fillRect(ax-12,ay,13,2);
+    cx.fillStyle='#d7c6a5'; cx.fillRect(ax-13,ay,2,1);
+    cx.fillStyle='#f1eadb'; cx.fillRect(ax,ay-2,4,5);
+    cx.fillStyle='#716a61'; cx.fillRect(ax+1,ay-1,2,3);
+    cx.fillStyle='#a83c32'; cx.fillRect(ax-11,ay-2,3,1); cx.fillRect(ax-11,ay+2,3,1);
+  }else if(f.kind==='bear' || f.kind==='plant'){
+    const id=f.kind==='bear'?'bear':'plant', img=TRAP_ART[id];
+    const close=Math.min(1,q/.34), gap=Math.round((1-close)*3);
+    if(img){
+      cx.drawImage(img,0,0,img.width/2,img.height,bx-gap,by,8,16);
+      cx.drawImage(img,img.width/2,0,img.width/2,img.height,bx+8+gap,by,8,16);
+    }
+    if(f.kind==='plant' && q>.18){
+      cx.fillStyle='#3b0b0b'; cx.fillRect(bx+6,by+6,4,6);
+      cx.fillStyle='#f0e1bc'; cx.fillRect(bx+6,by+6,1,2); cx.fillRect(bx+9,by+9,1,2);
+    }
+  }else{
+    const id=f.kind==='acid'?'acid':'poison', img=TRAP_ART[id];
+    if(img) cx.drawImage(img,bx,by,T,T);
+    const col=f.kind==='acid'?'#c568de':'#65bd58';
+    const hi=f.kind==='acid'?'#edb3f5':'#b7e38a';
+    for(let i=0;i<8;i++){
+      const ph=(i*0.173+q*.92)%1;
+      const spread=(i%4-1.5)*(2+ph*3);
+      const px0=Math.round(bx+8+spread), py0=Math.round(by+8-ph*13);
+      cx.globalAlpha=Math.max(0,1-ph);
+      cx.fillStyle=i%3?col:hi;
+      cx.fillRect(px0,py0,i%4===0?3:2,i%3===0?3:2);
+      if(f.kind==='acid' && i<4) cx.fillRect(px0,py0+3,1,4);
+    }
+  }
+  cx.restore();
+}
+
 /* 空氣中的浮塵：跟著鏡頭在世界座標裡飄，不是貼在螢幕上。
    貼在螢幕上的粒子會在鏡頭移動時「跟著走」，一眼就穿幫。 */
 const MOTES = [];
@@ -14237,7 +14344,7 @@ function draw(dt){
   for(const k in G.gold){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2) blit(goldIcon, ox+x*T, oy+y*T); }
   for(const k in G.traps){ const x=k%MW, y=(k/MW)|0;
-    if(G.seen[k]===2) blit(TRAPS[Math.max(0,Math.min(1,(G.traps[k]|0)-1))], ox+x*T, oy+y*T); }
+    if(G.seen[k]===2) blit(TRAPS[Math.max(0,Math.min(4,(G.traps[k]|0)-1))], ox+x*T, oy+y*T); }
   for(const k in G.items){ const x=k%MW, y=(k/MW)|0;
     if(G.seen[k]===2){ const b=bobItem(x,y); plate(x,y,'rgba(220,174,53,.30)'); blit(iconOf(G.items[k]), ox+x*T, oy+y*T+b); } }
 
@@ -14622,6 +14729,9 @@ function draw(dt){
     drawEnt(G.p, plit, pname+'@lit', 0, ACTOR_SCALE, false, !!panim);
   }
 
+  // 咬合／夾擊要壓在主角前面；毒霧與酸液也因此真的包住角色，不像地板貼花。
+  for(const f of (G.trapFx||[])) drawTrapFx(f,ox,oy);
+
   // 施法光環：畫在粒子之前，讓火星疊在光圈上面
   for(const r of (G.rings || [])){
     const k = Math.max(0, r.t / r.life);
@@ -14980,6 +15090,19 @@ function paintMap(mcx, mini, MMS){
    改成先算「還剩多少高度」，再回推畫面允許的最大寬度。
    限制放在 #screenwrap 而不是 canvas 上，這樣手把、暈影、面板
    全都跟著同一個框走，不會有東西留在框外。 */
+function crispCssWidth(cols, limit){
+  const dpr=Math.max(1,window.devicePixelRatio||1), base=cols*T*RS;
+  const mult=Math.floor(limit*dpr/base+1e-6);
+  return mult>=1 ? Math.floor(base*mult/dpr*1000)/1000 : Math.floor(limit);
+}
+function crispPortraitGrid(limit){
+  let best={cols:11,width:0};
+  for(let cols=9;cols<=11;cols++){
+    const width=crispCssWidth(cols,limit);
+    if(width<=limit+.01 && width>best.width) best={cols,width};
+  }
+  return best;
+}
 function fitCanvas(){
   const wrap = $('screenwrap');
   if(!wrap || !wrap.getBoundingClientRect) return;
@@ -14992,7 +15115,7 @@ function fitCanvas(){
        算法：機殼扣掉畫布本身，剩下的就是「畫布以外的東西」有多高；
        視窗高度減掉它們，剩下多少就決定畫布能有多寬。
        不用 getBoundingClientRect().top —— 溢出的時候它是負的，算出來會錯。 */
-    wrap.style.maxWidth = ''; wrap.style.margin = '0 auto';
+    wrap.style.width=''; wrap.style.maxWidth = ''; wrap.style.margin = '0 auto';
     const cab = $('cabinet'), main = $('main'), shake = wrap.parentElement;
     if(cab && main && wrap.offsetHeight){
       const bs = getComputedStyle(document.body);
@@ -15029,8 +15152,11 @@ function fitCanvas(){
   const tick = $('ticker').offsetHeight || 0;
   const maxW = Math.floor((innerHeight - top - padH - tick) * VW / VH);
   wrap.style.margin = '0 auto';
-  wrap.style.maxWidth = (maxW > 240 && maxW < innerWidth) ? maxW + 'px' : '';
-  fitPad(wrap.clientWidth || innerWidth, padH);
+  const parentW=(wrap.parentElement&&wrap.parentElement.clientWidth)||innerWidth;
+  const limit=Math.max(1,Math.min(parentW,(maxW>240?maxW:parentW)));
+  const exact=crispCssWidth(VW,limit);
+  wrap.style.width=exact+'px'; wrap.style.maxWidth=exact+'px';
+  fitPad(exact,padH);
 }
 /* 手把佔的橫向寬度：左緣 12 ＋ 十字（3k+8）＋ 中間留白 10 ＋ AB（2.85k+12）＋ 右緣 14。
    解出 k 就是「這個寬度塞得下的最大按鍵」。以前是寫死 46px，
@@ -15046,7 +15172,8 @@ function fitPad(w, zone){
 }
 function fitViewport(){
   const portrait = innerHeight > innerWidth && innerWidth <= 900;
-  const nw = portrait ? 11 : 14;
+  const mainW=($('main')&&$('main').clientWidth)||innerWidth;
+  const nw = portrait ? crispPortraitGrid(Math.min(innerWidth,mainW)).cols : 14;
   /* 直式的列數不寫死。畫布是「寬度撐滿、高度看比例」，
      所以螢幕越高、剩下的黑邊越多 —— 780 高的手機原本要浪費 110px。
      這裡反過來問：扣掉招牌、手把區、訊息列之後，
@@ -15116,6 +15243,8 @@ function loop(ts){
     G.corpses = G.corpses.filter(c=>c.t < .4);
     for(const r of (G.rings || [])) r.t += dt;
     if(G.rings) G.rings = G.rings.filter(r => r.t < r.life);
+    for(const f of (G.trapFx || [])) f.t += dt;
+    if(G.trapFx) G.trapFx = G.trapFx.filter(f=>f.t<f.dur);
     for(const p of G.parts){
       p.t += dt;
       p.px += p.vx*dt; p.py += p.vy*dt;
@@ -15134,7 +15263,7 @@ function loop(ts){
       }
       if(fx.t>=fx.dur){
         const bossStillHere=!!(G.f && G.f.bossLock && G.mons.some(m=>m.d && m.d.boss));
-        G.zoomTo=bossStillHere ? Math.max(1.2,fx.returnZoom||FIELD_ZOOM) : FIELD_ZOOM;
+        G.zoomTo=bossStillHere ? (fx.returnZoom||FIELD_ZOOM) : FIELD_ZOOM;
         G.levelFx=null;
       }
     }
@@ -15971,7 +16100,7 @@ function bossWatch(){
   const on = G.f.bossLock && G.mons.some(m => m.d.boss && G.seen[key(m.x,m.y)] === 2);
   if(on && !G.f.bossSeen){
     G.f.bossSeen = 1;
-    if(!REDUCED){ G.zoom = 1.85; G.zoomTo = 1.2; }
+    if(!REDUCED){ G.zoom = 1.85; G.zoomTo = FIELD_ZOOM; }
     SFX.play('roar');
     G.shake = Math.max(G.shake, 9);
   } else if(!G.f.bossLock && G.f.bossSeen){
@@ -18008,6 +18137,27 @@ function qaEnterFloor(actIdx,floor,seed){
   camX=G.p.x-VW/2+.5; camY=G.p.y-VH/2+.5;
   refresh(); showCard();
 }
+function qaEnterTraps(seed){
+  qaEnterFloor(0,1,seed);
+  G.mons=[]; G.traps={}; G.items={}; G.gold={};
+  const p=G.p, spots=[];
+  for(let r=1;r<=7;r++) for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+    const x=p.x+dx,y=p.y+dy;
+    if(walkable(x,y)&&cornerOK(p.x,p.y,x,y)&&!(x===p.x&&y===p.y)) spots.push({x,y});
+  }
+  const used=new Set(), chosen=[];
+  for(const s of spots){
+    const k=key(s.x,s.y); if(used.has(k)) continue;
+    used.add(k); chosen.push(s); if(chosen.length>=6) break;
+  }
+  for(let i=0;i<5&&chosen[i];i++) G.traps[key(chosen[i].x,chosen[i].y)]=i+1;
+  if(chosen[5]) G.items[key(chosen[5].x,chosen[5].y)]=mk('scroll','ident',{known:1});
+  const sh=mk('shld','steel',{known:1,up:1}); p.inv.push(sh); p.shld=sh;
+  p.mhp=p.hp=180; vision(); refresh();
+  say('陷阱驗收：附近依序放置捕獸器、毒霧、飛箭、食人草與強酸；另有新版唯一卷軸。','gold');
+  say('請逐一踩踏，確認箭從左側射入、食人草拘束 3～5 回合，以及強酸令盾牌防禦 −1。','gold');
+}
 function qaEnterBoss(id,seed){
   const wanted=bossById(id) || BOSS[0];
   let actIdx=ACTS.findIndex(a=>a.boss===wanted.id);
@@ -18194,6 +18344,7 @@ function qaMenu(){
     ['全部怪物圖鑑',qaUrl({qa:'gallery',type:'mon'})],
     ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
+    ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
     ['升級演出驗收',qaUrl({qa:'levelup',act:'temple',floor:1,seed:260822})],
   ]){
@@ -18229,6 +18380,7 @@ function startQa(){
     },320);
   }
   else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
+  else if(kind==='traps') qaEnterTraps(seed);
   else if(kind==='village'){
     const a=qaActIndex(QA_QUERY.get('act')||0); VILLAGE.act=a; VILLAGE.gold=99999;
     newGame(seed); qaOpenWorld(); renderVillage(); $('village').classList.add('show');

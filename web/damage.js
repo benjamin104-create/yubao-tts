@@ -31,6 +31,45 @@ t('一般傷害陷阱會立即扣除 HP', ()=>{
   assert(!G.traps[api.key(p.x,p.y)], '觸發後陷阱應該消失');
 });
 
+t('白色箭機關會造成明顯傷害，而不是只有動畫', ()=>{
+  resetProgress();
+  api.newGame(24085);
+  const G = api.G(), p = G.p;
+  G.mons.length = 0;
+  p.mhp = p.hp = 140;
+  G.traps[api.key(p.x,p.y)] = 3;
+  api.stepOn();
+  assert.strictEqual(p.hp, 120, '140 上限的飛箭陷阱應扣 20 點');
+  assert(G.trapFx.some(f=>f.kind==='arrow'), '飛箭陷阱應建立由左側射入的動畫');
+});
+
+t('食人草會咬傷並拘束玩家 3～5 個後續回合', ()=>{
+  resetProgress();
+  api.newGame(24086);
+  const G = api.G(), p = G.p;
+  G.mons.length = 0;
+  p.mhp = p.hp = 140;
+  G.traps[api.key(p.x,p.y)] = 4;
+  api.stepOn();
+  assert(p.hp < 140, '食人草合起時必須先造成傷害');
+  assert(p.st['咬'] >= 4 && p.st['咬'] <= 6,
+    `觸發當下的拘束計數應為 4～6，實際是 ${p.st['咬']}`);
+});
+
+t('強酸會長效腐蝕盾牌 1 點，且存入一般道具欄位', ()=>{
+  resetProgress();
+  api.newGame(24087);
+  const G = api.G(), p = G.p;
+  G.mons.length = 0;
+  const sh = api.mk('shld','steel',{known:1,up:1});
+  p.inv.push(sh); p.shld = sh;
+  const before = api.pDef();
+  G.traps[api.key(p.x,p.y)] = 5;
+  api.stepOn();
+  assert.strictEqual(sh.acid, 1, '盾牌必須留下 acid=1 的長效腐蝕值');
+  assert.strictEqual(api.pDef(), before-1, '腐蝕後實際防禦必須降低 1 點');
+});
+
 t('忍者 Master 只讓陷阱減傷，不會完全免疫', ()=>{
   resetProgress();
   V().jobs.nin = {lv:3, prog:0};

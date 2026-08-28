@@ -123,6 +123,21 @@ t('存檔裡的道具不會帶著舊數值復活', ()=>{
   assert.strictEqual(w.up, 3, '強化值應該保留');
 });
 
+t('被強酸腐蝕的盾牌讀檔後仍永久少 1 點防禦', ()=>{
+  V().act = 0;
+  api.newGame(7273);
+  const p = api.G().p;
+  const sh = api.mk('shld', 'steel', {known:1, up:1, acid:1});
+  p.inv.push(sh); p.shld = sh;
+  const reduced = api.pDef();
+  playToFloor(2);
+  api.resumeRun(api.loadedRun());
+  const restored = api.G().p.shld;
+  assert(restored, '腐蝕過的盾牌應該仍然裝備著');
+  assert.strictEqual(restored.acid, 1, 'acid=1 必須寫進存檔');
+  assert.strictEqual(api.pDef(), reduced, '讀檔不能偷偷把被腐蝕的防禦補回來');
+});
+
 t('壺裡的東西也要撐過讀檔 —— 而且不會被村莊那份多發一次', ()=>{
   V().act = 0; V().pots = [];
   api.newGame(3131);
