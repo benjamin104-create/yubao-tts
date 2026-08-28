@@ -231,6 +231,7 @@ t('踏進怪物之間，音樂會切成緊張的那一首', ()=>{
       if(!G.f.hall) continue;
       found = 1;
       BGM.force(null);
+      G.seen.fill(0); G.seen[api.key(G.p.x,G.p.y)]=2;
       api.bossWatch();
       assert.strictEqual(BGM.forced, null, '還沒踏進去就先緊張了');
       // 走進大廳
@@ -256,7 +257,7 @@ t('踏進怪物之間，音樂會切成緊張的那一首', ()=>{
    而這個專案最常見的失效方式正是「寫了但沒有人讀」：
    bossWatch() 裡如果還是寫死 force('boss')，資料表那一行就完全沒有效果，
    遊戲照跑、頭目照打，只是那一場放的是跟前面十五場一樣的鼓點。 */
-t('進入每個頭目房，音樂都真的切到那隻王指定的曲子', ()=>{
+t('踏上每個頭目層，還沒看見王就切到指定戰鬥曲', ()=>{
   const BGM=api.BGM,V=api.VILLAGE();
   for(let a=0;a<api.ACTS.length;a++){
     if(!api.ACTS[a].boss)continue;
@@ -264,11 +265,24 @@ t('進入每個頭目房，音樂都真的切到那隻王指定的曲子', ()=>{
     const G=api.G();G.act=a;G.floor=api.ACTS[a].floors;api.buildFloor();
     const b=G.mons.find(m=>m.d.boss);
     assert(b,api.ACTS[a].nm+'的頭目層沒有王');
-    BGM.force(null);G.f.bossLock=1;G.seen[api.key(b.x,b.y)]=2;api.bossWatch();
+    BGM.force(null);G.f.bossLock=1;G.seen.fill(0);api.bossWatch();
     assert.strictEqual(BGM.forced,b.d.bgm,
-      b.d.nm+'看見了，但實際播放 '+BGM.forced+'（應為 '+b.d.bgm+'）');
+      b.d.nm+'的樓層已進入，但實際播放 '+BGM.forced+'（應為 '+b.d.bgm+'）');
   }
   BGM.force(null);
+});
+
+t('同房四格內發現怪物會切一般戰鬥曲，擊倒後回場景曲', ()=>{
+  const BGM=api.BGM;
+  api.newGame(4259);
+  const G=api.G(),p=G.p; G.mons.length=0; G.f.bossLock=0; G.f.hall=null;
+  const d=api.DIRS.find(([dx,dy])=>api.walkable(p.x+dx,p.y+dy));
+  assert(d,'入口旁沒有可走格');
+  const m=api.spawnMon(api.MONS.find(x=>x.id==='rat'),p.x+d[0],p.y+d[1]);
+  api.vision(); BGM.force(null); api.bossWatch();
+  assert.strictEqual(BGM.forced,'combat','近身看見怪物沒有切戰鬥曲');
+  m.hp=0; api.bossWatch();
+  assert.strictEqual(BGM.forced,null,'敵人倒下後沒有回到場景曲');
 });
 
 t('人魚王后的詠嘆調與守護者戰鼓不會互相外洩', ()=>{

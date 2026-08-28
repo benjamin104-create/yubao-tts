@@ -112,6 +112,20 @@ t('沒有受傷的回合仍會正常自然回復', ()=>{
   assert(p.hp > 390, '修正不能把白魔導士的自然回復整個關掉');
 });
 
+t('鋼之盾不能把頭目攻擊壓回 2～3 點', ()=>{
+  resetProgress();
+  api.newGame(24088);
+  const G=api.G(),p=G.p;
+  const sh=api.mk('shld','steel',{known:1,up:1}); p.inv.push(sh); p.shld=sh;
+  const d=api.BOSS.find(x=>x.id==='b_keeper');
+  const m={d:Object.assign({},d,{atk:5})};
+  // 固定亂數在傷害區間的最低端，驗的是保底，不是運氣好的高傷。
+  const old=G.rng; G.rng=Object.assign(()=>0,{i:old.i,pick:old.pick,chance:old.chance,weight:old.weight,shuffle:old.shuffle});
+  const hit=api.rollEnemyDmg(m,5,1,false);
+  G.rng=old;
+  assert(hit>=4,`鋼盾後頭目仍只造成 ${hit} 點`);
+});
+
 resetProgress();
 console.log('\n受傷檢查：通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);

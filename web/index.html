@@ -716,7 +716,11 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #cross .dc{font-size:calc(var(--k)*.34)}
 /* 斜向放在十字的四個凹角，比主方向暗一階 ——
    視覺上還是一個十字，但八方向都按得到。原作的走位有一半靠斜走。 */
-#cross .dg{font-size:calc(var(--k)*.31); opacity:.62; background:rgba(20,17,14,.4); border-color:rgba(201,151,63,.3)}
+#cross .dg{
+  width:72%; height:72%; place-self:center;
+  font-size:calc(var(--k)*.27); opacity:.50;
+  background:rgba(20,17,14,.32); border-color:rgba(201,151,63,.24)
+}
 #cross .dg:active{opacity:1}
 #padwait{
   font-size:calc(var(--k)*.45); color:rgba(201,151,63,.75);
@@ -1000,9 +1004,19 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   color:var(--brass); font-weight:600;
 }
 #talkbody{
-  margin:0 0 12px; font-family:var(--serif); font-size:13px; line-height:1.85;
+  min-height:4.9em; margin:0 0 12px; padding-right:12px; position:relative;
+  font-family:var(--serif); font-size:13px; line-height:1.85;
   color:#f0d9a8; text-wrap:pretty;
 }
+#talkmore{
+  display:none; position:absolute; right:14px; bottom:57px;
+  width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
+  border-top:8px solid #fff; filter:drop-shadow(0 1px 0 #000);
+  animation:talkmore .72s steps(2,end) infinite;
+}
+#talkmore.on{display:block}
+@keyframes talkmore{50%{transform:translateY(4px)}}
+#talk .tbtns.wait{visibility:hidden; pointer-events:none}
 #talk .tbtns{display:flex; gap:8px}
 #talk .tbtns button{
   flex:1; min-height:42px; padding:9px 10px; cursor:pointer;
@@ -1316,7 +1330,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #keys::-webkit-scrollbar{display:none}
   #keys{padding:6px 10px}
   #keys button{flex:0 0 auto; min-height:40px; padding:7px 12px; font-size:12.5px; white-space:nowrap}
-  #pad{--k:50px}
+  #pad{--k:56px}
   #cross{gap:4px}
   #acts button{min-height:40px; padding:8px 12px; font-size:12.5px}
   .row{padding:10px 14px; min-height:48px}
@@ -1383,16 +1397,16 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
      那一行就是同一句話講兩次，而且兩個一上一下，眼睛不知道該看哪一個。
      留著元素（版面高度的計算讀它的 offsetHeight），但不再顯示。 */
 
-  #screenwrap{padding-bottom:162px; background:#0a0908; --padh:162px}
-  #vig{bottom:162px}
+  #screenwrap{padding-bottom:186px; background:#0a0908; --padh:186px}
+  #vig{bottom:186px}
   #cross{bottom:8px; left:12px}
   #ab{bottom:20px; right:14px}
-  #card{bottom:162px}
+  #card{bottom:186px}
   /* 提示往上抬，讓開訊息視窗那一條。它是浮在場上的一次性提示，
      訊息視窗是常駐的閱讀面 —— 讓開的該是前者。 */
-  #hint{bottom:250px}
+  #hint{bottom:274px}
   /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
-  #panel, #over, #aim, #bigmap{bottom:162px}
+  #panel, #over, #aim, #bigmap{bottom:186px}
   #card{top:0}
   /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
      點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
@@ -1611,9 +1625,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
           <div class="thead">
             <canvas id="talkface" width="32" height="32" aria-hidden="true"></canvas>
             <b id="talkwho"></b>
-          </div>
-          <p id="talkbody"></p>
-          <div class="tbtns">
+           </div>
+           <p id="talkbody"></p>
+           <i id="talkmore" aria-hidden="true"></i>
+           <div class="tbtns">
             <button id="talkyes"></button>
             <button id="talkno"></button>
           </div>
@@ -1916,7 +1931,7 @@ const BOSS = [
     前一回合就看得到（telegraph）。後面十六隻頭目全部建立在
     「看預告、決定這一回合要不要站在那裡」上面 ——
     在一隻打不死人的門番身上先教會它，比在第十章教便宜太多。 */
- {id:'b_keeper', nm:'神殿門番', sig:'seal_slam', ai:'C', hp:44,atk:4,def:2,exp:120, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1, still:1,
+ {id:'b_keeper', nm:'神殿門番', sig:'seal_slam', ai:'C', hp:52,atk:5,def:2,exp:120, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1, still:1,
   imm:['睡'], telegraph:1, cadence:4, ward:{cd:12, dur:2},
   line:'門上的浮雕動了 —— 它不追你，但它擋在唯一的路上。'},
  {id:'b_warden', nm:'礦坑守衛', sig:'ore_brood', ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
@@ -3646,7 +3661,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260828-unified-cast-art-v13';
+const ART_REV = '20260828-combat-ui-art-v14';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -5273,18 +5288,29 @@ function makeBlocker(kind, variant, ramp){
   return c;
 }
 function makeStairs(){
-  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  // 樓梯是整層唯一的目標，必須一眼看到 —— 用整張圖裡沒有別人在用的
-  // 金色踏面 + 全黑深井，跟冷色地板拉開最大距離
-  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
-  x.fillStyle=PAL['0']; x.fillRect(1,1,14,14);
-  for(let i=0;i<4;i++){
-    const y=2+i*3, w=12-i*2, sx=Math.floor((T-w)/2);
-    x.fillStyle=PAL['0']; x.fillRect(sx,y,w,3);
-    x.fillStyle=PAL[['v','u','t','s'][i]]; x.fillRect(sx,y,w,1);
-    x.fillStyle=PAL[['t','s','s','0'][i]]; x.fillRect(sx+1,y+1,w-2,1);
+  /* 直接在 32px 成品空間畫，而不是先畫 16px 再猜細節。
+     五層踏面每一層都有完整的受光頂面、正面與右側暗面；兩側石框把它
+     跟地板切開，底端的深井則明確告訴玩家「這裡可以往下」。 */
+  const S=32,c=document.createElement('canvas'); c.width=S; c.height=S; const x=c.getContext('2d');
+  x.fillStyle=PAL['0']; x.fillRect(1,1,30,31);
+  x.fillStyle=PAL['1']; x.fillRect(3,2,26,29);
+  // 左上光源下的石砌側框；右框整體壓暗一階。
+  x.fillStyle=PAL['d']; x.fillRect(2,2,4,27); x.fillRect(6,2,2,2);
+  x.fillStyle=PAL['b']; x.fillRect(3,4,3,24);
+  x.fillStyle=PAL['5']; x.fillRect(26,2,4,27); x.fillRect(24,2,2,2);
+  x.fillStyle=PAL['3']; x.fillRect(27,4,3,24);
+  x.fillStyle=PAL['0']; x.fillRect(7,3,18,25);
+  for(let i=0;i<5;i++){
+    const y=4+i*5, inset=i;
+    const sx=7+inset, w=18-inset*2;
+    x.fillStyle=PAL['0']; x.fillRect(sx-1,y-1,w+2,5);             // 階下暗縫
+    x.fillStyle=PAL[i<2?'v':(i<4?'u':'t')]; x.fillRect(sx,y,w,2); // 寬受光踏面
+    x.fillStyle=PAL[i<2?'t':'s']; x.fillRect(sx+1,y+2,w-2,1);     // 正面
+    x.fillStyle=PAL['7']; x.fillRect(sx+w-2,y+1,2,2);             // 右下暗面
+    if(w>8){ x.fillStyle=PAL['+']; x.fillRect(sx+2,y,Math.max(2,w>>3),1); }
   }
-  x.fillStyle=PAL['0']; x.fillRect(3,14,10,2);
+  x.fillStyle=PAL['0']; x.fillRect(10,27,12,5);
+  x.fillStyle=PAL['1']; x.fillRect(12,28,8,2);
   return c;
 }
 // 未探索區域：不是純黑，是「還沒挖開的岩盤」。
@@ -5304,14 +5330,22 @@ function makeRock(){
 /* 回村的出口：向上的拱門。整座地牢所有的光都是往下的，
    只有這一格是往上的 —— 那就是它的意思。 */
 function makeExit(){
-  const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  x.fillStyle=PAL['x']; x.fillRect(0,0,T,T);
-  px(x,PAL['0'],2,2,12,14);
-  px(x,PAL['z'],3,3,10,12); px(x,PAL['y'],4,4,8,11);
-  px(x,PAL['v'],5,5,6,10); px(x,PAL['u'],5,5,6,2);       // 拱內的光
-  px(x,PAL['0'],5,5,1,1);  px(x,PAL['0'],10,5,1,1);
-  px(x,PAL['d'],7,7,2,8);
-  px(x,PAL['0'],2,14,12,2);
+  const S=32,c=document.createElement('canvas'); c.width=S; c.height=S; const x=c.getContext('2d');
+  x.fillStyle=PAL['0']; x.fillRect(2,2,28,30);
+  // 回程是向上的拱梯：階面由下往上收窄，與下樓梯的深井方向相反。
+  x.fillStyle=PAL['5']; x.fillRect(4,8,24,22);
+  x.fillStyle=PAL['d']; x.fillRect(5,7,5,21); x.fillRect(22,7,5,21);
+  x.fillStyle=PAL['+']; x.fillRect(7,5,18,3); x.fillRect(5,8,4,3); x.fillRect(23,8,4,3);
+  x.fillStyle=PAL['0']; x.fillRect(9,8,14,13);
+  x.fillStyle=PAL['u']; x.fillRect(11,9,10,11);
+  x.fillStyle=PAL['v']; x.fillRect(12,9,7,3);              // 拱內整塊亮面
+  x.fillStyle=PAL['t']; x.fillRect(19,11,2,9);
+  for(let i=0;i<4;i++){
+    const y=28-i*3, sx=5+i*2, w=22-i*4;
+    x.fillStyle=PAL['0']; x.fillRect(sx,y-1,w,3);
+    x.fillStyle=PAL[i<2?'u':'v']; x.fillRect(sx+1,y-1,w-2,1);
+    x.fillStyle=PAL['s']; x.fillRect(sx+2,y,w-4,1);
+  }
   return c;
 }
 /* 帽子的道具圖示：直接畫那頂帽子，不另外設計 ——
@@ -5555,8 +5589,8 @@ const TILE_ART = {
      rock **不要**動：它是拿去 createPattern() 重複貼的底紋，
      來源變成兩倍大，花紋的週期就會從 16 邏輯單位變成 32 —— 
      背景會整個放大一倍，而那不是解析度變好，是版面壞掉。 */
-  stairs:tileHi(makeStairs()), rock:makeRock(),
-  exit:tileHi(makeExit()),
+  stairs:makeStairs(), rock:makeRock(),
+  exit:makeExit(),
 };
 let goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
@@ -8942,6 +8976,9 @@ function buildFloor(){
     say(TX('m.templegoal','內殿與樓梯就在正北方。沿中央長廊一直前進。'),'gold');
   }
   vision();
+  /* 頭目層的音樂在樓層生成完成就切換；一般遭遇則在入口房看見近身敵人時切。
+     音訊若尚未解鎖只會先記住指定曲目，玩家第一次按鍵後才真正發聲。 */
+  bossWatch();
 }
 /* ── 頭目要看著眼前這個玩家配 ──────────────────────────────
    使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
@@ -9232,6 +9269,19 @@ function rollDmg(atk, def, crit, mult){
   raw *= (0.9375 + G.rng()*0.125) * (mult||1);
   return Math.max(1, Math.floor(raw));
 }
+/* 頭目的攻擊不能被一面中階盾牌壓回雜魚數字。一般怪仍吃完整防禦；頭目只
+   吃一半，並保留隨深度成長的最低傷害。這不是無視裝備：鋼盾仍然比木盾
+   少痛，但不會再出現王揮巨劍只扣 2～3 點、玩家站著互砍也不必移動。 */
+function rollEnemyDmg(m, atk, mult, crit){
+  const boss=!!(m&&m.d&&m.d.boss), mul=mult||1;
+  const def=boss ? pDef()*.5 : pDef();
+  let dmg=rollDmg(atk,def,!!crit,mul);
+  if(boss){
+    const floor=Math.ceil(atk*(.70+.10*bossTense(G.md||0))*mul);
+    dmg=Math.max(dmg,floor);
+  }
+  return dmg;
+}
 /* 玩家受傷一律走這裡。除了扣血，也記住「這一回合確實受傷了」：
    以前高防禦玩家只會被打 1 點，而白魔導士 Master 的自然回復緊接在
    怪物行動後面，立刻把那 1 點補回去。畫面最後仍顯示滿血，玩家看到的
@@ -9263,6 +9313,7 @@ function say(txt, cls){
      say() 會併成「×3」而不加長度，但那仍然是新發生的一件事 ——
      比長度的話，連續挨同一隻怪打的時候視窗會一直安安靜靜。 */
   G.msgTick = (G.msgTick | 0) + 1;
+  SFX.play('talk', 34);
   const last = G.log[G.log.length-1];
   if(last && last.txt===txt){ last.n = (last.n||1)+1; return; }
   G.log.push({txt, cls});
@@ -9589,7 +9640,7 @@ function attack(m, mult){
     }
   }
   if(m.d.counter && G.rng.chance(m.d.counter)){
-    const back = rollDmg(m.d.atk, pDef(), false, .5);
+    const back = rollEnemyDmg(m, m.d.atk, .5, false);
     hurtPlayer(back); say(M('s.008','{v0} 發動了反擊！',{v0:(locName('mon', m.d))}),'bad'); float(p.x,p.y,'-'+back,'#a83c32');
   }
   m.aggro = 15;
@@ -9795,7 +9846,6 @@ function endTurn(){
   const p=G.p;
   if(G.f.turrets) for(const t of G.f.turrets) if(t.cd > 0) t.cd--;
   arenaTick();
-  bossWatch();
   /* 中毒：每回合扣血，而且**會死**。
 
      為什麼不設「最低留 1 點」的保險：那個保險會讓中毒變成一段可以無視的
@@ -9884,6 +9934,7 @@ function endTurn(){
 
   G.turn++;
   vision();
+  bossWatch();
   dwellCheck();
   if(p.hp<=0) death();
   G.tookDamage = 0;
@@ -10366,7 +10417,7 @@ function act(m,it){
     // 逃跑技能可以很強，防禦技能不行，不然玩家就沒有理由移動了
     const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
     if(!hit){ SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); return; }
-    let dmg = rollDmg(m.d.atk, pDef(), false, mult);
+    let dmg = rollEnemyDmg(m, m.d.atk, mult, false);
     /* 影法師打的是「你自己」。它的攻擊力取自你當下的攻擊力，
        所以在鏡像世界裡，把裝備練得越好，影子就越痛 ——
        這一章的主題本來就是「連自己都不能全信」。
@@ -10374,7 +10425,7 @@ function act(m,it){
     /* 表上的 atk 只有 16 —— 影法師的傷害「主要」來自你自己。
        第一版把表值寫成 30、倍率 0.7，量出來在鏡像世界只差 1.27 倍：
        那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
-    if(m.d.mimic) dmg = Math.max(dmg, rollDmg(Math.round(pAtk()*m.d.mimic), pDef(), false, mult));
+    if(m.d.mimic) dmg = Math.max(dmg, rollEnemyDmg(m, Math.round(pAtk()*m.d.mimic), mult, false));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     /* 頭目每第三下是重擊。使用者：「魔王可以有每 3～4 次攻擊，
        產生一次爆擊，然後把主角打飛，這樣比較刺激」。
@@ -10438,7 +10489,7 @@ function act(m,it){
       // 第一章的頭目一次把人推三格，光是位移就足以把玩家送進另外兩隻怪的懷裡。
       const k2 = knockPlayer(kx, ky, Math.max(1, Math.round(1 + 2 * ts2)));
       if(k2.slam){
-        const extra = rollDmg(m.d.atk * 0.5, pDef(), false, 1);
+        const extra = rollEnemyDmg(m, m.d.atk * 0.5, 1, false);
         hurtPlayer(extra);
         float(p.x, p.y, '-' + extra, '#a83c32');
         burst(p.x + kx, p.y + ky, 14, '#d9b98a', 80, 4, .5);
@@ -10532,7 +10583,7 @@ function act(m,it){
       say(M('s.quakemiss','地面震了一下 —— 你離得夠遠。',{}),'good');
       return;
     }
-    const dmg2 = rollDmg(m.d.atk * 0.9, pDef(), false, 1);
+    const dmg2 = rollEnemyDmg(m, m.d.atk * 0.9, 1, false);
     hurtPlayer(dmg2);
     p.flash = 0.14;
     startHurtPose(p, m.x, m.y);
@@ -10594,8 +10645,8 @@ function act(m,it){
       return;
     }
     const {tiles, slam} = knockPlayer(dx, dy, 6);
-    let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
-    if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
+    let dmg = rollEnemyDmg(m, m.d.atk * (0.9 + tiles * 0.12), 1, false);
+    if(slam) dmg += rollEnemyDmg(m, m.d.atk * 0.6, 1, false);
     hurtPlayer(dmg);
     p.flash = 0.14;
     startHurtPose(p, m.x, m.y, .24);
@@ -12347,6 +12398,16 @@ const SFX = (()=>{
     ident: ()=>{ [784,1047,1319].forEach((f,i)=>tone(f,0,.13,'triangle',.10,i*.06)); },
     curse: ()=>{ tone(160,120,.5,'sawtooth',.13); tone(84,70,.6,'square',.10,.05); },
     open:  ()=>tone(520,700,.05,'square',.05),
+    /* 對話字音：極短的雙方波，不模仿任何既有作品的音高序列；每隔幾個字
+       才播一次，形成 16-bit RPG 的閱讀節奏而不變成連續蜂鳴。 */
+    talk:  ()=>{ tone(760,690,.026,'square',.030); tone(380,345,.024,'triangle',.018,.004); },
+    /* 一般遭遇結束的小勝利句。頭目仍使用更長的 fell，不會兩段一起疊。 */
+    victory:()=>{
+      [[523,0,.12],[659,.13,.12],[784,.26,.16],[1047,.43,.30],[784,.76,.18],[1047,.96,.38]]
+        .forEach(([f,d,n])=>tone(f,0,n,'square',.075,d));
+      [[262,0,.30],[330,.34,.28],[392,.70,.25],[523,.98,.36]]
+        .forEach(([f,d,n])=>tone(f,0,n,'triangle',.050,d));
+    },
     /* 頭目登場：下行的低音疊一記悶雷。
        這一格本來是借用 level（升級的上行大三和弦）—— 那是「恭喜」的聲音，
        接在頭目走進畫面後面等於在說反話。打擊音全部下行、魔法全部上行，
@@ -13050,6 +13111,22 @@ const BGM = (()=>{
        [8,76,1],[9,84,1],[10,79,1],[11,88,1],[12,84,1],[13,91,1],[14,88,2]],
       [[0,93,1],[1,88,1],[2,84,1],[3,91,1],[4,86,1],[5,81,1],[6,88,1],[7,84,1],
        [8,79,1],[9,86,1],[10,81,1],[11,88,2],[13,84,1],[14,93,2]],
+    ],
+  });
+
+  /* 一般房間遭遇。不是挪用任何既有 RPG 的旋律，而是用同世代的聲音語彙
+     新寫：方波短句、三角波行進低音、每兩拍一次的軍鼓。旋律只用四音動機
+     反覆移位，讓玩家一聽就知道「現在是近身戰」，結束後立刻回到場景曲。 */
+  TRACKS.combat = T_({
+    bpm:148, wave:'square', pad:'triangle', cut:3300, lvol:.082, avol:.042,
+    root:[45,43,48,44], chord:[[57,60,64],[55,59,62],[60,64,67],[56,59,63]],
+    bass:[0,2,4,7,8,10,12,15], hat:[1,3,5,7,9,11,13,15],
+    kick:[0,4,8,12], tom:[2,6,10,14], arp:[0,4,8,12],
+    lead:[
+      [[0,69,2],[2,72,1],[3,76,1],[4,74,2],[7,72,1],[8,69,2],[10,76,2],[12,72,4]],
+      [[0,67,2],[2,71,1],[3,74,1],[4,72,2],[7,71,1],[8,67,2],[10,74,2],[12,71,4]],
+      [[0,72,2],[2,76,1],[3,79,1],[4,77,2],[7,76,1],[8,72,2],[10,79,2],[12,76,4]],
+      [[0,68,2],[2,71,1],[3,75,1],[4,73,2],[7,71,1],[8,68,2],[10,75,2],[12,68,4]],
     ],
   });
 
@@ -14716,8 +14793,8 @@ function draw(dt){
   if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x, G.npc.y)] === 2){
     const n2 = G.npc, art = npcArt();
     const [nx2, ny2] = entPos(n2);
-    shadow(nx2, ny2, 1, art, 'npc');
-    drawEnt(n2, art, 'npc', 7);
+    shadow(nx2, ny2, ACTOR_SCALE, art, 'npc');
+    drawEnt(n2, art, 'npc', 7, ACTOR_SCALE);
     const bx1 = Math.round(ox+nx2*T), by1 = Math.round(oy+ny2*T);
     cx.fillStyle = 'rgba(6,8,9,.8)'; cx.fillRect(bx1+2, by1-4, 12, 3);
     cx.fillStyle = n2.hp*3 <= n2.mhp ? '#a83c32' : '#6a8f4a';
@@ -15195,7 +15272,9 @@ function fitPad(w, zone){
   // 高度也要管：十字是 3k+8 高，S/B/A 那一疊是 2.25k+6 高。
   // 只看寬度的話，矮螢幕上手把會從專屬區往上長，蓋掉半個房間。
   const byH = zone ? (zone - 20) / 3 : 99;
-  const k = Math.max(28, Math.min(52, Math.floor(Math.min(byW, byH))));
+  /* 直向手機把主方向鍵放到約 56px；斜向鍵本身縮在格心，只保留較小的
+     實際觸控區。這樣上下左右更容易按，拇指擦到角落時也不會誤走斜線。 */
+  const k = Math.max(28, Math.min(58, Math.floor(Math.min(byW, byH))));
   pad.style.setProperty('--k', k + 'px');
 }
 function fitViewport(){
@@ -15434,15 +15513,59 @@ function refresh(){
    做成通用的 (who, body, yes, no, onYes, onNo)：目前只有迷路的村民
    用得到，但使用者接下來要的「隨機出現的拯救或解謎」也是同一個形狀，
    到時候不必再發明一次。 */
-let talkNow = null, talkSel = 0;
+let talkNow = null, talkSel = 0, talkPages = [], talkPage = 0;
+let talkTimer = null, talkTyping = false, talkFull = '';
+/* 以實際字寬概念分頁：中日韓字算兩格，拉丁字算一格。盡量在句號、問號、
+   驚嘆號或換行收頁，避免把一句話從正中間硬切開。 */
+function splitTalk(text){
+  const chars=[...String(text||'')], pages=[]; let page='', units=0, lastBreak=-1;
+  const weight=ch=>/[\u2e80-\u9fff\uf900-\ufaff\u3040-\u30ff]/.test(ch)?2:1;
+  for(const ch of chars){
+    page+=ch; units+=weight(ch);
+    if(/[。！？!?…\n]/.test(ch)) lastBreak=page.length;
+    if(units<76) continue;
+    if(lastBreak>18){ pages.push(page.slice(0,lastBreak).trim()); page=page.slice(lastBreak).trim(); }
+    else { pages.push(page.trim()); page=''; }
+    units=[...page].reduce((n,c)=>n+weight(c),0); lastBreak=-1;
+  }
+  if(page.trim()||!pages.length) pages.push(page.trim());
+  return pages;
+}
+function talkChoices(wait){
+  const el=document.querySelector&&document.querySelector('#talk .tbtns');
+  if(el&&el.classList) el.classList.toggle('wait',!!wait);
+}
+function finishTalkText(){
+  if(talkTimer){ clearInterval(talkTimer); talkTimer=null; }
+  talkTyping=false; $('talkbody').textContent=talkFull;
+  const more=$('talkmore'), hasMore=talkPage<talkPages.length-1;
+  if(more&&more.classList) more.classList.toggle('on',hasMore);
+  talkChoices(hasMore);
+}
+function paintTalkPage(){
+  if(talkTimer){ clearInterval(talkTimer); talkTimer=null; }
+  const el=$('talkbody'), more=$('talkmore');
+  talkFull=talkPages[talkPage]||''; el.textContent=''; talkTyping=true;
+  if(more&&more.classList) more.classList.remove('on');
+  talkChoices(true);
+  if(REDUCED){ finishTalkText(); return; }
+  const chars=[...talkFull]; let i=0;
+  talkTimer=setInterval(()=>{
+    if(!talkNow){ clearInterval(talkTimer); talkTimer=null; return; }
+    el.textContent+=chars[i++]||'';
+    if(i%3===1) SFX.play('talk',26);
+    if(i>=chars.length) finishTalkText();
+  },22);
+}
 function openTalk(o){
   const el = $('talk'); if(!el) return;
-  talkNow = o; talkSel = 0;
+  talkNow = o; talkSel = 0; talkPages=splitTalk(o.body); talkPage=0;
   $('talkwho').textContent = o.who;
-  $('talkbody').textContent = o.body;
   $('talkyes').textContent = o.yes;
   $('talkno').textContent = o.no;
-  $('talkhint').textContent = TX('t.hint','← → 選擇　Enter 確定　Esc 取消');
+  $('talkhint').textContent = talkPages.length>1
+    ? TX('t.more','A / Enter 繼續　▽ 尚有文字')
+    : TX('t.hint','← → 選擇　Enter 確定　Esc 取消');
   // 頭像：用場上那一隻的同一張圖，玩家才知道「是他在說話」
   const fc = $('talkface');
   if(fc && fc.getContext && o.art){
@@ -15454,12 +15577,27 @@ function openTalk(o){
   paintTalkSel();
   el.classList.add('on');
   SFX.play('open');
+  paintTalkPage();
+}
+function advanceTalk(){
+  if(!talkNow) return;
+  if(talkTyping){ finishTalkText(); return; }
+  if(talkPage<talkPages.length-1){
+    talkPage++;
+    $('talkhint').textContent = talkPage<talkPages.length-1
+      ? TX('t.more','A / Enter 繼續　▽ 尚有文字')
+      : TX('t.hint','← → 選擇　Enter 確定　Esc 取消');
+    paintTalkPage(); return;
+  }
+  answerTalk(talkSel===0);
 }
 function paintTalkSel(){
   const b = [$('talkyes'), $('talkno')];
   b.forEach((e,i)=>{ if(e) e.classList.toggle('sel', i === talkSel); });
 }
 function closeTalk(){
+  if(talkTimer){ clearInterval(talkTimer); talkTimer=null; }
+  talkTyping=false; talkPages=[]; talkPage=0;
   talkNow = null;
   const el = $('talk'); if(el) el.classList.remove('on');
 }
@@ -16125,25 +16263,42 @@ const REDUCED = (()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)'
                        catch(e){ return false; } })();
 function bossWatch(){
   if(!G || !G.f) return;
-  const on = G.f.bossLock && G.mons.some(m => m.d.boss && G.seen[key(m.x,m.y)] === 2);
-  if(on && !G.f.bossSeen){
+  const bossAlive = G.f.bossLock && G.mons.some(m => m.d.boss && m.hp > 0);
+  const bossVisible = bossAlive && G.mons.some(m => m.d.boss && m.hp > 0 && G.seen[key(m.x,m.y)] === 2);
+  if(bossVisible && !G.f.bossSeen){
     G.f.bossSeen = 1;
     if(!REDUCED){ G.zoom = 1.85; G.zoomTo = FIELD_ZOOM; }
     SFX.play('roar');
     G.shake = Math.max(G.shake, 9);
-  } else if(!G.f.bossLock && G.f.bossSeen){
+  } else if(!bossAlive && G.f.bossSeen){
     // 打完了：鏡頭鬆回去
     G.f.bossSeen = 0;
     G.zoomTo = FIELD_ZOOM;
   }
-  /* 這一層該放哪一首，由這一行說了算：頭目 > 怪物之間 > 章節主題。
-     怪物之間一踏進去就繃緊，一直到離開這一層為止 ——
-     換層時 buildFloor() 會把 G.f 整個換掉，下一回合這裡就自己鬆開了。
+  /* 一般遭遇只在「同一房間、看得見、四格內」成立。走廊偶然看見遠處一隻
+     不會每步都切歌；真正進房、近身威脅成立才切。離開範圍只退回場景曲，
+     只有參戰的敵人全部倒下才播勝利句，逃跑不會假裝勝利。 */
+  const pr=roomOf(G.p.x,G.p.y);
+  const close=G.mons.filter(m=>m.hp>0 && !m.d.boss &&
+    G.seen[key(m.x,m.y)]===2 && Math.max(Math.abs(m.x-G.p.x),Math.abs(m.y-G.p.y))<=4 &&
+    (pr>=0 ? roomOf(m.x,m.y)===pr : Math.max(Math.abs(m.x-G.p.x),Math.abs(m.y-G.p.y))<=2));
+  const was=G.f.combatIds||[];
+  if(close.length){
+    G.f.combatIds=close.map(m=>m.id); G.f.combatOn=1;
+  }else if(G.f.combatOn){
+    const allDown=was.length && was.every(id=>!G.mons.some(m=>m.id===id&&m.hp>0));
+    G.f.combatOn=0; G.f.combatIds=[];
+    if(allDown && !bossAlive) SFX.play('victory');
+  }
+  /* 這一層該放哪一首，由這一行說了算：頭目層 > 怪物之間 > 近身遭遇 > 章節。
+     頭目曲在踏上頭目層的第一刻就開始，登場鏡頭仍等看見頭目才觸發。
+     怪物之間一踏進去就繃緊，一直到離開這一層為止。
 
      刻意不記「上次設成什麼」：force() 只是把一個變數指過去，
      重算沒有代價，而記狀態就會漏掉「打完頭目、人還站在怪物之間那一層」
      的那一次切換 —— 音樂會停在章節主題，而大廳裡還有二十隻怪。 */
-  BGM.force(G.f.bossSeen ? bossTrack() : ((G.f.hall && G.f.hall.seen) ? 'hall' : null));
+  BGM.force(bossAlive ? bossTrack()
+    : ((G.f.hall && G.f.hall.seen) ? 'hall' : (G.f.combatOn ? 'combat' : null)));
 }
 /* 這一場頭目戰要放哪一首。每隻王都有 bgm：守護、追獵、術式、武者、
    詠嘆調，以及最終意識三型態。通用 boss 只留給資料遺漏時安全退回。
@@ -16242,15 +16397,15 @@ addEventListener('keydown', ev=>{
   if(!G || coverUp) return;
   if(ev.target.tagName==='INPUT') return;
   const k = ev.key;
-  /* 對話框開著的時候，鍵盤只做三件事：左右換選項、Enter 確定、Esc 取消。
+  /* 對話框開著時，A／Enter 先揭完本頁、再翻頁；到最後一頁才確認選項。
      這一段必須排在方向鍵之前 —— 排在後面的話，玩家一按左右
      角色就先走掉了，而他正在回答一個問題。 */
   if(talkOpen()){
     ev.preventDefault();
-    if(k==='ArrowLeft'||k==='ArrowRight'||k==='a'||k==='d'||k==='Tab'){
+    if(k==='ArrowLeft'||k==='ArrowRight'||k==='d'||k==='D'||k==='Tab'){
       talkSel = 1 - talkSel; paintTalkSel(); SFX.play('move'); return;
     }
-    if(k==='Enter'||k===' '){ answerTalk(talkSel === 0); return; }
+    if(k==='Enter'||k===' '||k==='a'||k==='A'){ advanceTalk(); return; }
     if(k==='Escape'){ answerTalk(false); return; }
     if(k==='y'||k==='Y'){ answerTalk(true); return; }
     if(k==='n'||k==='N'){ answerTalk(false); return; }
@@ -16369,6 +16524,7 @@ let pressB = ()=>{};
      什麼都沒有就待機一回合。一顆按鍵解決九成操作。 */
   $('btnA').addEventListener('pointerdown', ev=>{
     ev.preventDefault(); ev.stopPropagation();
+    if(talkOpen()){ advanceTalk(); return; }
     if(!live()) return;
     if($('aim').classList.contains('show')) return;      // 瞄準時要選方向，不是按確定
     if(panelMode){
@@ -16414,6 +16570,10 @@ let pressB = ()=>{};
   });
   pressB = function(){
     if(!G) return;
+    if(talkOpen()){
+      if(talkTyping){ finishTalkText(); return; }
+      answerTalk(false); return;
+    }
     if($('menu').classList.contains('show')){ closeMenu(); return; }
     if($('aim').classList.contains('show')){ cancelAim(); return; }
     const now = performance.now(), quick = now - lastB < 340;
@@ -18187,6 +18347,22 @@ function qaEnterTraps(seed){
   say('陷阱驗收：附近依序放置捕獸器、毒霧、飛箭、食人草與強酸；另有新版唯一卷軸。','gold');
   say('請逐一踩踏，確認箭從左側射入、食人草拘束 3～5 回合，以及強酸令盾牌防禦 −1。','gold');
 }
+function qaEnterEscort(seed){
+  const mine=ACTS.findIndex(a=>a.id==='mine');
+  qaEnterFloor(mine<0?0:mine,Math.min(3,ACTS[mine<0?0:mine].floors),seed);
+  G.mons=[]; G.traps={}; G.items={}; G.gold={};
+  const st=G.f.stairs, spots=[];
+  for(let r=1;r<=4;r++) for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+    const x=st.x+dx,y=st.y+dy;
+    if(walkable(x,y)&&cornerOK(st.x,st.y,x,y)) spots.push({x,y});
+  }
+  if(spots[0]){ G.p.x=spots[0].x; G.p.y=spots[0].y; }
+  const np=spots.find(s=>Math.max(Math.abs(s.x-G.p.x),Math.abs(s.y-G.p.y))===1)||spots[1]||st;
+  G.npc={x:np.x,y:np.y,hp:NPC_HP,mhp:NPC_HP,follow:1,hurt:0};
+  vision(); qaOpenWorld(); camX=st.x-VW/2+.5; camY=st.y-VH/2+.5; refresh();
+  say('尺寸驗收：迷路村民與主角同級顯示；旁邊是原生 32px 的新版下樓梯。','gold');
+}
 function qaEnterBoss(id,seed){
   const wanted=bossById(id) || BOSS[0];
   let actIdx=ACTS.findIndex(a=>a.boss===wanted.id);
@@ -18241,7 +18417,7 @@ function qaEnterBoss(id,seed){
   G.p.mhp=G.p.hp=999; G.p.mmp=G.p.mp=99; G.p.sat=G.p.msat=100000;
   G.p.weap=mk('weap','babel',{known:1,up:3});
   G.p.shld=mk('shld','aegis',{known:1,up:3});
-  G.turn=0; vision(); qaOpenWorld();
+  G.turn=0; vision(); bossWatch(); qaOpenWorld();
   // 鏡頭以頭目為中心；巨大剪影不可在驗收頁被畫面右緣切掉。
   camX=boss.x-VW/2+.5; camY=boss.y-VH/2+.5;
   refresh(); showCard();
@@ -18307,7 +18483,7 @@ function qaAudioAudit(){
   const label={
     title:['標題畫面','磅礴上行、Hijaz 動機與低鼓'],
     temple:['巴比倫神殿','Hijaz、持續低音與手鼓'],stone:['礦坑／牢獄','空五度與半音下沉'],forest:['迷霧森林','全音音階、沒有解決感'],
-    greathall:['地下大廣間','前半地底、後半通天塔'],spire:['通天塔','Hijaz 上行與 3+3+2'],hall:['怪物之間','三全音踏板與等待感'],
+    greathall:['地下大廣間','前半地底、後半通天塔'],spire:['通天塔','Hijaz 上行與 3+3+2'],combat:['一般房間戰鬥','方波短句與行進低音'],hall:['怪物之間','三全音踏板與等待感'],
     village:['安全村莊','全遊戲唯一明確大調'],boss:['通用頭目戰','高速半音下行與重戰鼓'],boss_guardian:['守護者戰','石、木與水的沉重五度'],boss_trickster:['追獵者戰','切分、瞬身與追逐'],
     boss_arcane:['術式頭目戰','機關琶音與三全音'],boss_warlord:['武者頭目戰','重步 6/8 與戰鼓'],diva:['人魚王后・詠嘆調','前半人聲、後半超高速大跳'],
     mind_gaze:['意識Ⅰ・凝視','稀疏、持續低音與顫音'],mind_echo:['意識Ⅱ・複寫','鏡像節奏逐步加速'],mind_unity:['意識Ⅲ・歸一','160 BPM 的最終整合'],
@@ -18392,6 +18568,7 @@ function qaMenu(){
     ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
     ['全部村民圖鑑',qaUrl({qa:'gallery',type:'npc'})],
     ['武器・盾牌・道具・金塊',qaUrl({qa:'gallery',type:'item'})],
+    ['迷路村民・新版樓梯',qaUrl({qa:'escort',seed:260822})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
@@ -18430,6 +18607,7 @@ function startQa(){
   }
   else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
   else if(kind==='traps') qaEnterTraps(seed);
+  else if(kind==='escort') qaEnterEscort(seed);
   else if(kind==='village'){
     const a=qaActIndex(QA_QUERY.get('act')||0); VILLAGE.act=a; VILLAGE.gold=99999;
     newGame(seed); qaOpenWorld(); renderVillage(); $('village').classList.add('show');

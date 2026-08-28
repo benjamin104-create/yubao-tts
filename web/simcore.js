@@ -79,15 +79,15 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
   'buildFloor, THEME_SHAPE, ACT_THEME, iceRoughAt, iceSlickAt, iceMoveTarget, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
-  'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer,' +
+  'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer, rollEnemyDmg,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
   'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
   'villageStyle, VSTYLES, VNAME, VPAL, VILLAGE_SCENE_SPEC, migrateAct, VILLAGE_VER, RUN_VER,' +
-  'talkOpen, answerTalk, askVillager, npcStep,' +
+  'talkOpen, answerTalk, askVillager, npcStep, splitTalk,' +
   'evOK, makeEvent, rubbleAt, digMason, stoneStep, evStep, giveCirclet,' +
   'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS, REGEN_TURNS, needExp,' +
-  'THEMES, PAL,' +
-  'crispCssWidth, crispPortraitGrid, FIELD_ZOOM,' +
+  'THEMES, PAL, TILE_ART,' +
+  'crispCssWidth, crispPortraitGrid, FIELD_ZOOM, ACTOR_SCALE,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
