@@ -3646,7 +3646,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260828-traps-scroll-pixel-pipeline-v1';
+const ART_REV = '20260828-unified-cast-art-v13';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3660,7 +3660,11 @@ const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
 const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
                   'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
                   'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind',
-                  'b_keeper', 'b_artisan', 'b_hallking'];
+                  'b_mind2', 'b_keeper', 'b_artisan', 'b_hallking'];
+/* 村民以前仍是 16px 程式剪影；主角升到 48px 之後，安全區與護送事件
+   一眼就像兩套遊戲。v13 把六位常駐角色做成 48px 正式精靈：同一族的
+   四腳圓身仍保留，但職業、年齡與隨身物件各自有清楚輪廓。 */
+const ART_NPC = ['elder','smith','merchant','child','chief','mason'];
 const ownArt = {};
 let qaGalleryRedrawT = 0;
 /* 載一張外部圖，成功了才呼叫 ok(canvas)。載不到什麼都不做 ——
@@ -3717,7 +3721,7 @@ const ART_ANIM_AVAILABLE = {
     'b_warden','b_treant','b_ballista','b_pyro','b_lord',
     'b_phoenix','b_hanzo','b_oni','b_gaoler','b_queen',
     'b_prism','b_mermaid','b_gate','b_mind1','b_mind',
-    'b_keeper','b_artisan','b_hallking'
+    'b_mind2','b_keeper','b_artisan','b_hallking'
   ]
 };
 const ANIM_ART = {}, animLoadTried = new Set(), animCellCache = {};
@@ -3790,6 +3794,15 @@ function adoptArt(id, url, own){
     delete flashCache[id];
     delete charLiftCache[id];
     delete footCache[id];
+    if(id.startsWith('npc#')){
+      /* 村莊可能在圖檔下載完成前就已經畫出第一幀。只換 atlas 不重畫，
+         玩家會一直看到 16px 備援村民，直到下一次離村再回來。 */
+      npcSprite = null; masonSprite = null;
+      const folk = $('vfolk'); if(folk) folk.replaceChildren();
+      if(typeof paintVillageSceneV12 === 'function') paintVillageSceneV12();
+      if(typeof paintVillagePortrait === 'function') paintVillagePortrait();
+      if(folk && typeof renderVillage === 'function' && !folk.childElementCount) renderVillage();
+    }
     for(const b in BOSS_BASE) if(BOSS_BASE[b] === id && !ownArt[b]){
       delete flashCache[b]; delete charLiftCache[b]; delete footCache[b];
       atlas[b] = crownSprite(id);
@@ -3800,7 +3813,7 @@ function adoptArt(id, url, own){
        new URLSearchParams(location.search).get('qa') === 'gallery'){
       clearTimeout(qaGalleryRedrawT);
       qaGalleryRedrawT = setTimeout(() => {
-        const tp = new URLSearchParams(location.search).get('type') === 'boss' ? 'boss' : 'mon';
+        const tp = new URLSearchParams(location.search).get('type') || 'mon';
         qaGallery(tp);
       }, 80);
     }
@@ -3810,6 +3823,7 @@ for(const id of ART_MON) adoptArt(id, ART_DIR + 'mon/' + id + '.png');
 /* 頭目的圖不描金邊 —— 金邊是「這隻跟雜魚不一樣」的替代方案，
    有了專屬造型就不需要，硬加反而會蓋掉本來就畫好的輪廓。 */
 for(const id of ART_BOSS) adoptArt(id, ART_DIR + 'boss/' + id + '.png', true);
+for(const id of ART_NPC) adoptArt('npc#' + id, ART_DIR + 'npc/' + id + '.png');
 
 /* 道具圖示。鍵是「類別#編號」，跟 iconOf() 的快取鍵一樣 ——
    iconOf 只在 atlas 裡沒有東西的時候才去程式畫一張，
@@ -5189,7 +5203,12 @@ function makeShopShield(id){
   return c;
 }
 function villageGearIcon(cat,id){
-  return cat==='weap' ? makeShopWeapon(id) : makeShopShield(id);
+  /* 貨架要顯示玩家真正會撿到／裝上的那張正式圖。舊版在這裡另外程式畫
+     一把 16px 的劍，結果地牢裡很精緻、商店列表卻像替代圖示。 */
+  const defs = cat==='weap' ? WEAP : SHLD;
+  const idx = Math.max(0, defs.findIndex(d=>d.id===id));
+  const art = atlas[cat+'#'+idx] || (cat==='weap' ? makeShopWeapon(id) : makeShopShield(id));
+  return uiIcon(art);
 }
 /* 房間矩形內卻不能走的格子，不能再畫成「另一塊地板」。
    它可能是房形雕刻留下的凹洞、崩塌土塊、冰脊或柱座；共同規則是：
@@ -5538,7 +5557,7 @@ const TILE_ART = {
   stairs:tileHi(makeStairs()), rock:makeRock(),
   exit:tileHi(makeExit()),
 };
-const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
+let goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.height=T;
   const x=c.getContext('2d');
   // 三枚有厚度的古幣，不再畫成會和道具底盤混在一起的金色方盒。
   const coin=(bx,by)=>{
@@ -5549,6 +5568,15 @@ const goldIcon = (()=>{ const c=document.createElement('canvas'); c.width=T;c.he
   coin(3,9); coin(8,8); coin(6,4);
   px(x,PAL['v'],12,3,2,1); px(x,PAL['v'],13,2,1,3); px(x,PAL['+'],13,3,1,1);
   return c; })();
+/* 金錢也走正式 32px 素材。載入前仍保留上面的 16px 三枚古幣，網路慢時
+   不會閃成空白；載入後直接換成有完整受光頂面、厚度與散幣的金塊堆。 */
+artImage('gold#0', ART_DIR + 'item/gold00.png', c=>{
+  goldIcon=c;
+  if(typeof location!=='undefined'){
+    const q=new URLSearchParams(location.search);
+    if(q.get('qa')==='gallery'&&q.get('type')==='item') qaGallery('item');
+  }
+});
 /* 五種陷阱。數字 1、2 要保留舊存檔的語意：1 仍是直接傷害型、2 仍是中毒型。
    新的 32px 外部圖會優先使用；載入前仍有完整的 16px 程式圖，不會閃成空白。 */
 const TRAP_IDS = ['bear','poison','arrow','plant','acid'];
@@ -11558,7 +11586,7 @@ let npcSprite = null;
 /* 村民的樣子：跟村莊裡站的那幾個同一個骨架（土棕、成年）。
    共用剪影是刻意的 —— 玩家在村莊看過他們，所以不用解釋「這是誰」。 */
 function npcArt(){
-  if(!npcSprite) npcSprite = makeBlob('b', {age:'adult'});
+  if(!npcSprite || atlas['npc#merchant']) npcSprite = atlas['npc#merchant'] || makeBlob('b', {age:'adult'});
   return npcSprite;
 }
 /* 迷路的村民在「礦坑洞穴」第三層 —— 使用者原話是「第一關的第三層」，
@@ -11842,7 +11870,7 @@ const rubbleAt = (x,y)=>{
 };
 let masonSprite = null;
 function masonArt(){
-  if(!masonSprite) masonSprite = makeBlob('5', {age:'adult'});
+  if(!masonSprite || atlas['npc#mason']) masonSprite = atlas['npc#mason'] || makeBlob('5', {age:'adult'});
   return masonSprite;
 }
 /* 先問，再搬。跟村民那一段同一個形狀，而且是同一支 openTalk ——
@@ -14598,12 +14626,11 @@ function draw(dt){
   }
   for(const m of G.mons){
     if(G.seen[key(m.x,m.y)]!==2) continue;
-    // 「意識・複寫」的本體也長得跟你一樣 —— 分辨它的方法只有「它不跟著你動」
+    // 複寫出的殘像仍模仿主角；真正的核心使用獨立大型頭目造型，
+    // 避免在戰場上與玩家同尺寸、失去頭目應有的份量與辨識度。
     const mpose = motionOf(m);
-    const anim = m.d.mind === 2
-      ? heroAnimNow(m,mpose,m.id*1.7)
-      : animFrameFor(m.d.boss ? 'boss' : 'mon',m.d.id,m,mpose,m.id*1.7);
-    const img = anim ? anim.img : (m.d.mind === 2 ? heroNow() : (atlas[m.d.id] || atlas.rat));
+    const anim = animFrameFor(m.d.boss ? 'boss' : 'mon',m.d.id,m,mpose,m.id*1.7);
+    const img = anim ? anim.img : (atlas[m.d.id] || atlas.rat);
     const artName = anim ? anim.key : m.d.id;
     const [mx,my] = entPos(m);
     /* 蓄力中：腳下一圈會呼吸的金光。這一圈就是「下一下是重擊」的預告 ——
@@ -17232,7 +17259,8 @@ function paintVillageSceneV11(){
     {px:128,py:128,col:VILLAGE.col||'#',skin:VILLAGE.skin,hero:1},
   ].sort((a,b)=>a.py-b.py);
   for(const p of people){
-    const art=p.hero?blobFor(p.col,p.skin):makeBlob(p.col,{age:p.age});
+    const villageId = p.age==='old' ? 'elder' : (p.col==='l' ? 'smith' : p.col==='u' ? 'merchant' : 'child');
+    const art=p.hero?blobFor(p.col,p.skin):(atlas['npc#'+villageId]||makeBlob(p.col,{age:p.age}));
     R(p.px-6,p.py-1,12,2,'rgba(8,6,5,.46)');
     x.drawImage(art,p.px-9,p.py-18,18,18);
     if(p.hero){R(p.px-5,p.py-20,10,1,'rgba(245,220,122,.65)');R(p.px-2,p.py-21,4,1,'#fff1b1');}
@@ -17275,10 +17303,10 @@ function paintVillagePortrait(){
   const x=c.getContext('2d');
   c.width=220;c.height=96;x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);
   const cast=[
-    {art:makeBlob('b',{age:'old'}),   px:2,   py:37, s:48},
-    {art:makeBlob('l',{age:'adult'}), px:35,  py:28, s:56},
-    {art:makeBlob('u',{age:'adult'}), px:139, py:31, s:55},
-    {art:makeBlob('q',{age:'child'}), px:178, py:45, s:43},
+    {art:atlas['npc#elder']||makeBlob('b',{age:'old'}),       px:2,   py:37, s:48},
+    {art:atlas['npc#smith']||makeBlob('l',{age:'adult'}),     px:35,  py:28, s:56},
+    {art:atlas['npc#merchant']||makeBlob('u',{age:'adult'}),  px:139, py:31, s:55},
+    {art:atlas['npc#child']||makeBlob('q',{age:'child'}),     px:178, py:45, s:43},
     {art:blobFor(VILLAGE.col||'#',VILLAGE.skin),px:78,py:12,s:72,hero:1},
   ];
   for(const p of cast){
@@ -17623,9 +17651,9 @@ function renderVillage(){
   // 村民：同一個骨架，換顏色與年齡。玩家要先認出「這是同一族」，再分辨是誰。
   const folk = $('vfolk');
   if(folk && !folk.childElementCount){
-    for(const [col, age] of [['b','old'],['l','adult'],['q','child'],
-                             ['u','adult'],['6','old'],['m','child']]){
-      const c = uiIcon(makeBlob(col, {age}));
+    for(const [id,col,age] of [['elder','b','old'],['smith','l','adult'],['child','q','child'],
+                              ['merchant','u','adult'],['chief','6','old'],['mason','m','adult']]){
+      const c = uiIcon(atlas['npc#'+id] || makeBlob(col, {age}));
       folk.appendChild(c);
     }
   }
@@ -18223,20 +18251,38 @@ function qaGallery(type){
   let el=$('qagallery');
   if(!el){ el=document.createElement('section'); el.id='qagallery'; document.body.appendChild(el); }
   el.innerHTML='';
+  const npcNames={elder:'長老',smith:'鐵匠',merchant:'旅行商人',child:'村童',chief:'村長',mason:'石匠'};
+  let titleText='怪物美術驗收', subText='同一倍率並排檢查剪影、顏色與角色辨識度。', list=[];
+  if(type==='boss'){
+    titleText='頭目美術驗收'; subText='點任何一隻，直接進入該頭目房。';
+    list=BOSS.map(d=>({id:d.id,nm:d.nm,src:atlas[d.id]||atlas.rat,href:qaUrl({qa:'boss',boss:d.id,seed:260822})}));
+  }else if(type==='npc'){
+    titleText='村民美術驗收'; subText='六位村民皆為 48px 正式精靈，與主角共用圓身、兩手、四腳的種族語彙。';
+    list=ART_NPC.map(id=>({id,nm:npcNames[id]||id,src:atlas['npc#'+id]}));
+  }else if(type==='item'){
+    titleText='武器・盾牌・道具・金塊驗收'; subText='地牢拾取、背包與鐵匠鋪共用同一份 32px 正式圖示。';
+    for(const cat of ['food','herb','pot','scroll','wand','weap','shld']){
+      const n=cat==='scroll'?1:(ART_ITEM[cat]||0);
+      for(let i=0;i<n;i++) list.push({id:cat+String(i).padStart(2,'0'),nm:cat+' '+(i+1),src:atlas[cat+'#'+i]});
+    }
+    list.push({id:'gold00',nm:'金塊與古幣',src:goldIcon});
+  }else{
+    type='mon';
+    list=MONS.map(d=>({id:d.id,nm:d.nm,src:atlas[d.id]||atlas.rat}));
+  }
   const title=document.createElement('h1');
-  title.textContent=type==='boss'?'頭目美術驗收':'怪物美術驗收';
+  title.textContent=titleText;
   const sub=document.createElement('p'); sub.className='qasub';
-  sub.textContent=type==='boss'?'點任何一隻，直接進入該頭目房。':'同一倍率並排檢查剪影、顏色與角色辨識度。';
+  sub.textContent=subText;
   const nav=document.createElement('p'); nav.className='qasub';
   const home=document.createElement('a'); home.href=qaUrl({qa:'menu'}); home.textContent='← 回快速測試總表'; nav.appendChild(home);
   const grid=document.createElement('div'); grid.className='qagrid';
-  const list=type==='boss'?BOSS:MONS;
   for(const d of list){
-    const card=type==='boss'?document.createElement('a'):document.createElement('article');
+    const card=d.href?document.createElement('a'):document.createElement('article');
     card.className='qacard';
-    if(type==='boss') card.href=qaUrl({qa:'boss',boss:d.id,seed:260822});
+    if(d.href) card.href=d.href;
     const c=document.createElement('canvas');
-    const src=atlas[d.id] || atlas.rat; const sw=Math.max(16,src&&src.width||16), sh=Math.max(16,src&&src.height||16);
+    const src=d.src || atlas.rat; const sw=Math.max(16,src&&src.width||16), sh=Math.max(16,src&&src.height||16);
     c.width=sw; c.height=sh; const cx=c.getContext('2d'); cx.imageSmoothingEnabled=false;
     if(src) cx.drawImage(src,0,0,sw,sh);
     const nm=document.createElement('b'); nm.textContent=d.nm;
@@ -18343,6 +18389,8 @@ function qaMenu(){
     ['塔腳中繼之村',qaUrl({qa:'village',act:14})],
     ['全部怪物圖鑑',qaUrl({qa:'gallery',type:'mon'})],
     ['全部頭目圖鑑',qaUrl({qa:'gallery',type:'boss'})],
+    ['全部村民圖鑑',qaUrl({qa:'gallery',type:'npc'})],
+    ['武器・盾牌・道具・金塊',qaUrl({qa:'gallery',type:'item'})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
@@ -18387,7 +18435,7 @@ function startQa(){
   }else{
     // 先建立一次遊戲狀態，部分外部精靈載入完成後再畫圖鑑。
     newGame(seed);
-    if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')==='boss'?'boss':'mon'),250);
+    if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')||'mon'),250);
     else if(kind==='worlds') setTimeout(()=>qaWorldAudit(),250);
     else if(kind==='audio') setTimeout(()=>qaAudioAudit(),250);
     else qaMenu();
