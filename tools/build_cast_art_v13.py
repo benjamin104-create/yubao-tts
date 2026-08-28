@@ -350,6 +350,37 @@ def build_existing(out_root: Path) -> None:
             finished.save(target_dir / path.name, optimize=True)
 
 
+def build_missing_statics(out_root: Path, replace=()) -> None:
+    """Give every animated monster a matching 32px atlas/static sprite.
+
+    Four late-game entities historically existed only as animation sheets.
+    During play their motion loaded correctly, but galleries and the first
+    paint before network completion fell back to a 16px program silhouette.
+    The first authored frame is the correct neutral pose and keeps both paths
+    visually identical.
+    """
+    anim_dir = out_root / "anim" / "mon"
+    static_dir = out_root / "mon"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    replace = set(replace)
+    for path in sorted(anim_dir.glob("*.png")):
+        target = static_dir / path.name
+        if target.exists() and path.stem not in replace:
+            continue
+        sheet = Image.open(path).convert("RGBA")
+        if sheet.width < 32 or sheet.height < 32:
+            raise ValueError(f"monster animation sheet is too small: {path}")
+        frame = sheet.crop((0, 0, 32, 32))
+        # Static atlas art uses the closed 32-colour base palette; animation
+        # sheets may additionally contain glow colours for attacks.  Map the
+        # neutral frame back to the base palette without resizing or trimming.
+        neutral = pixelize(
+            frame, 32, palette=tuple(hex_to_rgb(c) for c in PALETTE_HEX),
+            keep_bg=True, trim=False,
+        )
+        neutral.save(target, optimize=True)
+
+
 def copy_into_web(preview: Path) -> None:
     for path in preview.rglob("*.png"):
         rel = path.relative_to(preview)
@@ -369,6 +400,7 @@ def main() -> None:
     if output.exists():
         shutil.rmtree(output)
     build_existing(output)
+    build_missing_statics(output)
     build_mind_echo(output)
     build_villagers(output)
     build_gold(output)
