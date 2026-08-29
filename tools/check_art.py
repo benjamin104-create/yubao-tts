@@ -289,7 +289,13 @@ else:
             # 地板、走道與牆面也必須填滿整張：透明背景或外圍留白反而會在
             # 重複鋪設時露出接縫。blocker* 則相反 —— 它是疊在地板上的
             # 獨立障礙物，規格要求透明背景、四周留白與落地接觸陰影。
-            is_scene = cat in ("promo", "village", "map") or (cat == "tile" and not is_tile_blocker)
+            # chapter-charcoal-hero 是疊在十八張炭筆全景上的透明角色層，
+            # 不是另一張全景。它刻意只佔畫面中央偏下，若要求 92% 覆蓋率，
+            # 反而會逼它帶著不透明背景，破壞序章的分層動畫。
+            is_scene_overlay = (cat == "promo" and
+                                parts[-1].startswith("chapter-charcoal-hero-"))
+            is_scene = ((cat in ("promo", "village", "map") and not is_scene_overlay) or
+                        (cat == "tile" and not is_tile_blocker))
             im = Image.open(os.path.join(dirpath, name)).convert("RGBA")
             px = list(im.getdata())
             cols = {p[:3] for p in px if p[3] > 0}
