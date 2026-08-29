@@ -66,5 +66,16 @@ t('手機主方向鍵加大、斜向鍵的實際觸控區縮小', ()=>{
   assert(/#cross \.dg\{[\s\S]*?width:72%;\s*height:72%/.test(html),'斜向鍵沒有縮小觸控區');
 });
 
+t('升級拉遠完成後會依目前 viewport 與角色位置重新鎖定鏡頭', ()=>{
+  const html=fs.readFileSync(__dirname+'/index.html','utf8');
+  assert(/function cameraTarget\(\)[\s\S]*?G\.p\.x\s*-\s*VW\/2[\s\S]*?G\.p\.y\s*-\s*VH\/2/.test(html),
+    '鏡頭中心沒有共用目前格數與玩家位置');
+  assert(/cameraSettle\s*=\s*G\.zoomTo/.test(html), '升級結束沒有排入拉遠後校正');
+  assert(/Math\.abs\(G\.zoom\s*-\s*cameraSettle\)[\s\S]*?snapCameraToPlayer\(\)/.test(html),
+    '拉遠抵達原倍率後沒有鎖回玩家中心');
+  assert(/if\(G\)\s*snapCameraToPlayer\(\)/.test(html),
+    '旋轉或改變 viewport 時沒有使用同一套中心公式');
+});
+
 console.log('\n手機畫質檢查：通過 %d，失敗 %d', pass, fail);
 process.exit(fail ? 1 : 0);

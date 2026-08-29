@@ -139,6 +139,16 @@ def embed_promo(html, full):
         if f.name not in used:
             sys.exit('開場第 %d 張炭筆畫沒有進去（%s）' % (i, f.name))
 
+    # 每章分鏡與四腳主角也是 CSS 背景。網站版漏檔會 404，單檔版則只會
+    # 安靜地顯示一片羊皮紙底色；把十九張逐一點名，不能靠肉眼猜。
+    for i in range(1, 19):
+        f = promo / ('chapter-charcoal-%02d-v1.jpg' % i)
+        if f.name not in used:
+            sys.exit('第 %d 章炭筆分鏡沒有進去（%s）' % (i, f.name))
+    hero = promo / 'chapter-charcoal-hero-v1.png'
+    if hero.name not in used:
+        sys.exit('章節分鏡的四腳主角沒有進去（%s）' % hero.name)
+
     return html, used, total_raw, total_out
 
 
@@ -207,7 +217,7 @@ def main():
             path = pathlib.Path(dirpath) / f
             rel = str(path.relative_to(root))
             # promo/ 底下同時放著兩種完全不同的東西：遊戲跑起來真的會用到的
-            # 封面與開場炭筆畫（下面 embed_promo() 處理，一定要進來），
+            # 封面、開場與每章炭筆畫（下面 embed_promo() 處理，一定要進來），
             # 以及純宣傳海報（12 MB，遊戲從頭到尾不會讀它）。
             # 這裡一律跳過，交給 embed_promo() 去挑「畫面上真的引用到的」。
             if rel.replace('\\', '/').startswith('promo/'):

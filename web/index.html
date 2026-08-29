@@ -263,6 +263,46 @@ body{
   background-image:url("art/promo/prologue-charcoal-4-v1.jpg");
   animation:charcoalAwake 6.5s steps(7,end) both;
 }
+#chapterhero{
+  display:none; position:absolute; z-index:2; right:7%; bottom:25%;
+  width:min(31vw,430px); aspect-ratio:430/369; pointer-events:none;
+  background:url("art/promo/chapter-charcoal-hero-v1.png") center bottom/contain no-repeat;
+  filter:contrast(1.06) saturate(1.06);
+}
+/* 每章一張 3:2 炭筆分鏡，跟序章共用同一個舞台。背景與主角分層，
+   因此只需小幅的分段位移就有動畫感，不必讓手機解碼十八支影片。 */
+#prologuevisual.chapter{background:#8d7149}
+#prologuevisual.chapter #prologueart{
+  inset:-4%; background-position:center 44%; background-size:cover;
+  filter:contrast(1.08) saturate(1.06);
+  animation:chapterDrift 7.2s steps(12,end) both;
+}
+#prologuevisual.chapter #chapterhero{
+  display:block; animation:chapterHeroIn 7.2s steps(12,end) both;
+}
+#prologuevisual.chapter::before{
+  inset:-8%; opacity:.22;
+  background:linear-gradient(118deg,rgba(240,206,104,.22),transparent 38%,rgba(29,88,160,.18));
+  mix-blend-mode:color;
+}
+#prologuevisual.chapter-01 #prologueart{background-image:url("art/promo/chapter-charcoal-01-v1.jpg")}
+#prologuevisual.chapter-02 #prologueart{background-image:url("art/promo/chapter-charcoal-02-v1.jpg")}
+#prologuevisual.chapter-03 #prologueart{background-image:url("art/promo/chapter-charcoal-03-v1.jpg")}
+#prologuevisual.chapter-04 #prologueart{background-image:url("art/promo/chapter-charcoal-04-v1.jpg")}
+#prologuevisual.chapter-05 #prologueart{background-image:url("art/promo/chapter-charcoal-05-v1.jpg")}
+#prologuevisual.chapter-06 #prologueart{background-image:url("art/promo/chapter-charcoal-06-v1.jpg")}
+#prologuevisual.chapter-07 #prologueart{background-image:url("art/promo/chapter-charcoal-07-v1.jpg")}
+#prologuevisual.chapter-08 #prologueart{background-image:url("art/promo/chapter-charcoal-08-v1.jpg")}
+#prologuevisual.chapter-09 #prologueart{background-image:url("art/promo/chapter-charcoal-09-v1.jpg")}
+#prologuevisual.chapter-10 #prologueart{background-image:url("art/promo/chapter-charcoal-10-v1.jpg")}
+#prologuevisual.chapter-11 #prologueart{background-image:url("art/promo/chapter-charcoal-11-v1.jpg")}
+#prologuevisual.chapter-12 #prologueart{background-image:url("art/promo/chapter-charcoal-12-v1.jpg")}
+#prologuevisual.chapter-13 #prologueart{background-image:url("art/promo/chapter-charcoal-13-v1.jpg")}
+#prologuevisual.chapter-14 #prologueart{background-image:url("art/promo/chapter-charcoal-14-v1.jpg")}
+#prologuevisual.chapter-15 #prologueart{background-image:url("art/promo/chapter-charcoal-15-v1.jpg")}
+#prologuevisual.chapter-16 #prologueart{background-image:url("art/promo/chapter-charcoal-16-v1.jpg")}
+#prologuevisual.chapter-17 #prologueart{background-image:url("art/promo/chapter-charcoal-17-v1.jpg")}
+#prologuevisual.chapter-18 #prologueart{background-image:url("art/promo/chapter-charcoal-18-v1.jpg")}
 @keyframes towerBuild{
   0%{clip-path:inset(72% 0 0);transform:scale(1.08) translateY(2%);filter:contrast(.72) saturate(.55)}
   100%{clip-path:inset(0);transform:scale(1.015);filter:contrast(1.05) saturate(.88)}
@@ -282,6 +322,18 @@ body{
   0%{opacity:.38;transform:scale(1.045) translateY(14px);filter:contrast(.72) grayscale(.72) brightness(.72)}
   35%{opacity:.82;transform:scale(1.03) translateY(7px)}
   100%{opacity:1;transform:scale(1.015);filter:contrast(1.08) grayscale(.04) brightness(1)}
+}
+@keyframes chapterDrift{
+  0%{opacity:.35;transform:scale(1.075) translate(-1.5%,1.5%);filter:contrast(.78) saturate(.62)}
+  18%{opacity:1}
+  100%{opacity:1;transform:scale(1.015);filter:contrast(1.08) saturate(1.06)}
+}
+@keyframes chapterHeroIn{
+  0%{opacity:0;transform:translate(22px,18px) scale(.92)}
+  22%{opacity:0;transform:translate(18px,14px) scale(.94)}
+  48%{opacity:1;transform:translate(0,0) scale(1)}
+  76%{transform:translateY(-2px) scale(1.008)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
 }
 @keyframes charcoalBoil{0%{transform:translate(-1px,0) rotate(-.04deg)}100%{transform:translate(1px,1px) rotate(.04deg)}}
 #prologue::after{
@@ -1428,6 +1480,8 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
      對話框蓋住。固定讓圖佔上方 72%，左右只裁掉不重要的建築。 */
   #prologueart{inset:0;background-size:auto 72%;background-position:center top}
   #prologuevisual.scene-0{background-size:auto 72%;background-position:center top}
+  #prologuevisual.chapter #prologueart{inset:-2%;background-size:auto 72%;background-position:center top}
+  #prologuevisual.chapter #chapterhero{right:-1%;bottom:34%;width:min(52vw,235px)}
   #prologuebody{min-height:6.2em; font-size:14px; line-height:1.75}
   #prologueactions{gap:7px}
   #pronext,#proskip{padding:8px 12px; font-size:12px}
@@ -1480,6 +1534,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   <div id="prologue" aria-live="polite">
     <div id="prologuevisual" class="scene-0" aria-hidden="true">
       <div id="prologueart"></div>
+      <div id="chapterhero"></div>
     </div>
     <div id="prologuebox">
       <div id="prologuekicker">PROLOGUE</div>
@@ -2502,6 +2557,9 @@ ui.coverplaying|Title theme playing|タイトル曲 再生中
 ui.pronext|Next|つぎへ
 ui.prostart|Begin the adventure|冒険をはじめる
 ui.proskip|Skip prologue|プロローグをスキップ
+ui.chapterenter|Enter chapter|章へ入る
+ui.chapterskip|Skip animation|演出をスキップ
+ui.chaptercard|CHAPTER {n} / {total}|第 {n} 章 / {total}
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
@@ -3260,6 +3318,7 @@ p.putback|Put them back|たなに もどす
 p.staying|Cancel (stay in the shop)|とりけし（みせに のこる）
 p.forceout|Walk out anyway (divine punishment)|むりやり でる（てんばつ）
 p.tapitem|Tap an item to see what you can do.|アイテムを タップすると そうさが でる。
+p.shopsellhint|Choose an item to sell. The bag stays open after every sale.|うるものを えらぼう。うったあとも もちものは ひらいたまま。
 p.equipped|equipped|そうびちゅう
 p.nothinghere|Nothing underfoot.|あしもとには なにも ない。
 p.potuses|{n} uses left|あと {n}かい つかえる
@@ -3661,7 +3720,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260828-combat-ui-art-v14';
+const ART_REV = '20260829-chapter-charcoal-v15';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -7834,6 +7893,8 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                    使用者：「若主角沒有持有『Token 金庫』的冒險狀態中，
                    會耗損，挑戰 3 次」—— 所以它存的是次數不是有無。 */
                 ult: {}, sideKey: 0, sideDone: 0, circletDone: 0,
+                /* 每章炭筆分鏡只在第一次進章時播放；重打同章不反覆攔住玩家。 */
+                chapterSeen: {},
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -7850,6 +7911,12 @@ function sanitizeJobs(raw){
       prog: Math.max(0, Math.min(JOB_PER_LV - 1, r.prog | 0)),
     };
   }
+  return out;
+}
+function sanitizeChapterSeen(raw){
+  const out = {};
+  if(!raw || typeof raw !== 'object') return out;
+  for(const a of ACTS) if(raw[a.id]) out[a.id] = 1;
   return out;
 }
 /* 究極裝備的剩餘次數。存檔在 localStorage，誰都改得動 ——
@@ -7913,6 +7980,7 @@ function loadVillage(){
           sideKey: v.sideKey ? 1 : 0,
           sideDone: v.sideDone ? 1 : 0,
           circletDone: v.circletDone ? 1 : 0,
+          chapterSeen: sanitizeChapterSeen(v.chapterSeen),
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
           skin: SKINS.includes(v.skin) ? v.skin : 'blob',
@@ -8191,9 +8259,12 @@ function newGame(seed){
     log:[], anim:[], shake:0, floats:[], parts:[], rings:[], trapFx:[], corpses:[], tookDamage:0,
     zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
   };
-  // 開場只有一個麵包。武器、盾牌、藥草全部要自己在地牢裡找 ——
-  // 第一件武器因此變成一個事件，而不是一開始就在背包裡的預設值。
+  // 每次進迷宮固定只發一個麵包與一株已知的回復草。不同章節不再偷偷
+  // 加發大麵包或第二株草；玩家帶進來的村莊裝備／保存壺則仍是自己的財產。
+  // 武器與盾牌不免費發，第一件裝備仍要靠探索或村莊準備。
   G.p.inv.push(mk('food','bread'));
+  G.p.inv.push(mk('herb','heal',{known:1}));
+  G.known['herb/heal'] = 1;
   // 這一趟的目的地已經決定好了，旗標就地清掉 ——
   // 留著的話，死一次之後按「再下一次」會莫名其妙又進副本
   if(typeof sideRun !== 'undefined') sideRun = 0;
@@ -8221,17 +8292,8 @@ function newGame(seed){
     G.p.lv++; G.p.mhp += rng.i(6,11);
   }
   G.p.hp = G.p.mhp;
-  /* 中途章節多給的只有「口糧」，不給裝備。
-     曾經給過：一章開場自動配一把該深度最好的劍與盾。那是為了讓走通測試
-     過得去，但對玩家是把整個村莊的意義抹掉 —— 在鐵匠鋪咬牙買下鋼之劍，
-     下去才發現遊戲本來就要送你一把，那一刻買的不是裝備，是被騙的感覺。
-     裝備現在只有三個來源，而且全部是玩家自己的決定：
-     地牢裡撿到的、村裡買的、上一趟收進保存壺帶下來的。 */
-  if(G.act > 0){
-    for(let i=0;i<2;i++) G.p.inv.push(mk('herb','heal',{known:1}));
-    G.p.inv.push(mk('food','big'));
-    G.known['herb/heal'] = 1;
-  }
+  /* 中後期也不額外發口糧。章節難度要靠樓層補給與玩家在村莊的準備承擔，
+     不能因為從較深章節出發，就把「只給一草一麵包」悄悄改成三、四件。 */
   // 章節獎勵：純淨之泉（體力上限）與勇者的頭盔（防禦）跨死亡保留
   if(VILLAGE.hpBonus){ G.p.mhp += VILLAGE.hpBonus; G.p.hp = G.p.mhp; }
   // 餘力煉成買來的力量。跟上面兩個一樣存在村莊 ——
@@ -9269,15 +9331,15 @@ function rollDmg(atk, def, crit, mult){
   raw *= (0.9375 + G.rng()*0.125) * (mult||1);
   return Math.max(1, Math.floor(raw));
 }
-/* 頭目的攻擊不能被一面中階盾牌壓回雜魚數字。一般怪仍吃完整防禦；頭目只
-   吃一半，並保留隨深度成長的最低傷害。這不是無視裝備：鋼盾仍然比木盾
-   少痛，但不會再出現王揮巨劍只扣 2～3 點、玩家站著互砍也不必移動。 */
+/* 頭目的攻擊不能被一面中階盾牌壓回雜魚數字。裝備防禦仍然完整生效，
+   但頭目保留四點的最低傷害：鋼盾仍然有價值，也不會再出現王揮
+   巨劍只扣 2～3 點。不要直接砍半防禦，否則後期會變成無法通關的數值牆。 */
 function rollEnemyDmg(m, atk, mult, crit){
   const boss=!!(m&&m.d&&m.d.boss), mul=mult||1;
-  const def=boss ? pDef()*.5 : pDef();
+  const def=pDef();
   let dmg=rollDmg(atk,def,!!crit,mul);
   if(boss){
-    const floor=Math.ceil(atk*(.70+.10*bossTense(G.md||0))*mul);
+    const floor=Math.ceil(4*mul);
     dmg=Math.max(dmg,floor);
   }
   return dmg;
@@ -9351,6 +9413,7 @@ function startLevelUpCelebration(o){
   // 一次擊殺跨兩級時只播一段完整樂句；第二次只加一束粒子，避免兩首疊成爆音。
   if(G.levelFx){ burst(o.x,o.y,14,'#fff2b0',36,24,.72); return; }
   const returnZoom = Number.isFinite(G.zoomTo) ? G.zoomTo : FIELD_ZOOM;
+  cameraSettle = null;
   G.anim = G.anim.filter(a=>a.o!==o);
   G.anim.push({o,t:0,dur:LEVEL_FANFARE_DUR,kind:'level'});
   G.levelFx = {t:0,dur:LEVEL_FANFARE_DUR,returnZoom,mid:false,crest:false};
@@ -13407,6 +13470,11 @@ for(let i=0;i<16;i++) MOTES.push({
 const cv = document.getElementById('game'), cx = cv.getContext('2d');
 cx.imageSmoothingEnabled = false;
 let camX=0, camY=0;
+/* 升級推近收回之後，不可以只把倍率改回 1：iPad 橫向的 CSS 版面與
+   直式手機不同，瀏覽器工具列收合也可能在演出途中改變可用寬度。等拉遠
+   真正抵達常態倍率時，再依「現在的玩家位置、現在的格數、現在的面板寬度」
+   鎖一次中心，才不會把演出前的舊座標帶回來。 */
+let cameraSettle = null;
 
 // 背包面板寬度換算成格數 —— 面板是 CSS 尺寸、畫面是像素尺寸，
 // 硬寫常數會在改版面時失準，直接量。
@@ -13414,6 +13482,15 @@ function panelTiles(){
   const w = cv.getBoundingClientRect().width;
   if(!w) return 6.6;
   return document.getElementById('panel').getBoundingClientRect().width / (w/VW);
+}
+function cameraTarget(){
+  const shift = panelMode ? panelTiles()/2 : 0;
+  return {x:G.p.x - VW/2 + .5 + shift, y:G.p.y - VH/2 + .5};
+}
+function snapCameraToPlayer(){
+  if(!G || !G.p) return;
+  const target = cameraTarget();
+  camX = target.x; camY = target.y;
 }
 let lastOx=0, lastOy=0, lastZ=1, rockPat=null;
 // 世界座標 → 螢幕座標。名牌是 DOM 元素，滑鼠點擊也要反推，
@@ -13735,8 +13812,8 @@ function draw(dt){
   // 夾住的話玩家走到邊角時房間會被推到畫面一側，另一半是死黑；
   // 而地圖外和未探索一樣是黑的，不夾反而構圖永遠是平衡的。
   // 背包開著時把鏡頭往右推，玩家才不會被面板蓋住。
-  const shift = panelMode ? panelTiles()/2 : 0;
-  const tx = G.p.x - VW/2 + .5 + shift, ty = G.p.y - VH/2 + .5;
+  const target = cameraTarget();
+  const tx = target.x, ty = target.y;
   camX += (tx - camX) * Math.min(1, dt*14);
   camY += (ty - camY) * Math.min(1, dt*14);
 
@@ -13744,6 +13821,21 @@ function draw(dt){
      推近本身沒有任何機制意義，它只是在說「接下來這一段不一樣」。
      縮放是對畫布中心做的，而玩家永遠在畫布中心，所以推近不會失焦。 */
   G.zoom += (G.zoomTo - G.zoom) * Math.min(1, dt * 4.5);
+  /* 等升級鏡頭真的拉回原倍率才校正。一般手機／電腦本來就在 target 上，
+     這次賦值是無感的；iPad 橫向若在演出中發生 viewport 重算，則會在這裡
+     一次回到正確中心，不需要玩家再按兩步讓追蹤鏡頭慢慢追上。 */
+  if(cameraSettle !== null && Math.abs(G.zoom - cameraSettle) < .012){
+    G.zoom = cameraSettle; G.zoomTo = cameraSettle;
+    snapCameraToPlayer(); cameraSettle = null;
+  }
+  if(QA_MODE){
+    cv.dataset.qaCamera = JSON.stringify({
+      viewport:[innerWidth,innerHeight], grid:[VW,VH], player:[G.p.x,G.p.y],
+      camera:[camX,camY], target:[target.x,target.y], zoom:G.zoom,
+      zoomTo:G.zoomTo, settling:cameraSettle !== null,
+      levelFx:G.levelFx ? {t:G.levelFx.t,dur:G.levelFx.dur} : null, freeze:G.freeze||0
+    });
+  }
   const Z = G.zoom;
 
   const ox = -Math.round(camX*T), oy = -Math.round(camY*T);
@@ -15311,7 +15403,7 @@ function fitViewport(){
   cv.style.aspectRatio = VW + ' / ' + VH;
   cx.imageSmoothingEnabled = false;       // 改 canvas.width 會把 context 狀態重設
   rockPat = null;                         // 圖樣綁在舊的繪圖狀態上，一起重建
-  if(G){ camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5; }
+  if(G) snapCameraToPlayer();
   fitCanvas();
 }
 addEventListener('resize', fitViewport);
@@ -15371,6 +15463,7 @@ function loop(ts){
       if(fx.t>=fx.dur){
         const bossStillHere=!!(G.f && G.f.bossLock && G.mons.some(m=>m.d && m.d.boss));
         G.zoomTo=bossStillHere ? (fx.returnZoom||FIELD_ZOOM) : FIELD_ZOOM;
+        cameraSettle=G.zoomTo;
         G.levelFx=null;
       }
     }
@@ -15998,7 +16091,9 @@ function renderPanel(){
   if(panelMode==='inv'){
     $('ptitle').textContent = TX('p.bag','背包');
     $('pcount').textContent = `${p.inv.length} / 20　${p.gold} G`;
-    $('phint').textContent = sel ? nameOf(sel) : TX('p.tapitem','點選道具查看可用的操作。');
+    $('phint').textContent = sel ? nameOf(sel)
+      : (inShop() ? TX('p.shopsellhint','選擇要賣的物品；每次賣出後背包會保持開啟。')
+                  : TX('p.tapitem','點選道具查看可用的操作。'));
     for(const it of p.inv){
       const row = document.createElement('div');
       row.className='row';
@@ -16106,7 +16201,9 @@ function buildActions(it, ground){
         p.gold += sp; removeItem(it); SFX.play('coin');
         say(M('m.sell','賣掉了「{nm}」，得到 {n} G。',{nm:nameOf(it),n:sp}),'gold');
         keeperSay(keepLine(G.rng.pick([['k.sell1','收下了。'],['k.sell2','這個我留著自己用。'],['k.sell3','再多帶一點下來。']])));
-        closePanel(); endTurn();
+        /* 留在背包：玩家可以直接選下一件繼續賣，不必每件都重新按 B。
+           回合照樣推進，沒有改商店與怪物的規則；refresh() 會重畫清單與金額。 */
+        sel=null; endTurn();
       }, it===p.weap || it===p.shld);
     }
     if(swapMode){
@@ -16777,11 +16874,13 @@ document.querySelectorAll('[data-act]').forEach(b=>{
     }
   };
 });
+/* 章節分鏡的實作在封面控制器裡；村莊出發流程比它早宣告，先留一個鉤子。 */
+let playChapterPrelude = null;
 $('vgo').onclick = ()=>{
   sideRun = 0;
   closeVillage();
   $('over').classList.remove('show');
-  restart();
+  restart(true);
 };
 /* 這一趟是不是副本。restart() → newGame() 讀的是 VILLAGE.act，
    而副本不能動 VILLAGE.act（動了主線的進度就跳掉了），
@@ -16791,7 +16890,7 @@ $('vside').onclick = ()=>{
   sideRun = 1;
   closeVillage();
   $('over').classList.remove('show');
-  restart();
+  restart(true);
 };
 $('restart').onclick = ()=>{
   // 解鎖過村莊的話，死亡之後先回村 —— 買到的裝備還在，那是繼續玩下去的理由
@@ -16803,14 +16902,21 @@ $('restart').onclick = ()=>{
   }
   restart();
 };
-function restart(){
+function restart(withChapterPrelude){
   $('over').classList.remove('show');
   closePanel(); closeBigMap(); closeVillage();
   pendWand=null; pendThrow=null; pendSpell=null; swapMode=null;
   newGame((Math.random()*1e9)|0);
-  BGM.start(); showCard();
-  camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
-  refresh();
+  const enter=()=>{
+    BGM.force(null); BGM.start(); showCard();
+    camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
+    refresh(); saveRun();
+  };
+  if(withChapterPrelude && playChapterPrelude){
+    playChapterPrelude(G.act, enter);
+    return;
+  }
+  enter();
 }
 
 /* ─── 村莊 ──────────────────────────────────────────────────── */
@@ -18178,6 +18284,7 @@ heroArtHooks.push(paintCover);
   const PROLOGUE_ART = ART_DATA ? []
     : [1,2,3,4].map(i=>`art/promo/prologue-charcoal-${i}-v1.jpg`);
   let proIndex=0, proTimer=0, prologueArtWarmed=false;
+  let chapterDone=null, chapterTimer=0, chapterActId='';
 
   function warmPrologueArt(){
     if(prologueArtWarmed) return;
@@ -18221,7 +18328,52 @@ heroArtHooks.push(paintCover);
     proIndex++; renderPrologue();
   }
 
+  function finishChapterPrelude(){
+    clearTimeout(chapterTimer); chapterTimer=0;
+    const done=chapterDone;
+    chapterDone=null;
+    if(chapterActId){
+      VILLAGE.chapterSeen = VILLAGE.chapterSeen || {};
+      VILLAGE.chapterSeen[chapterActId] = 1;
+      saveVillage();
+    }
+    chapterActId='';
+    coverUp=false;
+    pro.classList.remove('show'); pro.setAttribute('aria-hidden','true');
+    proVisual.className='scene-0';
+    BGM.force(null);
+    if(done) done();
+  }
+
+  /* 每章第一趟下潛前播放一張可動的炭筆分鏡。插畫與序章同材質，
+     四腳主角是獨立透明層，所以能保持角色一致、又不必下載影片。 */
+  playChapterPrelude=(actIndex,done,force)=>{
+    const idx=Math.max(0,Math.min(ACTS.length-1,actIndex|0)), a=actAt(idx);
+    VILLAGE.chapterSeen = VILLAGE.chapterSeen || {};
+    if(!force && VILLAGE.chapterSeen[a.id]){ if(done) done(); return false; }
+    clearTimeout(proTimer); clearTimeout(chapterTimer);
+    chapterDone=typeof done==='function'?done:()=>{};
+    chapterActId=a.id;
+    const n=String(idx+1).padStart(2,'0');
+    if(!ART_DATA){ const im=new Image(); im.src=`art/promo/chapter-charcoal-${n}-v1.jpg`; }
+    $('prologuekicker').textContent=M('ui.chaptercard','第 {n} 章 / {total}',{n:idx+1,total:ACTS.length});
+    $('prologuetitle').textContent=locAct(a);
+    $('prologuebody').textContent=TX('acti.'+a.id,a.intro);
+    $('pronext').textContent=TX('ui.chapterenter','進入章節');
+    $('proskip').textContent=TX('ui.chapterskip','略過動畫');
+    $('prologuedots').innerHTML='<i></i><i class="on"></i><i></i>';
+    proVisual.className=''; void proVisual.offsetWidth;
+    proVisual.className=`chapter chapter-${n}`;
+    coverUp=true; cov.classList.add('gone');
+    pro.classList.add('show'); pro.setAttribute('aria-hidden','false');
+    SFX.unlock(); SFX.play('stairs',65); BGM.force('title'); BGM.start();
+    if(!matchMedia('(prefers-reduced-motion:reduce)').matches)
+      chapterTimer=setTimeout(finishChapterPrelude,7200);
+    return true;
+  };
+
   function beginPrologue(){
+    clearTimeout(chapterTimer); chapterDone=null; chapterActId='';
     titleMusic();
     warmPrologueArt();
     coverUp=true; cov.classList.add('gone');
@@ -18240,6 +18392,9 @@ heroArtHooks.push(paintCover);
     SFX.unlock();                 // 按鈕本身就是瀏覽器要求的那個「使用者手勢」
     SFX.play('stairs');
     BGM.force(null); BGM.start();
+    VILLAGE.chapterSeen = VILLAGE.chapterSeen || {};
+    VILLAGE.chapterSeen.temple = 1;
+    saveVillage();
     refresh();
     showCard();
     if(matchMedia('(hover:none) and (pointer:coarse)').matches) $('hint').classList.add('show');
@@ -18256,8 +18411,8 @@ heroArtHooks.push(paintCover);
        樓層起點才是安全的存檔點，因為那一刻玩家還沒撿走任何東西。 */
     saveRun();
   }
-  $('pronext').onclick=nextPrologue;
-  $('proskip').onclick=enterDungeon;
+  $('pronext').onclick=()=>chapterDone?finishChapterPrelude():nextPrologue();
+  $('proskip').onclick=()=>chapterDone?finishChapterPrelude():enterDungeon();
   $('start').onclick = ()=>{
     clearRun();                   // 重新開始就是放棄紀錄點，講明白就好
     beginPrologue();
@@ -18362,6 +18517,17 @@ function qaEnterEscort(seed){
   G.npc={x:np.x,y:np.y,hp:NPC_HP,mhp:NPC_HP,follow:1,hurt:0};
   vision(); qaOpenWorld(); camX=st.x-VW/2+.5; camY=st.y-VH/2+.5; refresh();
   say('尺寸驗收：迷路村民與主角同級顯示；旁邊是原生 32px 的新版下樓梯。','gold');
+}
+function qaEnterShop(seed){
+  const mine=ACTS.findIndex(a=>a.id==='mine');
+  qaEnterFloor(mine<0?0:mine,1,seed);
+  G.mons=[]; G.items={}; G.gold={}; G.traps={};
+  const room=roomOf(G.p.x,G.p.y);
+  G.shop={room,keeper:{x:G.p.x+2,y:G.p.y},stock:[]};
+  G.p.gold=120;
+  G.p.inv=[mk('weap','club',{known:1}),mk('herb','heal',{known:1}),mk('scroll','ident',{known:1})];
+  vision(); qaOpenWorld(); snapCameraToPlayer(); refresh(); openPanel('inv');
+  say('操作驗收：賣出後背包保持開啟，可直接選下一件。','gold');
 }
 function qaEnterBoss(id,seed){
   const wanted=bossById(id) || BOSS[0];
@@ -18571,8 +18737,10 @@ function qaMenu(){
     ['迷路村民・新版樓梯',qaUrl({qa:'escort',seed:260822})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
+    ['商店連續賣出驗收',qaUrl({qa:'shop',seed:260822})],
     ['遊戲音樂驗收台',qaUrl({qa:'audio'})],
     ['升級演出驗收',qaUrl({qa:'levelup',act:'temple',floor:1,seed:260822})],
+    ['章節炭筆動畫驗收',qaUrl({qa:'chapter',act:'mine',seed:260822})],
   ]){
     const a=document.createElement('a'); a.className='qacard'; a.href=href; a.textContent=label; top.appendChild(a);
   }
@@ -18608,6 +18776,12 @@ function startQa(){
   else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
   else if(kind==='traps') qaEnterTraps(seed);
   else if(kind==='escort') qaEnterEscort(seed);
+  else if(kind==='shop') qaEnterShop(seed);
+  else if(kind==='chapter'){
+    const a=qaActIndex(QA_QUERY.get('act')||'mine');
+    qaEnterFloor(a,1,seed);
+    playChapterPrelude(a,()=>{ qaOpenWorld(); refresh(); },true);
+  }
   else if(kind==='village'){
     const a=qaActIndex(QA_QUERY.get('act')||0); VILLAGE.act=a; VILLAGE.gold=99999;
     newGame(seed); qaOpenWorld(); renderVillage(); $('village').classList.add('show');

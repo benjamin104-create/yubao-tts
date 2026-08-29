@@ -6,6 +6,7 @@
 // 沉默的失效比崩潰難抓，所以每一個有特殊效果的道具都要有一條斷言。
 const { api } = require('./simcore.js');
 const assert = require('assert');
+const fs = require('fs');
 
 const V = api.VILLAGE();
 /* 章節一律用 id 找，不寫索引。這一支裡本來有一整排 `G.act = 10`，
@@ -1003,6 +1004,32 @@ t('主動找架打的時候，回血要少於挨打', ()=>{
   assert(dmg > 300, '樣本要夠大（' + turns + ' 回合、挨打 ' + dmg + ' 點）');
   assert(pct < 85,
     '回血是挨打的 ' + pct.toFixed(0) + '%（上限 85%）—— 超過就代表傷害留不住');
+});
+
+t('商店賣出一件後背包保持開啟，可以直接選下一件', ()=>{
+  const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+  const from = html.indexOf("btn(M('b.sell'");
+  const to = html.indexOf('}, it===p.weap || it===p.shld)', from);
+  assert(from >= 0 && to > from, '找不到商店賣出動作');
+  const sale = html.slice(from, to);
+  assert(/sel\s*=\s*null;\s*endTurn\(\)/.test(sale), '賣出後沒有清除舊選取並回到清單');
+  assert(!/closePanel\(\)/.test(sale), '賣出後仍會關閉背包，玩家還得重按 B');
+  assert(/p\.shopsellhint\|/.test(html), '商店背包沒有提示可以連續賣出');
+});
+
+t('每次進迷宮只配給一個回復草與一個麵包，深章節也不加發', ()=>{
+  for(const id of ['temple','gaol']){
+    V.act=AI(id); V.stock=[]; V.pots=[]; V.ult={}; V.godsword=0;
+    V.pocket={open:false,item:null};
+    api.newGame(6200 + V.act);
+    const ration=api.G().p.inv.filter(i=>i.cat==='food'||i.cat==='herb');
+    assert.strictEqual(ration.filter(i=>i.cat==='food'&&i.id==='bread').length,1,
+      id+' 應該恰好只有一個麵包');
+    assert.strictEqual(ration.filter(i=>i.cat==='herb'&&i.id==='heal').length,1,
+      id+' 應該恰好只有一個回復草');
+    assert.strictEqual(ration.length,2,id+' 不應再加發大麵包或第二株草');
+    assert(api.G().known['herb/heal'],'開場回復草應該已鑑定');
+  }
 });
 
 console.log('\n通過 %d，失敗 %d', pass, fail);
