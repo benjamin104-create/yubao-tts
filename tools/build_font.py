@@ -228,7 +228,7 @@ def build(name, spec, want, verbose=True):
 （正體是「殘」「滿」），而為了兩個字再內嵌一整套思源宋體日文版
 要多兩百多 KB。讓它們落到系統字型上，只有日文介面的那兩個詞
 會跟旁邊的字差一點點 —— 那個代價比兩百 KB 便宜太多。"""
-SYSTEM_FALLBACK = (set('←↑→↓↖↗↘↙≠≡␣Ⓣ✕✗×·　ⅠⅡⅢ')
+SYSTEM_FALLBACK = (set('←↑→↓↔↖↗↘↙≠≡␣Ⓣ✕✗×·　ⅠⅡⅢ')
                    | set('残満戻数継続聴覚険剣壊巻薬静'))
 
 
@@ -252,7 +252,7 @@ def check(want):
         miss = sorted(need - have)
         if miss:
             print('✗ %s 少了 %d 個字：%s'
-                  % (p.name, len(miss), ''.join(chr(c) for c in miss[:40])))
+                  % (p.name, len(miss), ''.join(chr(c) for c in miss)))
             bad += 1
         else:
             print('✓ %s　%d 字　%.0f KB' % (p.name, len(have), p.stat().st_size / 1024))

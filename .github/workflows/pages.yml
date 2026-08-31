@@ -1,8 +1,7 @@
 # 把 web/ 直接發到 GitHub Pages。
 #
-# 這款遊戲是零依賴的單檔 HTML —— 沒有建置步驟、沒有 node_modules、
-# 沒有要編譯的東西。所以這支流程只做一件事：把資料夾原封不動送上去。
-# 任何「先 build 再部署」的寫法在這裡都只是多一個會壞掉的地方。
+# 遊戲本身不需要編譯。只有新增文字超過既有字型子集時，才在雲端
+# 補齊字型並重新驗證，再將 web/ 發布；不需要在開發者電腦安裝字型。
 name: Deploy to GitHub Pages
 
 on:
@@ -79,6 +78,9 @@ jobs:
           # 字型是子集化的：只收玩家真的會顯示的那 1400 個字。
           # 加了新的中文訊息卻忘了重建，畫面上會冒出幾個豆腐 ——
           # 不報錯、不當機，而且只有中文介面看得到。
+          if ! python tools/build_font.py --check; then
+            python tools/build_font.py
+          fi
           python tools/build_font.py --check
           # 單檔打包也要跑得起來。這款遊戲的識別就是「一個檔案打開就能玩」，
           # 而打包靠 index.html 裡一個叫 ART_DATA 的鉤子 ——
@@ -86,6 +88,13 @@ jobs:
           # 沒有人會發現，直到要散佈的那一天。
           # 工具本身會驗每一個鍵都寫進去了，所以跑得過就代表打包是好的。
           python tools/build_single.py /tmp/single.html
+      - name: 保留雲端字型成品
+        uses: actions/upload-artifact@v4
+        with:
+          name: babel-fonts-${{ github.sha }}
+          path: web/font/*.woff2
+          if-no-files-found: error
+          retention-days: 7
       - name: 版面與多語言測試（需要真的瀏覽器）
         run: |
           pip install --quiet playwright
