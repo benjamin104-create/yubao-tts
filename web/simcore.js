@@ -89,6 +89,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'THEMES, PAL, TILE_ART,' +
   'MONSTER_SKILLS, monsterSkillIntent, useMonsterSkill, monsterLastStand,' +
   'HEIAN_ACT, buildHeianRift, spawnHeianQuest, enterHeianRift, leaveHeianRift, riftBossDown, giveMuramasa,' +
+  'askHeianSamurai, startHeianWave, captureHeianFloor, sideBossIntent, useSideBossSkill, HEIAN_SPIRIT,' +
   'startMuramasaAim, fireMuramasa,' +
   'crispCssWidth, crispPortraitGrid, FIELD_ZOOM, ACTOR_SCALE,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +

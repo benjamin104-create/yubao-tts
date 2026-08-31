@@ -46,6 +46,7 @@ jobs:
           node web/save.js
           node web/msgs.js
           node web/dialog.js
+          node web/heian.js
           node web/chapter.js
           node web/campaign_strategy.js
           # 走通測試：十五章有沒有哪一章根本過不去。九秒，值得 ——
@@ -111,6 +112,8 @@ jobs:
           python tools/check_layout.py
           # 真正點 A 與框內翻頁按鈕，防止手機對話被遮罩困住。
           python tools/check_dialog_touch.py
+          # 三公實際圖檔與亮暗快取、手機領獎/遠斬/返回的完整接線。
+          python tools/check_heian.py
           # 音量：music.js 驗的是曲子的「資料」，驗不到「放出來有多大聲」。
           # 使用者回報「好像沒有音樂」時，音樂其實一直在播 —— 只是 RMS 只有 -40 dBFS。
           python tools/check_audio.py

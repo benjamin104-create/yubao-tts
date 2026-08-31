@@ -801,13 +801,15 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   width:calc(var(--k)*.95); height:calc(var(--k)*.95); font-size:calc(var(--k)*.32);
   border-color:rgba(122,168,214,.6); background:rgba(91,134,184,.22); color:#cfe2f5;
 }
-#btnR{
-  display:none; position:absolute; right:0; top:calc(var(--k)*-1.34);
+#ab #btnR{
+  display:none; position:relative; right:auto; top:auto; margin:0;
+  grid-column:2; grid-row:1; align-self:start; justify-self:center;
+  min-width:48px; min-height:48px;
   width:calc(var(--k)*1.05)!important; height:calc(var(--k)*1.05)!important;
   border-color:rgba(191,116,218,.8)!important; color:#f0d6ff!important;
   background:rgba(90,38,112,.42)!important; font-size:calc(var(--k)*.26)!important;
 }
-#btnR.ready{display:flex;align-items:center;justify-content:center;animation:ping 1.8s ease-in-out infinite}
+#ab #btnR.ready{display:flex;align-items:center;justify-content:center;animation:ping 1.8s ease-in-out infinite}
 /* 有技能點沒分配、或有技能可以用，S 就呼吸一下 */
 #btnS.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s ease-in-out infinite}
 #padhint{
@@ -3378,14 +3380,20 @@ h.break|With his last strength, the samurai shatters the wardstone. A violet-bla
 h.warning|Crossing starts three battles in a row. If you promise and leave, the samurai spirit will hunt you on later floors.|もんを こえれば 3れんせん。やくそくして たちされば、さむらいの れいが つぎの かいで おってくる。
 h.wait|"I will hold on… but not for long."|「もちこたえる……だが ながくは もたぬ。」
 h.enter|You cross the otherworld gate. Three chambers join end to end in the dark.|いかいのもんを こえた。やみの なかで 3つの へやが つながっている。
-h.first|First chamber: Genmaan. Find the true body that does not move with the phantoms.|だい1しつ・げんまあん。げんえいと おなじに うごかない ほんたいを さがせ。
+h.first|First chamber: Genmaan. Phantoms vanish in one hit. Watch the true body's shuriken.|だい1しつ・げんまあん。ざんぞうは いちげきで きえる。ほんたいの しゅりけんに きをつけろ。
+h.realm|Heian — Three Otherworld Halls|へいあん・いかい さんでん
+h.gate|Otherworld Gate|いかいのもん
+h.getblade|Take Muramasa, then use the gate on the right|むらまさを ひろい、みぎの もんへ
+h.returngoal|Enter the right gate to return to Heian-kyo|みぎの もんで へいあんきょうへ もどる
+h.fightgoal|Defeat this chamber's guardians to unseal the next door|このへやの しゅごしゃを たおし、とびらを ひらく
+h.restgoal|Save ring: one full heal. Next chamber to the right|きろくのわで いちど かいふく。つぎは みぎへ
 h.return|The otherworld gate closes behind you. You return to the chamber in Heian-kyo.|いかいのもんが せなかで とじ、へいあんきょうの へやへ もどった。
 h.voice|The dead samurai's voice descends: "This blade belongs to one who still keeps a promise."|なき さむらいの こえが ふる。「やくそくを まもる ものに、この かたなを たくす。」
 h.obtain|★ You obtained the Demon Blade Muramasa and equipped it. A DISTANT SLASH button appeared on the right.|★ ようとう むらまさを てにいれ そうびした。みぎに とおぎりボタンが ふえた。
 h.price|Each distant slash costs 1/20 of your maximum HP.|とおぎりは 1かいごとに さいだいHPの 1/20を つかう。
-h.stage1|The illusion collapses. The first door opens, and a save ring glows in the second chamber.|げんじゅつが くずれ、さいしょの とびらが ひらく。だい2しつで きろくのわが ひかった。
-h.stage2|Musashimaru falls to his knees. The last door opens, and all three dolls turn their heads.|むさしまるが ひざをつく。さいごの とびらが ひらき、3たいの にんぎょうが ふりむいた。
-h.stage3|All three dolls' threads snap. A return gate appears at the far end.|3たいの いとが すべて きれた。おくに かえりのもんが あらわれた。
+h.stage1|The illusion collapses. The first door opens. Rest at this chamber's save ring before continuing.|げんじゅつが くずれ、とびらが ひらく。このへやの きろくのわで やすんでから すすもう。
+h.stage2|Musashimaru falls. The final door opens, and a save ring lights in this chamber.|むさしまるが たおれた。さいごの とびらが ひらき、このへやに きろくのわが ともる。
+h.stage3|The dolls' threads snap. Muramasa descends from the sky. Take it to open the return gate.|にんぎょうの いとが きれた。むらまさが そらから おりる。ひろえば かえりのもんが ひらく。
 h.hunt|You leave the chamber where you made your promise. Far away, a scabbard scrapes across the floor…|やくそくした へやを さった。とおくで さやが ゆかを こする おとがする……
 p.magic|Magic|まほう
 p.bag|Bag|もちもの
@@ -3906,7 +3914,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260829-boss-gear-turret-v16';
+const ART_REV = '20260831-heian-three-lords-v17';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3921,7 +3929,8 @@ const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
 const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
                   'b_phoenix', 'b_hanzo', 'b_oni', 'b_gaoler', 'b_queen',
                   'b_prism', 'b_mermaid', 'b_gate', 'b_mind1', 'b_mind',
-                  'b_mind2', 'b_keeper', 'b_artisan', 'b_hallking'];
+                  'b_mind2', 'b_keeper', 'b_artisan', 'b_hallking',
+                  'b_genmaan','b_musashimaru','b_doll_heal','b_doll_mage','b_doll_tank','samurai_spirit'];
 /* 村民以前仍是 16px 程式剪影；主角升到 48px 之後，安全區與護送事件
    一眼就像兩套遊戲。v13 把六位常駐角色做成 48px 正式精靈：同一族的
    四腳圓身仍保留，但職業、年齡與隨身物件各自有清楚輪廓。 */
@@ -4043,18 +4052,23 @@ function animFrameFor(cat, id, o, pose, phaseSeed){
   }
   return {img:animCellCache[cacheKey], key:artKey+'@'+frameKey};
 }
+function invalidateActorArt(id){
+  // Lighting keys carry a suffix, and white-flash keys may add @lit. Deleting
+  // only the bare id left the first (fallback) frame on screen indefinitely.
+  for(const cache of [flashCache,charLiftCache,footCache,auraCache])
+    for(const key in cache) if(key===id||key.startsWith(id+'@')) delete cache[key];
+}
 function adoptArt(id, url, own){
   artImage(id, url, c => {
     /* 只有真的載到才記 ownArt。先記的話，頭目的圖還沒畫出來（404）時
        這個頭目就永遠不會跟著雜魚的新圖更新，卡在程式畫的舊造型上。 */
     if(own) ownArt[id] = 1;
     atlas[id] = c;
+    if(id==='weap#9'&&typeof heroArtIn==='function') heroArtIn();
     /* 三份衍生資料是照舊圖烘的，一起作廢：受擊白閃的剪影、影子的著地寬度、
        以及從這隻雜魚長出來的頭目。忘了的話，玩家會看到
        「被打時閃出一個舊造型」或是「影子的寬度跟身體對不上」。 */
-    delete flashCache[id];
-    delete charLiftCache[id];
-    delete footCache[id];
+    invalidateActorArt(id);
     if(id.startsWith('npc#')){
       /* 村莊可能在圖檔下載完成前就已經畫出第一幀。只換 atlas 不重畫，
          玩家會一直看到 16px 備援村民，直到下一次離村再回來。 */
@@ -4065,7 +4079,7 @@ function adoptArt(id, url, own){
       if(folk && typeof renderVillage === 'function' && !folk.childElementCount) renderVillage();
     }
     for(const b in BOSS_BASE) if(BOSS_BASE[b] === id && !ownArt[b]){
-      delete flashCache[b]; delete charLiftCache[b]; delete footCache[b];
+      invalidateActorArt(b);
       atlas[b] = crownSprite(id);
     }
     /* 驗收畫廊把 atlas 拷進自己的 canvas；如果外部 PNG 比畫廊晚載完，
@@ -4097,7 +4111,7 @@ for(const id of ART_NPC) adoptArt('npc#' + id, ART_DIR + 'npc/' + id + '.png');
 
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
 // 圖到了才填，沒列到的維持程式畫的（卷軸 11 張還沒畫）
-const ART_ITEM = {herb: 14, weap: 9, wand: 9, pot: 6, shld: 6, food: 3};
+const ART_ITEM = {herb: 14, weap: 10, wand: 9, pot: 6, shld: 6, food: 3};
 /* 這一類的每一個外觀共用**同一張**圖。
    卷軸就是這樣：十一個名字、一張圖 —— 識別靠的是名字，不是圖示
    （NetHack 也是這樣）。十一張不同的卷軸圖只會讓背包變得很亂。 */
@@ -8089,7 +8103,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                    會耗損，挑戰 3 次」—— 所以它存的是次數不是有無。 */
                 ult: {}, sideKey: 0, sideDone: 0, circletDone: 0,
                 /* 平安京異界副本的神器。取得後永久保留，每次出發發回背包。 */
-                muramasa: 0,
+                muramasa: 0, heianHunt: 0,
                 /* 每章炭筆分鏡只在第一次進章時播放；重打同章不反覆攔住玩家。 */
                 chapterSeen: {},
                 lang: '', skin: 'blob' };
@@ -8178,6 +8192,7 @@ function loadVillage(){
           sideDone: v.sideDone ? 1 : 0,
           circletDone: v.circletDone ? 1 : 0,
           muramasa: v.muramasa ? 1 : 0,
+          heianHunt: !v.muramasa && v.heianHunt ? 1 : 0,
           chapterSeen: sanitizeChapterSeen(v.chapterSeen),
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
@@ -8257,7 +8272,7 @@ function saveRun(){
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: RUN_VER, seed: G.seed, act: G.act, floor: G.floor, turn: G.turn,
       known: G.known, look: G.look, notes: G.notes, npc: G.npc,
-      heian: G.heian,
+      heian: packHeianState(),
       p: {
         lv:p.lv, exp:p.exp, hp:p.hp, mhp:p.mhp, mp:p.mp, mmp:p.mmp,
         str:p.str, strb:p.strb, sat:p.sat, msat:p.msat, gold:p.gold,
@@ -8458,7 +8473,7 @@ function newGame(seed){
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
     /* 平安京的異界之門跨樓層／存檔保留。active 代表目前正在三連戰副本。 */
-    heian:{accepted:0, entered:0, hunt:0, active:0, stage:0,
+    heian:{accepted:0, entered:0, hunt:VILLAGE.heianHunt?1:0, active:0, stage:0,
            originFloor:0, completed:VILLAGE.muramasa?1:0},
     log:[], anim:[], shake:0, floats:[], parts:[], rings:[], trapFx:[], corpses:[], tookDamage:0,
     zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
@@ -8812,7 +8827,15 @@ function buildFloor(){
   G.depth = absDepth(G.act, G.floor);
   G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
-  if(G.heian && G.heian.active){ buildHeianRift(rng); return; }
+  if(G.heian && G.heian.active){
+    if(!restoreHeianFloor(G.heian.riftState)) buildHeianRift(rng);
+    delete G.heian.riftState;
+    BGM.force(G.f.riftWave?'boss':null); vision(); bossWatch(); return;
+  }
+  if(G.heian&&G.heian.returnAct===G.act&&G.heian.returnFloor===G.floor&&
+     restoreHeianFloor(G.heian.returnState)){
+    delete G.heian.returnState;vision();bossWatch();return;
+  }
   G.f = genFloor(rng, G.depth, themeNow(),
                  {wide: !!actAt(G.act).wide, temple: actAt(G.act).id === 'temple'});
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
@@ -9413,7 +9436,8 @@ const tileAt=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? WALL : G.f.t[key(x,y)];
    放這裡是安全的：石頭的位置在樓層生成之後才決定（那時 G.f.ev 還是 null），
    而且放之前會做連通複查，所以地圖不會因此被切開。
    人挖出來（done）之後這一格自動變回空地。 */
-const walkable=(x,y)=> tileAt(x,y)!==WALL && !rubbleAt(x,y);
+const walkable=(x,y)=> tileAt(x,y)!==WALL && !rubbleAt(x,y) &&
+  !(G.f.rift&&G.heian&&roomOf(x,y)>G.heian.stage-1);
 const roomOf=(x,y)=> (x<0||y<0||x>=MW||y>=MH) ? -1 : G.f.roomAt[key(x,y)];
 const roomRectAt=(x,y)=>{
   if(!G || !G.f || !G.f.rooms) return -1;
@@ -9732,7 +9756,7 @@ function tryMove(dx,dy){
        路還是自己走，但至少知道要往哪邊走。 */
     SFX.play('wall',120);
     G.bump = (G.bump|0) + 1;
-    if(G.bump >= 5 && G.f && G.f.stairs){
+    if(G.bump >= 5 && G.f && G.f.stairs && !G.f.rift){
       G.bump = 0;
       const dx0 = G.f.stairs.x - p.x, dy0 = G.f.stairs.y - p.y;
       const ns = Math.abs(dy0) < 2 ? '' : (dy0 < 0 ? TX('dir.n','北') : TX('dir.s','南'));
@@ -9774,6 +9798,7 @@ function tryMove(dx,dy){
    罰得重是刻意的 —— 商店的張力全部來自「拿不拿得走」，
    罰輕了就變成免費補給站，整個區域的意義就沒了。 */
 function steal(){
+  VILLAGE.heianHunt=0;if(G.heian)G.heian.hunt=0;saveVillage();
   G.over = true;
   clearRun();
   SFX.play('death');
@@ -9791,6 +9816,11 @@ function steal(){
 
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
+  if(G.heian&&G.heian.active){
+    startHeianWave();
+    const blade=G.f.muramasaDrop;
+    if(blade&&blade.x===p.x&&blade.y===p.y) giveMuramasa();
+  }
   if(G.f.heianGate && G.f.heianGate.x===p.x && G.f.heianGate.y===p.y){
     enterHeianRift(); return;
   }
@@ -10223,7 +10253,7 @@ function endTurn(){
     while(p.mregen >= 1400 && p.mp < p.mmp){ p.mregen -= 1400; p.mp++; }
   }
   const interval = Math.max(60, 130 - G.md*2);
-  if(G.turn>0 && G.turn % interval === 0 && G.mons.length < 8+Math.floor(G.md/3)){
+  if(!G.f.rift && G.turn>0 && G.turn % interval === 0 && G.mons.length < 8+Math.floor(G.md/3)){
     const spots=[];
     for(let y=0;y<MH;y++) for(let x=0;x<MW;x++)
       if(walkable(x,y) && G.seen[key(x,y)]!==2 && !monAt(x,y)) spots.push({x,y});
@@ -10494,13 +10524,13 @@ function sideBossIntent(m){
   m.sideTick=(m.sideTick|0)+1;
   if(role==='genmaan'){
     if(!m.skillUsed.illusion) return {k:'sideSkill',kind:'illusion'};
-    if(dist>=2&&dist<=10&&aligned(m.x,m.y,p.x,p.y)&&m.sideTick%4===0)
+    if(dist>=2&&dist<=10&&aligned(m.x,m.y,p.x,p.y)&&lineClear(m.x,m.y,p.x,p.y)&&m.sideTick%4===0)
       return {k:'sideSkill',kind:'rootShuriken'};
   }
   if(role==='musashi'&&!m.skillUsed.roar&&dist<=5) return {k:'sideSkill',kind:'samuraiRoar'};
   if(role==='doll_heal'&&m.sideTick%3===0&&G.mons.some(q=>q.hp>0&&q.hp<q.mhp&&q.d.sideRole&&q.d.sideRole.startsWith('doll')))
     return {k:'sideSkill',kind:'dollHeal'};
-  if(role==='doll_mage'&&m.sideTick%3===0) return {k:'sideSkill',kind:'dollBurst'};
+  if(role==='doll_mage'&&m.sideTick%3===0&&lineClear(m.x,m.y,p.x,p.y)) return {k:'sideSkill',kind:'dollBurst'};
   if(role==='doll_tank'&&m.sideTick%4===0&&aligned(m.x,m.y,p.x,p.y)) return {k:'sideSkill',kind:'dollCharge'};
   return null;
 }
@@ -10522,7 +10552,7 @@ function useSideBossSkill(m,it){
     m.skillUsed.illusion=1; fx('幻化之術','#9b67d0');
     for(let i=0;i<2;i++){
       const q=sideArenaSpot(m,1); if(!q) continue;
-      const cd=Object.assign({},m.d,{boss:0,sideBoss:0,sideRole:'illusion',hp:1,exp:0,atk:Math.max(1,Math.floor(m.d.atk*.35))});
+      const cd=Object.assign({},m.d,{boss:0,visualBoss:1,sideBoss:0,sideRole:'illusion',hp:1,exp:0,atk:Math.max(1,Math.floor(m.d.atk*.35))});
       const c=spawnMon(cd,q.x,q.y,{noElite:true}); c.isClone=1;c.hp=c.mhp=1;c.aggro=99;
       burst(q.x,q.y,20,'#9b67d0',65,14,.65);
     }
@@ -10531,6 +10561,7 @@ function useSideBossSkill(m,it){
   }
   if(kind==='rootShuriken'){
     const s=fx('縛影手裏劍','#b487e5');
+    G.trapFx.push({kind:'shuriken',fx:m.x,fy:m.y,x:p.x,y:p.y,t:0,dur:.42});
     p.st['纏']=Math.max(p.st['纏']||0,2);
     const dmg=damagePlayerFromSkill(m,.72,s);
     say(M('h.rootshot','影釘把你固定在原地，手裏劍造成 {n} 點傷害。',{n:dmg}),'bad');
@@ -10997,6 +11028,8 @@ function act(m,it){
        → 落點炸開（打到了）」，三段合起來才讀得出是一發攻擊。
        顏色一怪一種：玩家要分得出這一發是誰放的，尤其是同時有兩三隻的時候。 */
     if(ranged){
+      if(m.d.sideRole==='genmaan'||m.d.sideRole==='illusion')
+        G.trapFx.push({kind:'shuriken',fx:m.x,fy:m.y,x:p.x,y:p.y,t:0,dur:.42});
       const bx0 = Math.sign(p.x - m.x), by0 = Math.sign(p.y - m.y);
       const len = Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y));
       const col = BOLT_COL[m.d.id] || '#f5a95e';
@@ -12239,13 +12272,14 @@ const heianSamuraiAt=(x,y)=>G.f&&G.f.heianSamurai&&G.f.heianSamurai.x===x&&G.f.h
   ? G.f.heianSamurai : null;
 
 function spawnHeianQuest(rng, free){
-  if(G.act!==HEIAN_ACT || !G.heian || G.heian.completed || VILLAGE.muramasa) return;
+  if(!G.heian || G.heian.active || G.heian.completed || VILLAGE.muramasa) return;
   G.f.heianSamurai=null; G.f.heianGate=null;
   if(G.heian.hunt){
     const q=free(8)||free(3);
     if(q){ const m=spawnMon(HEIAN_SPIRIT,q.x,q.y,{noElite:true}); m.aggro=99; }
     return;
   }
+  if(G.act!==HEIAN_ACT) return;
   if(G.floor!==HEIAN_QUEST_FLOOR) return;
   const q=free(6); if(!q) return;
   if(G.heian.accepted) G.f.heianGate={x:q.x,y:q.y};
@@ -12254,7 +12288,7 @@ function spawnHeianQuest(rng, free){
 
 function askHeianSamurai(n){
   openTalk({
-    who:'瀕死的武士', art:npcArt(),
+    who:'瀕死的武士', art:atlas['npc#dying_samurai']||npcArt(),
     body:n.asked
       ? '「結界石還撐著……你願意穿過異界之門，替平安京除掉魔化的三公嗎？」'
       : '「旅人……三公已經被異界侵蝕。我只能再打碎一次結界石。答應我，穿過門，依序打倒幻魔庵、武藏丸與陰陽師的人偶。」',
@@ -12263,13 +12297,52 @@ function askHeianSamurai(n){
       G.heian.accepted=1; G.heian.originFloor=G.floor;
       G.heian.originX=n.x; G.heian.originY=n.y;
       G.f.heianGate={x:n.x,y:n.y}; G.f.heianSamurai=null;
+      saveRun();
       SFX.play('shatter'); G.shake=Math.max(G.shake,12);
       burst(n.x,n.y,36,'#8860c8',78,24,1.0); ring(n.x,n.y,'#c8b4ff',38,.65);
       say(TX('h.break','武士用最後的力量擊碎結界石 —— 紫黑色的異界之門張開了。'),'gold');
       say(TX('h.warning','走進門就會開始三連戰；若答應後離開此層，武士靈將在後續樓層追來。'),'bad');
     },
     onNo(){ n.asked=1; say(TX('h.wait','「我會撐住……但不會太久。」')); }
-  });
+});
+}
+
+// 只有異界往返需要保留完整現場。一般樓層仍沿用種子重建的存檔規則。
+// 道具用既有 packItem 格式，避免把數值表的舊版物件永久寫進存檔。
+function captureHeianFloor(){
+  const q={f:G.f, gold:G.gold, traps:G.traps, mons:G.mons, allies:G.allies,
+    shop:G.shop, shopSeen:G.shopSeen, npc:G.npc, seen:G.seen, torches:G.torches,
+    x:G.p.x, y:G.p.y, items:{}};
+  for(const k in G.items) q.items[k]=packItem(G.items[k]);
+  return JSON.parse(JSON.stringify(q,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v):v));
+}
+function restoreHeianFloor(q){
+  if(!q || !q.f || !Array.isArray(q.f.t) || q.f.t.length!==MW*MH ||
+     !Array.isArray(q.f.roomAt) || q.f.roomAt.length!==MW*MH ||
+     !Array.isArray(q.mons) || !Number.isInteger(q.x) || !Number.isInteger(q.y) ||
+     q.x<0 || q.y<0 || q.x>=MW || q.y>=MH) return false;
+  q=JSON.parse(JSON.stringify(q));
+  G.f=q.f; G.f.t=new Uint8Array(q.f.t); G.f.roomAt=new Int8Array(q.f.roomAt);
+  G.f.el=new Uint8Array(q.f.el||MW*MH);
+  if(q.f.iceRough) G.f.iceRough=new Uint8Array(q.f.iceRough);
+  for(const k of ['gold','traps','mons','allies','shop','shopSeen','npc','torches']) G[k]=q[k];
+  G.items={}; for(const k in q.items){const it=unpackItem(q.items[k]);if(it)G.items[k]=it;}
+  G.seen=new Uint8Array(q.seen||MW*MH);
+  // Restored actors must not share runtime ids with freshly spawned clones.
+  for(const m of G.mons.concat(G.allies||[])) UID=Math.max(UID,(m.id|0)+1);
+  G.p.x=q.x;G.p.y=q.y;G.anim=[];G.corpses=[];G.parts=[];G.rings=[];G.trapFx=[];
+  G.echoes=[];G.bossLine=null;
+  G.zoom=G.zoomTo=FIELD_ZOOM; G.levelFx=null;
+  camX=G.p.x-VW/2+.5;camY=G.p.y-VH/2+.5;
+  return true;
+}
+function packHeianState(){
+  if(!G.heian) return null;
+  const h=Object.assign({},G.heian);
+  if(h.active) h.riftState=captureHeianFloor();
+  if(!h.active&&h.returnAct===G.act&&h.returnFloor===G.floor) h.returnState=captureHeianFloor();
+  else delete h.returnState;
+  return h;
 }
 
 function buildHeianRift(rng){
@@ -12285,25 +12358,38 @@ function buildHeianRift(rng){
       t[key(x,y)]=ROOM; roomAt[key(x,y)]=+rk;
     }
   }
-  const stage=Math.max(1,G.heian.stage|0);
+  const stage=Math.max(1,Math.min(4,G.heian.stage|0));
   if(stage>=2){t[key(9,14)]=CORR; roomAt[key(9,14)]=-1;}
   if(stage>=3){t[key(19,14)]=CORR; roomAt[key(19,14)]=-1;}
   const starts={1:{x:3,y:14},2:{x:11,y:14},3:{x:21,y:14},4:{x:24,y:14}};
   const spawn=starts[stage]||starts[1], stairs={x:27,y:14};
   G.f={t,roomAt,el,rooms,spawn,stairs,depth:G.depth,mark:null,iceStops:[],iceRough:null,
        shrine:null,ev:null,hall:null,rest:false,turrets:null,arena:null,bossSeen:0,
-       bossLock:stage<4?1:0,rift:1,riftExit:stage>=4?{x:27,y:14}:null,exit:null};
+       bossLock:stage<4?1:0,rift:1,riftWave:0,
+       riftExit:stage>=4&&VILLAGE.muramasa?{x:27,y:14}:null,exit:null};
   G.p.x=spawn.x; G.p.y=spawn.y; G.p.face=[1,0];
   G.items={}; G.gold={}; G.traps={}; G.mons=[]; G.allies=[]; G.shop=null; G.shopSeen=0;
   G.npc=null; G.seen=new Uint8Array(MW*MH); G.torches=[];
+  if(stage===2) G.f.shrine={x:5,y:14,rift:1};
+  if(stage===3) G.f.shrine={x:14,y:14,rift:1};
+  if(stage===4&&!VILLAGE.muramasa) G.f.muramasaDrop={x:25,y:14,fall:1.4};
+  startHeianWave();
+  G.zoomTo=FIELD_ZOOM; BGM.force(stage<4?'boss':null);
+  vision(); bossWatch();
+}
+function startHeianWave(){
+  if(!G.heian.active || G.heian.stage>=4 || G.f.riftWave) return;
+  const stage=G.heian.stage;
+  if(roomOf(G.p.x,G.p.y)!==stage-1) return;
+  G.f.riftWave=stage;G.f.bossSeen=0;
   const add=id=>{const d=bossById(id),q={
     b_genmaan:{x:7,y:14},b_musashimaru:{x:17,y:14},b_doll_heal:{x:25,y:9},
     b_doll_mage:{x:26,y:14},b_doll_tank:{x:25,y:19}}[id];
-    if(d&&q) spawnMon(d,q.x,q.y,{noElite:true});};
+    if(d&&q){const m=spawnMon(d,q.x,q.y,{noElite:true});m.aggro=99;}};
   if(stage===1) add('b_genmaan');
-  if(stage===2){ add('b_musashimaru'); G.f.shrine={x:11,y:20,rift:1}; }
-  if(stage===3){ add('b_doll_heal'); add('b_doll_mage'); add('b_doll_tank'); G.f.shrine={x:21,y:22,rift:1}; }
-  G.zoomTo=FIELD_ZOOM; BGM.force(stage<4?'boss':null);
+  if(stage===2) add('b_musashimaru');
+  if(stage===3){add('b_doll_heal');add('b_doll_mage');add('b_doll_tank');}
+  BGM.force('boss'); SFX.play('curse');
   vision(); bossWatch();
 }
 
@@ -12311,20 +12397,27 @@ function enterHeianRift(){
   if(!G.heian||G.heian.active) return;
   G.heian.entered=1; G.heian.active=1; G.heian.hunt=0; G.heian.stage=1;
   G.heian.originFloor=G.floor; G.heian.originX=G.p.x; G.heian.originY=G.p.y;
+  G.heian.originState=captureHeianFloor();
+  VILLAGE.heianHunt=0;saveVillage();
   SFX.play('curse'); wave(G.p.x,G.p.y,'#8860c8',1.1);
   buildHeianRift(RNG(mix32(G.seed,G.depth*1709)));
   saveRun();
   camX=G.p.x-VW/2+.5; camY=G.p.y-VH/2+.5;
   say(TX('h.enter','你穿過異界之門。三個房間在黑暗中首尾相連。'),'gold');
-  say(TX('h.first','第一室：幻魔庵。找出不跟著殘像移動的真身。'),'bad');
+  say(TX('h.first','第一室：幻魔庵。殘像一擊即散，注意真身的手裏劍。'),'bad');
   refresh();
 }
 
 function leaveHeianRift(){
+  if(!G.heian || !G.heian.active || G.heian.stage<4 || !G.f.riftExit) return;
   const ox=G.heian.originX, oy=G.heian.originY;
   G.heian.active=0; G.heian.completed=1; G.heian.hunt=0;
+  G.heian.returnAct=G.act;G.heian.returnFloor=G.heian.originFloor||HEIAN_QUEST_FLOOR;
   G.floor=G.heian.originFloor||HEIAN_QUEST_FLOOR;
-  buildFloor();
+  if(!restoreHeianFloor(G.heian.originState)) buildFloor();
+  G.f.heianGate=null;G.f.heianSamurai=null;
+  delete G.heian.originState;delete G.heian.riftState;
+  VILLAGE.heianHunt=0;saveVillage();BGM.force(null);
   if(walkable(ox,oy)){G.p.x=ox;G.p.y=oy;vision();}
   saveRun();
   say(TX('h.return','異界之門在身後閉合。你回到了平安京原本的房間。'),'gold');
@@ -12332,33 +12425,45 @@ function leaveHeianRift(){
 }
 
 function giveMuramasa(){
-  if(!VILLAGE.muramasa){VILLAGE.muramasa=1;saveVillage();}
+  if(!G.heian||!G.heian.active||G.heian.stage!==4) return false;
   let blade=G.p.inv.find(i=>i.cat==='weap'&&i.d.id==='muramasa');
+  if(!blade&&G.p.inv.length>=20){say(TX('m.bagfull','背包已經滿了。'));return false;}
+  if(!VILLAGE.muramasa){VILLAGE.muramasa=1;VILLAGE.heianHunt=0;saveVillage();}
   if(!blade){blade=mk('weap','muramasa',{known:1});G.p.inv.push(blade);}
   G.p.weap=blade;
+  G.f.muramasaDrop=null;G.f.riftExit={x:27,y:14};
   SFX.play('level'); wave(G.p.x,G.p.y,'#d8a0ee',1.25);
   burst(G.p.x,G.p.y,48,'#f3d8ff',86,32,1.15);
   say(TX('h.voice','亡去武士的聲音從空中傳來：「這把刀，交給仍願意守約的人。」'),'gold');
   say(TX('h.obtain','★ 取得神器「妖刀村正」並自動裝備。畫面右側新增「遠斬」按鈕。'),'gold');
   say(TX('h.price','遠斬每次會消耗最大體力的 1/20。'),'bad');
+  saveRun();refresh();return true;
 }
 
 function riftBossDown(m){
   if(!G.heian||!G.heian.active) return;
   const role=m.d.sideRole;
-  if(role==='genmaan'){
-    G.heian.stage=2; buildHeianRift(G.rng); saveRun();
-    say(TX('h.stage1','幻術崩散，第一道門打開。紀錄之環在第二室亮起。'),'gold'); return;
-  }
-  if(role==='musashi'){
-    G.heian.stage=3; buildHeianRift(G.rng); saveRun();
-    say(TX('h.stage2','武藏丸跪倒，最後一扇門開啟。三具人偶同時轉過頭來。'),'gold'); return;
+  if((role==='genmaan'&&G.heian.stage===1)||(role==='musashi'&&G.heian.stage===2)){
+    const first=role==='genmaan',x=first?9:19;
+    G.heian.stage++;G.f.riftWave=0;
+    G.f.t[key(x,14)]=CORR;
+    G.f.shrine={x:first?5:14,y:14,rift:1};
+    G.mons=G.mons.filter(q=>q!==m&&!q.isClone);
+    G.anim=G.anim.filter(a=>a.o===G.p);G.p.st={};
+    BGM.force(null);SFX.play('level');wave(x,14,'#a5ebeb',1);
+    vision();saveRun();
+    say(TX(first?'h.stage1':'h.stage2',first
+      ? '幻術崩散，第一道門打開。紀錄之環在本室亮起，準備好再前往第二室。'
+      : '武藏丸跪倒，最後一扇門開啟。本室的紀錄之環已亮起。'),'gold');return;
   }
   if(role&&role.startsWith('doll')){
     const left=G.mons.some(q=>q!==m&&q.hp>0&&q.d.sideRole&&q.d.sideRole.startsWith('doll'));
     if(left) return;
-    G.heian.stage=4; buildHeianRift(G.rng); giveMuramasa(); saveRun();
-    say(TX('h.stage3','三具人偶的絲線全部斷裂，房間盡頭出現返回之門。'),'gold');
+    if(G.heian.stage!==3) return;
+    G.heian.stage=4;G.f.riftWave=0;G.f.bossLock=0;
+    G.f.muramasaDrop={x:25,y:14,fall:1.4};G.p.st={};
+    BGM.force(null);SFX.play('level');wave(25,14,'#d8a0ee',1.5);saveRun();
+    say(TX('h.stage3','三具人偶的絲線全部斷裂。妖刀村正從空中降下，走近拾取後即可返回。'),'gold');
   }
 }
 
@@ -12757,16 +12862,19 @@ function evStep(){
 }
 
 /* ─── 樓層與死亡 ───────────────────────────────────────────── */
+function abandonHeianPromise(){
+  if(G.heian&&G.heian.accepted&&!G.heian.entered&&!G.heian.hunt){
+    G.heian.hunt=1;VILLAGE.heianHunt=1;saveVillage();
+    say(TX('h.hunt','你離開了答應守約的房間。遠處傳來刀鞘摩擦地面的聲音……'),'bad');
+  }
+}
 function descend(){
   if(tileAt(G.p.x,G.p.y)!==DOWN){ say(TX('s.110','這裡沒有樓梯。')); return; }
   if(G.shop && unpaid().length){ SFX.play('open'); openPanel('bill'); return; }
   if(G.f.bossLock){ say(TX('m.locked','樓梯被一股壓力封住了 —— 先解決這一層的東西。'),'bad'); return; }
   const act = actAt(G.act);
+  abandonHeianPromise();
   if(G.floor >= act.floors){ clearAct(); return; }
-  if(G.act===HEIAN_ACT && G.heian && G.heian.accepted && !G.heian.entered){
-    G.heian.hunt=1;
-    say(TX('h.hunt','你離開了答應守約的房間。遠處傳來刀鞘摩擦地面的聲音……'),'bad');
-  }
   SFX.play('stairs');
   G.floor++;
   buildFloor();
@@ -12991,6 +13099,8 @@ function death(){
   /* Token 金庫：把「一半」變成「全部」。護送迷路的村民換來的長期報酬 ——
      它不讓你這一趟變強，它讓每一次失敗都不那麼傷。
      使用者：「主角不救也可以，就是之後冒險存錢比較辛苦而已」。 */
+  // 爽約的追殺跨章，但不是永久毀掉存檔；真正倒下後可重新接武士任務。
+  VILLAGE.heianHunt=0;if(G.heian)G.heian.hunt=0;saveVillage();
   const keepAll = !!VILLAGE.vault;
   const relic = keepAll ? G.p.gold : Math.floor(G.p.gold * 0.5);
   if(relic > 0){ VILLAGE.gold += relic; saveVillage(); }
@@ -13996,7 +14106,16 @@ function heroAnimNow(o, pose, phaseSeed){
     else { const t=document.createElement('canvas'); t.width=t.height=T; drawHeroShield(t.getContext('2d'),si); legacyLayer(t); }
   }
   if(weapId){
-    if(weapFrame){
+    if(weapId==='muramasa'&&atlas['weap#9']){
+      // Use the actual new blade in the hand, with a pivoted walk/cleave cycle.
+      // Do not quietly fall back to the old generic western sword layer.
+      const left=dir.row===0||(dir.row===1&&dir.flip);
+      const swing=pose.kind==='attack'?Math.sin(pose.phase*Math.PI)*1.45:
+        pose.kind==='walk'?Math.sin(pose.phase*Math.PI*2)*.12:0;
+      x.save();x.translate(left?10:38,29);
+      if(left)x.scale(-1,1);
+      x.rotate(-.5+swing);x.drawImage(atlas['weap#9'],-5,-25,30,30);x.restore();
+    }else if(weapFrame){
       /* 終極武器不是只在背包裡變漂亮；手持圖層也要大一圈，
          否則 32px 細刃疊在 48px 主角上只剩一條看不清的亮線。 */
       const ult=(weapId==='babel'||weapId==='muramasa'), grow=ult?4:0;
@@ -14088,7 +14207,16 @@ function drawTrapFx(f, ox, oy){
   const q=Math.max(0,Math.min(1,f.t/f.dur));
   const bx=Math.round(ox+f.x*T), by=Math.round(oy+f.y*T);
   cx.save(); cx.imageSmoothingEnabled=false;
-  if(f.kind==='arrow'){
+  if(f.kind==='shuriken'){
+    const px=Math.round(ox+(f.fx+(f.x-f.fx)*q)*T+8);
+    const py=Math.round(oy+(f.fy+(f.y-f.fy)*q)*T+7);
+    cx.fillStyle='#13172e';cx.fillRect(px-4,py-1,9,3);cx.fillRect(px-1,py-4,3,9);
+    cx.fillStyle='#c7d4ed';
+    if(Math.floor(q*12)%2){
+      for(let j=-3;j<=3;j++){cx.fillRect(px+j,py+j,1,1);cx.fillRect(px+j,py-j,1,1);}
+    }else{cx.fillRect(px-4,py,9,1);cx.fillRect(px,py-4,1,9);}
+    cx.fillStyle='#796797';cx.fillRect(px-1,py-1,3,3);
+  }else if(f.kind==='arrow'){
     const ease=1-Math.pow(1-q,3), tx=bx+T/2;
     const ax=Math.round(-22+(tx+22)*ease), ay=by+7;
     cx.fillStyle='#241b14'; cx.fillRect(ax-12,ay,13,2);
@@ -15563,6 +15691,18 @@ function draw(dt){
     cx.restore();
   }
 
+  // 村正從空中降下再成為可拾取的實體；背包滿時仍留在原地。
+  const drop=G.f.muramasaDrop;
+  if(drop&&G.seen[key(drop.x,drop.y)]){
+    const blade=atlas['weap#9']||(atlas['weap#9']=makeWeapon(9));
+    const lift=Math.round((drop.fall||0)/1.4*T*3);
+    const px=Math.round(ox+drop.x*T),py=Math.round(oy+drop.y*T-lift);
+    cx.save();cx.imageSmoothingEnabled=false;
+    cx.drawImage(blade,px-8,py-24,32,32);
+    cx.fillStyle='#d978c4';cx.fillRect(px+7,oy+drop.y*T+13,3,2);
+    cx.restore();
+  }
+
   // 店員
   if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
     const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
@@ -15785,8 +15925,14 @@ function updateTags(){
       if(G.shop && G.seen[key(G.shop.keeper.x,G.shop.keeper.y)]===2)
         push(G.shop.keeper.x, G.shop.keeper.y, TX('k.who','店員'), 'shop', 'keeper');
       const stt = G.f.stairs;
-      if(G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y,
+      if(!G.f.rift&&G.seen[key(stt.x,stt.y)]) push(stt.x, stt.y,
         actUp(G.act) ? TX('k.up','上樓') : TX('k.down','下樓'), 'stair');
+      const gate=G.f.heianGate||G.f.riftExit;
+      if(gate&&G.seen[key(gate.x,gate.y)])
+        push(gate.x,gate.y,TX('h.gate','異界之門'),'stair');
+      const blade=G.f.muramasaDrop;
+      if(blade&&G.seen[key(blade.x,blade.y)])
+        push(blade.x,blade.y,locName('weap',WEAP[9]),'item');
       if(G.npc && G.npc.hp > 0 && G.seen[key(G.npc.x,G.npc.y)] === 2)
         push(G.npc.x, G.npc.y, TX('k.npc','迷路的村民'), 'shop');
       const shr = G.f.shrine;
@@ -15924,7 +16070,7 @@ function paintMap(mcx, mini, MMS){
      序章不是找路考試，所以這一層從一開始就把終點標出來；其他章仍維持
      看過才記住的規則。 */
   const templeGoal = actAt(G.act).id === 'temple' && G.floor >= actAt(G.act).floors;
-  if(G.seen[key(st.x,st.y)] || templeGoal){
+  if(!G.f.rift&&(G.seen[key(st.x,st.y)] || templeGoal)){
     mcx.fillStyle = '#c9973f';
     mcx.fillRect(st.x*MMS+1, st.y*MMS+1, MMS-2, MMS-2);
     mcx.fillStyle = '#14110f';
@@ -15935,6 +16081,8 @@ function paintMap(mcx, mini, MMS){
     const o = Math.floor((MMS-sz)/2);
     mcx.fillStyle=col; mcx.fillRect(x*MMS+o, y*MMS+o, sz, sz);
   };
+  for(const q of [G.f.heianGate,G.f.riftExit,G.f.muramasaDrop,G.f.shrine])
+    if(q&&G.seen[key(q.x,q.y)]) dot(q.x,q.y,'#c5a0ea',5);
   for(const k in G.items) if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#dcae35',4);
   for(const k in G.gold)  if(G.seen[k]===2) dot(k%MW,(k/MW)|0,'#f5dc7a',3);
   // 已看見的陷阱畫成橙紅菱形，不再跟怪物共用一顆紅點。
@@ -16108,6 +16256,8 @@ function loop(ts){
   if(G && G.freeze > 0){ G.freeze -= dt; dt = 0; }
   clock += dt;
   if(G){
+    if(G.f&&G.f.muramasaDrop)
+      G.f.muramasaDrop.fall=Math.max(0,(G.f.muramasaDrop.fall||0)-dt);
     /* 挨打的暈影。衰減放在這裡而不是交給 CSS 的 transition ——
        血量見底的時候要留一層底色不散，那是 transition 做不到的。 */
     const floor0 = G.p && G.p.hp > 0 && G.p.hp / G.p.mhp <= .25 ? .34 : 0;
@@ -16202,7 +16352,7 @@ function refresh(){
   $('job').textContent = locJob(p.job);
   /* 手機上只留章名與章內進度。「深度 93」是給想比較難度的人看的，
      不是每一步都要讀的東西 —— 而它會把招牌擠成兩行。 */
-  $('zone').textContent = locAct(actAt(G.act)) + `　${G.floor}/${actAt(G.act).floors}` +
+  $('zone').textContent = G.heian.active ? TX('h.realm','平安京・異界三殿') + `　${Math.min(3,G.heian.stage)}/3` : locAct(actAt(G.act)) + `　${G.floor}/${actAt(G.act).floors}` +
     (innerWidth > 620 ? `　${TX('ui.depth','深度')} ${G.depth}` : '');
 
   /* 巴比倫神殿 B3F 是一條二十多格的中軸長廊。目的地雖然保證連通，
@@ -16211,7 +16361,11 @@ function refresh(){
   const objective = $('objective');
   if(objective && objective.classList){
     const templeLast = actAt(G.act).id === 'temple' && G.floor >= actAt(G.act).floors;
-    if(templeLast){
+    if(G.heian.active){
+      objective.textContent=G.heian.stage===4 ? (G.f.muramasaDrop ? TX('h.getblade','領取妖刀村正，再由右方的門返回') : TX('h.returngoal','向右進入異界之門，回到平安京')) :
+        G.f.riftWave ? TX('h.fightgoal','擊敗本室守護者，解除下一道門封印') : TX('h.restgoal','紀錄點可回復一次・向右前往下一室');
+      objective.classList.add('show');
+    } else if(templeLast){
       const st = G.f.stairs;
       const dist = Math.max(Math.abs(st.x-p.x), Math.abs(st.y-p.y));
       let txt;
@@ -17622,6 +17776,7 @@ function restart(withChapterPrelude){
 
 /* ─── 村莊 ──────────────────────────────────────────────────── */
 function leaveDungeon(){
+  abandonHeianPromise();
   const sc = submitScore('out');
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
@@ -19184,7 +19339,7 @@ function qaEnterFloor(actIdx,floor,seed){
 }
 function qaEnterHeian(seed){
   // 驗收模式不存檔；即使正式存檔已拿過村正，也能重測武士對話。
-  VILLAGE.muramasa=0;
+  VILLAGE.muramasa=0;VILLAGE.heianHunt=0;
   qaEnterFloor(HEIAN_ACT,HEIAN_QUEST_FLOOR,seed);
   G.mons=[]; G.traps={};
   const n=G.f.heianSamurai;
@@ -19193,6 +19348,18 @@ function qaEnterHeian(seed){
     .find(q=>walkable(q.x,q.y)&&cornerOK(q.x,q.y,n.x,n.y));
   if(q){G.p.x=q.x;G.p.y=q.y;}
   G.p.hp=G.p.mhp=999; G.p.mp=G.p.mmp=99;
+  const stage=Math.max(0,Math.min(4,new URLSearchParams(location.search).get('stage')|0));
+  G.p.mp=G.p.mmp=maxMp(G.p);
+  if(stage){
+    G.p.x=n.x;G.p.y=n.y;G.heian.accepted=1;
+    G.f.heianSamurai=null;enterHeianRift();
+    G.heian.stage=stage;buildHeianRift(G.rng);
+    G.log=[];clearMsgWin();
+    const sword=mk('weap','mith',{known:1,up:3}),shield=mk('shld','steel',{known:1,up:2});
+    G.p.inv.push(sword,shield);G.p.weap=sword;G.p.shld=shield;
+    camX=G.p.x-VW/2+.5;camY=G.p.y-VH/2+.5;refresh();
+    return;
+  }
   vision();camX=G.p.x-VW/2+.5;camY=G.p.y-VH/2+.5;refresh();
   askHeianSamurai(n);
 }
@@ -19471,6 +19638,10 @@ function qaMenu(){
     ['迷路村民・新版樓梯',qaUrl({qa:'escort',seed:260822})],
     ['新版巴比倫砲座',qaUrl({qa:'turrets',seed:260822})],
     ['平安京武士對話與異界之門',qaUrl({qa:'heian',seed:260829})],
+    ['異界第一室・幻魔庵',qaUrl({qa:'heian',stage:1,seed:260829})],
+    ['異界第二室・武藏丸',qaUrl({qa:'heian',stage:2,seed:260829})],
+    ['異界第三室・陰陽師人偶',qaUrl({qa:'heian',stage:3,seed:260829})],
+    ['妖刀村正降臨與返回',qaUrl({qa:'heian',stage:4,seed:260829})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['商店連續賣出驗收',qaUrl({qa:'shop',seed:260822})],
