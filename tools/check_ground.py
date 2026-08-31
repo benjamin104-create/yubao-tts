@@ -22,6 +22,7 @@ import base64
 import functools
 import http.server
 import io
+import math
 import os
 import pathlib
 import sys
@@ -62,15 +63,15 @@ _fly = set(_re.findall(r"\{id:'([a-z_]+)',[^\n]*fly:1", _src[_j:_src.index('\n];
 GROUND = [m for m in _have if m not in _fly]
 FLYING = [m for m in _have if m in _fly]
 
-# 頭目也要驗。牠們用 48px 的圖、在遊戲裡放大 1.6 倍畫 ——
-# 兩個跟雜魚都不一樣的數字，正是「以為沒問題」最容易出事的地方。
+# 頭目也要驗。顯示倍率比雜魚大，必須量到兩側的腳，不能只裁腳下那一格。
 _b = _src.index('const ART_BOSS = [')
-BOSSES = _re.findall(r"'(b_[a-z0-9_]+)'", _src[_b:_src.index('];', _b)])
+BOSSES = _re.findall(r"'([a-z0-9_]+)'", _src[_b:_src.index('];', _b)])
 
 PLACE = """(mid)=>{
   const p = G.p;
   G.mons.length = 0;
-  const d = MONS.find(m => m.id === mid) || BOSS.find(m => m.id === mid);
+  const d = MONS.find(m => m.id === mid) || BOSS.find(m => m.id === mid)
+            || (mid === HEIAN_SPIRIT.id ? HEIAN_SPIRIT : null);
   if(!d) return null;
   let sp = null;
   for(let r=2; r<=9 && !sp; r++)
@@ -88,7 +89,7 @@ PLACE = """(mid)=>{
   mo.lunge = null;
   for(let y=sp[1]-7; y<=sp[1]+7; y++)
     for(let x=sp[0]-9; x<=sp[0]+9; x++) G.seen[key(x,y)] = 2;
-  return {x:sp[0], y:sp[1], fly:!!d.fly};
+  return {x:sp[0], y:sp[1], fly:!!d.fly, scale:bossVisualScale(mo.d)};
 }"""
 
 
@@ -157,9 +158,14 @@ def main():
             info = pg.evaluate("()=>({ox:lastOx, oy:lastOy})")
             sx = int((info['ox'] + spot['x'] * T) * RS)
             sy = int((info['oy'] + spot['y'] * T) * RS)
-            # 往上兩格、往下一格，飛起來的本體與地上的影子都要框得進來
-            x0, x1 = sx - 2 * RS, sx + (T + 2) * RS
-            y0, y1 = sy - 2 * T * RS, sy + (T + 4) * RS
+            # 完整顯示寬度再加邊界。舊版只看一格，3 倍寬的幻魔庵／武藏丸
+            # 兩腳落在裁切範圍外，量到的是兩腿中間的袍角，誤報懸空。
+            # scale 只用來決定截圖範圍；接地高度仍由三張實際像素相減量出，
+            # 不使用 footOf／影子公式，也不放寬下面的 1 邏輯單位標準。
+            pad = math.ceil(max(0, spot['scale'] - 1) * T / 2) + 4
+            x0, x1 = sx - pad * RS, sx + (T + pad) * RS
+            up = max(2 * T, math.ceil(spot['scale'] * T))
+            y0, y1 = sy - up * RS, sy + (T + 4) * RS
 
             # 不能用「完全相等」比：火把的閃爍是照 performance.now() 算的，
             # 三張截圖之間一定不一樣。但那個雜訊很小 ——
