@@ -26,6 +26,7 @@ $AnimPalette = @(
 )
 $BossPalettes = @{
   b_keeper = @('0d0d12','101c3a','1d3468','2f57a0','4a86cf','565668','757589','c8c8d4','ecd3ae','2a1d14','7d5c3c','a87a1e','dcae35','f5dc7a')
+  b_lord = @('0d0d12','101c3a','1d3468','2f57a0','4a86cf','7cb8ea','e8edf4','f7f5eb','1d6475','2f90a6','58c2cf','a5ebeb','565668','c8c8d4')
   b_artisan = @('0d0d12','2a1d14','43301f','5e442c','7d5c3c','9c7850','bb9668','ecd3ae','101c3a','2f57a0','4a86cf','7cb8ea','565668','c8c8d4')
   b_hallking = @('0d0d12','101c3a','1d3468','2f57a0','4a86cf','6b4a12','a87a1e','dcae35','f5dc7a','757589','c8c8d4','ecd3ae','5e442c','9c7850')
 }
@@ -119,7 +120,7 @@ function Build-Animation([string]$stillPath,[string]$animPath) {
   } finally {$sprite.Dispose()}
 }
 
-foreach($id in @('b_keeper','b_artisan','b_hallking')){
+foreach($id in @('b_keeper','b_lord','b_artisan','b_hallking')){
   $still=Join-Path $ProjectRoot "web/art/boss/$id.png"
   $anim=Join-Path $ProjectRoot "web/art/anim/boss/$id.png"
   $sc=Normalize-Image $still $BossPalettes[$id] $true

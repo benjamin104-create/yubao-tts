@@ -176,15 +176,15 @@ t('礦坑的和弦沒有三音，低音半音往下（往地底下去的聲音�
   }
 });
 
-t('十九位頭目都有對應戰鬥配樂，而且至少八種戰鬥語彙', ()=>{
-  assert.strictEqual(api.BOSS.length, 19, '頭目表數量改了，音樂驗收也要一起更新');
+t('所有頭目都有對應戰鬥配樂，而且至少八種戰鬥語彙', ()=>{
+  assert(api.BOSS.length >= 19, '頭目表意外縮水：只剩 ' + api.BOSS.length + ' 位');
   const used = new Set();
   for(const d of api.BOSS){
     assert(d.bgm, d.nm + ' 沒有 bgm，會悄悄退回通用快歌');
     assert(TRACKS[d.bgm], d.nm + ' 的 bgm 指向不存在的曲子：' + d.bgm);
     used.add(d.bgm);
   }
-  assert(used.size >= 8, '十九位王只有 ' + used.size + ' 種配樂語彙');
+  assert(used.size >= 8, '所有頭目只有 ' + used.size + ' 種配樂語彙');
   const mind=['b_mind1','b_mind2','b_mind'].map(id=>api.BOSS.find(d=>d.id===id).bgm);
   assert.strictEqual(new Set(mind).size,3,'意識三型態沒有隨型態進化音樂：'+mind.join('/'));
   assert.strictEqual(api.BOSS.find(d=>d.id==='b_mermaid').bgm,'diva',

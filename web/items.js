@@ -148,27 +148,29 @@ t('熔岩杖挖不穿地圖最外一圈', ()=>{
 });
 
 // ── 影忍的分身之術 ───────────────────────────────────────────
-t('影忍挨打之後會分出只有 1 點體力的分身', ()=>{
-  V.act = 0;
-  let cloned = false;
-  for(let s=0; s<40 && !cloned; s++){
-    api.newGame(5000 + s);
-    const G = api.G(), p = G.p;
-    p.lv = 5;                                         // 打不死牠才分得出來
-    G.mons.length = 0;
-    const d = api.MONS.find(m=>m.id==='shinobi');
-    const sp = api.DIRS.find(dd => api.walkable(p.x+dd[0], p.y+dd[1]));
-    if(!sp) continue;
-    api.spawnMon(d, p.x+sp[0], p.y+sp[1]);
-    const m = G.mons[0];
-    m.hp = m.mhp = 99999;
-    for(let i=0;i<12 && !cloned;i++){
-      api.attack(m);
-      cloned = G.mons.some(x => x.isClone);
-    }
-    if(cloned) assert.strictEqual(G.mons.find(x=>x.isClone).hp, 1, '分身應該只有 1 點體力');
-  }
-  assert(cloned, '打了幾十次都沒有分身 —— clone 沒有生效');
+t('影忍會主動一化為三，而且整場只能使用一次', ()=>{
+  V.act = 0; api.newGame(5000);
+  const G = api.G(), p = G.p;
+  G.mons.length = 0;
+  const d = api.MONS.find(m=>m.id==='shinobi');
+  const sp = api.DIRS.find(dd => api.walkable(p.x+dd[0], p.y+dd[1]));
+  assert(sp, '主角旁邊沒有可生成影忍的位置');
+  const m = api.spawnMon(d, p.x+sp[0], p.y+sp[1], {noElite:true});
+  api.useMonsterSkill(m, {s:d.skill});
+  const clones=G.mons.filter(x=>x.isClone);
+  assert.strictEqual(clones.length,2,'應該由一個變成三個（本體＋兩個分身）');
+  assert(clones.every(x=>x.hp===1),'兩個分身都應該只有 1 點體力');
+  assert.strictEqual(m.skillUsed.triple,1,'本體沒有記住已用過分身術');
+  assert.strictEqual(api.monsterSkillIntent(m),null,'分身術用過一次後不該再排入行動');
+});
+
+t('每一種一般怪物都有一招獨特的一次性技能', ()=>{
+  const missing=api.MONS.filter(m=>!m.skill).map(m=>m.nm);
+  assert(!missing.length,'沒有技能：'+missing.join('、'));
+  assert.strictEqual(new Set(api.MONS.map(m=>m.skill.kind)).size,api.MONS.length,
+    '有怪物共用了同一種技能識別，會無法分辨各自特色');
+  for(const m of api.MONS)
+    assert((m.skill.uses||1)>=1,m.nm+' 的技能次數不合法');
 });
 
 // ── 影法師：傷害跟著玩家的攻擊力走 ───────────────────────────
@@ -391,15 +393,16 @@ t('主角練過頭時，同一隻怪會變強，而且名字上看得出來', ()
   const G = api.G();
   G.act = AI('briar'); G.floor = 2; api.buildFloor();
   const rat = api.MONS.find(d => d.id === 'rat');
-  const base = api.spawnMon(rat, G.p.x, G.p.y);
+  /* 強化種是另一條隨機倍率，這裡只驗等級追趕，兩者不可混在同一個比較。 */
+  const base = api.spawnMon(rat, G.p.x, G.p.y, {noElite:true});
   G.p.lv += 12;                                   // 練到明顯超前
-  const up = api.spawnMon(rat, G.p.x, G.p.y);
+  const up = api.spawnMon(rat, G.p.x, G.p.y, {noElite:true});
   assert(up.d.hp > base.d.hp, '練了十二級，血量還是 ' + up.d.hp);
   assert(up.d.atk > base.d.atk, '攻擊沒有跟上');
   assert(up.mhp === up.d.hp && up.hp === up.d.hp, '補正沒有寫進實際血量');
   // 補正有天花板 —— 不然練得越久，遊戲越變成看誰的數字大
   G.p.lv += 60;
-  const cap = api.spawnMon(rat, G.p.x, G.p.y);
+  const cap = api.spawnMon(rat, G.p.x, G.p.y, {noElite:true});
   assert(cap.d.hp <= Math.round(rat.hp * 2.20), '補正沒有上限：' + cap.d.hp);
   // 玩家要看得出來：名字上有記號，而且原本的表沒有被污染
   assert(api.i18n.locName('mon', up.d) !== api.i18n.locName('mon', rat),
@@ -688,7 +691,10 @@ t('每一章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
   for(const d of api.BOSS){
     const has = VERBS.filter(v => d[v]);
     // 使用者要的是「每個小王套 2~3 種」。一種只能算會動，兩種才算有手感。
-    if(has.length < 2 && !d.mind) thin.push(d.nm + '（' + (has.join('/') || '無') + '）');
+    /* 平安京三公由 sideRole 走專屬狀態機：幻術、震喝、治療、術式、撲殺。
+       那些招不使用共用 VERBS 欄位，不能因此誤判成只有一招。 */
+    if(has.length < 2 && !d.mind && !d.sideRole)
+      thin.push(d.nm + '（' + (has.join('/') || '無') + '）');
   }
   assert(!thin.length, '這幾隻頭目的招不到兩種：' + thin.join('、'));
   // 至少要有七八種不同的招在用，不然十五章還是同一場仗
@@ -706,6 +712,7 @@ t('每一章的頭目各有自己的招，而且每一隻都跑得起來', ()=>{
       if(v==='adds') return 'adds:' + (d.adds.id || 'roster');
       return v;
     }).sort();
+    if(d.sideRole) moves.push('sideRole:'+d.sideRole);
     const fp=moves.join('/');
     if(kits.has(fp)) throw new Error(d.nm + ' 與 ' + kits.get(fp) + ' 的應對方法完全相同：' + fp);
     kits.set(fp,d.nm);

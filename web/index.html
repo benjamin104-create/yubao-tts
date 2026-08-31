@@ -765,11 +765,14 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #pad button:active, #pad button.on{
   background:rgba(201,151,63,.55); color:#14110f; transform:scale(.94);
 }
-#cross .dc{font-size:calc(var(--k)*.34)}
+#cross .dc{
+  width:116%; height:116%; place-self:center; z-index:2;
+  font-size:calc(var(--k)*.38);
+}
 /* 斜向放在十字的四個凹角，比主方向暗一階 ——
    視覺上還是一個十字，但八方向都按得到。原作的走位有一半靠斜走。 */
 #cross .dg{
-  width:72%; height:72%; place-self:center;
+  width:52%; height:52%; place-self:center; z-index:1;
   font-size:calc(var(--k)*.27); opacity:.50;
   background:rgba(20,17,14,.32); border-color:rgba(201,151,63,.24)
 }
@@ -798,6 +801,13 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   width:calc(var(--k)*.95); height:calc(var(--k)*.95); font-size:calc(var(--k)*.32);
   border-color:rgba(122,168,214,.6); background:rgba(91,134,184,.22); color:#cfe2f5;
 }
+#btnR{
+  display:none; position:absolute; right:0; top:calc(var(--k)*-1.34);
+  width:calc(var(--k)*1.05)!important; height:calc(var(--k)*1.05)!important;
+  border-color:rgba(191,116,218,.8)!important; color:#f0d6ff!important;
+  background:rgba(90,38,112,.42)!important; font-size:calc(var(--k)*.26)!important;
+}
+#btnR.ready{display:flex;align-items:center;justify-content:center;animation:ping 1.8s ease-in-out infinite}
 /* 有技能點沒分配、或有技能可以用，S 就呼吸一下 */
 #btnS.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s ease-in-out infinite}
 #padhint{
@@ -1449,16 +1459,16 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
      那一行就是同一句話講兩次，而且兩個一上一下，眼睛不知道該看哪一個。
      留著元素（版面高度的計算讀它的 offsetHeight），但不再顯示。 */
 
-  #screenwrap{padding-bottom:186px; background:#0a0908; --padh:186px}
-  #vig{bottom:186px}
+  #screenwrap{padding-bottom:208px; background:#0a0908; --padh:208px}
+  #vig{bottom:208px}
   #cross{bottom:8px; left:12px}
   #ab{bottom:20px; right:14px}
-  #card{bottom:186px}
+  #card{bottom:208px}
   /* 提示往上抬，讓開訊息視窗那一條。它是浮在場上的一次性提示，
      訊息視窗是常駐的閱讀面 —— 讓開的該是前者。 */
   #hint{bottom:274px}
   /* 面板不能蓋到手把區 —— 手把 z-index 比較高，會變成按鍵浮在選單上 */
-  #panel, #over, #aim, #bigmap{bottom:186px}
+  #panel, #over, #aim, #bigmap{bottom:208px}
   #card{top:0}
   /* 封面內容靠上排。整頁比手機螢幕長，如果「開始下潛」落在頁面中段，
      點下去瀏覽器會把它捲進視野 —— 封面關掉之後就停在半空中，
@@ -1638,6 +1648,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
           <button class="dg" data-dir="1,1"   aria-label="右下">↘</button>
         </div>
         <div id="ab">
+          <button id="btnR" data-lbl="村正遠斬" aria-label="妖刀村正遠斬">斬</button>
           <button id="btnS" data-lbl="技能" aria-label="技能">S</button>
           <button id="btnB" data-lbl="背包·地圖" aria-label="背包／地圖／取消">B</button>
           <button id="btnA" data-lbl="確定" aria-label="確定">A</button>
@@ -1969,6 +1980,52 @@ const MONS = [
  {id:'unnamed',nm:'未名者',   ai:'C', hp:96,atk:46,def:22,exp:520,spd:1,   sight:9, ev:0, fl:[24,30],w:34, zn:['void'], bd:'giant', col:'4', glow:'g'},
 ];
 
+/* 每一種一般怪物都有一個「一場只會出現一次」的招牌動作。
+   名字與效果集中在這裡，AI、訊息與測試讀的是同一份資料；不再把技能
+   散落成幾十個看不出是否真的生效的布林欄位。鴉天狗有兩招、岩鷹三次，
+   是使用者明確指定的例外。 */
+const MONSTER_SKILLS = {
+  rat:    {nm:'鑽地奇襲',       kind:'burrow',    col:'#a9825a'},
+  slime:  {nm:'黏液遲滯',       kind:'slow',      col:'#5798bd'},
+  goblin: {nm:'偷天換日',       kind:'stealblink',col:'#79a85b'},
+  shroom: {nm:'醉毒孢子',       kind:'spore',     col:'#b65ad1'},
+  imp:    {nm:'連環投石',       kind:'stoneburst',col:'#c89a61'},
+  grub:   {nm:'噬魔口器',       kind:'mpbite',    col:'#b5bd67'},
+  skeleton:{nm:'飛首一擊',      kind:'headthrow', col:'#d7d2bf'},
+  wolf:   {nm:'疾風撲殺',       kind:'windrush',  col:'#a9c8db'},
+  mage:   {nm:'咒印封魔',       kind:'silence',   col:'#9b61c9'},
+  golem:  {nm:'石化凝視',       kind:'petrify',   col:'#9a8d73'},
+  turret: {nm:'稜鏡超載',       kind:'overload',  col:'#72d8e7'},
+  knight: {nm:'深淵混沌',       kind:'chaos',     col:'#793e76'},
+  wasp:   {nm:'毒針俯衝',       kind:'venom',     col:'#d6bd42'},
+  dryad:  {nm:'纏根束縛',       kind:'root',      col:'#65934e'},
+  mossy:  {nm:'苔甲怒震',       kind:'mossguard', col:'#71824d'},
+  hawk:   {nm:'岩鷹遠吼',       kind:'roarshot',  col:'#c19a73', uses:3},
+  ibex:   {nm:'螺角衝陣',       kind:'hornrush',  col:'#d3cfbd'},
+  scree:  {nm:'崩岩散射',       kind:'rockfall',  col:'#8e7961'},
+  eel:    {nm:'濕電纏身',       kind:'shock',     col:'#71c4d1'},
+  crab:   {nm:'鐵鉗固守',       kind:'shell',     col:'#a55743'},
+  salam:  {nm:'焰尾橫掃',       kind:'firetail',  col:'#e96b35'},
+  ash:    {nm:'灰幕遮眼',       kind:'ashblind',  col:'#8e8793'},
+  tengu:  {nm:'鋼化／疾風倍擊', kind:'tengu',     col:'#7f91ae', uses:2},
+  tanuki: {nm:'萬象幻化',       kind:'morph',     col:'#d08bb2'},
+  prism:  {nm:'折光束',         kind:'prismbeam', col:'#79cfe0'},
+  refr:   {nm:'折射殘像',       kind:'mirrorhide',col:'#a69be8'},
+  centip: {nm:'百足毒走',       kind:'venomrush', col:'#89a84b'},
+  ratking:{nm:'鼠群號令',       kind:'callrats',  col:'#a9825a'},
+  moth:   {nm:'眠光鱗粉',       kind:'sleepdust', col:'#d58cd8'},
+  chochin:{nm:'鬼火爆閃',       kind:'blindflare',col:'#f0a65a'},
+  shinobi:{nm:'影分身之術',     kind:'triple',    col:'#657bb5'},
+  shadow: {nm:'影噬反身',       kind:'mimicburst',col:'#615b76'},
+  seraph: {nm:'熾光審判',       kind:'judgment',  col:'#f0ce68'},
+  chimera:{nm:'三相吐息',       kind:'tribreath', col:'#d76045'},
+  warden: {nm:'秩序封鎖',       kind:'nullfield', col:'#6f9cb3'},
+  axiom:  {nm:'絕對命題',       kind:'certainty', col:'#d4d0c0'},
+  parad:  {nm:'血魔悖換',       kind:'invert',    col:'#bd67d1'},
+  unnamed:{nm:'未名抹除',       kind:'erase',     col:'#7b6997'},
+};
+for(const d of MONS) if(MONSTER_SKILLS[d.id]) d.skill = MONSTER_SKILLS[d.id];
+
 /* ═══ 頭目 ═══════════════════════════════════════════════════
    頭目不進一般的怪物表（`w:0`），只由章節結尾指定生成。
    共同規則：頭目在場時樓梯是鎖著的，打倒了才開 ——
@@ -2012,6 +2069,7 @@ const BOSS = [
   rage:.5, quake:8, ward:{cd:13, dur:3},
   line:'牠燒起來的時候，是在重生 —— 而且會燒到站得太近的人。'},
  {id:'b_hanzo',  nm:'全藏', sig:'shadow_swap', ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
+  mul:{hp:2}, magicResist:.5,
   blink:[3,6], rage:.35, adds:{n:1, cd:13},
   /* 本來叫的是影忍 —— 而影忍挨打會分身，於是牠每十三回合叫兩隻、
      兩隻各自再分裂，走通測試在這一章直接卡住四十次。
@@ -2079,6 +2137,17 @@ const BOSS = [
  {id:'b_mind', mul:{hp:1.3, atk:1.2, def:1.6}, nm:'意識・歸一', sig:'collapse_opening', ai:'C', hp:520,atk:40,def:26,exp:9999,spd:1,  sight:99,ev:0, fl:[0,0], w:0, boss:1,
   mind:3, opening:1, imm:['睡','亂','麻'],
  line:'它終於站起來了。每揮一次刀，它都會露出破綻。'},
+ /* 平安京異界副本。三房不是三個普通樓層：勝利會在同一座空間裡打開下一道門。 */
+ {id:'b_genmaan',nm:'幻魔庵',sig:'phantom_shuriken',ai:'R',hp:360,atk:32,def:15,exp:2400,spd:1.5,sight:12,ev:24,fl:[0,0],w:0,boss:1,sideBoss:1,sideRole:'genmaan',rng:10,blink:[3,5],
+  mul:{hp:1.15,atk:1.05},line:'「找到真身之前，你連影子都碰不到。」'},
+ {id:'b_musashimaru',nm:'武藏丸',sig:'samurai_roar',ai:'C',hp:460,atk:38,def:28,exp:3000,spd:1,sight:10,ev:3,fl:[0,0],w:0,boss:1,sideBoss:1,sideRole:'musashi',imm:['睡','亂'],
+  mul:{hp:1.25,atk:1.15,def:2.0},line:'大鎧踏過地板。那一聲吼不是威嚇，是命令身體跪下。'},
+ {id:'b_doll_heal',nm:'白符人偶',sig:'doll_restore',ai:'R',hp:300,atk:18,def:15,exp:1600,spd:1,sight:12,ev:8,fl:[0,0],w:0,boss:1,sideBoss:1,sideRole:'doll_heal',rng:8,
+  mul:{hp:.85,atk:.7},line:'白符人偶展開恢復術式。'},
+ {id:'b_doll_mage',nm:'赤符人偶',sig:'doll_sorcery',ai:'R',hp:330,atk:46,def:13,exp:1800,spd:1,sight:12,ev:10,fl:[0,0],w:0,boss:1,sideBoss:1,sideRole:'doll_mage',rng:10,
+  mul:{hp:.9,atk:1.3},line:'赤符人偶把整個房間變成咒式。'},
+ {id:'b_doll_tank',nm:'黑鐵人偶',sig:'doll_bulwark',ai:'C',hp:700,atk:30,def:25,exp:2200,spd:1,sight:12,ev:0,fl:[0,0],w:0,boss:1,sideBoss:1,sideRole:'doll_tank',charge:1,
+  mul:{hp:1.8,def:1.7},line:'黑鐵人偶撲了過來，另外兩具藏在它身後。'},
 ];
 /* ── 頭目配樂分鏡 ────────────────────────────────────────────
    「每隻王都播同一首快歌」只能告訴玩家戰鬥開始，不能告訴他正在面對誰。
@@ -2086,10 +2155,10 @@ const BOSS = [
    各有一段，第二型態加速、第三型態才把整個節奏推到頂。屬性仍寫回王身上，
    bossTrack() 不必猜章節，也能在同一章的連續型態間換曲。 */
 const BOSS_SCORE={
-  boss_guardian:['b_keeper','b_warden','b_treant','b_lord'],
-  boss_trickster:['b_ballista','b_phoenix','b_hanzo'],
-  boss_arcane:['b_pyro','b_queen','b_prism','b_artisan'],
-  boss_warlord:['b_oni','b_gaoler','b_hallking','b_gate'],
+  boss_guardian:['b_keeper','b_warden','b_treant','b_lord','b_doll_tank'],
+  boss_trickster:['b_ballista','b_phoenix','b_hanzo','b_genmaan'],
+  boss_arcane:['b_pyro','b_queen','b_prism','b_artisan','b_doll_heal','b_doll_mage'],
+  boss_warlord:['b_oni','b_gaoler','b_hallking','b_gate','b_musashimaru'],
   diva:['b_mermaid'],
   mind_gaze:['b_mind1'], mind_echo:['b_mind2'], mind_unity:['b_mind'],
 };
@@ -2235,6 +2304,8 @@ const WEAP = [
  {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1, ult:1},
  /* 武士刀補在鋼劍與秘銀之間的成長空檔。只做俐落斬擊，不沿用長槍的直刺。 */
  {id:'katana',nm:'武士刀', atk:11, up:7, price:5200},
+ /* 平安京三公副本的神器。遠斬以體力為代價，因此不進商店與一般掉落表。 */
+ {id:'muramasa',nm:'妖刀村正',atk:24,up:8,price:26000,muramasa:1,ult:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
@@ -3036,6 +3107,11 @@ mon.b_gate|Gatewatcher|もんのしゅぼう
 mon.b_mind1|The Mind - Gaze|いしき・ぎょうし
 mon.b_mind2|The Mind - Echo|いしき・ふくしゃ
 mon.b_mind|The Mind - The One|いしき・きいつ
+mon.b_genmaan|Genmaan|げんまあん
+mon.b_musashimaru|Musashimaru|むさしまる
+mon.b_doll_heal|White Talisman Doll|しろふ にんぎょう
+mon.b_doll_mage|Red Talisman Doll|あかふ にんぎょう
+mon.b_doll_tank|Black-Iron Doll|くろがね にんぎょう
 it.heal|Healing Herb|やくそう
 it.elix|Elixir|とっこうやく
 it.life|Life Herb|いのちのくさ
@@ -3081,6 +3157,7 @@ it.drgn|Dragonslayer|ドラゴンキラー
 it.sky|Sword of the Sky|てんくうのつるぎ
 it.babel|Blade of Babel|つうてんのつるぎ
 it.katana|Katana|かたな
+it.muramasa|Demon Blade Muramasa|ようとう むらまさ
 it.leath|Leather Shield|かわのたて
 it.wood|Wooden Shield|きのたて
 it.s_steel|Steel Shield|はがねのたて
@@ -3266,6 +3343,37 @@ bl.b_gate|The last door.|さいごの とびら。
 bl.b_mind1|It has no form yet. Only an eye, and it is looking at you.|まだ かたちが ない。ただ ひとつの めが、きみを みている。
 bl.b_mind2|Three of you. Only one does not follow your steps.|3にんの きみ。ついてこないのは ひとりだけ。
 bl.b_mind|It stands at last. Every swing leaves it open for a turn.|ついに たちあがる。ひとふりごとに 1ターン すきが できる。
+bl.b_genmaan|"Until you find the true body, you cannot even touch my shadow."|「ほんたいを みつけるまで、かげにさえ ふれられぬ。」
+bl.b_musashimaru|Heavy armour crosses the floor. That roar is not a threat; it commands the body to kneel.|おおよろいが ゆかを ふむ。その さけびは いかくではない。からだに ひざまずけと めいじている。
+bl.b_doll_heal|The white talisman doll unfolds a restoration rite.|しろふ にんぎょうが かいふくの じゅつしきを ひらく。
+bl.b_doll_mage|The red talisman doll turns the entire chamber into a spell array.|あかふ にんぎょうが へや ぜんたいを じゅつしきに かえる。
+bl.b_doll_tank|The black-iron doll lunges forward while the other two hide behind it.|くろがね にんぎょうが とびかかり、ほかの 2たいは その うしろに かくれる。
+h.shrine|The Three Lords of the Otherworld wait in the next chamber. Prepare before crossing.|つぎの へやには いかいの さんこうが まつ。とびらを こえるまえに じゅんびせよ。
+h.illusion|Genmaan creates two phantoms that vanish in one hit. The true body has moved.|げんまあんが ひとつきで きえる 2つの げんえいを だした。ほんたいは いどうした。
+h.rootshot|A shadow pin roots you in place. The shuriken deals {n} damage.|かげぬいに そのばへ とめられ、しゅりけんで {n} ダメージ。
+h.roar|Musashimaru's roar freezes your body — you cannot move for two turns.|むさしまるの さけびに からだが すくむ —— 2ターン うごけない。
+h.heal|The support doll stitches life back into all three. Cut its threads first!|ほじょ にんぎょうが 3たいの いのちを ぬいもどす。さきに いとを たて！
+h.burst|The attack doll's rite detonates for {n} damage.|こうげき にんぎょうの じゅつしきが はじけ、{n} ダメージ。
+h.charge|The bulwark doll crashes into you for {n} damage.|にくかべ にんぎょうが とびこみ、{n} ダメージ。
+h.muraneed|You must equip the Demon Blade Muramasa.|ようとう むらまさを そうびしなければ ならない。
+h.muraaim|Muramasa — choose the direction of the distant slash|むらまさ・とおぎりの ほうこうを えらべ
+h.murawait|Muramasa drinks a thread of life. Its blade wind awaits a direction.|むらまさが いのちを ひとすじ すう。とうきが ほうこうを まっている。
+h.murahit|Muramasa's distant slash hits {nm} for {n} damage.|むらまさの とおぎりが {nm}に あたり、{n} ダメージ。
+h.muramiss|The violet blade wind cuts down the corridor and hits nothing.|むらさきの とうきが ろうかを きり、なにも あたらなかった。
+h.muracost|Muramasa bites back for {n} HP.|むらまさの はんどうで HPが {n} へった。
+h.break|With his last strength, the samurai shatters the wardstone. A violet-black otherworld gate opens.|さむらいが さいごの ちからで けっかいせきを くだく。しこくの いかいのもんが ひらいた。
+h.warning|Crossing starts three battles in a row. If you promise and leave, the samurai spirit will hunt you on later floors.|もんを こえれば 3れんせん。やくそくして たちされば、さむらいの れいが つぎの かいで おってくる。
+h.wait|"I will hold on… but not for long."|「もちこたえる……だが ながくは もたぬ。」
+h.enter|You cross the otherworld gate. Three chambers join end to end in the dark.|いかいのもんを こえた。やみの なかで 3つの へやが つながっている。
+h.first|First chamber: Genmaan. Find the true body that does not move with the phantoms.|だい1しつ・げんまあん。げんえいと おなじに うごかない ほんたいを さがせ。
+h.return|The otherworld gate closes behind you. You return to the chamber in Heian-kyo.|いかいのもんが せなかで とじ、へいあんきょうの へやへ もどった。
+h.voice|The dead samurai's voice descends: "This blade belongs to one who still keeps a promise."|なき さむらいの こえが ふる。「やくそくを まもる ものに、この かたなを たくす。」
+h.obtain|★ You obtained the Demon Blade Muramasa and equipped it. A DISTANT SLASH button appeared on the right.|★ ようとう むらまさを てにいれ そうびした。みぎに とおぎりボタンが ふえた。
+h.price|Each distant slash costs 1/20 of your maximum HP.|とおぎりは 1かいごとに さいだいHPの 1/20を つかう。
+h.stage1|The illusion collapses. The first door opens, and a save ring glows in the second chamber.|げんじゅつが くずれ、さいしょの とびらが ひらく。だい2しつで きろくのわが ひかった。
+h.stage2|Musashimaru falls to his knees. The last door opens, and all three dolls turn their heads.|むさしまるが ひざをつく。さいごの とびらが ひらき、3たいの にんぎょうが ふりむいた。
+h.stage3|All three dolls' threads snap. A return gate appears at the far end.|3たいの いとが すべて きれた。おくに かえりのもんが あらわれた。
+h.hunt|You leave the chamber where you made your promise. Far away, a scabbard scrapes across the floor…|やくそくした へやを さった。とおくで さやが ゆかを こする おとがする……
 p.magic|Magic|まほう
 p.bag|Bag|もちもの
 p.ground|Underfoot|あしもと
@@ -3382,6 +3490,65 @@ m.nothing|Nothing happens...|なにも おこらなかった……
 m.stoff|The {nm} effect wears off.|{nm}の こうかが きれた。
 m.ston|You are afflicted with {nm}!|{nm}の じょうたいに なった！
 m.ston2|Afflicted with {nm}!|{nm}の じょうたいに なった！
+m.skill|{nm} uses "{sk}"!|{nm}は「{sk}」を つかった！
+ms.burrow|Burrowing Ambush|もぐり きしゅう
+ms.slow|Viscous Drag|ねんえき ちたい
+ms.stealblink|Snatch and Vanish|ぬすみ しゅんい
+ms.spore|Drunken Venom Spores|すいどく ほうし
+ms.stoneburst|Stone Barrage|れんぞく いしなげ
+ms.mpbite|Mana-Gnawing Maw|まりょくぐい
+ms.headthrow|Severed-Head Strike|とびくび いちげき
+ms.windrush|Gale Pounce|しっぷう ひっさつ
+ms.silence|Spell-Sealing Mark|ふうまの じゅいん
+ms.petrify|Petrifying Gaze|せきかの ぎょうし
+ms.overload|Prism Overload|プリズム オーバーロード
+ms.chaos|Abyssal Chaos|しんえん こんとん
+ms.venom|Venom Dive|どくばり きゅうこうか
+ms.root|Binding Roots|ねがらみ そくばく
+ms.mossguard|Moss-Armour Quake|こけよろい しんげき
+ms.roarshot|Crag-Hawk Roar|がんよう えんこう
+ms.hornrush|Spiral-Horn Charge|らせんづの とつげき
+ms.rockfall|Shattering Rockfall|ほうがん さんしゃ
+ms.shock|Wet Lightning Coil|ぬれいなずま
+ms.shell|Iron-Pincer Guard|てつばさみ こしゅ
+ms.firetail|Flame-Tail Sweep|ほのおの おおなぎ
+ms.ashblind|Blinding Ash Veil|はいまく めくらまし
+ms.tengu|Steel Body / Gale Double-Strike|こうか・しっぷう ばいげき
+ms.morph|Myriad Transformation|ばんしょう へんげ
+ms.prismbeam|Refracted Beam|くっせつこうせん
+ms.mirrorhide|Refracted Afterimage|くっせつ ざんぞう
+ms.venomrush|Hundred-Leg Venom Run|むかで どくそう
+ms.callrats|Command the Swarm|ねずみぐん ごうれい
+ms.sleepdust|Drowsing Scale Dust|ねむりの りんぷん
+ms.blindflare|Ghost-Flame Flash|おにび せんこう
+ms.triple|Shadow Clone Technique|かげぶんしんの じゅつ
+ms.mimicburst|Shadow-Eater Reversal|かげぐい がえし
+ms.judgment|Seraphic Judgment|しこう しんぱん
+ms.tribreath|Triune Breath|さんそう ブレス
+ms.nullfield|Order Lock|ちつじょ ふうさ
+ms.certainty|Absolute Proposition|ぜったい めいだい
+ms.invert|Blood-Mana Paradox|ちま ぎゃくてん
+ms.erase|Nameless Erasure|むめい まっしょう
+ms.illusion|Phantom Art|げんかの じゅつ
+ms.rootShuriken|Shadow-Pin Shuriken|かげぬい しゅりけん
+ms.samuraiRoar|Warrior's Roar|むしゃ しんかつ
+ms.dollHeal|Life-Stitching Thread|ぞくめいし
+ms.dollBurst|Onmyo Burst Rite|おんみょう ばくしき
+ms.dollCharge|Body-Crushing Rush|にくしん ぼくさつ
+m.tengusteel|Steel covers its entire body — all attacks fail for {n} turns.|こうかが ぜんしんを おおう —— {n}ターン すべての こうげきが きかない。
+m.tenguhaste|The tengu accelerates — faster actions and double damage for {n} turns.|からすてんぐが かそく —— {n}ターン こうどうが はやくなり ダメージ 2ばい。
+m.slow|Slime binds your limbs. Enemies act faster for the next 2–3 turns.|ねんえきが てあしに からむ。2～3ターン てきの こうどうが はやくなる。
+m.silenced|A curse mark seals your magic. You cannot cast for a while.|じゅいんが まほうを ふうじた。しばらく じゅもんを つかえない。
+m.petrified|Your body turns to stone. You cannot act for 2–3 turns.|からだが せきかした。2～3ターン こうどうできない。
+m.chaos|The abyss floods your mind and confuses every direction.|しんえんが いしきへ ながれこみ、ほうこうが こんらんした。
+m.rooted|Roots bind your feet. You cannot move for a while.|ねが あしへ からみ、しばらく うごけない。
+m.roarleft|The crag hawk can roar {n} more time(s).|がんようの えんこうは あと {n}かい。
+m.shell|The shell closes completely. Damage is negated for the next 2 turns.|こうらが とじた。つぎの 2ターン ダメージが きかない。
+m.morph|The trickster tanuki becomes "{nm}" — with the same health and techniques!|ばけだぬきが「{nm}」に へんげ —— たいりょくも わざも おなじ！
+m.mirrorhide|Refracted afterimages envelop the body, greatly raising evasion.|くっせつ ざんぞうが ほんたいを つつみ、かいひが おおきく あがった。
+m.triple|One shadow ninja becomes three — two clones vanish in a single hit.|かげしのびが 1たいから 3たいへ —— 2つの ぶんしんは ひとつきで きえる。
+m.headthrow|Before falling, the skeleton tears off its head and hurls it for {n} heavy damage!|がいこつへいが たおれるまえに くびを なげ、{n}の だいダメージ！
+m.stolen|"{nm}" was stolen! Defeat the thief to take it back.|「{nm}」を ぬすまれた！ たおせば とりもどせる。
 sp.cure|Cure|ケアル
 sp.purge|Purge|じょうか
 sp.spark|Spark|でんげき
@@ -3526,6 +3693,9 @@ st.雷|Thunder|らいもん
 st.鏡|Mirror|みずかがみ
 st.歌|Anthem|せんいのうた
 st.影|Clones|かげぶんしん
+st.緩|Slowed|どんそく
+st.石|Petrified|せきか
+st.纏|Rooted|からみつき
 st.睡|Asleep|すいみん
 st.麻|Paralysed|まひ
 st.夾|Snared|はさまれ
@@ -3652,6 +3822,8 @@ const BOSS_BASE = {
   b_lord:'slime', b_phoenix:'imp', b_hanzo:'wolf', b_oni:'knight',
   b_gaoler:'skeleton', b_queen:'mage', b_prism:'turret', b_mermaid:'mage',
   b_hallking:'knight', b_artisan:'turret', b_gate:'knight',
+  b_genmaan:'shinobi', b_musashimaru:'knight',
+  b_doll_heal:'dryad', b_doll_mage:'mage', b_doll_tank:'golem',
 };
 function crownSprite(base){
   const src = atlas[base] || atlas.rat;
@@ -3720,7 +3892,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260829-chapter-charcoal-v15';
+const ART_REV = '20260829-boss-gear-turret-v16';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3739,7 +3911,7 @@ const ART_BOSS = ['b_warden', 'b_treant', 'b_ballista', 'b_pyro', 'b_lord',
 /* 村民以前仍是 16px 程式剪影；主角升到 48px 之後，安全區與護送事件
    一眼就像兩套遊戲。v13 把六位常駐角色做成 48px 正式精靈：同一族的
    四腳圓身仍保留，但職業、年齡與隨身物件各自有清楚輪廓。 */
-const ART_NPC = ['elder','smith','merchant','child','chief','mason'];
+const ART_NPC = ['elder','smith','merchant','child','chief','mason','dying_samurai'];
 const ownArt = {};
 let qaGalleryRedrawT = 0;
 /* 載一張外部圖，成功了才呼叫 ok(canvas)。載不到什麼都不做 ——
@@ -3911,7 +4083,7 @@ for(const id of ART_NPC) adoptArt('npc#' + id, ART_DIR + 'npc/' + id + '.png');
 
    ART_ITEM 只列「已經畫好的」，沒畫的維持程式畫的版本 —— 跟怪物同一條規則。 */
 // 圖到了才填，沒列到的維持程式畫的（卷軸 11 張還沒畫）
-const ART_ITEM = {herb: 14, weap: 8, wand: 9, pot: 6, shld: 6, food: 3};
+const ART_ITEM = {herb: 14, weap: 9, wand: 9, pot: 6, shld: 6, food: 3};
 /* 這一類的每一個外觀共用**同一張**圖。
    卷軸就是這樣：十一個名字、一張圖 —— 識別靠的是名字，不是圖示
    （NetHack 也是這樣）。十一張不同的卷軸圖只會讓背包變得很亂。 */
@@ -4751,10 +4923,15 @@ const ACTOR_SCALE = 1.5;
    48px 原圖不代表畫面上的大小；這裡才是正式戰鬥的顯示倍率。
    碰撞與攻擊判定仍只佔腳下那一格，避免巨型剪影破壞回合制走位。 */
 const BOSS_SCALE = ACTOR_SCALE * 2;
+/* 序章門衛舊圖是一扇窄門；換成寬翼石衛後仍需更大的專屬顯示倍率，
+   才能讓前爪、身軀與雙翼真正比主角形成壓迫。 */
+const KEEPER_BOSS_SCALE = ACTOR_SCALE * 3.05;
 // 門之守望是一座活門，不只是大型人形；視覺面積約為主角的 7.4 倍。
 const GATE_BOSS_SCALE = ACTOR_SCALE * 2.72;
 const bossVisualScale = d => d && d.id === 'b_gate' ? GATE_BOSS_SCALE
-                          : (d && d.boss ? BOSS_SCALE : ACTOR_SCALE);
+                          : (d && d.id === 'b_keeper' ? KEEPER_BOSS_SCALE
+                          : (d && (d.boss || d.visualBoss) ? BOSS_SCALE
+                          : ACTOR_SCALE * (d && d.elite ? 1.5 : 1)));
 
 /* 會飛的怪離地多高（邏輯單位）。3 是試出來的：再低看不出來跟站著的差別，
    再高就會蓋掉上一格的東西、也讓「牠在哪一格」變得難判斷 ——
@@ -5640,6 +5817,10 @@ function tilesFor(theme){
 /* 砲座的四種顏色。刻意用飽和色 —— 這是全遊戲少數
    「不是活物、卻該被一眼看見」的東西，跟紀錄之環同一個理由。 */
 const TURRET_COL = ['#e8a33c', '#5fa9e8', '#79c97a', '#c98ad8'];
+let turretArt = null;
+artImage('prop#turret', ART_DIR + 'prop/turret.png', c => { turretArt = c; });
+let riftGateArt = null;
+artImage('prop#rift_gate', ART_DIR + 'prop/rift_gate.png', c => { riftGateArt = c; });
 const TILE_ART = {
   floor:[makeFloor(1,0),makeFloor(2,0),makeFloor(3,0),makeFloor(4,0)],
   corr:[makeFloor(11,1),makeFloor(12,1),makeFloor(13,1)],
@@ -7893,6 +8074,8 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                    使用者：「若主角沒有持有『Token 金庫』的冒險狀態中，
                    會耗損，挑戰 3 次」—— 所以它存的是次數不是有無。 */
                 ult: {}, sideKey: 0, sideDone: 0, circletDone: 0,
+                /* 平安京異界副本的神器。取得後永久保留，每次出發發回背包。 */
+                muramasa: 0,
                 /* 每章炭筆分鏡只在第一次進章時播放；重打同章不反覆攔住玩家。 */
                 chapterSeen: {},
                 lang: '', skin: 'blob' };
@@ -7980,6 +8163,7 @@ function loadVillage(){
           sideKey: v.sideKey ? 1 : 0,
           sideDone: v.sideDone ? 1 : 0,
           circletDone: v.circletDone ? 1 : 0,
+          muramasa: v.muramasa ? 1 : 0,
           chapterSeen: sanitizeChapterSeen(v.chapterSeen),
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
@@ -8059,6 +8243,7 @@ function saveRun(){
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: RUN_VER, seed: G.seed, act: G.act, floor: G.floor, turn: G.turn,
       known: G.known, look: G.look, notes: G.notes, npc: G.npc,
+      heian: G.heian,
       p: {
         lv:p.lv, exp:p.exp, hp:p.hp, mhp:p.mhp, mp:p.mp, mmp:p.mmp,
         str:p.str, strb:p.strb, sat:p.sat, msat:p.msat, gold:p.gold,
@@ -8123,6 +8308,8 @@ function resumeRun(q){
   /* 護送中的村民要跟著存檔走。不存的話，玩家在第四層存檔離開、
      回來村民就不見了 —— 而他前面已經花了十幾株草在那個人身上。 */
   G.npc = (q && q.npc && q.npc.hp > 0) ? q.npc : null;
+  G.heian = q && q.heian && typeof q.heian === 'object'
+    ? Object.assign({}, G.heian, q.heian) : G.heian;
   if(r.learned)  p.learned = Object.assign({}, r.learned);
   if(r.mastered) p.mastered = Object.assign({}, r.mastered);
   /* 舊存檔是四格共用的，而且沒有 spells。切成 3 + 2 之後：
@@ -8256,6 +8443,9 @@ function newGame(seed){
         sat:100000, msat:100000, gold:0, st:{}, regen:0,
         inv:[], weap:null, shld:null },
     allies:[], shop:null,
+    /* 平安京的異界之門跨樓層／存檔保留。active 代表目前正在三連戰副本。 */
+    heian:{accepted:0, entered:0, hunt:0, active:0, stage:0,
+           originFloor:0, completed:VILLAGE.muramasa?1:0},
     log:[], anim:[], shake:0, floats:[], parts:[], rings:[], trapFx:[], corpses:[], tookDamage:0,
     zoom:FIELD_ZOOM, zoomTo:FIELD_ZOOM, levelFx:null,
   };
@@ -8265,6 +8455,11 @@ function newGame(seed){
   G.p.inv.push(mk('food','bread'));
   G.p.inv.push(mk('herb','heal',{known:1}));
   G.known['herb/heal'] = 1;
+  if(VILLAGE.muramasa){
+    const blade=mk('weap','muramasa',{known:1});
+    G.p.inv.push(blade);
+    if(!G.p.weap) G.p.weap=blade;
+  }
   // 這一趟的目的地已經決定好了，旗標就地清掉 ——
   // 留著的話，死一次之後按「再下一次」會莫名其妙又進副本
   if(typeof sideRun !== 'undefined') sideRun = 0;
@@ -8603,6 +8798,7 @@ function buildFloor(){
   G.depth = absDepth(G.act, G.floor);
   G.md = scaleDepth(G.depth);            // 難度用換算深度，不用絕對層數
   const rng = RNG((G.seed ^ (G.depth*2654435761)) >>> 0);
+  if(G.heian && G.heian.active){ buildHeianRift(rng); return; }
   G.f = genFloor(rng, G.depth, themeNow(),
                  {wide: !!actAt(G.act).wide, temple: actAt(G.act).id === 'temple'});
   G.p.x = G.f.spawn.x; G.p.y = G.f.spawn.y;
@@ -8683,6 +8879,7 @@ function buildFloor(){
     }
   }
   spawnNpc(rng, free);
+  spawnHeianQuest(rng, free);
   /* 休息層：長章節每 N 層一個。沒有休息層的三十層一口氣打完，
      不是難度，是體力測驗 —— 走通測試在通天塔第 7 層就打不下去了。
      這裡不生怪、一定有商店、進來就補滿，玩家可以重新整隊再往下。 */
@@ -8779,7 +8976,11 @@ function buildFloor(){
      而那時候的名單是深淵騎士（攻 48）與水晶砲台（射程 8、攻 40）——
      四隻騎士貼上來是三回合的事。原本的怪物表只需要撐到 20 層，
      戰役要撐到 30 層，所以尾段必須把「數量」讓給「強度」。 */
-  const dens = G.md >= 15 ? 5 : 12;
+  /* 通天塔有二十層，是其他章節的四到六倍長；若每層仍放五隻終盤怪，
+     一章就會累積近百場遭遇，休息層也補不回來。強化種與一次性技能都
+     保留，只把這個長章的每層密度降到三隻：挑戰來自完整爬塔，而不是
+     第一層就被五個必殺技疊死。 */
+  const dens = act0.id==='tower' ? 3 : (G.md >= 15 ? 5 : 12);
   const isBossFloor = G.floor >= actAt(G.act).floors && actAt(G.act).boss;
   let n = G.f.rest ? 0 : Math.min(dens, 2+Math.floor(G.md/3));
   /* 頭目層的雜魚減半，而且**從比較淺的名單裡抽**。
@@ -9137,7 +9338,8 @@ const overLv = () => {
    那時候該補的是頭目（bossLive 會自己看著玩家配），不是雜魚的血量。 */
 const lvMul = () => Math.min(2.20, 1 + overLv() * 0.09);
 
-function spawnMon(d,x,y){
+function spawnMon(d,x,y,opt){
+  opt = opt || {};
   // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
   // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossLive()。
   if(d.boss){
@@ -9165,10 +9367,24 @@ function spawnMon(d,x,y){
       lvup: +(k.toFixed(2)),          // 給名牌用：玩家看得到牠變強了
     });
   }
+  /* 強化種不是單純把圖放大：體力、攻防與經驗一起上升，名字也會標示。
+     只在自然生成的一般怪物上抽取；頭目、召喚物、分身與劇情敵人不抽，
+     否則同一段劇情會因亂數突然變成另一個難度。 */
+  if(!d.boss && !opt.noElite && G.depth >= 4 && G.rng.chance(Math.min(.18,.055+G.md*.004))){
+    d = Object.assign({}, d, {
+      hp:Math.round(d.hp*1.55), atk:Math.round(d.atk*1.22), def:Math.round(d.def*1.15),
+      exp:Math.round(d.exp*1.8), elite:1, lvup:d.lvup||1,
+    });
+  }
   /* 瞬移型頭目要記住自己的房間。不記的話，她追著玩家衝出房門之後，
      「同一間房」就變成走廊 —— 走廊裡挑不到落點，於是她從此再也不閃。
      這是實測抓到的：機器人把她引出門，後面五十回合她一次都沒有瞬移。 */
-  const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++};
+  const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0,
+              carry:[], skillUsed:{}, id:UID++};
+  /* 頭目叫出的增援已經是頭目招式的一部分；若每個增援再立刻施放自己的
+     一次性技能，長血條頭目會不斷堆出「召喚＋必殺」而失控。自然生成的
+     同種怪仍完整保留技能，只有明確標記的召喚物從已使用狀態開始。 */
+  if(opt.noSkill && d.skill) mo.skillUsed[d.skill.kind]=d.skill.uses||1;
   if(d.blink) mo.home = roomOf(x, y);
   G.mons.push(mo);
   return mo;                     // 分身之術需要拿到剛生出來的那一隻
@@ -9433,8 +9649,8 @@ function tryMove(dx,dy){
      這裡是所有入口的匯流點，守這裡才守得完。 */
   if(talkOpen()) return;
   const p=G.p;
-  if(p.st['睡']||p.st['麻']||p.st['夾']||p.st['咬']){
-    const why=p.st['咬']?'食人草仍咬著你！':p.st['夾']?'捕獸器仍夾著腳！':'身體動不了……';
+  if(p.st['睡']||p.st['麻']||p.st['石']||p.st['纏']||p.st['夾']||p.st['咬']){
+    const why=p.st['石']?'身體已經石化！':p.st['纏']?'藤根仍纏著腳！':p.st['咬']?'食人草仍咬著你！':p.st['夾']?'捕獸器仍夾著腳！':'身體動不了……';
     say(TX('s.002',why),'bad'); endTurn(); return;
   }
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
@@ -9443,6 +9659,8 @@ function tryMove(dx,dy){
   const m = monAt(nx,ny);
   if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
   if(allyAt(nx,ny)){ say(M('s.003','{v0} 擋在前面。',{v0:(allyAt(nx,ny).d.nm)})); return; }
+  const dying=heianSamuraiAt(nx,ny);
+  if(dying){ askHeianSamurai(dying); return; }
   const npcHit = npcAt(nx,ny);
   if(npcHit){
     if(!npcHit.follow){
@@ -9559,6 +9777,12 @@ function steal(){
 
 function stepOn(){
   const p=G.p, k=key(p.x,p.y);
+  if(G.f.heianGate && G.f.heianGate.x===p.x && G.f.heianGate.y===p.y){
+    enterHeianRift(); return;
+  }
+  if(G.f.riftExit && G.f.riftExit.x===p.x && G.f.riftExit.y===p.y){
+    leaveHeianRift(); return;
+  }
   if(G.shop && unpaid().length && roomOf(p.x,p.y) !== G.shop.room) keeperReclaim();
   // 紀錄之環：踩上去存檔並補滿，然後熄掉。只有一次，不是無限泉水。
   const sh = G.f.shrine;
@@ -9569,7 +9793,8 @@ function stepOn(){
     SFX.play('level');
     burst(p.x, p.y, 30, '#79c97a', 55, 20, .9);
     say(TX('m.shrine','★ 紀錄之環 —— 進度已保存，體力與魔力全滿。'),'good');
-    say(TX('m.shrine2','下一層是頭目。整理好再下去。'),'gold');
+    say(sh.rift ? TX('h.shrine','下一個房間是異界三公。整理好再通過門。')
+                : TX('m.shrine2','下一層是頭目。整理好再下去。'),'gold');
   }
   /* 怪物之間：踏進去才講。在門外就跳提示的話，玩家永遠不會真的走進去 ——
      這個房間的重點就是「推開門的那一秒」。 */
@@ -9652,7 +9877,7 @@ function attack(m, mult){
   const p=G.p;
   /* 解謎型頭目：刀砍不動。第一次撞上去要把「正解在哪」講清楚 ——
      一個打不痛的敵人如果不解釋，玩家只會以為是 bug 或自己太弱。 */
-  if(m.ward > 0){
+  if(m.ward > 0 || m.steelTurns > 0){
     startAttackPose(p, m.x-p.x, m.y-p.y, 'melee');
     SFX.play('miss');
     float(m.x, m.y, 'NO', '#7cb8ea');
@@ -9690,18 +9915,7 @@ function attack(m, mult){
      而不是更大的數字。 */
   if(crit) G.freeze = Math.max(G.freeze || 0, .07);
   say(M('m.hit','對 {nm} 造成 {n} 點傷害。{c}',{nm:locName('mon',m.d),n:dmg,c:crit?TX('m.crit','（會心一擊！）'):''}), crit?'gold':null);
-  if(m.hp<=0){ kill(m); return; }
-  /* 分身之術。挨了一刀而沒死的影忍會留下一個假的自己 ——
-     分身只有 1 點體力，一碰就散，但你要多花一回合才知道哪個是真的。
-     這是幻忍之里唯一「不靠數值」的威脅：它偷的是你的回合，不是血。 */
-  if(m.d.clone && !m.isClone && G.rng.chance(.4)){
-    const s = nearestFree(m.x, m.y);
-    if(s){
-      const c = spawnMon(m.d, s.x, s.y);
-      if(c){ c.isClone = 1; c.hp = 1; c.mhp = 1; c.aggro = 15;
-             say(M('m.clone','{nm} 分成了兩個 —— 哪一個是真的？',{nm:locName('mon',m.d)}),'bad'); }
-    }
-  }
+  if(m.hp<=0){ monsterLastStand(m); kill(m); return; }
   if(m.d.counter && G.rng.chance(m.d.counter)){
     const back = rollEnemyDmg(m, m.d.atk, .5, false);
     hurtPlayer(back); say(M('s.008','{v0} 發動了反擊！',{v0:(locName('mon', m.d))}),'bad'); float(p.x,p.y,'-'+back,'#a83c32');
@@ -9804,7 +10018,7 @@ function kill(m){
     burst(m.x, m.y, 14, '#c8c8d4', 52, 14, 0.5);
   }
   say(M('m.kill','打倒了 {nm}。',{nm:locName('mon',m.d)}),'good');
-  if(m.d.boss) bossDown(m);
+  if(m.d.boss && !m.d.sideBoss) bossDown(m);
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
   if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
@@ -9814,7 +10028,7 @@ function kill(m){
      只是把「有沒有掉」從機率變成保證、再加上 +1~+3 的鍛造值。
      跳級的神兵會讓後面五章的鐵匠鋪與撿到的每一把劍同時失去意義：
      贏了一場仗換來的是「接下來都不用再選了」，那是最貴的一種獎勵。 */
-  if(m.d.boss && !MIND_CHAIN[m.d.id]){
+  if(m.d.boss && !m.d.sideBoss && !MIND_CHAIN[m.d.id]){
     const tbl = G.rng.chance(.6) ? WEAP : SHLD;
     const cap = (400 + G.md * 280) * 1.35;      // 比平常寬一點，但不是無上限
     /* 一般掉落是「越貴越少見」，那對地上撿到的東西是對的；
@@ -9891,6 +10105,7 @@ function kill(m){
       SFX.play('ident');
     }
   }
+  if(m.d.sideBoss) riftBossDown(m);
 }
 function nearestFree(x,y){
   if(walkable(x,y) && !G.items[key(x,y)]) return {x,y};
@@ -9929,14 +10144,23 @@ function endTurn(){
   // 狀態遞減
   for(const k in p.st){ if(--p.st[k]<=0){ delete p.st[k];
     say(M('m.stoff','{nm}的狀態解除了。',{nm:TX('st.'+k, k)})); } }
-  for(const m of G.mons){ for(const k in m.st) if(--m.st[k]<=0) delete m.st[k]; }
+  for(const m of G.mons){
+    for(const k in m.st) if(--m.st[k]<=0) delete m.st[k];
+    if(m.steelTurns>0) m.steelTurns--;
+    if(m.speedBuffTurns>0) m.speedBuffTurns--;
+    if(m.damageBuffTurns>0) m.damageBuffTurns--;
+  }
 
   allyTurn();                       // 幻獸先動 —— 它是玩家花代價換來的先手
   npcTurn();
 
   // 怪物行動（速度用行動點累積器；倍速怪拆成前後半，玩家才算得清逃跑距離）
   const snap = {px:p.x, py:p.y};
-  for(const m of G.mons) if(m.hp>0){ m.gauge += m.d.spd; }
+  for(const m of G.mons) if(m.hp>0){
+    const slowed=p.st['緩']?1.5:1;
+    const sped=m.speedBuffTurns?1.5:1;
+    m.gauge += m.d.spd*slowed*sped;
+  }
   let maxAct = 0; for(const m of G.mons) maxAct = Math.max(maxAct, Math.floor(m.gauge));
   for(let sub=0; sub<maxAct; sub++){
     const actors = G.mons.filter(m=>m.hp>0 && Math.floor(m.gauge)>sub)
@@ -10100,12 +10324,239 @@ function surgeTo(want){
   }
 }
 
+/* ─── 每種怪物的一次性技能 ──────────────────────────────────── */
+function monsterSkillFx(m, s, target){
+  const p=target||G.p, col=s.col||'#f5dc7a';
+  startAttackPose(m,p.x-m.x,p.y-m.y,'ranged');
+  wave(m.x,m.y,col,.58); ring(m.x,m.y,col,24,.38);
+  burst(m.x,m.y,16,col,54,15,.55);
+  const len=Math.max(Math.abs(p.x-m.x),Math.abs(p.y-m.y));
+  if(len>1) trail(m.x,m.y,Math.sign(p.x-m.x),Math.sign(p.y-m.y),len,col);
+  if(p===G.p){ ring(p.x,p.y,col,22,.32); burst(p.x,p.y,12,col,48,12,.48); }
+  G.freeze=Math.max(G.freeze||0,.045); G.shake=Math.max(G.shake||0,5);
+  SFX.play(['roarshot','mossguard','tengu'].includes(s.kind)?'roar':'cast',45);
+  say(M('m.skill','{nm} 發動「{sk}」！',
+        {nm:locName('mon',m.d),sk:TX('ms.'+s.kind,s.nm)}),'bad');
+}
+function damagePlayerFromSkill(m, mul, s, fixed){
+  const p=G.p;
+  const raw=fixed||rollEnemyDmg(m,Math.max(1,m.d.atk*(mul||1)),1,false);
+  /* 一般怪的招牌技要改變戰況，不能在進房的第一幀直接秒人。深層一個房間
+     可能同時看見三至五隻怪；每隻各自一次的技能若都吃完整倍率，累積傷害
+     會比頭目還高。固定傷害（骷髏飛首）與真正的頭目技保留原規格；一般怪
+     的技能單次最多拿掉 18% 最大體力，狀態、擊退與動畫仍完整生效。 */
+  const dmg=(fixed||m.d.boss)?raw:Math.min(raw,Math.max(3,Math.ceil(p.mhp*.18)));
+  hurtPlayer(dmg); p.flash=.13; startHurtPose(p,m.x,m.y,.24);
+  float(p.x,p.y,'-'+dmg,'#a83c32');
+  G.hurtFx=Math.max(G.hurtFx||0,Math.min(1,dmg/Math.max(1,p.mhp*.3)));
+  if(s) burst(p.x,p.y,18,s.col||'#a83c32',64,12,.55);
+  return dmg;
+}
+function farRoomSpot(m){
+  const pr=roomOf(G.p.x,G.p.y), out=[];
+  for(let y=1;y<MH-1;y++) for(let x=1;x<MW-1;x++){
+    if(!walkable(x,y)||monAt(x,y)||(x===G.p.x&&y===G.p.y)) continue;
+    if(roomOf(x,y)>=0 && roomOf(x,y)!==pr) out.push({x,y});
+  }
+  return out.length?G.rng.pick(out):nearestFree(m.x,m.y);
+}
+function monsterSkillIntent(m){
+  const s=m.d.skill, p=G.p;
+  if(!s||m.isClone||m.d.boss||m.st['睡']||m.st['麻']) return null;
+  const dist=Math.max(Math.abs(m.x-p.x),Math.abs(m.y-p.y));
+  const sees=G.seen[key(m.x,m.y)]===2 || (dist<=m.d.sight&&lineClear(m.x,m.y,p.x,p.y));
+  if(!sees) return null;
+  if(s.kind==='headthrow') return null;                 // 致死瞬間保證發動
+  /* 看見玩家不等於射程無限。舊版讓所有招牌技在房間另一端同時落下，
+     玩家既看不到準備動作也沒有接近／退開的決定。近戰技一至三格、術式
+     四至六格；純粹強化自己的技能不受距離限制。 */
+  const selfSkill=['mossguard','shell','tengu','morph','mirrorhide','callrats','triple','certainty'];
+  const skillRange={burrow:4,slow:1,stealblink:1,spore:2,stoneburst:5,mpbite:1,
+    windrush:3,silence:5,petrify:4,overload:7,chaos:4,venom:3,root:4,
+    roarshot:9,hornrush:3,rockfall:5,shock:3,firetail:3,ashblind:4,
+    prismbeam:6,venomrush:3,sleepdust:4,blindflare:5,mimicburst:4,
+    judgment:5,tribreath:4,nullfield:4,invert:4,erase:5};
+  if(!selfSkill.includes(s.kind) && dist>(skillRange[s.kind]||3)) return null;
+  if(s.kind==='tengu'){
+    if(!m.skillUsed.steel && m.hp<m.mhp*.82) return {k:'skill',s,mode:'steel'};
+    if(m.skillUsed.steel&&!m.skillUsed.haste&&!m.steelTurns&&m.hp<m.mhp*.58)
+      return {k:'skill',s,mode:'haste'};
+    return null;
+  }
+  const used=m.skillUsed[s.kind]||0, limit=s.uses||1;
+  if(used>=limit) return null;
+  if(s.kind==='stealblink' && (dist>1 || !p.inv.some(i=>i!==p.weap&&i!==p.shld&&i!==p.hat))) return null;
+  if(s.kind==='mpbite' && (dist>1||p.mp<=0)) return null;
+  if(s.kind==='roarshot' && (dist<2||dist>9)) return null;
+  if(['venom','windrush','hornrush','venomrush','firetail'].includes(s.kind) && dist>3) return null;
+  if(m.skillDelay===undefined) m.skillDelay=1+(m.id%3);
+  if(m.skillDelay-->0) return null;
+  return {k:'skill',s};
+}
+function useMonsterSkill(m,it){
+  const s=it.s, p=G.p, kind=s.kind;
+  monsterSkillFx(m,s,p);
+  if(kind==='tengu'){
+    if(it.mode==='steel'){
+      m.skillUsed.steel=1; m.steelTurns=G.rng.i(4,5);
+      say(M('m.tengusteel','鋼化覆住全身 —— {n} 回合內所有攻擊無效。',{n:m.steelTurns-1}),'bad');
+    }else{
+      m.skillUsed.haste=1; m.speedBuffTurns=G.rng.i(4,5); m.damageBuffTurns=m.speedBuffTurns;
+      say(M('m.tenguhaste','鴉天狗加速了 —— {n} 回合內行動加快且傷害加倍。',{n:m.speedBuffTurns-1}),'bad');
+    }
+    return;
+  }
+  m.skillUsed[kind]=(m.skillUsed[kind]||0)+1;
+  switch(kind){
+    case 'burrow': { const q=farRoomSpot(m)||nearestFree(p.x,p.y); if(q){burst(m.x,m.y,12,s.col,40,8,.4);m.x=q.x;m.y=q.y;} damagePlayerFromSkill(m,.7,s); break; }
+    case 'slow': p.st['緩']=Math.max(p.st['緩']||0,G.rng.i(3,4)); say(TX('m.slow','黏液纏住四肢，接下來 2～3 回合敵人行動得更快。'),'bad'); break;
+    case 'stealblink': { const pool=p.inv.filter(i=>i!==p.weap&&i!==p.shld&&i!==p.hat); if(pool.length){const v=G.rng.pick(pool);p.inv.splice(p.inv.indexOf(v),1);m.carry.push(v);say(M('m.stolen','「{nm}」被偷走了！打倒牠才能拿回來。',{nm:nameOf(v)}),'bad');} const q=farRoomSpot(m);if(q){burst(m.x,m.y,16,s.col,60,10,.5);m.x=q.x;m.y=q.y;burst(m.x,m.y,16,s.col,60,10,.5);} break; }
+    case 'spore': p.st['亂']=Math.max(p.st['亂']||0,4); poison(8); break;
+    case 'stoneburst': damagePlayerFromSkill(m,.85,s); p.st['痛']=Math.max(p.st['痛']||0,2); break;
+    case 'mpbite': {const n=Math.min(p.mp,Math.max(1,Math.ceil(p.mmp/4)));p.mp-=n;float(p.x,p.y,'-'+n+' MP',s.col);say(M('m.mpquarter','環狀口器咬掉了 {n} MP（最大魔力的四分之一）。',{n}),'bad');break;}
+    case 'windrush': damagePlayerFromSkill(m,1.15,s); knockPlayer(Math.sign(p.x-m.x)||1,Math.sign(p.y-m.y),2); break;
+    case 'silence': p.st['封']=Math.max(p.st['封']||0,4); say(TX('m.silenced','咒印封住了魔法，暫時無法施法。'),'bad'); break;
+    case 'petrify': p.st['石']=Math.max(p.st['石']||0,G.rng.i(2,3)); say(TX('m.petrified','身體石化，2～3 回合無法行動。'),'bad'); break;
+    case 'overload': damagePlayerFromSkill(m,1.35,s); break;
+    case 'chaos': p.st['亂']=Math.max(p.st['亂']||0,5); say(TX('m.chaos','深淵灌進意識，方向陷入混沌。'),'bad'); break;
+    case 'venom': damagePlayerFromSkill(m,.8,s); poison(14); break;
+    case 'root': p.st['纏']=Math.max(p.st['纏']||0,3); say(TX('m.rooted','藤根纏住腳步，暫時不能移動。'),'bad'); break;
+    case 'mossguard': m.steelTurns=3; damagePlayerFromSkill(m,.55,s); break;
+    case 'roarshot': damagePlayerFromSkill(m,.7,s); say(M('m.roarleft','岩鷹的遠吼還能使用 {n} 次。',{n:3-m.skillUsed[kind]}),'bad'); break;
+    case 'hornrush': damagePlayerFromSkill(m,1.15,s); knockPlayer(Math.sign(p.x-m.x)||1,Math.sign(p.y-m.y),3); break;
+    case 'rockfall': damagePlayerFromSkill(m,.95,s); p.st['麻']=Math.max(p.st['麻']||0,2); break;
+    case 'shock': damagePlayerFromSkill(m,.75,s); p.st['麻']=Math.max(p.st['麻']||0,2); break;
+    case 'shell': m.steelTurns=3; say(TX('m.shell','甲殼完全閉合，接下來 2 回合傷害無效。'),'bad'); break;
+    case 'firetail': damagePlayerFromSkill(m,1,s); p.st['燒']=Math.max(p.st['燒']||0,4); break;
+    case 'ashblind': p.st['盲']=Math.max(p.st['盲']||0,5); break;
+    case 'morph': {
+      const pool=MONS.filter(d=>d.id!=='tanuki').concat(BOSS.filter(d=>!d.turret));
+      const t=G.rng.pick(pool); let nd=Object.assign({},t);
+      if(t.boss){const bs=bossLive(G.md,t);nd=Object.assign(nd,bs,{boss:0,visualBoss:1,lives:0,exp:m.d.exp});}
+      else {const k2=lvMul();nd=Object.assign(nd,{hp:Math.round(nd.hp*k2)});}
+      nd.turret=null; nd.mul=null; m.d=nd; m.hp=m.mhp=nd.hp; m.skillUsed={morph:1};
+      burst(m.x,m.y,34,s.col,74,22,.9); say(M('m.morph','幻狸化為「{nm}」—— 體力與招式完全相同！',{nm:locName('mon',nd)}),'bad'); break;
+    }
+    case 'prismbeam': damagePlayerFromSkill(m,1.05,s); break;
+    case 'mirrorhide': m.d=Object.assign({},m.d,{ev:Math.min(70,(m.d.ev||0)+35)}); say(TX('m.mirrorhide','折射殘像包住本體，閃避率大幅上升。'),'bad'); break;
+    case 'venomrush': damagePlayerFromSkill(m,.9,s); poison(12); break;
+    case 'callrats': {const rd=MONS.find(d=>d.id==='rat');for(let i=0;i<2;i++){const q=nearestFree(m.x,m.y);if(q){const c=spawnMon(rd,q.x,q.y,{noElite:true});c.bornOf=m.id;burst(q.x,q.y,10,s.col,40,8,.4);}}break;}
+    case 'sleepdust': p.st['睡']=Math.max(p.st['睡']||0,2); break;
+    case 'blindflare': p.st['盲']=Math.max(p.st['盲']||0,5); damagePlayerFromSkill(m,.45,s); break;
+    case 'triple': {let n=0;for(let i=0;i<2;i++){const q=nearestFree(m.x,m.y);if(q){
+      /* 分身有完整輪廓但只有一點血，攻擊也只是本體的三成五；否則一次技能
+         等同永久多出兩隻完整影忍，跟「一化為三的障眼法」不符。 */
+      const cd=Object.assign({},m.d,{atk:Math.max(1,Math.round(m.d.atk*.35)),exp:0});
+      const c=spawnMon(cd,q.x,q.y,{noElite:true,noSkill:true});c.isClone=1;c.hp=c.mhp=1;c.aggro=15;c.skillUsed.triple=1;n++;burst(q.x,q.y,18,s.col,60,12,.6);}}say(M('m.triple','影忍一化為三 —— 兩個分身一碰就會消散。',{}),'bad');break;}
+    case 'mimicburst': damagePlayerFromSkill(m,1,s,Math.max(1,Math.round(pAtk()*.7))); break;
+    case 'judgment': damagePlayerFromSkill(m,1.2,s); p.st['封']=Math.max(p.st['封']||0,3); break;
+    case 'tribreath': damagePlayerFromSkill(m,1.1,s); p.st[G.rng.pick(['毒','燒','麻'])]=4; break;
+    case 'nullfield': p.st['封']=Math.max(p.st['封']||0,4); p.st['緩']=Math.max(p.st['緩']||0,3); break;
+    case 'certainty': m.sureHit=1; m.damageBuffTurns=3; say(TX('m.certainty','命題已成立：接下來的攻擊必定命中。'),'bad'); break;
+    case 'invert': {const hp=p.hp,mp=p.mp;p.hp=Math.max(1,Math.min(p.mhp,Math.round((mp/Math.max(1,p.mmp))*p.mhp)));p.mp=Math.max(0,Math.min(p.mmp,Math.round((hp/Math.max(1,p.mhp))*p.mmp)));float(p.x,p.y,'HP↔MP',s.col);break;}
+    case 'erase': p.st['石']=Math.max(p.st['石']||0,2); p.st['封']=Math.max(p.st['封']||0,4); damagePlayerFromSkill(m,.8,s); break;
+  }
+  if(p.hp<=0) death();
+}
+function monsterLastStand(m){
+  if(!m||m.d.id!=='skeleton'||m.isClone||m.skillUsed.headthrow) return false;
+  const s=MONSTER_SKILLS.skeleton; m.skillUsed.headthrow=1;
+  monsterSkillFx(m,s,G.p);
+  const dmg=Math.max(8,Math.ceil(G.p.mhp/4)); damagePlayerFromSkill(m,1,s,dmg);
+  say(M('m.headthrow','骷髏兵在倒下前摘下頭顱砸來，造成 {n} 點大損傷！',{n:dmg}),'bad');
+  if(G.p.hp<=0) death();
+  return true;
+}
+
+/* 平安京三公不是把普通頭目換名字：每一室都要求不同的應對。
+   幻魔庵考辨認真身與脫離定身；武藏丸考吼叫後的兩回合；
+   三人偶則考擊殺順序（治療 → 法師 → 肉盾）。 */
+function sideBossIntent(m){
+  const role=m.d.sideRole, p=G.p;
+  if(!role||m.st['睡']||m.st['麻']) return null;
+  const dist=Math.max(Math.abs(m.x-p.x),Math.abs(m.y-p.y));
+  const sees=G.seen[key(m.x,m.y)]===2||dist<=2;
+  if(!sees) return null;
+  m.sideTick=(m.sideTick|0)+1;
+  if(role==='genmaan'){
+    if(!m.skillUsed.illusion) return {k:'sideSkill',kind:'illusion'};
+    if(dist>=2&&dist<=10&&aligned(m.x,m.y,p.x,p.y)&&m.sideTick%4===0)
+      return {k:'sideSkill',kind:'rootShuriken'};
+  }
+  if(role==='musashi'&&!m.skillUsed.roar&&dist<=5) return {k:'sideSkill',kind:'samuraiRoar'};
+  if(role==='doll_heal'&&m.sideTick%3===0&&G.mons.some(q=>q.hp>0&&q.hp<q.mhp&&q.d.sideRole&&q.d.sideRole.startsWith('doll')))
+    return {k:'sideSkill',kind:'dollHeal'};
+  if(role==='doll_mage'&&m.sideTick%3===0) return {k:'sideSkill',kind:'dollBurst'};
+  if(role==='doll_tank'&&m.sideTick%4===0&&aligned(m.x,m.y,p.x,p.y)) return {k:'sideSkill',kind:'dollCharge'};
+  return null;
+}
+function sideArenaSpot(m,minD){
+  const rr=roomOf(m.x,m.y),out=[];
+  for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++){
+    if(roomOf(x,y)!==rr||!walkable(x,y)||monAt(x,y)||(x===G.p.x&&y===G.p.y))continue;
+    if(Math.max(Math.abs(x-G.p.x),Math.abs(y-G.p.y))<(minD||0))continue;
+    out.push({x,y});
+  }
+  return out.length?G.rng.pick(out):null;
+}
+function useSideBossSkill(m,it){
+  const p=G.p, kind=it.kind;
+  const fx=(nm,col)=>{
+    const s={nm,col,kind}; monsterSkillFx(m,s,p); return s;
+  };
+  if(kind==='illusion'){
+    m.skillUsed.illusion=1; fx('幻化之術','#9b67d0');
+    for(let i=0;i<2;i++){
+      const q=sideArenaSpot(m,1); if(!q) continue;
+      const cd=Object.assign({},m.d,{boss:0,sideBoss:0,sideRole:'illusion',hp:1,exp:0,atk:Math.max(1,Math.floor(m.d.atk*.35))});
+      const c=spawnMon(cd,q.x,q.y,{noElite:true}); c.isClone=1;c.hp=c.mhp=1;c.aggro=99;
+      burst(q.x,q.y,20,'#9b67d0',65,14,.65);
+    }
+    const q=sideArenaSpot(m,4); if(q){m.x=q.x;m.y=q.y;burst(q.x,q.y,26,'#9b67d0',72,18,.8);}
+    say(TX('h.illusion','幻魔庵化出兩道一擊即散的殘像，真身已換了位置。'),'bad'); return;
+  }
+  if(kind==='rootShuriken'){
+    const s=fx('縛影手裏劍','#b487e5');
+    p.st['纏']=Math.max(p.st['纏']||0,2);
+    const dmg=damagePlayerFromSkill(m,.72,s);
+    say(M('h.rootshot','影釘把你固定在原地，手裏劍造成 {n} 點傷害。',{n:dmg}),'bad');
+  }else if(kind==='samuraiRoar'){
+    m.skillUsed.roar=1; fx('武者震喝','#e36c4d');
+    p.st['麻']=Math.max(p.st['麻']||0,2); G.shake=Math.max(G.shake,13);
+    say(TX('h.roar','武藏丸的吼聲震住身體 —— 兩回合不能行動。'),'bad');
+  }else if(kind==='dollHeal'){
+    fx('續命絲','#75d79d');
+    for(const q of G.mons.filter(q=>q.hp>0&&q.d.sideRole&&q.d.sideRole.startsWith('doll'))){
+      const n=Math.max(1,Math.ceil(q.mhp*.16));q.hp=Math.min(q.mhp,q.hp+n);float(q.x,q.y,'+'+n,'#79c97a');
+      trail(m.x,m.y,Math.sign(q.x-m.x),Math.sign(q.y-m.y),Math.max(Math.abs(q.x-m.x),Math.abs(q.y-m.y)),'#79c97a');
+    }
+    say(TX('h.heal','輔助人偶替三具人偶縫回生命。先打斷它的絲線！'),'bad');
+  }else if(kind==='dollBurst'){
+    const s=fx('陰陽爆式','#6fb5ef');
+    const dmg=damagePlayerFromSkill(m,1.45,s); say(M('h.burst','攻擊人偶的術式爆開，造成 {n} 點傷害。',{n:dmg}),'bad');
+  }else if(kind==='dollCharge'){
+    fx('肉身撲殺','#d2a166');
+    const dx=Math.sign(p.x-m.x),dy=Math.sign(p.y-m.y); let x=m.x,y=m.y;
+    while(Math.max(Math.abs(x-p.x),Math.abs(y-p.y))>1&&walkable(x+dx,y+dy)&&!monAt(x+dx,y+dy)){x+=dx;y+=dy;}
+    G.anim.push({o:m,fx:m.x,fy:m.y,t:0,dur:.22,kind:'charge'});m.x=x;m.y=y;
+    if(Math.max(Math.abs(m.x-p.x),Math.abs(m.y-p.y))<=1){
+      const s={col:'#d2a166'},dmg=damagePlayerFromSkill(m,1.2,s);knockPlayer(dx||1,dy,2);
+      say(M('h.charge','肉盾人偶撲撞過來，造成 {n} 點傷害。',{n:dmg}),'bad');
+    }
+  }
+  if(p.hp<=0) death();
+}
+
 /* ─── 怪物 AI：三種行為模式 ─────────────────────────────────── */
 function decide(m){
   const p=G.p;
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
+  const side=sideBossIntent(m);
+  if(side) return side;
   if(m.d.mind) return mindDecide(m);
+  const special=monsterSkillIntent(m);
+  if(special) return special;
   /* ── 頭目的共同語彙 ──────────────────────────────────────
      使用者：「每一章頭目一定要多個一兩招不同的啊，不然會覺得很無聊」。
      十五章各寫一套 AI 是寫不完也養不起的，所以改成三個可以組合的動詞：
@@ -10437,6 +10888,8 @@ function knockPlayer(dx, dy, max){
 
 function act(m,it){
   const p=G.p;
+  if(it.k==='sideSkill'){ useSideBossSkill(m,it); return; }
+  if(it.k==='skill'){ useMonsterSkill(m,it); return; }
   /* 怪會打村民，而且**優先**打他。護送的壓力全部從這一段來：
      他打不過、跑得慢，而怪知道誰比較好殺。
      兩邊都貼著的時候各一半 —— 全打他的話玩家只能眼睜睜看他死，
@@ -10478,9 +10931,9 @@ function act(m,it){
     }
     // 影分身：命中率從 92% 掉到 45%，但它不是無敵 ——
     // 逃跑技能可以很強，防禦技能不行，不然玩家就沒有理由移動了
-    const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
+    const hit = m.sureHit || G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
     if(!hit){ SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); return; }
-    let dmg = rollEnemyDmg(m, m.d.atk, mult, false);
+    let dmg = rollEnemyDmg(m, m.d.atk*(m.damageBuffTurns?2:1), mult, false);
     /* 影法師打的是「你自己」。它的攻擊力取自你當下的攻擊力，
        所以在鏡像世界裡，把裝備練得越好，影子就越痛 ——
        這一章的主題本來就是「連自己都不能全信」。
@@ -10489,6 +10942,10 @@ function act(m,it){
        第一版把表值寫成 30、倍率 0.7，量出來在鏡像世界只差 1.27 倍：
        那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
     if(m.d.mimic) dmg = Math.max(dmg, rollEnemyDmg(m, Math.round(pAtk()*m.d.mimic), mult, false));
+    /* 劇情追殺與武藏丸的刀傷以玩家上限為準，裝再厚也不能站著無視。
+       前者一刀三分之一，後者一刀四分之一，正好是使用者指定的威脅。 */
+    if(m.d.sideRole==='vengeance') dmg=Math.max(dmg,Math.ceil(p.mhp/3));
+    if(m.d.sideRole==='musashi') dmg=Math.max(dmg,Math.ceil(p.mhp/4));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
     /* 頭目每第三下是重擊。使用者：「魔王可以有每 3～4 次攻擊，
        產生一次爆擊，然後把主角打飛，這樣比較刺激」。
@@ -10605,7 +11062,7 @@ function act(m,it){
       const sp = nearestFree(m.x, m.y);
       if(!sp) break;
       const nd = G.rng.pick(src);
-      const born2 = spawnMon(nd, sp.x, sp.y);
+      const born2 = spawnMon(nd, sp.x, sp.y, {noElite:true,noSkill:true});
       if(born2) born2.bornOf = m.id;      // 上限只數這一隻叫來的
       burst(sp.x, sp.y, 12, '#79c97a', 60, 10, .5);
       born++;
@@ -11187,7 +11644,7 @@ function fireWand(dx,dy){
 }
 
 /* ═══ 魔法與幻獸 ═════════════════════════════════════════════ */
-let pendSpell = null;
+let pendSpell = null, pendMuramasa = false;
 
 /* 視野內的敵人 —— 全場型魔法的作用對象。用「看得見」而不是「同房間」，
    玩家看到什麼就打到什麼，不需要另外解釋規則。 */
@@ -11197,6 +11654,7 @@ function spellById(id){ return SPELLS.find(s => s.id === id); }
 
 function castSpell(sp){
   const p = G.p;
+  if(p.st['封']||p.st['石']){ say(TX('m.cantcast','身體或魔力被封住，現在無法施法。'),'bad'); return false; }
   const cost = spellCost(p, sp);
   if(p.mp < cost){ say(TX('s.060','魔力不足。'),'bad'); return false; }
   // room 打的是「視野內全體」，方向無關 —— 還要玩家選方向只是白按一次
@@ -11213,6 +11671,30 @@ function fireSpell(dx, dy){
   doSpell(sp, dx, dy);
   endTurn();
 }
+function startMuramasaAim(){
+  if(!G.p.weap||!G.p.weap.d.muramasa){say(TX('h.muraneed','必須裝備妖刀村正。'));return;}
+  pendMuramasa=true; openAim(TX('h.muraaim','妖刀村正・選擇遠斬方向'));
+  say(TX('h.murawait','村正吸走一縷生命，刀氣正在等待方向。'),'bad'); refresh();
+}
+function fireMuramasa(dx,dy){
+  pendMuramasa=false;
+  const p=G.p;if(!p.weap||!p.weap.d.muramasa)return;
+  const cost=Math.max(1,Math.ceil(p.mhp/20));
+  startAttackPose(p,dx,dy,'melee');SFX.play('swing');
+  let x=p.x,y=p.y,target=null,len=0;
+  for(let i=0;i<9;i++){x+=dx;y+=dy;if(!walkable(x,y))break;len++;const m=monAt(x,y);if(m){target=m;break;}}
+  trail(p.x,p.y,dx,dy,Math.max(1,len),'#d9a7ee');
+  for(let i=1;i<=Math.max(1,len);i++)burst(p.x+dx*i,p.y+dy*i,4,'#d9a7ee',44,7,.38);
+  if(target){
+    const dmg=rollDmg(pAtk()*1.25,target.d.def,false,1);
+    hurtMon(target,dmg,'#e9c8f5');
+    say(M('h.murahit','村正的遠斬命中 {nm}，造成 {n} 點傷害。',{nm:locName('mon',target.d),n:dmg}),'good');
+  }else say(TX('h.muramiss','紫色刀氣劃過走廊，沒有命中。'));
+  hurtPlayer(cost);float(p.x,p.y,'-'+cost+' HP','#b76ac8');
+  burst(p.x,p.y,14,'#b76ac8',48,10,.5);
+  say(M('h.muracost','村正反噬了 {n} 點體力。',{n:cost}),'bad');
+  if(p.hp<=0){death();return;} endTurn();
+}
 
 /* 所有「非砲座」的傷害都要從這裡過。
    把免疫只寫在 attack() 裡是不夠的：天空之劍的橫掃、長槍的貫穿、
@@ -11228,10 +11710,10 @@ function fireSpell(dx, dy){
    於是每一場頭目戰的最佳解都是同一個，那才是真正無聊的地方。
    打對折之後，對一群雜魚它還是最強，對頭目就得換招。 */
 const BOSS_WIDE = 0.5;
-function hurtWide(m, dmg, col, st, dur){
-  hurtMon(m, m.d.boss ? Math.max(1, Math.round(dmg * BOSS_WIDE)) : dmg, col, st, dur);
+function hurtWide(m, dmg, col, st, dur, source){
+  hurtMon(m, m.d.boss ? Math.max(1, Math.round(dmg * BOSS_WIDE)) : dmg, col, st, dur, source);
 }
-function hurtMon(m, dmg, col, st, dur){
+function hurtMon(m, dmg, col, st, dur, source){
   if(m.d.turret){
     float(m.x, m.y, 'NO', '#a99a7e');
     return;
@@ -11240,17 +11722,22 @@ function hurtMon(m, dmg, col, st, dur){
      它不是用來拖時間的，是用來**逼玩家換一件事做**：
      這幾回合去補血、去撿東西、去換站位，而不是繼續砍。
      所以它有明確的長度、看得到的圈，而且時間到就沒了。 */
-  if(m.ward > 0){
+  if(m.ward > 0 || m.steelTurns > 0){
     float(m.x, m.y, 'NO', '#7cb8ea');
     burst(m.x, m.y, 6, '#7cb8ea', 30, 6, .35);
     return;
+  }
+  if(m.d.magicResist && (source==='magic'||source==='summon')){
+    dmg=Math.max(1,Math.ceil(dmg*m.d.magicResist));
+    float(m.x,m.y,'RESIST','#7cb8ea');
+    say(M('m.resist','{nm} 的魔抗把傷害降低了一半。',{nm:locName('mon',m.d)}),'bad');
   }
   m.hp -= dmg; m.flash = 0.12;
   startHurtPose(m, G.p.x, G.p.y);
   float(m.x, m.y, String(dmg), col);
   burst(m.x, m.y, 8, col, 34, 8);
   if(st && !(m.d.imm||[]).includes(st)) m.st[st] = dur;
-  if(m.hp <= 0) kill(m);
+  if(m.hp <= 0){ monsterLastStand(m); kill(m); }
 }
 /* 沿方向掃出一條線，回傳沿途的怪 */
 function beamLine(dx, dy, range, stopAtFirst){
@@ -11302,7 +11789,7 @@ function doSpell(sp, dx, dy){
     case 'spark': {
       const {mons} = beamLine(dx, dy, 9, false);
       if(!mons.length){ say(TX('s.062','電光射向遠方。')); break; }
-      for(const m of mons) hurtMon(m, rollDmg(power(p,sp,16,9), m.d.def, false, 1), '#7cb8ea', '麻', 2);
+      for(const m of mons) hurtMon(m, rollDmg(power(p,sp,16,9), m.d.def, false, 1), '#7cb8ea', '麻', 2, 'magic');
       say(M('s.063','電擊貫穿了 {v0} 個敵人。',{v0:(mons.length)}),'good');
       break;
     }
@@ -11310,7 +11797,7 @@ function doSpell(sp, dx, dy){
       const {mons} = beamLine(dx, dy, 8, false);
       if(!mons.length){ say(TX('s.064','風掠過空無一物的走廊。')); break; }
       for(const m of mons){
-        hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+        hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a', null, null, 'magic');
         if(m.hp > 0) knock(m, dx, dy, 3);
       }
       say(M('s.065','疾風把 {v0} 個敵人推了出去。',{v0:(mons.length)}),'good');
@@ -11326,7 +11813,7 @@ function doSpell(sp, dx, dy){
       for(const m of G.mons.slice()){
         if(Math.max(Math.abs(m.x-hitAt.x), Math.abs(m.y-hitAt.y)) > (ice?0:1)) continue;
         hurtMon(m, rollDmg(power(p,sp, ice?14:18, ice?8:10), m.d.def, false, 1),
-                ice ? '#7cb8ea' : '#e87a4a', ice ? '麻' : '痛', ice ? 4 : 5);
+                ice ? '#7cb8ea' : '#e87a4a', ice ? '麻' : '痛', ice ? 4 : 5, 'magic');
         n++;
       }
       say(n ? M('m.spellhit','{nm}命中了 {n} 個敵人。',{nm:locSpell(sp),n:n})
@@ -11339,13 +11826,13 @@ function doSpell(sp, dx, dy){
       G.shake = Math.max(G.shake, 9);
       for(const m of list.slice()){
         if(sp.id === 'thund')
-          hurtWide(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
+          hurtWide(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea', null, null, 'magic');
         else if(sp.id === 'inferno')
-          hurtWide(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
+          hurtWide(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6, 'magic');
         else if(sp.id === 'freeze')
-          hurtWide(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
+          hurtWide(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5, 'magic');
         else {
-          hurtWide(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+          hurtWide(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a', null, null, 'magic');
           if(m.hp > 0) knock(m, Math.sign(m.x-p.x)||1, Math.sign(m.y-p.y)||1, 4);
         }
       }
@@ -11661,7 +12148,7 @@ function allyTurn(){
       startAttackPose(a, best.x-a.x, best.y-a.y, 'melee');
       const dmg = rollDmg(a.atk, best.d.def, G.rng.chance(.12), 1);
       SFX.play('hit', 40);
-      hurtMon(best, dmg, PAL[a.d.col]);
+      hurtMon(best, dmg, PAL[a.d.col], null, null, 'summon');
       say(M('s.108','{v0} 對 {v1} 造成 {v2} 點傷害。',{v0:(locSummon(a.d)), v1:(locName('mon', best.d)), v2:(dmg)}),'good');
     } else if(best){
       let bs = -1e9, bdir = null;
@@ -11726,6 +12213,141 @@ function spawnNpc(rng, free){
 }
 const npcAt = (x,y) => (G.npc && G.npc.hp > 0 && G.npc.x === x && G.npc.y === y) ? G.npc : null;
 
+/* ═══ 平安京：異界之門三連戰 ════════════════════════════════════
+   支線放在第二層，既不取代原本的鬼武者頭目，也不改主線樓層數。
+   答應後離開而沒有進門，報復的武士靈會在後續每一層追上來；
+   進門則是三個相連大房間，兩個可見的紀錄點把三場戰鬥切開。 */
+const HEIAN_ACT = ACTS.findIndex(a=>a.id==='heian'), HEIAN_QUEST_FLOOR = 2;
+const HEIAN_SPIRIT = {id:'samurai_spirit',nm:'報復的武士靈',ai:'C',hp:180,atk:45,def:18,
+  exp:720,spd:2,sight:99,ev:18,fl:[0,0],w:0,sideRole:'vengeance',visualBoss:1,
+  line:'「答應了，卻沒有踏進門……那就由我來討回。」'};
+const heianSamuraiAt=(x,y)=>G.f&&G.f.heianSamurai&&G.f.heianSamurai.x===x&&G.f.heianSamurai.y===y
+  ? G.f.heianSamurai : null;
+
+function spawnHeianQuest(rng, free){
+  if(G.act!==HEIAN_ACT || !G.heian || G.heian.completed || VILLAGE.muramasa) return;
+  G.f.heianSamurai=null; G.f.heianGate=null;
+  if(G.heian.hunt){
+    const q=free(8)||free(3);
+    if(q){ const m=spawnMon(HEIAN_SPIRIT,q.x,q.y,{noElite:true}); m.aggro=99; }
+    return;
+  }
+  if(G.floor!==HEIAN_QUEST_FLOOR) return;
+  const q=free(6); if(!q) return;
+  if(G.heian.accepted) G.f.heianGate={x:q.x,y:q.y};
+  else G.f.heianSamurai={x:q.x,y:q.y,asked:0};
+}
+
+function askHeianSamurai(n){
+  openTalk({
+    who:'瀕死的武士', art:npcArt(),
+    body:n.asked
+      ? '「結界石還撐著……你願意穿過異界之門，替平安京除掉魔化的三公嗎？」'
+      : '「旅人……三公已經被異界侵蝕。我只能再打碎一次結界石。答應我，穿過門，依序打倒幻魔庵、武藏丸與陰陽師的人偶。」',
+    yes:'我答應', no:'現在不能去',
+    onYes(){
+      G.heian.accepted=1; G.heian.originFloor=G.floor;
+      G.heian.originX=n.x; G.heian.originY=n.y;
+      G.f.heianGate={x:n.x,y:n.y}; G.f.heianSamurai=null;
+      SFX.play('shatter'); G.shake=Math.max(G.shake,12);
+      burst(n.x,n.y,36,'#8860c8',78,24,1.0); ring(n.x,n.y,'#c8b4ff',38,.65);
+      say(TX('h.break','武士用最後的力量擊碎結界石 —— 紫黑色的異界之門張開了。'),'gold');
+      say(TX('h.warning','走進門就會開始三連戰；若答應後離開此層，武士靈將在後續樓層追來。'),'bad');
+    },
+    onNo(){ n.asked=1; say(TX('h.wait','「我會撐住……但不會太久。」')); }
+  });
+}
+
+function buildHeianRift(rng){
+  const t=new Uint8Array(MW*MH), roomAt=new Int8Array(MW*MH).fill(-1),
+        el=new Uint8Array(MW*MH);
+  const rooms={
+    0:{x:1,y:7,w:8,h:16,doors:['9,14']},
+    1:{x:10,y:7,w:9,h:16,doors:['9,14','19,14']},
+    2:{x:20,y:5,w:9,h:20,doors:['19,14']},
+  };
+  for(const rk in rooms){ const r=rooms[rk];
+    for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++){
+      t[key(x,y)]=ROOM; roomAt[key(x,y)]=+rk;
+    }
+  }
+  const stage=Math.max(1,G.heian.stage|0);
+  if(stage>=2){t[key(9,14)]=CORR; roomAt[key(9,14)]=-1;}
+  if(stage>=3){t[key(19,14)]=CORR; roomAt[key(19,14)]=-1;}
+  const starts={1:{x:3,y:14},2:{x:11,y:14},3:{x:21,y:14},4:{x:24,y:14}};
+  const spawn=starts[stage]||starts[1], stairs={x:27,y:14};
+  G.f={t,roomAt,el,rooms,spawn,stairs,depth:G.depth,mark:null,iceStops:[],iceRough:null,
+       shrine:null,ev:null,hall:null,rest:false,turrets:null,arena:null,bossSeen:0,
+       bossLock:stage<4?1:0,rift:1,riftExit:stage>=4?{x:27,y:14}:null,exit:null};
+  G.p.x=spawn.x; G.p.y=spawn.y; G.p.face=[1,0];
+  G.items={}; G.gold={}; G.traps={}; G.mons=[]; G.allies=[]; G.shop=null; G.shopSeen=0;
+  G.npc=null; G.seen=new Uint8Array(MW*MH); G.torches=[];
+  const add=id=>{const d=bossById(id),q={
+    b_genmaan:{x:7,y:14},b_musashimaru:{x:17,y:14},b_doll_heal:{x:25,y:9},
+    b_doll_mage:{x:26,y:14},b_doll_tank:{x:25,y:19}}[id];
+    if(d&&q) spawnMon(d,q.x,q.y,{noElite:true});};
+  if(stage===1) add('b_genmaan');
+  if(stage===2){ add('b_musashimaru'); G.f.shrine={x:11,y:20,rift:1}; }
+  if(stage===3){ add('b_doll_heal'); add('b_doll_mage'); add('b_doll_tank'); G.f.shrine={x:21,y:22,rift:1}; }
+  G.zoomTo=FIELD_ZOOM; BGM.force(stage<4?'boss':null);
+  vision(); bossWatch();
+}
+
+function enterHeianRift(){
+  if(!G.heian||G.heian.active) return;
+  G.heian.entered=1; G.heian.active=1; G.heian.hunt=0; G.heian.stage=1;
+  G.heian.originFloor=G.floor; G.heian.originX=G.p.x; G.heian.originY=G.p.y;
+  SFX.play('curse'); wave(G.p.x,G.p.y,'#8860c8',1.1);
+  buildHeianRift(RNG(mix32(G.seed,G.depth*1709)));
+  saveRun();
+  camX=G.p.x-VW/2+.5; camY=G.p.y-VH/2+.5;
+  say(TX('h.enter','你穿過異界之門。三個房間在黑暗中首尾相連。'),'gold');
+  say(TX('h.first','第一室：幻魔庵。找出不跟著殘像移動的真身。'),'bad');
+  refresh();
+}
+
+function leaveHeianRift(){
+  const ox=G.heian.originX, oy=G.heian.originY;
+  G.heian.active=0; G.heian.completed=1; G.heian.hunt=0;
+  G.floor=G.heian.originFloor||HEIAN_QUEST_FLOOR;
+  buildFloor();
+  if(walkable(ox,oy)){G.p.x=ox;G.p.y=oy;vision();}
+  saveRun();
+  say(TX('h.return','異界之門在身後閉合。你回到了平安京原本的房間。'),'gold');
+  refresh();
+}
+
+function giveMuramasa(){
+  if(!VILLAGE.muramasa){VILLAGE.muramasa=1;saveVillage();}
+  let blade=G.p.inv.find(i=>i.cat==='weap'&&i.d.id==='muramasa');
+  if(!blade){blade=mk('weap','muramasa',{known:1});G.p.inv.push(blade);}
+  G.p.weap=blade;
+  SFX.play('level'); wave(G.p.x,G.p.y,'#d8a0ee',1.25);
+  burst(G.p.x,G.p.y,48,'#f3d8ff',86,32,1.15);
+  say(TX('h.voice','亡去武士的聲音從空中傳來：「這把刀，交給仍願意守約的人。」'),'gold');
+  say(TX('h.obtain','★ 取得神器「妖刀村正」並自動裝備。畫面右側新增「遠斬」按鈕。'),'gold');
+  say(TX('h.price','遠斬每次會消耗最大體力的 1/20。'),'bad');
+}
+
+function riftBossDown(m){
+  if(!G.heian||!G.heian.active) return;
+  const role=m.d.sideRole;
+  if(role==='genmaan'){
+    G.heian.stage=2; buildHeianRift(G.rng); saveRun();
+    say(TX('h.stage1','幻術崩散，第一道門打開。紀錄之環在第二室亮起。'),'gold'); return;
+  }
+  if(role==='musashi'){
+    G.heian.stage=3; buildHeianRift(G.rng); saveRun();
+    say(TX('h.stage2','武藏丸跪倒，最後一扇門開啟。三具人偶同時轉過頭來。'),'gold'); return;
+  }
+  if(role&&role.startsWith('doll')){
+    const left=G.mons.some(q=>q!==m&&q.hp>0&&q.d.sideRole&&q.d.sideRole.startsWith('doll'));
+    if(left) return;
+    G.heian.stage=4; buildHeianRift(G.rng); giveMuramasa(); saveRun();
+    say(TX('h.stage3','三具人偶的絲線全部斷裂，房間盡頭出現返回之門。'),'gold');
+  }
+}
+
 /* 跟村民說話。同意就開始護送，不同意他就繼續站在那裡等 ——
    再走過去可以再問一次。第一次問跟後來再問講的話不一樣：
    同一句話問第二次，玩家會以為自己按錯了。 */
@@ -11758,12 +12380,15 @@ function askVillager(n){
 function npcTurn(){
   const n = G.npc, p = G.p;
   if(!n || n.hp <= 0 || !n.follow) return;
+  const playerDist=Math.max(Math.abs(p.x-n.x),Math.abs(p.y-n.y));
   let best = null, bd = 1e9;
   for(const m of G.mons){
     const d = Math.max(Math.abs(m.x-n.x), Math.abs(m.y-n.y));
     if(d < bd){ bd = d; best = m; }
   }
-  if(best && bd <= 1 && cornerOK(n.x,n.y,best.x,best.y)){
+  /* 已經掉隊時先追人，不要站在後方與小怪纏鬥。護送者為了揮一刀讓玩家
+     消失在走廊另一端，是「會幫忙」蓋過了「牢牢跟著」的優先順序。 */
+  if(best && bd <= 1 && playerDist <= 2 && cornerOK(n.x,n.y,best.x,best.y)){
     const dmg = rollDmg(4, best.d.def, false, 1);
     hurtMon(best, dmg, '#79c97a');
     say(M('m.npchit','村民揮了一下 —— {v0} 受到 {v1} 點傷害。',
@@ -11781,17 +12406,30 @@ function npcTurn(){
      繞過一根柱子，貪心都會卡住：離玩家最近的那一格是一面牆，
      而他會在原地左右來回，直到玩家走遠、他徹底掉隊。
 
-     改成真的找路（BFS），而且落後兩格以上時一回合走兩步追上來。
+     改成真的找路（BFS），而且落後兩格以上時一回合最多走三步追上來。
      追上來這件事一定要有：他一回合走一步、玩家也一回合走一步，
      所以只要卡住一次就永遠差那一步，而「差一步」持續三十回合
      就是玩家眼中的「他不見了」。 */
-  for(let step = 0; step < 2; step++){
+  for(let step = 0; step < 3; step++){
     const far = Math.max(Math.abs(p.x-n.x), Math.abs(p.y-n.y));
     if(far <= 1) return;                       // 貼在旁邊就停下來，不要擠玩家
     const d = npcStep(n, p);
-    if(!d) return;
+    if(!d) break;
     G.anim.push({o:n, fx:n.x, fy:n.y, t:0, kind:'walk'});
     n.x += d[0]; n.y += d[1]; faceActor(n, d[0], d[1]);
+  }
+  /* 單格走廊偶爾會被怪物完全截斷，這時 BFS 沒有合法路徑；玩家繼續走，
+     護送者就會永遠留在牆後。若三次追趕後仍超過兩格，讓他沿玩家剛走過的
+     路線快速趕到一個相鄰空格。這只在真的掉隊時發生，不影響平常逐格步行。 */
+  if(Math.max(Math.abs(p.x-n.x),Math.abs(p.y-n.y))>2){
+    const catchups=DIRS.map(d=>({x:p.x+d[0],y:p.y+d[1],d}))
+      .filter(q=>walkable(q.x,q.y)&&!monAt(q.x,q.y)&&!allyAt(q.x,q.y)&&
+                 cornerOK(p.x,p.y,q.x,q.y))
+      .sort((a,b)=>Math.max(Math.abs(a.x-n.x),Math.abs(a.y-n.y))-
+                   Math.max(Math.abs(b.x-n.x),Math.abs(b.y-n.y)));
+    const q=catchups[0];
+    if(q){G.anim.push({o:n,fx:n.x,fy:n.y,t:0,dur:.18,kind:'walk'});
+      n.x=q.x;n.y=q.y;faceActor(n,-q.d[0],-q.d[1]);}
   }
 }
 /* 從村民走到玩家的第一步。廣度優先，用的是**玩家真正的移動規則**
@@ -12111,6 +12749,10 @@ function descend(){
   if(G.f.bossLock){ say(TX('m.locked','樓梯被一股壓力封住了 —— 先解決這一層的東西。'),'bad'); return; }
   const act = actAt(G.act);
   if(G.floor >= act.floors){ clearAct(); return; }
+  if(G.act===HEIAN_ACT && G.heian && G.heian.accepted && !G.heian.entered){
+    G.heian.hunt=1;
+    say(TX('h.hunt','你離開了答應守約的房間。遠處傳來刀鞘摩擦地面的聲音……'),'bad');
+  }
   SFX.play('stairs');
   G.floor++;
   buildFloor();
@@ -13265,8 +13907,11 @@ if(QA_MODE) globalThis.__GAME_QA={audio:{BGM,SFX}};
    這支函式讀遊戲狀態，所以放在遊戲層，不放美術層。 */
 function heroNow(){
   const p = G && G.p;
-  const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.id) : -1;
-  const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.id) : -1;
+  /* 裝備欄放的是物件實例（{cat,d,up...}），真正的 id 在 d.id。
+     舊碼誤讀 p.weap.id / p.shld.id，findIndex 永遠回 -1，因此不論裝了
+     武士刀、通天之劍或聖域之盾，角色都會悄悄退回「空手」的圖。 */
+  const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.d.id) : -1;
+  const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.d.id) : -1;
   return heroSprite(wi, si, p && p.hat, VILLAGE.skin, VILLAGE.col);
 }
 
@@ -13302,8 +13947,8 @@ function heroAnimNow(o, pose, phaseSeed){
   const col = BLOB_COLS.includes(VILLAGE.col) ? VILLAGE.col : '#';
   const bodyFrame = animFrameFor('hero',sk,o,pose,phaseSeed);
   if(!bodyFrame) return null;
-  const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.id) : -1;
-  const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.id) : -1;
+  const wi = p && p.weap ? WEAP.findIndex(d=>d.id===p.weap.d.id) : -1;
+  const si = p && p.shld ? SHLD.findIndex(d=>d.id===p.shld.d.id) : -1;
   const dir = animDirection(o);
   const hatId = p && p.hat, weapId = wi>=0 ? WEAP[wi].id : null, shldId = si>=0 ? SHLD[si].id : null;
   const hatFrame = hatId && animFrameFor('hat',hatId,o,pose,phaseSeed);
@@ -13329,12 +13974,20 @@ function heroAnimNow(o, pose, phaseSeed){
     else drawHat(x,hatId,cell);
   }
   if(shldId){
-    if(shldFrame) x.drawImage(shldFrame.img,0,0,cell,cell);
+    if(shldFrame){
+      const ult=shldId==='aegis', grow=ult?4:0;
+      x.drawImage(shldFrame.img,-grow,-grow,cell+grow*2,cell+grow*2);
+    }
     else if(SHLD_ART[shldId]) legacyLayer(SHLD_ART[shldId]);
     else { const t=document.createElement('canvas'); t.width=t.height=T; drawHeroShield(t.getContext('2d'),si); legacyLayer(t); }
   }
   if(weapId){
-    if(weapFrame) x.drawImage(weapFrame.img,0,0,cell,cell);
+    if(weapFrame){
+      /* 終極武器不是只在背包裡變漂亮；手持圖層也要大一圈，
+         否則 32px 細刃疊在 48px 主角上只剩一條看不清的亮線。 */
+      const ult=(weapId==='babel'||weapId==='muramasa'), grow=ult?4:0;
+      x.drawImage(weapFrame.img,-grow,-grow,cell+grow*2,cell+grow*2);
+    }
     else if(WEAP_ART[weapId]) legacyLayer(WEAP_ART[weapId]);
     else { const t=document.createElement('canvas'); t.width=t.height=T; drawHeroWeapon(t.getContext('2d'),wi); legacyLayer(t); }
   }
@@ -14270,10 +14923,18 @@ function draw(dt){
     cx.globalAlpha = hot ? .95 : .40;
     cx.strokeStyle = col; cx.lineWidth = 1;
     cx.strokeRect(px3+1.5, py3+1.5, T-3, T-3);
-    // 裝置本體：底座 + 朝向頭目的管子
-    cx.fillStyle = '#2b2620'; cx.fillRect(px3+4, py3+9, 8, 5);
-    cx.fillStyle = hot ? col : '#4a4038';
-    cx.fillRect(px3+6, py3+5, 4, 5);
+    /* 正式砲座是青金釉磚底座、砂岩角柱、齒輪樞軸與真正的砲管。
+       小王機關必須比地上道具有份量：碰撞仍是一格，機身則越出格線。 */
+    if(turretArt){
+      cx.imageSmoothingEnabled=false;
+      cx.drawImage(turretArt,px3-6,py3-12,28,28);
+      cx.globalCompositeOperation='source-atop';
+      cx.fillStyle=col; cx.globalAlpha=(hot?.08:.05); cx.fillRect(px3-6,py3-12,28,28);
+      cx.globalCompositeOperation='source-over'; cx.globalAlpha=hot?.95:.40;
+    }else{
+      cx.fillStyle = '#2b2620'; cx.fillRect(px3+4, py3+9, 8, 5);
+      cx.fillStyle = hot ? col : '#4a4038'; cx.fillRect(px3+6, py3+5, 4, 5);
+    }
     if(hot){                                         // 熱著的時候會呼吸
       const b2 = .45 + .55*Math.sin(clock*3 + t.i*1.7);
       cx.globalAlpha = b2 * .9;
@@ -14571,7 +15232,7 @@ function draw(dt){
      所以「凡是會改變主角剪影的東西」都得在裡面。體型、顏色、帽子
      少了任何一項，換過造型之後影子的寬度就會對不上身體 ——
      而那種錯位不會報錯，只會讓人覺得畫面哪裡怪怪的。 */
-  const heroKey = ()=> 'hero'+(G.p.weap?G.p.weap.id:'-')+(G.p.shld?G.p.shld.id:'-')
+  const heroKey = ()=> 'hero'+(G.p.weap?G.p.weap.d.id:'-')+(G.p.shld?G.p.shld.d.id:'-')
                      + (G.p.hat||'-') + VILLAGE.skin + VILLAGE.col;
   // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
   // 像素風的動畫本來就該是一格一格的，平滑插值反而會糊掉。
@@ -14799,7 +15460,7 @@ function draw(dt){
     // 複寫出的殘像仍模仿主角；真正的核心使用獨立大型頭目造型，
     // 避免在戰場上與玩家同尺寸、失去頭目應有的份量與辨識度。
     const mpose = motionOf(m);
-    const anim = animFrameFor(m.d.boss ? 'boss' : 'mon',m.d.id,m,mpose,m.id*1.7);
+    const anim = animFrameFor((m.d.boss||m.d.visualBoss) ? 'boss' : 'mon',m.d.id,m,mpose,m.id*1.7);
     const img = anim ? anim.img : (atlas[m.d.id] || atlas.rat);
     const artName = anim ? anim.key : m.d.id;
     const [mx,my] = entPos(m);
@@ -14822,13 +15483,13 @@ function draw(dt){
     }
     const msc = bossVisualScale(m.d);
     // 睡著或被麻痺的飛行生物會落地 —— 昏過去還在半空是說不通的
-    const mfly = !!m.d.fly && !(m.st['睡'] || m.st['麻']);
+    const mfly = !!m.d.fly && !(m.st['睡'] || m.st['麻'] || m.st['石']);
     shadow(mx, my, msc, img, artName, mfly);
     /* 頭目的背光。畫在影子之後、本體之前 —— 順序不能換：
        畫在本體後面會蓋掉剪影，那正是要保住的東西。
        睡著或被麻痺時關掉：那兩個狀態的意思是「牠現在沒有威脅」，
        還在發光會說反話。 */
-    if(AURA > 0 && m.d.boss && !(m.st['睡'] || m.st['麻'])){
+    if(AURA > 0 && (m.d.boss||m.d.visualBoss) && !(m.st['睡'] || m.st['麻'] || m.st['石'])){
       const au = auraOf(img, artName);
       // 呼吸得很慢（蓄力那圈是 clock*7，這裡是 clock*1.3），
       // 讀起來是「牠在那裡」，不是「牠要出手了」
@@ -14846,7 +15507,7 @@ function draw(dt){
       cx.restore();
     }
     cx.save();
-    if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
+    if(m.st['睡']||m.st['麻']||m.st['石']) cx.globalAlpha=.55;
     const litImg=characterLiftOf(img,artName);
     drawEnt(m, litImg, artName+'@lit', m.id*1.7, msc, mfly, !!anim);
     cx.restore();
@@ -14869,6 +15530,22 @@ function draw(dt){
     eg.addColorStop(0, `rgba(245,220,122,${(.34*pulse).toFixed(3)})`);
     eg.addColorStop(1, 'rgba(0,0,0,0)');
     cx.fillStyle = eg; cx.fillRect(ex-30, ey-30, 76, 76);
+    cx.restore();
+  }
+
+  /* 平安京支線的兩個故事物件都是正式 48px 精靈。門略大於角色，中央保持
+     真正的透明洞口；它不是一塊紫色地磚，玩家一眼就知道可以走進去。 */
+  const hs=G.f.heianSamurai;
+  if(hs&&G.seen[key(hs.x,hs.y)]===2){
+    const art=atlas['npc#dying_samurai']||npcArt();
+    shadow(hs.x,hs.y,ACTOR_SCALE,art,'dying_samurai');
+    drawEnt(hs,art,'dying_samurai',19,ACTOR_SCALE);
+  }
+  const gate=G.f.heianGate||G.f.riftExit;
+  if(gate&&G.seen[key(gate.x,gate.y)]){
+    const art=riftGateArt||TILE_ART.exit,pulse=.92+Math.sin(clock*3)*.08;
+    cx.save();cx.globalAlpha=pulse;
+    drawEnt(gate,art,'rift_gate',23,2.15,true);
     cx.restore();
   }
 
@@ -15366,7 +16043,7 @@ function fitPad(w, zone){
   const byH = zone ? (zone - 20) / 3 : 99;
   /* 直向手機把主方向鍵放到約 56px；斜向鍵本身縮在格心，只保留較小的
      實際觸控區。這樣上下左右更容易按，拇指擦到角落時也不會誤走斜線。 */
-  const k = Math.max(28, Math.min(58, Math.floor(Math.min(byW, byH))));
+  const k = Math.max(30, Math.min(62, Math.floor(Math.min(byW, byH))));
   pad.style.setProperty('--k', k + 'px');
 }
 function fitViewport(){
@@ -15503,6 +16180,7 @@ function refresh(){
   $('mpbar').firstElementChild.style.width = Math.max(0,100*p.mp/Math.max(1,p.mmp))+'%';
   $('magbtn').classList.toggle('ping', p.sp > 0);
   $('btnS').classList.toggle('ping', p.sp > 0);
+  const rb=$('btnR'); if(rb&&rb.classList) rb.classList.toggle('ready',!!(p.weap&&p.weap.d.muramasa));
 
   $('atk').textContent = pAtk();
   $('def').textContent = pDef();
@@ -16463,11 +17141,12 @@ function openAim(label){
 }
 function closeAim(){ const el = $('aim'); if(el) el.classList.remove('show'); }
 function cancelAim(){
-  pendWand = null; pendThrow = null; pendSpell = null; pendAbil = null;
+  pendWand = null; pendThrow = null; pendSpell = null; pendAbil = null; pendMuramasa=false;
   closeAim(); say(TX('s.121','取消了。')); refresh();
 }
 function handleDir(dx,dy){
   if(talkOpen()) return;          // 有人在等你回答，這一步不算
+  if(pendMuramasa){closeAim();fireMuramasa(dx,dy);return;}
   if(pendAbil){ closeAim(); fireAbil(dx,dy); return; }
   if(pendSpell){ closeAim(); fireSpell(dx,dy); return; }
   if(pendWand){ closeAim(); fireWand(dx,dy); return; }
@@ -16509,7 +17188,7 @@ addEventListener('keydown', ev=>{
     return;
   }
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
-  if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
+  if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; pendMuramasa=false; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
   if(k===' '){
@@ -16527,6 +17206,7 @@ addEventListener('keydown', ev=>{
   if(k==='k'||k==='K'){ SFX.play('open'); panelMode==='magic'?closePanel():openPanel('magic'); return; }
   if(k==='l'||k==='L'){ toggleTags(); return; }
   if(k==='m'||k==='M'){ toggleMute(); return; }
+  if(k==='r'||k==='R'){ startMuramasaAim(); return; }
   if(k==='>'||k==='.'){ descend(); return; }
 });
 document.querySelectorAll('[data-dir]').forEach(b=>{
@@ -16614,6 +17294,9 @@ let pressB = ()=>{};
     SFX.play('open');
     panelMode === 'magic' ? closePanel() : openPanel('magic');
     refresh();
+  });
+  $('btnR').addEventListener('pointerdown',ev=>{
+    ev.preventDefault();ev.stopPropagation();if(!live())return;startMuramasaAim();
   });
 
   /* A＝確定：看情況做「現在最該做的那件事」。
@@ -18518,6 +19201,25 @@ function qaEnterEscort(seed){
   vision(); qaOpenWorld(); camX=st.x-VW/2+.5; camY=st.y-VH/2+.5; refresh();
   say('尺寸驗收：迷路村民與主角同級顯示；旁邊是原生 32px 的新版下樓梯。','gold');
 }
+function qaEnterTurrets(seed){
+  const artisan=ACTS.findIndex(a=>a.id==='artisan');
+  qaEnterFloor(artisan<0?0:artisan,Math.min(2,ACTS[artisan<0?0:artisan].floors),seed);
+  G.mons=[]; G.traps={}; G.items={}; G.gold={};
+  const p=G.p, spots=[];
+  for(let r=2;r<=5;r++) for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+    const x=p.x+dx,y=p.y+dy;
+    if(walkable(x,y)&&cornerOK(p.x,p.y,x,y)) spots.push({x,y});
+  }
+  const chosen=[];
+  for(const s of spots){
+    if(chosen.some(t=>Math.max(Math.abs(t.x-s.x),Math.abs(t.y-s.y))<2)) continue;
+    chosen.push(s); if(chosen.length>=3) break;
+  }
+  G.f.turrets=chosen.map((t,i)=>({x:t.x,y:t.y,cd:i===1?3:0,i}));
+  vision(); qaOpenWorld(); snapCameraToPlayer(); refresh(); showCard();
+  say('砲座美術驗收：新版巴比倫青銅稜鏡砲台，含待命與冷卻狀態。','gold');
+}
 function qaEnterShop(seed){
   const mine=ACTS.findIndex(a=>a.id==='mine');
   qaEnterFloor(mine<0?0:mine,1,seed);
@@ -18735,6 +19437,7 @@ function qaMenu(){
     ['全部村民圖鑑',qaUrl({qa:'gallery',type:'npc'})],
     ['武器・盾牌・道具・金塊',qaUrl({qa:'gallery',type:'item'})],
     ['迷路村民・新版樓梯',qaUrl({qa:'escort',seed:260822})],
+    ['新版巴比倫砲座',qaUrl({qa:'turrets',seed:260822})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['商店連續賣出驗收',qaUrl({qa:'shop',seed:260822})],
@@ -18776,6 +19479,7 @@ function startQa(){
   else if(kind==='boss') qaEnterBoss(QA_QUERY.get('boss')||'b_warden',seed);
   else if(kind==='traps') qaEnterTraps(seed);
   else if(kind==='escort') qaEnterEscort(seed);
+  else if(kind==='turrets') qaEnterTurrets(seed);
   else if(kind==='shop') qaEnterShop(seed);
   else if(kind==='chapter'){
     const a=qaActIndex(QA_QUERY.get('act')||'mine');

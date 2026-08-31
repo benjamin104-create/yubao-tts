@@ -61,9 +61,9 @@ t('迷路村民與主角使用相同場上倍率', ()=>{
 
 t('手機主方向鍵加大、斜向鍵的實際觸控區縮小', ()=>{
   const html=fs.readFileSync(__dirname+'/index.html','utf8');
-  assert(/padding-bottom:186px/.test(html),'手機手把區沒有增高');
-  assert(/Math\.min\(58,/.test(html),'主方向鍵上限仍是舊尺寸');
-  assert(/#cross \.dg\{[\s\S]*?width:72%;\s*height:72%/.test(html),'斜向鍵沒有縮小觸控區');
+  assert(/padding-bottom:208px/.test(html),'手機手把區沒有增高到 208px');
+  assert(/Math\.min\(62,/.test(html),'主方向鍵上限沒有增大到 62px');
+  assert(/#cross \.dg\{[\s\S]*?width:52%;\s*height:52%/.test(html),'斜向鍵沒有縮小觸控區');
 });
 
 t('升級拉遠完成後會依目前 viewport 與角色位置重新鎖定鏡頭', ()=>{

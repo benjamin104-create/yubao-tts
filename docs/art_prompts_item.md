@@ -9,7 +9,7 @@
 | **I3** | 卷軸 ×**1**（十一個名字共用一張圖） | ⬜ |
 | I5 | 杖 ×9 | ✅ 已進遊戲 |
 | I6 | 壺 ×6 | ✅ 已進遊戲 |
-| I7 | 武器 ×9 | ✅ 八把已進遊戲；`weap08` 武士刀待補 |
+| I7 | 武器 ×10 | ✅ 武士刀與副本神器妖刀村正均已進遊戲 |
 | I8 | 盾 ×6 ＋ 食物 ×3 | ✅ 已進遊戲 |
 | I9 | 帽 ×9 | ↗ 移到主角那一批 |
 
@@ -330,7 +330,7 @@
 | I3 | `scroll00`（只有這一張，十一個外觀共用） |
 | I5 | `wand00` `wand01` `wand02` `wand03` `wand04` `wand05` `wand06` `wand07` `wand08` |
 | I6 | `pot00` `pot01` `pot02` `pot03` `pot04` `pot05` |
-| I7 | `weap00` `weap01` `weap02` `weap03` `weap04` `weap05` `weap06` `weap07` `weap08` |
+| I7 | `weap00` `weap01` `weap02` `weap03` `weap04` `weap05` `weap06` `weap07` `weap08` `weap09` |
 | I8 | `shld00` `shld01` `shld02` `shld03` `shld04` `shld05` `food00` `food01` `food02` |
 
 編號就是遊戲裡的順序，**不能重排**：

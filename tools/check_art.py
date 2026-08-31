@@ -92,7 +92,20 @@ for fam in ("綠", "藍", "棕橙", "紅"):
     ok(n >= 3, "%s 色群至少三階（實際 %d）" % (fam, n))
 
 print("\n主體偵測")
-sheets = [f for f in sorted(os.listdir(RAW)) if f.endswith(".png")] if os.path.isdir(RAW) else []
+def is_import_sheet(name):
+    """Only raw sheets intended for the automatic subject splitter belong here.
+
+    Retained masters (`*-source`), QA close-ups and animation strips are useful
+    references, but they deliberately fill the canvas or contain a continuous
+    row of poses.  Treating them as cuttable character sheets produces false
+    "merged subject" failures and says nothing about the shipped assets.
+    """
+    n = name.lower()
+    return (n.endswith(".png") and "source" not in n and
+            not n.startswith("qa-") and "_part_" not in n and
+            "_anim_v" not in n)
+
+sheets = [f for f in sorted(os.listdir(RAW)) if is_import_sheet(f)] if os.path.isdir(RAW) else []
 ok(bool(sheets), "art_raw/ 裡有原圖")
 for name in sheets:
     im = strip_background(Image.open(os.path.join(RAW, name)))
@@ -378,6 +391,10 @@ else:
             # 遊戲那邊的影子會跟著精靈實際的腳走，所以圖畫歪了影子也跟著歪，
             # 兩者永遠貼在一起 —— check_ground 量的是「身體與影子的距離」，
             # 它看不到「這一組整個被抬高了」。一條斷言只看得到它量的東西。
+            sprite_id = os.path.splitext(parts[-1])[0]
+            # 飛行單位刻意在格底留空；逼它貼底會把「離地」修成站地。
+            # 目前換成外部高解析成品的熾天使保留這條正確的空中輪廓。
+            is_flying = cat in ("mon", "boss") and sprite_id in {"seraph"}
             if is_tile_blocker:
                 # blocker 是一格裡的獨立立體物，不該像角色那樣把腳貼到圖片
                 # 最下列；底部要保留少量透明空間，讓接觸陰影完整留在格內。
@@ -399,6 +416,11 @@ else:
                     ok(gap <= ch * 0.26,
                        "%s 接觸陰影靠近格底、沒有漂浮（底部留白 %dpx，上限 %.1fpx）"
                        % (rel, gap, ch * 0.26))
+            elif is_flying:
+                gaps = [ch - b[2][3] for b in boxes]
+                ok(all(2 <= g <= ch * .34 for g in gaps),
+                   "%s 飛行單位明顯離地（底部留白 %d~%dpx）"
+                   % (rel, min(gaps), max(gaps)))
             elif cat == "hat":
                 # 帽子是**疊在頭上的一層**，不是站在地上的東西 ——
                 # 它的方框跟身體的方框是同一個座標系，帽子畫在上緣、

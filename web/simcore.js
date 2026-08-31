@@ -81,12 +81,15 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'buildFloor, THEME_SHAPE, ACT_THEME, iceRoughAt, iceSlickAt, iceMoveTarget, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer, rollEnemyDmg,' +
   'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
-  'SKINS, BLOB_SKINS, refreshHero, saveVillage, loadVillage, atlas:()=>atlas,' +
+  'SKINS, BLOB_SKINS, refreshHero, heroNow, heroAnimNow, heroSprite, saveVillage, loadVillage, atlas:()=>atlas,' +
   'villageStyle, VSTYLES, VNAME, VPAL, VILLAGE_SCENE_SPEC, migrateAct, VILLAGE_VER, RUN_VER,' +
   'talkOpen, answerTalk, askVillager, npcStep, splitTalk,' +
   'evOK, makeEvent, rubbleAt, digMason, stoneStep, evStep, giveCirclet,' +
   'EV_RATE, MASON_DIG, STONE_ELS, ULT_RUNS, ULT_IDS, REGEN_TURNS, needExp,' +
   'THEMES, PAL, TILE_ART,' +
+  'MONSTER_SKILLS, monsterSkillIntent, useMonsterSkill, monsterLastStand,' +
+  'HEIAN_ACT, buildHeianRift, spawnHeianQuest, enterHeianRift, leaveHeianRift, riftBossDown, giveMuramasa,' +
+  'startMuramasaAim, fireMuramasa,' +
   'crispCssWidth, crispPortraitGrid, FIELD_ZOOM, ACTOR_SCALE,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
   'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +

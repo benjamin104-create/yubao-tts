@@ -49,7 +49,7 @@ def key_for(rel):
         return name
     # 主角是分層合成的：身體一層、帽子一層。鍵用「類別#名字」，
     # 跟 art/item 的「類別#編號」同一個形狀 —— adoptArt 那邊也是這樣查的。
-    if cat in ('hero', 'hat', 'weapon', 'shield', 'village', 'map', 'trap', 'npc'):
+    if cat in ('hero', 'hat', 'weapon', 'shield', 'village', 'map', 'trap', 'npc', 'prop'):
         return '%s#%s' % (cat, name)
     if cat == 'item':
         m = re.fullmatch(r'([a-z]+)(\d+)', name)

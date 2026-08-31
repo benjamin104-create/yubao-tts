@@ -379,7 +379,10 @@ def trim_to_subject(im, margin=1, headroom=0.0, band=0.0, pad=0.0, zone=None):
         return im
     x0, y0, x1, y1 = bbox
     x0 = max(0, x0 - margin); y0 = max(0, y0 - margin)
-    x1 = min(im.width, x1 + margin); y1 = min(im.height, y1 + margin)
+    # 左右與頭頂留裁切呼吸空間，腳下不留。bbox 的 y1 已是最後一列
+    # 不透明像素之後的 exclusive 座標；再加 margin 會在降採樣後固定多出
+    # 一列透明，讓所有「已靠下」的物件仍漂高 1px。
+    x1 = min(im.width, x1 + margin); y1 = min(im.height, y1)
     cut = im.crop((x0, y0, x1, y1))
     side = max(cut.width, cut.height)
     if zone:
@@ -593,8 +596,14 @@ def check_assets(root, size):
             elif not is_anim:
                 # 地磚可以用 32、64… 的正方形提供更多材質細節；遊戲會把它
                 # 縮放到一格使用。精靈則仍維持固定格高，避免角色尺寸漂移。
-                size_bad = (w != h or w < want or w % want != 0) if top == "tile" \
-                    else (h != want or w % want != 0)
+                if top == "tile":
+                    size_bad = w != h or w < want or w % want != 0
+                elif top == "prop":
+                    # 場景道具有單格 32px（砲座）與大型 48px（異界之門）。
+                    # 兩者都按自身正方形尺寸繪製，不可硬把門縮成砲座大小。
+                    size_bad = w != h or w not in (32, 48)
+                else:
+                    size_bad = h != want or w % want != 0
                 if size_bad:
                     expect = "%d 以上的正方形（且為 %d 的整數倍）" % (want, want) \
                         if top == "tile" else "%d 的倍數 x %d" % (want, want)

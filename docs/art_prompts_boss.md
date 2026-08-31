@@ -323,5 +323,6 @@ shadow on lower-right.
 | B3 | `b_prism` `b_mermaid` `b_gate` `b_mind1` `b_mind` |
 | B5 | `b_keeper` `b_hallking` |
 | B6 | `b_artisan` |
+| B7 | `b_genmaan` `b_musashimaru` `b_doll_heal` `b_doll_mage` `b_doll_tank` |
 
 不畫：`b_mind2`（用主角造型）
