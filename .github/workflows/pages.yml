@@ -109,6 +109,8 @@ jobs:
           # 版面：玩家非看到不可的東西有沒有真的在畫面上（九種視窗尺寸）。
           # 這一類 bug 不報錯、字也是對的、其他測試全綠 —— 只是看不到。
           python tools/check_layout.py
+          # 真正點 A 與框內翻頁按鈕，防止手機對話被遮罩困住。
+          python tools/check_dialog_touch.py
           # 音量：music.js 驗的是曲子的「資料」，驗不到「放出來有多大聲」。
           # 使用者回報「好像沒有音樂」時，音樂其實一直在播 —— 只是 RMS 只有 -40 dBFS。
           python tools/check_audio.py

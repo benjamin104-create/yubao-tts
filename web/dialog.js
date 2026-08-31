@@ -30,5 +30,15 @@ t('畫面有向下三角，A／Enter 會呼叫翻頁',()=>{
   assert(/if\(talkOpen\(\)\)\{ advanceTalk\(\); return; \}/.test(html),'手機 A 沒有翻頁');
 });
 
+t('長文提供框內翻頁按鈕，且觸控手把不被對話遮罩蓋住',()=>{
+  const html=fs.readFileSync(__dirname+'/index.html','utf8');
+  assert(/id="talknext"[^>]*><span id="talknextlabel"><\/span><i id="talkmore"/.test(html),
+    '白色三角必須跟著可點的翻頁按鈕');
+  assert(html.includes("$('talknext').onclick = ()=> advanceTalk();"),'翻頁按鈕未接線');
+  assert(html.includes('next.hidden=!wait'),'最後一頁仍保留翻頁按鈕，可能誤接任務');
+  assert(/#screenwrap:has\(#talk.on\) #pad\{z-index:31\}/.test(html),'A/B 仍被 z-index:30 遮罩擋住');
+  assert(html.includes("t.closest('#talk')"),'對話點擊可能漏進地圖觸控');
+});
+
 console.log('\n對話檢查：通過 %d，失敗 %d',pass,fail);
 process.exit(fail?1:0);

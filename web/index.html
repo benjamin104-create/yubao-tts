@@ -1041,17 +1041,27 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
    就寫著「主角不救也可以」。沒有那個「不同意」的按鈕，
    「可以不救」這件事在畫面上根本不存在。
 
-   它是強制的（z-index 在手把之上、會吃掉點擊）：有人在問你問題，
-   而回答之前遊戲不該繼續跑。這也是它跟訊息視窗最大的差別 ——
+   遮罩擋住場景，但 A/B 必須仍可操作對話；移動與技能繼續鎖住。
+   否則長文把選項藏到最後一頁時，手機會沒有任何可點的翻頁入口。
+   這也是它跟訊息視窗最大的差別 ——
    訊息視窗是唸給你聽的，對話框是在等你。 */
 #talk{
   position:absolute; inset:0; z-index:30; display:none;
-  align-items:center; justify-content:center; padding:14px;
+  align-items:center; justify-content:center; padding:14px 14px calc(var(--padh) + 14px);
   background:rgba(6,5,4,.62);
 }
 #talk.on{display:flex}
+#screenwrap:has(#talk.on) #pad{z-index:31}
+#screenwrap:has(#talk.on) #cross,
+#screenwrap:has(#talk.on) #ab{pointer-events:none}
+#screenwrap:has(#talk.on) #btnA,
+#screenwrap:has(#talk.on) #btnB{pointer-events:auto}
+#screenwrap:has(#talk.on) #cross,
+#screenwrap:has(#talk.on) #btnS,
+#screenwrap:has(#talk.on) #btnR{opacity:.35}
 #talk .tbox{
-  width:min(340px, 100%); padding:14px 16px 12px;
+  position:relative; width:min(340px, 100%); max-height:100%; overflow-y:auto;
+  padding:14px 16px 12px; touch-action:pan-y;
   background:linear-gradient(180deg,rgba(26,22,19,.98),rgba(12,10,9,.98));
   border:1px solid var(--brass-dim);
   box-shadow:inset 0 0 0 1px rgba(246,239,227,.10), 0 14px 40px rgba(0,0,0,.6);
@@ -1071,20 +1081,23 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   color:#f0d9a8; text-wrap:pretty;
 }
 #talkmore{
-  display:none; position:absolute; right:14px; bottom:57px;
+  display:none; position:absolute; right:18px; bottom:19px; pointer-events:none;
   width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
   border-top:8px solid #fff; filter:drop-shadow(0 1px 0 #000);
   animation:talkmore .72s steps(2,end) infinite;
 }
 #talkmore.on{display:block}
 @keyframes talkmore{50%{transform:translateY(4px)}}
-#talk .tbtns.wait{visibility:hidden; pointer-events:none}
+#talk .tbtns.wait{display:none}
 #talk .tbtns{display:flex; gap:8px}
-#talk .tbtns button{
-  flex:1; min-height:42px; padding:9px 10px; cursor:pointer;
+#talk .tbtns button, #talknext{
+  flex:1; min-height:48px; padding:9px 10px; cursor:pointer; touch-action:manipulation;
   font-family:var(--display); font-size:13.5px; letter-spacing:.12em;
   color:var(--parch); background:rgba(10,8,7,.7); border:1px solid var(--edge);
 }
+#talknext{position:relative; display:block; width:100%; padding-right:34px;
+  color:var(--parch); background:rgba(201,151,63,.2); border-color:var(--brass-dim)}
+#talknext[hidden]{display:none}
 #talkyes{color:#f6efe3; background:rgba(106,143,74,.24); border-color:var(--moss)}
 #talkyes:hover{background:rgba(106,143,74,.36)}
 #talkno:hover{background:rgba(255,255,255,.06)}
@@ -1693,7 +1706,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
             <b id="talkwho"></b>
            </div>
            <p id="talkbody"></p>
-           <i id="talkmore" aria-hidden="true"></i>
+           <button id="talknext" type="button"><span id="talknextlabel"></span><i id="talkmore" aria-hidden="true"></i></button>
            <div class="tbtns">
             <button id="talkyes"></button>
             <button id="talkno"></button>
@@ -3594,6 +3607,7 @@ m.npcmet|The villager sticks close behind you - from now on they will not leave 
 m.npcask|Take them back to the village. They will get hurt on the way - step into them to heal with a herb.|むらまで つれて かえろう。みちで きずつく —— ぶつかれば くすりぐさで てあてする。
 m.npcno|"...I see. I will wait a little longer, then." The villager stays where they are.|「…… そうか。もうすこし まつよ」むらびとは そのばに のこった。
 t.hint|LEFT RIGHT to choose - ENTER to confirm - ESC to decline|←→ えらぶ　ENTER けってい　ESC やめる
+t.next|A - Continue|A・つづける
 t.npc.ask|"Thank goodness, someone came... I have been lost a long time. Could you take me back to the village? I will fight alongside you, but I am not strong - if I get hurt, please heal me with a herb."|「よかった、だれか きた…… ずっと まよっていたんだ。むらまで つれて いって くれないか。たたかいは てつだうが ちからは ない —— きずついたら、くすりぐさで たすけて ほしい」
 t.npc.again|"...Have you changed your mind? I still cannot find my way out."|「…… きが かわった？ ぼくは まだ でられないんだ」
 t.npc.yes|Yes, come with me|いいとも、ついてこい
@@ -16305,6 +16319,7 @@ function splitTalk(text){
 function talkChoices(wait){
   const el=document.querySelector&&document.querySelector('#talk .tbtns');
   if(el&&el.classList) el.classList.toggle('wait',!!wait);
+  const next=$('talknext'); if(next) next.hidden=!wait;
 }
 function finishTalkText(){
   if(talkTimer){ clearInterval(talkTimer); talkTimer=null; }
@@ -16334,6 +16349,7 @@ function openTalk(o){
   $('talkwho').textContent = o.who;
   $('talkyes').textContent = o.yes;
   $('talkno').textContent = o.no;
+  $('talknextlabel').textContent = TX('t.next','A・繼續');
   $('talkhint').textContent = talkPages.length>1
     ? TX('t.more','A / Enter 繼續　▽ 尚有文字')
     : TX('t.hint','← → 選擇　Enter 確定　Esc 取消');
@@ -16388,6 +16404,8 @@ const talkOpen = () => !!talkNow;
 (function bindTalk(){
   const y = $('talkyes'), n = $('talkno');
   if(!y || !n) return;
+  // click 同時支援觸控、滑鼠及輔助輸入，不與 pointerdown 重複翻頁。
+  $('talknext').onclick = ()=> advanceTalk();
   y.onclick = ()=> answerTalk(true);
   n.onclick = ()=> answerTalk(false);
   y.onmouseenter = ()=>{ talkSel = 0; paintTalkSel(); };
@@ -18814,7 +18832,7 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
     return DIRS[(k%8+8)%8];
   };
   function tick(){
-    if(!dragging || coverUp || !G || G.over) return;
+    if(!dragging || coverUp || !G || G.over || talkOpen()) return;
     const d = dirOf(cx_-sx, cy_-sy);
     handleDir(d[0], d[1]);
   }
@@ -18823,10 +18841,10 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
     if(timer){ clearInterval(timer); timer = null; }
   }
   const blocked = t => !!(t.closest && (t.closest('#panel') || t.closest('#over')
-                       || t.closest('#cover') || t.closest('#pad') || t.closest('#aim')));
+                       || t.closest('#cover') || t.closest('#pad') || t.closest('#aim') || t.closest('#talk')));
 
   el.addEventListener('pointerdown', ev=>{
-    if(coverUp || !G || G.over || blocked(ev.target)) return;
+    if(coverUp || !G || G.over || talkOpen() || blocked(ev.target)) return;
     if(panelMode){ closePanel(); refresh(); return; }    // 點畫面 = 關視窗
     id = ev.pointerId; sx = cx_ = ev.clientX; sy = cy_ = ev.clientY;
     t0 = performance.now(); dragging = false;
@@ -18845,7 +18863,7 @@ document.querySelectorAll('#railtabs button').forEach(b=>{
     if(ev.pointerId !== id) return;
     const wasDrag = dragging, dt = performance.now() - t0;
     stop();
-    if(wasDrag || dt > 400 || coverUp || !G || G.over) return;
+    if(wasDrag || dt > 400 || coverUp || !G || G.over || talkOpen()) return;
 
     // 輕點：換算成格座標，朝那一格走一步（點自己 = 開腳下選單）
     const r = cv.getBoundingClientRect(); if(!r.width) return;
@@ -19164,6 +19182,20 @@ function qaEnterFloor(actIdx,floor,seed){
   camX=G.p.x-VW/2+.5; camY=G.p.y-VH/2+.5;
   refresh(); showCard();
 }
+function qaEnterHeian(seed){
+  // 驗收模式不存檔；即使正式存檔已拿過村正，也能重測武士對話。
+  VILLAGE.muramasa=0;
+  qaEnterFloor(HEIAN_ACT,HEIAN_QUEST_FLOOR,seed);
+  G.mons=[]; G.traps={};
+  const n=G.f.heianSamurai;
+  if(!n) return;
+  const q=DIRS.map(d=>({x:n.x-d[0],y:n.y-d[1]}))
+    .find(q=>walkable(q.x,q.y)&&cornerOK(q.x,q.y,n.x,n.y));
+  if(q){G.p.x=q.x;G.p.y=q.y;}
+  G.p.hp=G.p.mhp=999; G.p.mp=G.p.mmp=99;
+  vision();camX=G.p.x-VW/2+.5;camY=G.p.y-VH/2+.5;refresh();
+  askHeianSamurai(n);
+}
 function qaEnterTraps(seed){
   qaEnterFloor(0,1,seed);
   G.mons=[]; G.traps={}; G.items={}; G.gold={};
@@ -19438,6 +19470,7 @@ function qaMenu(){
     ['武器・盾牌・道具・金塊',qaUrl({qa:'gallery',type:'item'})],
     ['迷路村民・新版樓梯',qaUrl({qa:'escort',seed:260822})],
     ['新版巴比倫砲座',qaUrl({qa:'turrets',seed:260822})],
+    ['平安京武士對話與異界之門',qaUrl({qa:'heian',seed:260829})],
     ['全迷宮美術巡查',qaUrl({qa:'worlds'})],
     ['五種陷阱與卷軸驗收',qaUrl({qa:'traps',seed:260822})],
     ['商店連續賣出驗收',qaUrl({qa:'shop',seed:260822})],
@@ -19480,6 +19513,7 @@ function startQa(){
   else if(kind==='traps') qaEnterTraps(seed);
   else if(kind==='escort') qaEnterEscort(seed);
   else if(kind==='turrets') qaEnterTurrets(seed);
+  else if(kind==='heian') qaEnterHeian(seed);
   else if(kind==='shop') qaEnterShop(seed);
   else if(kind==='chapter'){
     const a=qaActIndex(QA_QUERY.get('act')||'mine');
