@@ -48,6 +48,7 @@ jobs:
           node web/msgs.js
           node web/dialog.js
           node web/chapter.js
+          node web/campaign_strategy.js
           # 走通測試：十五章有沒有哪一章根本過不去。九秒，值得 ——
           # 「拿掉開場裝備」那一次改動就是靠它抓到的：單看 sim.js 一切正常，
           # 實際上第 8、13 章已經完全走不完了。

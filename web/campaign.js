@@ -4,6 +4,7 @@
 // 十五章裡有沒有哪一章因為數值配錯而根本過不去。
 // 一場死了就重來（跟真的玩家一樣，進度留在村莊），最多重試 N 次。
 const { api } = require('./simcore.js');
+const { combatItem } = require('./campaign_strategy.js');
 
 // 30 層的通天塔一趟就要好幾千回合 —— 上限太低會把「打得完」誤判成「過不去」
 const MAX_TURNS = 16000, RETRY = 40;
@@ -17,6 +18,7 @@ function playFloorLoop(G, cap){
        而且不會報錯 —— 只會看到「第一章忽然過不去了」。
        一律同意：機器人的工作是量「護送走不走得完」，不是量拒絕。 */
     if(api.talkOpen()){ api.answerTalk(true); continue; }
+    if(combatItem(api,G)){ t++; continue; }
     /* 受傷了而且附近沒東西，就坐下來休息。
        自然回復放慢之後，休息是玩家主動回血的正規手段 ——
        機器人不會用的話，量到的就不是「玩家過不過得去」，
