@@ -1,0 +1,64 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+interface Props {
+  theme: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  promise: string;
+  topics: readonly string[];
+}
+
+const { theme, eyebrow, title, description, promise, topics } = Astro.props;
+---
+
+<html lang="zh-Hant">
+  <head>
+    <BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
+  </head>
+  <body class={`page-world theme-${theme}`}>
+    <Header />
+    <main class="container world-shell">
+      <a class="back-grid" href="/#nine-grid">
+        <span aria-hidden="true">←</span>
+        回到九宮
+      </a>
+
+      <header class="world-hero">
+        <div class="world-hero-copy">
+          <p class="world-eyebrow">{eyebrow}</p>
+          <h1>{title}</h1>
+          <p class="world-lead">{description}</p>
+        </div>
+        <div class="world-mark" aria-hidden="true">
+          <span></span>
+        </div>
+      </header>
+
+      <section class="world-intro" aria-labelledby="world-intro-title">
+        <div>
+          <p class="section-kicker">PHASE 1 · 頁面骨架</p>
+          <h2 id="world-intro-title">這一格，準備承接什麼？</h2>
+        </div>
+        <p>{promise}</p>
+      </section>
+
+      <div class="topic-grid" aria-label={`${title}預定內容`}>
+        {
+          topics.map((topic, index) => (
+            <article>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <h3>{topic}</h3>
+              <p>內容正在整理中。這裡將以成熟、溫暖、理性的方式，陪你把感受讀成可以行動的理解。</p>
+            </article>
+          ))
+        }
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

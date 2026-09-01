@@ -1,0 +1,15 @@
+---
+import WorldPage from '../../layouts/WorldPage.astro';
+import { PERSONA_PAGES, type PersonaSlug } from '../../consts';
+
+export function getStaticPaths() {
+  return Object.keys(PERSONA_PAGES).map((persona) => ({
+    params: { persona },
+    props: PERSONA_PAGES[persona as PersonaSlug],
+  }));
+}
+
+const page = Astro.props;
+---
+
+<WorldPage {...page} />
