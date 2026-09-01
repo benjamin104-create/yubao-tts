@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- 小禮物圖卡模板（1080×1350）。範例＝Day1 心流線索小卡。需要 gsap.min.js。
+     render 後抽圖：ffmpeg -ss 1.2 -i renders/x.mp4 -frames:v 1 card.png -->
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=1080, height=1350" />
+    <script src="gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html,body { width:1080px; height:1350px; overflow:hidden;
+        background: radial-gradient(120% 100% at 50% 30%, #1a1610 0%, #0c0a07 72%);
+        font-family:"PingFang TC","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC",sans-serif; color:#F5EFE6; }
+      #card { position:relative; width:1080px; height:1350px; padding:84px 90px; opacity:0; }
+      .top { font-size:30px; letter-spacing:5px; color:#c9bea9; } .top b { color:#E0A24E; }
+      .title { font-size:80px; font-weight:800; margin-top:40px; letter-spacing:2px; } .title .hl { color:#E0A24E; }
+      .sub { font-size:37px; color:#cfc6b6; margin-top:22px; line-height:1.5; }
+      .rule { height:3px; background:linear-gradient(90deg,#E0A24E,transparent); margin:38px 0 30px; }
+      .lead { font-size:38px; color:#e7ddcc; line-height:1.6; margin-bottom:26px; }
+      .item { font-size:41px; line-height:1.5; margin:24px 0; display:flex; gap:18px; } .item .q { color:#E0A24E; font-weight:700; white-space:nowrap; }
+      .punch { font-size:44px; font-weight:800; line-height:1.45; margin-top:34px; } .punch .hl { color:#E0A24E; }
+      .foot { position:absolute; left:90px; bottom:68px; font-size:30px; letter-spacing:4px; color:#a59a85; }
+    </style>
+  </head>
+  <body>
+    <div id="card" data-composition-id="root" data-start="0" data-duration="2" data-width="1080" data-height="1350">
+      <div class="top">潔米爸的書房筆記 · <b>@jamine_pa</b></div>
+      <div class="title">🔎 心流<span class="hl">線索</span>小卡</div>
+      <div class="sub">心流不是效率——是你暫時忘記焦慮和評價的時刻。</div>
+      <div class="rule"></div>
+      <div class="lead">心流出現時，你可能會⋯</div>
+      <div class="item"><span class="q">⏳</span><span>忘記時間，抬頭才發現過了好久</span></div>
+      <div class="item"><span class="q">🤫</span><span>暫時忘記別人怎麼看你</span></div>
+      <div class="item"><span class="q">🔋</span><span>做完不累，反而有一點能量</span></div>
+      <div class="item"><span class="q">🎯</span><span>難度剛剛好，有挑戰又做得到</span></div>
+      <div class="punch">最近哪件事，讓你有這種感覺？<br>那，就是你的<span class="hl">心流線索</span>。</div>
+      <div class="foot">潔米爸陪你慢慢看 · @jamine_pa</div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused:true });
+      tl.to("#card",{opacity:1,duration:0.6,ease:"power2.out"},0);
+      window.__timelines = window.__timelines || {}; window.__timelines["root"] = tl;
+    </script>
+  </body>
+</html>

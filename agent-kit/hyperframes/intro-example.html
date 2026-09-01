@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: radial-gradient(circle at 50% 35%, #1b2a4a 0%, #0a1124 70%);
+        font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", sans-serif;
+      }
+      #root { position: relative; width: 1920px; height: 1080px; }
+      .center { position: absolute; left: 0; right: 0; text-align: center; }
+      #emoji  { top: 230px; font-size: 200px; }
+      #title  { top: 500px; font-size: 150px; font-weight: 800; color: #fff; letter-spacing: 8px; }
+      #title b { color: #FF7A59; }
+      #sub    { top: 720px; font-size: 56px; color: #aab8d4; letter-spacing: 6px; }
+      #bar    { top: 880px; left: 760px; width: 400px; height: 10px; border-radius: 8px;
+                background: linear-gradient(90deg,#FF7A59,#FFC371); transform-origin: left center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="root"
+         data-start="0" data-duration="3" data-width="1920" data-height="1080">
+      <div id="emoji" class="center">🦜</div>
+      <div id="title" class="center">語寶<b>圖鑑</b></div>
+      <div id="sub"   class="center">拍照辨識 · 多語發音</div>
+      <div id="bar"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.from("#emoji", { opacity: 0, scale: 0.2, y: -60, duration: 0.8, ease: "back.out(1.7)" }, 0)
+        .from("#title", { opacity: 0, y: 60, duration: 0.8, ease: "power3.out" }, 0.3)
+        .from("#sub",   { opacity: 0, y: 30, duration: 0.7, ease: "power2.out" }, 0.7)
+        .fromTo("#bar", { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: "power1.inOut" }, 0.9)
+        .to("#emoji",   { y: "+=20", duration: 0.9, yoyo: true, repeat: 1, ease: "sine.inOut" }, 1.2);
+      window.__timelines["root"] = tl;
+    </script>
+  </body>
+</html>
