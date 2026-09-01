@@ -20,9 +20,9 @@ const { title, description, pubDate, updatedDate, category } = Astro.props;
   <head>
     <BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
   </head>
-  <body>
+  <body class={`page-article theme-${category}`}>
     <Header />
-    <main class="container">
+    <main class="container article-shell">
       <header class="article-header">
         <a class={`chip ${category}`} href={`/${category}/`}>{CATEGORIES[category].name}</a>
         <h1>{title}</h1>
@@ -37,9 +37,11 @@ const { title, description, pubDate, updatedDate, category } = Astro.props;
           }
         </div>
       </header>
-      <article class="prose">
-        <slot />
-      </article>
+      <div class="article-body">
+        <article class="prose">
+          <slot />
+        </article>
+      </div>
     </main>
     <Footer />
   </body>
