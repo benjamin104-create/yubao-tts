@@ -65,12 +65,12 @@ SKINS = table('const BLOB_SKINS = {', r'^  ([a-z]+): \[')
 HATS = table('const HAT = [', r"\{id:'([a-z]+)'")
 WEAPS = table('const WEAP = [', r"\{id:'([a-z]+)'")
 SHLDS = table('const SHLD = [', r"\{id:'([a-z]+)'")
-COLS = re.findall(r"'(.)'", SRC[SRC.index('const BLOB_COLS = ['):SRC.index('];', SRC.index('const BLOB_COLS = ['))])
+COLS = re.findall(r"'([^']+)'", SRC[SRC.index('const BLOB_COLS = ['):SRC.index('];', SRC.index('const BLOB_COLS = ['))])
 PAL = dict(re.findall(r"'(.)':'(#[0-9a-f]{6})'", SRC[SRC.index('const PAL = {'):SRC.index('};', SRC.index('const PAL = {'))]))
 RAMP = {}
 _r = SRC[SRC.index('const BLOB_RAMP = {'):SRC.index('};', SRC.index('const BLOB_RAMP = {'))]
-for m in re.finditer(r"'(.)': \['(.)','(.)','(.)'\]", _r):
-    RAMP[m.group(1)] = [m.group(2), m.group(3), m.group(4)]
+for m in re.finditer(r"(?:'([^']+)'|(\w+)):\s*\['([^']+)','([^']+)','([^']+)'\]", _r):
+    RAMP[m.group(1) or m.group(2)] = [m.group(3), m.group(4), m.group(5)]
 
 
 def rgb(ch):
@@ -282,8 +282,10 @@ JS = r"""
 
   // 造型選單與封面的快取要跟著作廢 —— 沒作廢的話它們會停在程式畫的舊主角
   ok('造型選單用的是同一份', blobFor('#', 'blob').width === 32);
-  const cov = document.getElementById('coverart');
-  ok('封面用的是同一份', cov && cov.width === 32, cov ? '' + cov.width : '沒有封面');
+  VILLAGE.skin='blob';VILLAGE.col='#';RPG_COVER.paint();
+  const cov = document.getElementById('cover-knight'), expected=document.createElement('canvas');
+  expected.width=expected.height=256;expected.getContext('2d').imageSmoothingQuality='high';expected.getContext('2d').drawImage(heroSprite(3,2,'helm','blob','#'),0,0,256,256);
+  ok('封面穿戴展示使用同一份角色', !!cov && same(cov,expected));
 
   return out;
 })()
@@ -315,7 +317,7 @@ def static_checks():
 
 
 def run(page, url, cfg):
-    page.goto(url)
+    page.goto(url+'?art=classic')  # Injected 32px palette/gear fixtures; HD has separate wear checks.
     page.wait_for_function('typeof heroSprite === "function"')
     # 圖是非同步載的。等到全部就位再問 —— 這裡等的是遊戲自己的表，
     # 不是等固定秒數：固定秒數在 CI 上遲早會有一次剛好不夠。
@@ -357,7 +359,7 @@ def main():
         cfg = json.dumps({
             'skins': SKINS, 'hats': HATS, 'cols': COLS,
             'weaps': WEAPS, 'shlds': SHLDS,
-            'mid': {c: PAL[RAMP[c][1]] for c in COLS},
+            'mid': {c: PAL.get(RAMP[c][1], RAMP[c][1]) for c in COLS},
             'white': PAL['+'], 'dark': PAL['0'], 'hatcol': PAL['v'],
         }, ensure_ascii=False)
 
