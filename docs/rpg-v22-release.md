@@ -1,6 +1,8 @@
 # 通天塔 RPG v22：三造型封面與四種主角色彩
 
-2026-09-24 發布候選版。離線成品：`dist/babel-rpg-v22.html`，約 22.8 MiB。正式網址：https://benjamin104-create.github.io/yubao-tts/ 。部署成功與公開網址驗證紀錄以 GitHub Actions 及 `work/publish-v22/live-report.json` 為準。
+2026-09-24 已發布。正式試玩網址：https://benjamin104-create.github.io/yubao-tts/?v=20260924-v22 。離線成品：`dist/babel-rpg-v22.html`，約 22.8 MiB。
+
+部署版本 `efa4309`：[GitHub Actions 全部檢查與部署成功](https://github.com/benjamin104-create/yubao-tts/actions/runs/35933198369)。正式網址另以 390×844、3× DPR 的手機觸控模擬驗證，選色保存、開場、背包／技能切換、續玩存檔及村莊調合通過；頁面例外、HTTP 錯誤與 HD 載入失敗皆為零。報告與公開版截圖：`work/publish-v22/live-report.json`、`live-*-phone.png`。Pages 使用 workflow 發布。
 
 同日視覺修訂：依回饋將背景改為明亮寶藍色，使用 CSS 色彩混合移除原場景的濁黃調；羽毛帽主角移至左側，魔法帽移至右側，兩者仍朝向中央。更新手機／桌面截圖與離線成品。
 
