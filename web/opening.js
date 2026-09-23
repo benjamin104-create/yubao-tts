@@ -73,8 +73,9 @@ for(const id of bossIds){
   ok(html.includes(`'${id}'`), `${id} is registered in the runtime`);
 }
 
-ok(/m\.d\.mind\s*===\s*2\s*\?\s*heroAnimNow/.test(html), 'Mind Echo reuses the current animated hero by design');
-ok(!fs.existsSync(path.join(ROOT, 'art', 'boss', 'b_mind2.png')), 'Mind Echo has no dedicated still that could break the mimic puzzle');
-ok(!fs.existsSync(path.join(ROOT, 'art', 'anim', 'boss', 'b_mind2.png')), 'Mind Echo has no dedicated animation that could break the mimic puzzle');
+ok(/if\(G\.echoes\)[\s\S]*?blit\(heroNow\(\)/.test(html), 'Mind copies retain the current hero appearance');
+ok(/animFrameFor\([\s\S]*?m\.d\.id/.test(html), 'The real Mind core keeps its own boss art, distinguishable from copies');
+ok(fs.existsSync(path.join(ROOT, 'art', 'boss', 'b_mind2.png')), 'Mind core has a dedicated still');
+ok(fs.existsSync(path.join(ROOT, 'art', 'anim', 'boss', 'b_mind2.png')), 'Mind core has a dedicated animation');
 
 console.log(`\nOpening/boss release checks: ${pass} passed, 0 failed.`);

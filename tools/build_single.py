@@ -20,6 +20,7 @@
 """
 
 import base64
+import json
 import os
 import pathlib
 import re
@@ -205,6 +206,23 @@ def main():
     if args:
         OUT = pathlib.Path(args[0])
     html = (WEB / 'index.html').read_text(encoding='utf-8')
+    for filename, tag in [('rpg-upgrade.css', 'style'), ('rpg-upgrade.js', 'script'), ('boss-fx.js', 'script'), ('rpg-cinema.js', 'script'), ('rpg-cover.js', 'script')]:
+        pattern = (r'<link rel="stylesheet" href="' + re.escape(filename) + r'[^\"]*">'
+                   if tag == 'style' else r'<script src="' + re.escape(filename) + r'[^\"]*"></script>')
+        inline = '<' + tag + '>' + (WEB / filename).read_text(encoding='utf-8') + '</' + tag + '>'
+        html, count = re.subn(pattern, lambda _: inline, html)
+        if count != 1:
+            sys.exit(filename + ' must be embedded exactly once')
+    hd_script = WEB / 'hd-manifest.js'
+    if hd_script.exists():
+        manifest = json.loads((WEB / 'art-hd' / 'manifest.json').read_text(encoding='utf-8'))
+        hd_data = {name: data_uri((WEB / 'art-hd' / name).read_bytes(), '.webp')
+                   for name in sorted({v['file'] for v in manifest.values()})}
+        inline = '<script>' + hd_script.read_text(encoding='utf-8')
+        inline += '\nglobalThis.BABEL_HD_DATA=' + json.dumps(hd_data, separators=(',', ':')) + ';</script>'
+        html, replaced = re.subn(r'<script src="hd-manifest\.js[^\"]*"></script>', lambda _: inline, html)
+        if replaced != 1:
+            sys.exit('HD manifest script must be embedded exactly once')
 
     art = {}
     unknown = []

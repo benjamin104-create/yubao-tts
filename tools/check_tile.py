@@ -163,7 +163,7 @@ def main():
     with sync_playwright() as pw:
         b = pw.chromium.launch(**LAUNCH)
         pg = b.new_page(viewport={'width': 1280, 'height': 900})
-        pg.goto(HTML)
+        pg.goto(HTML+'?art=classic')  # This suite measures the 32px palette, not HD paintings.
         pg.wait_for_timeout(900)
         pg.click('#start')
         pg.wait_for_timeout(1400)

@@ -331,6 +331,7 @@
 | I5 | `wand00` `wand01` `wand02` `wand03` `wand04` `wand05` `wand06` `wand07` `wand08` |
 | I6 | `pot00` `pot01` `pot02` `pot03` `pot04` `pot05` |
 | I7 | `weap00` `weap01` `weap02` `weap03` `weap04` `weap05` `weap06` `weap07` `weap08` `weap09` |
+| v21 程式繪製 | `weap10`：究極之劍・諸神的黃昏，由 `web/rpg-cinema.js` 繪製透明劍身、四印寶石並接入 HD 道具與穿戴圖層。 |
 | I8 | `shld00` `shld01` `shld02` `shld03` `shld04` `shld05` `food00` `food01` `food02` |
 
 編號就是遊戲裡的順序，**不能重排**：

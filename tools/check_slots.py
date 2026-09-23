@@ -68,7 +68,7 @@ with sync_playwright() as pw:
       // 加點會自動帶上
       p.spells=[null,null]; p.sp=3;
       panelMode='magic'; renderPanel();
-      const plus=[...document.querySelectorAll('#list button')].find(b=>b.textContent==='＋');
+      const plus=[...document.querySelectorAll('#list .sch button')].find(b=>!b.disabled);
       if(plus) plus.click();
       ok('加點之後會自動帶上', p.spells.filter(Boolean).length>0, JSON.stringify(p.spells));
       return out;

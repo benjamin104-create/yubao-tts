@@ -31,6 +31,7 @@ HTML = (ROOT / 'web' / 'index.html').as_uri()
 
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 
 # 音樂的合理範圍。下限是「聽得到」，上限是「不會把音效蓋掉」。
 MUSIC_RMS_MIN, MUSIC_RMS_MAX = -30.0, -14.0

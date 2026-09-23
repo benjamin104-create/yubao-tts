@@ -38,6 +38,7 @@ RUN_KEY = 'claude-abyss-run'
 
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 if not LAUNCH and os.path.exists('/opt/pw-browsers/chromium'):
     LAUNCH = {'executable_path': '/opt/pw-browsers/chromium'}
 

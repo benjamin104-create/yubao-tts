@@ -682,6 +682,9 @@ console.log('\n=== 受困的石匠（拯救 → 副本迷宮） ===');
   ok(!!G6, '找得到有石匠的樓層');
   if(G6){
     const ev = G6.f.ev, V6 = api.VILLAGE();
+    // Isolate the rescue interaction; a nearby slime can otherwise kill this
+    // deliberately unprepared fixture before the fifth dig. Combat is tested separately.
+    G6.mons=[];G6.p.hp=G6.p.mhp;
     // 站到落石旁邊，然後撞過去
     let d0 = null;
     for(const d of api.DIRS){

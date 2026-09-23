@@ -4,7 +4,7 @@
 // 十五章裡有沒有哪一章因為數值配錯而根本過不去。
 // 一場死了就重來（跟真的玩家一樣，進度留在村莊），最多重試 N 次。
 const { api } = require('./simcore.js');
-const { combatItem } = require('./campaign_strategy.js');
+const { combatItem, dodgeWarning } = require('./campaign_strategy.js');
 
 // 30 層的通天塔一趟就要好幾千回合 —— 上限太低會把「打得完」誤判成「過不去」
 const MAX_TURNS = 16000, RETRY = 40;
@@ -18,6 +18,7 @@ function playFloorLoop(G, cap){
        而且不會報錯 —— 只會看到「第一章忽然過不去了」。
        一律同意：機器人的工作是量「護送走不走得完」，不是量拒絕。 */
     if(api.talkOpen()){ api.answerTalk(true); continue; }
+    if(dodgeWarning(api,G)){t++;continue;}
     if(combatItem(api,G)){ t++; continue; }
     /* 受傷了而且附近沒東西，就坐下來休息。
        自然回復放慢之後，休息是玩家主動回血的正規手段 ——
@@ -147,7 +148,7 @@ function shopTrip(V){
   // 錢愈攢愈多卻沒地方花（第一版量到的就是這個：第十五章手上十四萬）。
   const pot = (cat, id, up) => {
     const d = api.defOf(cat, id);
-    return (d[stat(cat)] || 0) + Math.max(up|0, d.up || 0) * 2;
+    return (d[stat(cat)] || 0) + Math.max(up|0, api.forgeCap(d)) * 2;
   };
   for(const cat of ['weap', 'shld']){
     const best = V.stock.filter(g => g.cat === cat)
@@ -170,13 +171,13 @@ function shopTrip(V){
   for(let i = 0; i < 60; i++){
     const cand = V.stock
       .map(g => ({g, d: api.defOf(g.cat, g.id)}))
-      .filter(o => o.g.up < (o.d.up || 0))
-      .map(o => Object.assign(o, {cost: api.forgeCost(o.d, o.g.up),
+      .filter(o => o.g.up < api.forgeCap(o.d))
+      .map(o => Object.assign(o, {cost: api.forgeCost(o.d, o.g.up), ore:api.forgeOreCost(o.g.up),
                                   pot: pot(o.g.cat, o.g.id, o.g.up)}))
-      .filter(o => o.cost <= V.gold)
+      .filter(o => o.cost <= V.gold && o.ore <= (V.forgeOre|0))
       .reduce((a, b) => !a || b.pot > a.pot ? b : a, null);
     if(!cand) break;
-    V.gold -= cand.cost; cand.g.up++;
+    V.gold -= cand.cost; V.forgeOre=(V.forgeOre|0)-cand.ore; cand.g.up++;
   }
 }
 
@@ -198,6 +199,8 @@ for(let a = 0; a < ACTS.length; a++){
   while(tries < RETRY && !done){
     tries++;
     V.act = a;
+    // Reserve lodging before buying/forging; use the same charged service as players.
+    if(V.condition){if(V.gold>=api.innCost())api.restAtInn();else api.restAtInn(true);}
     shopTrip(V);
     if(a === MID && tries === 1) midGold = V.gold;
     api.newGame(seed++);

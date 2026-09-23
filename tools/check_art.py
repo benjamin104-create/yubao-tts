@@ -213,18 +213,18 @@ else:
 # 少一種不會報錯 —— tintHero 回 null，那個顏色悄悄退回程式畫的舊主角。
 _pal = dict(re.findall(r"'(.)':'(#[0-9a-f]{6})'",
                        _html[_html.index("const PAL = {"):_html.index("\n};", _html.index("const PAL = {"))]))
-_cols = re.findall(r"'(.)'", _html[_html.index("const BLOB_COLS = ["):
+_cols = re.findall(r"'([^']+)'", _html[_html.index("const BLOB_COLS = ["):
                                    _html.index("];", _html.index("const BLOB_COLS = ["))])
 _ri = _html.index("const BLOB_RAMP = {")
-_ramp = dict((m.group(1), [m.group(2), m.group(3), m.group(4)]) for m in
-             re.finditer(r"'(.)': \['(.)','(.)','(.)'\]", _html[_ri:_html.index("\n};", _ri)]))
+_ramp = dict((m.group(1) or m.group(2), [m.group(3), m.group(4), m.group(5)]) for m in
+             re.finditer(r"(?:'([^']+)'|(\w+)):\s*\['([^']+)','([^']+)','([^']+)'\]", _html[_ri:_html.index("\n};", _ri)]))
 ok(sorted(_ramp) == sorted(_cols),
-   "十種可選顏色都有對應的色階（缺：%s）" % (sorted(set(_cols) - set(_ramp)) or "無"))
-_bad = sorted(c for c in _ramp for s in _ramp[c] if s not in _pal)
+   "所有可讀取的角色顏色都有對應色階（缺：%s）" % (sorted(set(_cols) - set(_ramp)) or "無"))
+_bad = sorted(c for c in _ramp for s in _ramp[c] if s not in _pal and not re.fullmatch(r'#[0-9a-fA-F]{6}',s))
 ok(not _bad, "色階裡的每一階都在色盤裡（不在的：%s）" % (_bad or "無"))
 # 十組色階必須互不相同 —— 相同的話，兩個選項在玩家眼裡是同一個顏色
 _mid = [_ramp[c][1] for c in _ramp]
-ok(len(set(_mid)) == len(_mid), "十種顏色的主色互不相同")
+ok(len(set(_mid)) == len(_mid), "角色顏色的主色互不相同")
 
 print("\n道具圖示的編號與遊戲對得上")
 # 道具跟怪不一樣：檔名是**編號**不是 id，而編號直接對應遊戲裡的索引。

@@ -23,6 +23,7 @@ html = (ROOT / 'web' / 'index.html').as_uri()
 # 讓它自己找。寫死路徑會讓這支測試「只有在我的機器上跑得起來」。
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 
 # lastOx/lastOy 是 draw() 裡算的，而 draw() 跑在 rAF 上 ——
 # 同一個 evaluate 裡設完鏡頭馬上量，量到的是上一幀的偏移，

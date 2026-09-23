@@ -176,6 +176,25 @@ def build(name, spec, want, verbose=True):
         f.save(buf)
         buf.seek(0)
         parts.append(TTFont(buf))
+    # TC omits some Japanese shinjitai used by the Japanese translation.
+    # Supplement only missing codepoints from the matching OFL serif family.
+    if name == 'serif-tc':
+        covered = {cp for part in parts for table in part['cmap'].tables for cp in table.cmap}
+        missing = set(map(ord, want)) - covered
+        jp_url = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400&display=swap'
+        for u, cps in parse_css(fetch(jp_url, binary=False)):
+            if cps and not (cps & missing):
+                continue
+            raw = fetch(u); got += len(raw)
+            f = TTFont(io.BytesIO(raw))
+            take = {cp for table in f['cmap'].tables for cp in table.cmap} & missing
+            if not take:
+                continue
+            opt = subset.Options(layout_features=['*'], notdef_outline=True,
+                                 recalc_bounds=True, drop_tables=['DSIG'])
+            sub = subset.Subsetter(options=opt); sub.populate(unicodes=take); sub.subset(f)
+            buf = io.BytesIO(); f.save(buf); buf.seek(0)
+            parts.append(TTFont(buf)); missing -= take
     if verbose:
         print('  下載 %.1f MB' % (got / 1e6))
 

@@ -1,0 +1,29 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'C:/Users/X/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{
+ const b=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ const out=path.resolve(__dirname,'../work/rpg-v20');fs.mkdirSync(out,{recursive:true});const report=[];
+ try{
+ for(const [width,height] of [[1200,900],[390,844],[360,640],[844,390]]){
+  const p=await b.newPage({viewport:{width,height},hasTouch:width<900}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+  await p.goto('http://127.0.0.1:8876/?qa=village&act=1');
+  await p.waitForFunction(()=>RPG_TOWN.state&&HD_LOADED['hd:town-elder-house']&&HD_LOADED['hd:town-yurt']);await p.evaluate(()=>document.fonts.ready);
+  await p.evaluate(()=>{for(const n of RPG_TOWN.state.npcs){n.goal=null;n.next=999;}VILLAGE.condition={hp:.4,mp:.25,sat:.3};RPG_TOWN.mount();});
+  const pos=await p.evaluate(()=>RPG_TOWN.state.p.y);const box=await p.locator('#town-dpad [data-dir="0,1"]').boundingBox();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.waitForTimeout(300);await p.mouse.up();assert((await p.evaluate(()=>RPG_TOWN.state.p.y))>pos+.3,'pointer direction movement');
+  await p.screenshot({animations:'disabled',path:path.join(out,`village-${width}.png`)});
+  const speak=async id=>{await p.evaluate(id=>{const n=RPG_TOWN.state.npcs.find(n=>n.id===id);Object.assign(RPG_TOWN.state.p,{x:n.x,y:n.y+.6});},id);await p.locator('#town-action').click();await p.locator('#town-modal').waitFor({state:'visible'});};
+  const check=async()=>{const data=await p.evaluate(()=>({w:innerWidth,h:innerHeight,sw:document.documentElement.scrollWidth,sh:document.documentElement.scrollHeight,m:document.getElementById('town-modal').getBoundingClientRect().toJSON(),body:document.getElementById('town-modal-body').getBoundingClientRect().toJSON()}));assert(data.sw<=width+1&&data.sh<=height+1,JSON.stringify(data));assert(data.m.y>=0&&data.m.bottom<=height+1&&data.m.x>=0&&data.m.right<=width+1,JSON.stringify(data));assert(data.body.height>60,JSON.stringify(data));return data;};
+  await speak('smith');assert(await p.locator('#town-modal #vstock').count());await check();await p.screenshot({animations:'disabled',path:path.join(out,`smith-${width}.png`)});await p.keyboard.press('Escape');
+  await speak('innkeeper');assert((await p.locator('#town-modal').innerText()).includes('住宿'));await check();await p.screenshot({animations:'disabled',path:path.join(out,`inn-${width}.png`)});await p.getByRole('button',{name:/^住宿 ·/}).click();assert.equal(await p.evaluate(()=>VILLAGE.condition.hp),1);await p.keyboard.press('Escape');
+  await speak('healer');await p.getByRole('button',{name:'魔法調合與素材寄存',exact:true}).click();await check();assert.equal(await p.locator('.alchemy-recipes article').count(),6);await p.screenshot({animations:'disabled',path:path.join(out,`alchemy-${width}.png`)});await p.keyboard.press('Escape');
+  await p.locator('#town-journal').click();await check();assert.equal(await p.getByRole('button',{name:'驅魔小祠',exact:true}).count(),0);await p.getByRole('button',{name:'旅程紀錄台',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('town-modal').hidden&&document.getElementById('town-modal').textContent.includes('記錄目前旅程'),null,{timeout:20000});await p.getByRole('button',{name:'記錄目前旅程',exact:true}).click();assert((await p.locator('#town-modal').innerText()).includes('未覆寫'));await p.keyboard.press('Escape');
+  await p.evaluate(()=>Object.assign(RPG_TOWN.state.p,{x:10,y:16}));await p.waitForTimeout(200);await p.screenshot({animations:'disabled',path:path.join(out,`south-${width}.png`)});
+  await p.goto('http://127.0.0.1:8876/?qa=village&act=14');await p.waitForFunction(()=>RPG_TOWN.state&&HD_LOADED['hd:town-shrine']);await p.evaluate(()=>{for(const n of RPG_TOWN.state.npcs){n.goal=null;n.next=999;}Object.assign(RPG_TOWN.state.p,{x:16,y:12.6});VILLAGE.stock=[{cat:'weap',id:'brnz',up:4,cursed:true}];});await p.locator('#town-action').click();assert((await p.locator('#town-modal').innerText()).includes('驅魔小祠'));await check();await p.getByRole('button',{name:/^舉行淨化儀式/}).click();assert.equal(await p.evaluate(()=>VILLAGE.stock[0].cursed),false);await p.keyboard.press('Escape');
+  await p.goto('http://127.0.0.1:8876/?qa=floor&act=mine');await p.waitForFunction(()=>G?.f&&HD_LOADED['npc#mason']);await p.evaluate(()=>{G.over=false;G.mons=[];G.floor=1;G.f.arena=null;G.f.heianGate=null;G.f.heianSamurai=null;G.f.elapsedTurns=419;dwellCheck();refresh();});assert((await p.locator('#pressure-status').innerText()).includes('120'));const turns=await p.evaluate(()=>G.f.elapsedTurns);await p.evaluate(()=>openPanel('inv'));await p.waitForTimeout(500);assert.equal(await p.evaluate(()=>G.f.elapsedTurns),turns);await p.keyboard.press('Escape');
+  const arts=await p.evaluate(()=>({npc:npcArt()===HD_LOADED['npc#merchant'],mason:masonArt()===HD_LOADED['npc#mason']}));assert(arts.npc&&arts.mason);
+  await p.evaluate(()=>{G.npc={x:G.p.x+1,y:G.p.y,hp:20,mhp:20,follow:0};askVillager(G.npc);});await p.waitForTimeout(250);const talk=await p.locator('#talk .tbox').boundingBox();assert(talk.y>=0&&talk.y+talk.height<=height+1);await p.screenshot({animations:'disabled',path:path.join(out,`npc-talk-${width}.png`)});assert.equal(await p.locator('#talkface').getAttribute('width'),'192');
+  assert.deepEqual(errors,[]);report.push({width,height,errors,arts});await p.close();console.log('PASS '+width+'x'+height);
+ }
+ fs.writeFileSync(path.join(out,'browser-report.json'),JSON.stringify(report,null,2));
+ }finally{await b.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,5766 @@
+{
+  "hd:hunter-lion-idle": {
+    "file": "hd-hunter-lion-idle.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:hunter-lion-windup": {
+    "file": "hd-hunter-lion-windup.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:hunter-lion-strike": {
+    "file": "hd-hunter-lion-strike.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:hunter-wall-relief": {
+    "file": "hd-hunter-wall-relief.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:hunter-wall-emerge": {
+    "file": "hd-hunter-wall-emerge.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:hunter-wall-idle": {
+    "file": "hd-hunter-wall-idle.webp",
+    "width": 384,
+    "height": 384,
+    "source": "hunters-v21.png",
+    "crop": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:town-elder-house": {
+    "file": "hd-town-elder-house.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:town-shrine": {
+    "file": "hd-town-shrine.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:town-yurt": {
+    "file": "hd-town-yurt.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:town-save-desk": {
+    "file": "hd-town-save-desk.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:town-weapon-rack": {
+    "file": "hd-town-weapon-rack.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:town-alchemy-bench": {
+    "file": "hd-town-alchemy-bench.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-facilities-cutouts-v20.png",
+    "crop": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:keeper-idle": {
+    "file": "hd-keeper-idle.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:keeper-anticipation": {
+    "file": "hd-keeper-anticipation.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:keeper-slam": {
+    "file": "hd-keeper-slam.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:keeper-recovery": {
+    "file": "hd-keeper-recovery.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:keeper-hit": {
+    "file": "hd-keeper-hit.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:keeper-defeat": {
+    "file": "hd-keeper-defeat.webp",
+    "width": 384,
+    "height": 384,
+    "source": "keeper-animation.png",
+    "crop": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:terrace": {
+    "file": "hd-terrace.webp",
+    "width": 1536,
+    "height": 1024,
+    "source": "terrace.png",
+    "crop": [
+      0,
+      0,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:town-innkeeper": {
+    "file": "hd-town-innkeeper.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      0,
+      0,
+      327,
+      339
+    ],
+    "terrain": false
+  },
+  "hd:town-healer": {
+    "file": "hd-town-healer.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      327,
+      0,
+      620,
+      339
+    ],
+    "terrain": false
+  },
+  "hd:town-archivist": {
+    "file": "hd-town-archivist.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      620,
+      0,
+      910,
+      339
+    ],
+    "terrain": false
+  },
+  "hd:town-cauldron": {
+    "file": "hd-town-cauldron.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      910,
+      0,
+      1222,
+      339
+    ],
+    "terrain": false
+  },
+  "hd:town-noticeboard": {
+    "file": "hd-town-noticeboard.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      0,
+      339,
+      337,
+      653
+    ],
+    "terrain": false
+  },
+  "hd:town-crate": {
+    "file": "hd-town-crate.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      337,
+      339,
+      611,
+      653
+    ],
+    "terrain": false
+  },
+  "hd:town-stele": {
+    "file": "hd-town-stele.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      611,
+      339,
+      877,
+      653
+    ],
+    "terrain": false
+  },
+  "hd:town-bench": {
+    "file": "hd-town-bench.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      877,
+      339,
+      1222,
+      653
+    ],
+    "terrain": false
+  },
+  "hd:town-valves": {
+    "file": "hd-town-valves.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      0,
+      653,
+      337,
+      936
+    ],
+    "terrain": false
+  },
+  "hd:town-bell": {
+    "file": "hd-town-bell.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      337,
+      653,
+      611,
+      936
+    ],
+    "terrain": false
+  },
+  "hd:town-route-map": {
+    "file": "hd-town-route-map.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      611,
+      653,
+      904,
+      936
+    ],
+    "terrain": false
+  },
+  "hd:town-herb-stall": {
+    "file": "hd-town-herb-stall.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      904,
+      653,
+      1222,
+      936
+    ],
+    "terrain": false
+  },
+  "hd:town-lamp": {
+    "file": "hd-town-lamp.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      0,
+      936,
+      301,
+      1287
+    ],
+    "terrain": false
+  },
+  "hd:town-garland": {
+    "file": "hd-town-garland.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      301,
+      936,
+      643,
+      1287
+    ],
+    "terrain": false
+  },
+  "hd:town-hourglass": {
+    "file": "hd-town-hourglass.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      643,
+      936,
+      887,
+      1287
+    ],
+    "terrain": false
+  },
+  "hd:town-carpet": {
+    "file": "hd-town-carpet.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-life.png",
+    "crop": [
+      887,
+      936,
+      1222,
+      1287
+    ],
+    "terrain": false
+  },
+  "hero#blob": {
+    "file": "hero-blob.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero.png",
+    "crop": [
+      0,
+      0,
+      425,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:hero-side": {
+    "file": "hd-hero-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero.png",
+    "crop": [
+      425,
+      0,
+      836,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:hero-back": {
+    "file": "hd-hero-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "weap#0": {
+    "file": "weap-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "weap#1": {
+    "file": "weap-1.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "weap#2": {
+    "file": "weap-2.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      627,
+      0,
+      942,
+      313
+    ],
+    "terrain": false
+  },
+  "weap#3": {
+    "file": "weap-3.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      942,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "weap#4": {
+    "file": "weap-4.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "weap#5": {
+    "file": "weap-5.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "weap#6": {
+    "file": "weap-6.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      627,
+      313,
+      941,
+      627
+    ],
+    "terrain": false
+  },
+  "weap#7": {
+    "file": "weap-7.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      941,
+      313,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "weap#8": {
+    "file": "weap-8.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      0,
+      627,
+      313,
+      917
+    ],
+    "terrain": false
+  },
+  "weap#9": {
+    "file": "weap-9.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      313,
+      627,
+      627,
+      917
+    ],
+    "terrain": false
+  },
+  "shld#0": {
+    "file": "shld-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      627,
+      627,
+      940,
+      917
+    ],
+    "terrain": false
+  },
+  "shld#1": {
+    "file": "shld-1.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      917
+    ],
+    "terrain": false
+  },
+  "shld#2": {
+    "file": "shld-2.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      0,
+      917,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "shld#3": {
+    "file": "shld-3.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      313,
+      917,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "shld#4": {
+    "file": "shld-4.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      627,
+      917,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "shld#5": {
+    "file": "shld-5.webp",
+    "width": 192,
+    "height": 192,
+    "source": "gear.png",
+    "crop": [
+      940,
+      917,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "rat": {
+    "file": "rat.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "slime": {
+    "file": "slime.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "goblin": {
+    "file": "goblin.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "terrain": false
+  },
+  "skeleton": {
+    "file": "skeleton.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "shroom": {
+    "file": "shroom.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "imp": {
+    "file": "imp.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "grub": {
+    "file": "grub.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "terrain": false
+  },
+  "wolf": {
+    "file": "wolf.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "mage": {
+    "file": "mage.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      0,
+      627,
+      313,
+      921
+    ],
+    "terrain": false
+  },
+  "golem": {
+    "file": "golem.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      313,
+      627,
+      627,
+      921
+    ],
+    "terrain": false
+  },
+  "turret": {
+    "file": "turret.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      627,
+      627,
+      940,
+      921
+    ],
+    "terrain": false
+  },
+  "knight": {
+    "file": "knight.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      921
+    ],
+    "terrain": false
+  },
+  "wasp": {
+    "file": "wasp.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      0,
+      921,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "dryad": {
+    "file": "dryad.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      313,
+      921,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "mossy": {
+    "file": "mossy.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      627,
+      921,
+      936,
+      1254
+    ],
+    "terrain": false
+  },
+  "moth": {
+    "file": "moth.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      936,
+      921,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "hawk": {
+    "file": "hawk.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      0,
+      0,
+      313,
+      321
+    ],
+    "terrain": false
+  },
+  "ibex": {
+    "file": "ibex.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      313,
+      0,
+      626,
+      321
+    ],
+    "terrain": false
+  },
+  "scree": {
+    "file": "scree.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      626,
+      0,
+      940,
+      321
+    ],
+    "terrain": false
+  },
+  "eel": {
+    "file": "eel.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      321
+    ],
+    "terrain": false
+  },
+  "crab": {
+    "file": "crab.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      0,
+      321,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "salam": {
+    "file": "salam.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      313,
+      321,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "ash": {
+    "file": "ash.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      627,
+      321,
+      939,
+      627
+    ],
+    "terrain": false
+  },
+  "tengu": {
+    "file": "tengu.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      939,
+      321,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "tanuki": {
+    "file": "tanuki.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      0,
+      627,
+      313,
+      922
+    ],
+    "terrain": false
+  },
+  "chochin": {
+    "file": "chochin.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      313,
+      627,
+      627,
+      922
+    ],
+    "terrain": false
+  },
+  "shinobi": {
+    "file": "shinobi.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      627,
+      627,
+      940,
+      922
+    ],
+    "terrain": false
+  },
+  "centip": {
+    "file": "centip.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      922
+    ],
+    "terrain": false
+  },
+  "prism": {
+    "file": "prism.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      0,
+      922,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "refr": {
+    "file": "refr.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      313,
+      922,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "shadow": {
+    "file": "shadow.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      627,
+      922,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "ratking": {
+    "file": "ratking.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-b.png",
+    "crop": [
+      940,
+      922,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_keeper": {
+    "file": "b_keeper.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      0,
+      0,
+      343,
+      318
+    ],
+    "terrain": false
+  },
+  "b_warden": {
+    "file": "b_warden.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      343,
+      0,
+      638,
+      318
+    ],
+    "terrain": false
+  },
+  "b_treant": {
+    "file": "b_treant.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      638,
+      0,
+      940,
+      318
+    ],
+    "terrain": false
+  },
+  "b_ballista": {
+    "file": "b_ballista.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      318
+    ],
+    "terrain": false
+  },
+  "b_pyro": {
+    "file": "b_pyro.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      0,
+      318,
+      310,
+      626
+    ],
+    "terrain": false
+  },
+  "b_lord": {
+    "file": "b_lord.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      310,
+      318,
+      558,
+      626
+    ],
+    "terrain": false
+  },
+  "b_phoenix": {
+    "file": "b_phoenix.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      558,
+      318,
+      948,
+      626
+    ],
+    "terrain": false
+  },
+  "b_hanzo": {
+    "file": "b_hanzo.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      948,
+      318,
+      1254,
+      626
+    ],
+    "terrain": false
+  },
+  "b_oni": {
+    "file": "b_oni.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      0,
+      626,
+      320,
+      937
+    ],
+    "terrain": false
+  },
+  "b_gaoler": {
+    "file": "b_gaoler.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      320,
+      626,
+      642,
+      937
+    ],
+    "terrain": false
+  },
+  "b_queen": {
+    "file": "b_queen.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      642,
+      626,
+      940,
+      937
+    ],
+    "terrain": false
+  },
+  "b_prism": {
+    "file": "b_prism.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      940,
+      626,
+      1254,
+      937
+    ],
+    "terrain": false
+  },
+  "b_mermaid": {
+    "file": "b_mermaid.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      0,
+      937,
+      288,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_gate": {
+    "file": "b_gate.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      288,
+      937,
+      650,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_mind1": {
+    "file": "b_mind1.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      650,
+      937,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_mind": {
+    "file": "b_mind.webp",
+    "width": 320,
+    "height": 320,
+    "source": "bosses-a.png",
+    "crop": [
+      940,
+      937,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "chimera": {
+    "file": "chimera.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      0,
+      0,
+      327,
+      328
+    ],
+    "terrain": false
+  },
+  "seraph": {
+    "file": "seraph.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      327,
+      0,
+      627,
+      328
+    ],
+    "terrain": false
+  },
+  "warden": {
+    "file": "warden.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      627,
+      0,
+      943,
+      328
+    ],
+    "terrain": false
+  },
+  "axiom": {
+    "file": "axiom.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      943,
+      0,
+      1254,
+      328
+    ],
+    "terrain": false
+  },
+  "parad": {
+    "file": "parad.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      0,
+      328,
+      325,
+      653
+    ],
+    "terrain": false
+  },
+  "unnamed": {
+    "file": "unnamed.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      325,
+      328,
+      627,
+      653
+    ],
+    "terrain": false
+  },
+  "npc#elder": {
+    "file": "npc-elder.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      627,
+      328,
+      940,
+      653
+    ],
+    "terrain": false
+  },
+  "npc#smith": {
+    "file": "npc-smith.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      940,
+      328,
+      1254,
+      653
+    ],
+    "terrain": false
+  },
+  "npc#merchant": {
+    "file": "npc-merchant.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      0,
+      653,
+      315,
+      919
+    ],
+    "terrain": false
+  },
+  "npc#child": {
+    "file": "npc-child.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      315,
+      653,
+      627,
+      919
+    ],
+    "terrain": false
+  },
+  "npc#chief": {
+    "file": "npc-chief.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      627,
+      653,
+      941,
+      919
+    ],
+    "terrain": false
+  },
+  "npc#mason": {
+    "file": "npc-mason.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      941,
+      653,
+      1254,
+      919
+    ],
+    "terrain": false
+  },
+  "npc#dying_samurai": {
+    "file": "npc-dying_samurai.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      0,
+      919,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_mind2": {
+    "file": "b_mind2.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      313,
+      919,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_artisan": {
+    "file": "b_artisan.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      627,
+      919,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_hallking": {
+    "file": "b_hallking.webp",
+    "width": 256,
+    "height": 256,
+    "source": "cast.png",
+    "crop": [
+      940,
+      919,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "b_genmaan": {
+    "file": "b_genmaan.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      0,
+      314,
+      369
+    ],
+    "terrain": false
+  },
+  "b_musashimaru": {
+    "file": "b_musashimaru.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      314,
+      0,
+      672,
+      369
+    ],
+    "terrain": false
+  },
+  "b_doll_heal": {
+    "file": "b_doll_heal.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      672,
+      0,
+      940,
+      369
+    ],
+    "terrain": false
+  },
+  "b_doll_mage": {
+    "file": "b_doll_mage.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      369
+    ],
+    "terrain": false
+  },
+  "b_doll_tank": {
+    "file": "b_doll_tank.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      369,
+      347,
+      691
+    ],
+    "terrain": false
+  },
+  "samurai_spirit": {
+    "file": "samurai_spirit.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      347,
+      369,
+      659,
+      691
+    ],
+    "terrain": false
+  },
+  "hat#helm": {
+    "file": "hat-helm.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      659,
+      369,
+      940,
+      691
+    ],
+    "terrain": false
+  },
+  "hat#beret": {
+    "file": "hat-beret.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      940,
+      369,
+      1254,
+      691
+    ],
+    "terrain": false
+  },
+  "hat#rhat": {
+    "file": "hat-rhat.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      691,
+      349,
+      981
+    ],
+    "terrain": false
+  },
+  "hat#crown": {
+    "file": "hat-crown.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      349,
+      691,
+      631,
+      981
+    ],
+    "terrain": false
+  },
+  "hat#hood": {
+    "file": "hat-hood.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      631,
+      691,
+      940,
+      981
+    ],
+    "terrain": false
+  },
+  "hat#plume": {
+    "file": "hat-plume.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      940,
+      691,
+      1254,
+      981
+    ],
+    "terrain": false
+  },
+  "hat#band": {
+    "file": "hat-band.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      981,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "hat#oni": {
+    "file": "hat-oni.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      313,
+      981,
+      633,
+      1254
+    ],
+    "terrain": false
+  },
+  "hat#cone": {
+    "file": "hat-cone.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      633,
+      981,
+      949,
+      1254
+    ],
+    "terrain": false
+  },
+  "hat#circlet": {
+    "file": "hat-circlet.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      949,
+      981,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "trap#bear": {
+    "file": "trap-bear.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "trap#poison": {
+    "file": "trap-poison.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "trap#arrow": {
+    "file": "trap-arrow.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "terrain": false
+  },
+  "trap#plant": {
+    "file": "trap-plant.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "trap#acid": {
+    "file": "trap-acid.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      313,
+      313,
+      583
+    ],
+    "terrain": false
+  },
+  "scroll#0": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false
+  },
+  "food#0": {
+    "file": "food-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      627,
+      313,
+      940,
+      583
+    ],
+    "terrain": false
+  },
+  "gold#0": {
+    "file": "gold-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      583
+    ],
+    "terrain": false
+  },
+  "prop#stairs": {
+    "file": "prop-stairs.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      583,
+      313,
+      890
+    ],
+    "terrain": false
+  },
+  "prop#exit": {
+    "file": "prop-exit.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      583,
+      627,
+      890
+    ],
+    "terrain": false
+  },
+  "hd:lion": {
+    "file": "hd-lion.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      627,
+      583,
+      940,
+      890
+    ],
+    "terrain": false
+  },
+  "hd:stele": {
+    "file": "hd-stele.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      940,
+      583,
+      1254,
+      890
+    ],
+    "terrain": false
+  },
+  "hd:block-stone": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:block-forest": {
+    "file": "hd-block-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      890,
+      633,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:block-ice": {
+    "file": "hd-block-ice.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      633,
+      890,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "prop#rift_gate": {
+    "file": "prop-rift_gate.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      940,
+      890,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "herb#0": {
+    "file": "herb-0.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "herb#1": {
+    "file": "herb-1.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "herb#2": {
+    "file": "herb-2.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "terrain": false
+  },
+  "herb#3": {
+    "file": "herb-3.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "herb#4": {
+    "file": "herb-4.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "herb#5": {
+    "file": "herb-5.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "herb#6": {
+    "file": "herb-6.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "terrain": false
+  },
+  "herb#7": {
+    "file": "herb-7.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "herb#8": {
+    "file": "herb-8.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      0,
+      627,
+      313,
+      922
+    ],
+    "terrain": false
+  },
+  "herb#9": {
+    "file": "herb-9.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      313,
+      627,
+      627,
+      922
+    ],
+    "terrain": false
+  },
+  "herb#10": {
+    "file": "herb-10.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      627,
+      627,
+      940,
+      922
+    ],
+    "terrain": false
+  },
+  "herb#11": {
+    "file": "herb-11.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      922
+    ],
+    "terrain": false
+  },
+  "herb#12": {
+    "file": "herb-12.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      0,
+      922,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "herb#13": {
+    "file": "herb-13.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      313,
+      922,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "food#1": {
+    "file": "food-1.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      627,
+      922,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "food#2": {
+    "file": "food-2.webp",
+    "width": 160,
+    "height": 160,
+    "source": "herbs.png",
+    "crop": [
+      940,
+      922,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "wand#0": {
+    "file": "wand-0.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "wand#1": {
+    "file": "wand-1.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "wand#2": {
+    "file": "wand-2.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "terrain": false
+  },
+  "wand#3": {
+    "file": "wand-3.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "wand#4": {
+    "file": "wand-4.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "wand#5": {
+    "file": "wand-5.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "wand#6": {
+    "file": "wand-6.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "terrain": false
+  },
+  "wand#7": {
+    "file": "wand-7.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "wand#8": {
+    "file": "wand-8.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "terrain": false
+  },
+  "pot#0": {
+    "file": "pot-0.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "terrain": false
+  },
+  "pot#1": {
+    "file": "pot-1.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": false
+  },
+  "pot#2": {
+    "file": "pot-2.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": false
+  },
+  "pot#3": {
+    "file": "pot-3.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "pot#4": {
+    "file": "pot-4.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "pot#5": {
+    "file": "pot-5.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:torch": {
+    "file": "hd-torch.webp",
+    "width": 160,
+    "height": 160,
+    "source": "wands-pots.png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero#biped": {
+    "file": "hero-biped.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "terrain": false
+  },
+  "hero#cat": {
+    "file": "hero-cat.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "terrain": false
+  },
+  "hero#bird": {
+    "file": "hero-bird.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "terrain": false
+  },
+  "hero#bot": {
+    "file": "hero-bot.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "hero#ghost": {
+    "file": "hero-ghost.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:sum-ifr": {
+    "file": "hd-sum-ifr.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:sum-niv": {
+    "file": "hd-sum-niv.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:sum-ram": {
+    "file": "hd-sum-ram.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "terrain": false
+  },
+  "hd:sum-syl": {
+    "file": "hd-sum-syl.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      0,
+      627,
+      313,
+      941
+    ],
+    "terrain": false
+  },
+  "hd:shopkeeper": {
+    "file": "hd-shopkeeper.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      627,
+      627,
+      941
+    ],
+    "terrain": false
+  },
+  "hd:block-lion": {
+    "file": "hd-block-lion.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      627,
+      939,
+      941
+    ],
+    "terrain": false
+  },
+  "hd:block-rubble": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false
+  },
+  "hd:block-briar": {
+    "file": "hd-block-briar.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      0,
+      941,
+      313,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:block-void": {
+    "file": "hd-block-void.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      941,
+      627,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:block-ice-rubble": {
+    "file": "hd-block-ice-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      941,
+      940,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:block-bones": {
+    "file": "hd-block-bones.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      940,
+      941,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "tile:stone#floor0": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:forest#floor0": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:mountain#floor0": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:briar#floor0": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:lake#floor0": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:beast#floor0": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:wood#floor0": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:mirror#floor0": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:crystal#floor0": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:spire#floor0": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:temple#floor0": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:greathall#floor0": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:void#floor0": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true
+  },
+  "tile:temple#floor1": {
+    "file": "tile-temple-floor1.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      940,
+      627,
+      1254
+    ],
+    "terrain": true
+  },
+  "tile:forest#floor1": {
+    "file": "tile-forest-floor1.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "terrain": true
+  },
+  "tile:crystal#floor1": {
+    "file": "tile-crystal-floor1.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "terrain": true
+  },
+  "tile:stone#wallface": {
+    "file": "tile-stone-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:forest#wallface": {
+    "file": "tile-forest-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:mountain#wallface": {
+    "file": "tile-mountain-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:briar#wallface": {
+    "file": "tile-briar-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true
+  },
+  "tile:lake#wallface": {
+    "file": "tile-lake-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:beast#wallface": {
+    "file": "tile-beast-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:wood#wallface": {
+    "file": "tile-wood-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:mirror#wallface": {
+    "file": "tile-mirror-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true
+  },
+  "tile:crystal#wallface": {
+    "file": "tile-crystal-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:spire#wallface": {
+    "file": "tile-spire-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:temple#wallface": {
+    "file": "tile-temple-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:greathall#wallface": {
+    "file": "tile-greathall-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true
+  },
+  "tile:void#wallface": {
+    "file": "tile-void-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true
+  },
+  "hd:wall-relief": {
+    "file": "hd-wall-relief.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      940,
+      627,
+      1254
+    ],
+    "terrain": true
+  },
+  "hd:wall-forest": {
+    "file": "hd-wall-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "terrain": true
+  },
+  "hd:wall-ice": {
+    "file": "hd-wall-ice.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "terrain": true
+  },
+  "hero-worn:helm#front": {
+    "file": "hero-worn-helm-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      0,
+      0,
+      455,
+      260
+    ],
+    "terrain": false
+  },
+  "hero-worn:helm#side": {
+    "file": "hero-worn-helm-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      455,
+      0,
+      823,
+      260
+    ],
+    "terrain": false
+  },
+  "hero-worn:helm#back": {
+    "file": "hero-worn-helm-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      823,
+      0,
+      1254,
+      260
+    ],
+    "terrain": false
+  },
+  "hero-worn:beret#front": {
+    "file": "hero-worn-beret-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      0,
+      260,
+      451,
+      497
+    ],
+    "terrain": false
+  },
+  "hero-worn:beret#side": {
+    "file": "hero-worn-beret-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      451,
+      260,
+      836,
+      497
+    ],
+    "terrain": false
+  },
+  "hero-worn:beret#back": {
+    "file": "hero-worn-beret-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      836,
+      260,
+      1254,
+      497
+    ],
+    "terrain": false
+  },
+  "hero-worn:rhat#front": {
+    "file": "hero-worn-rhat-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      0,
+      497,
+      490,
+      745
+    ],
+    "terrain": false
+  },
+  "hero-worn:rhat#side": {
+    "file": "hero-worn-rhat-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      490,
+      497,
+      817,
+      745
+    ],
+    "terrain": false
+  },
+  "hero-worn:rhat#back": {
+    "file": "hero-worn-rhat-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      817,
+      497,
+      1254,
+      745
+    ],
+    "terrain": false
+  },
+  "hero-worn:crown#front": {
+    "file": "hero-worn-crown-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      0,
+      745,
+      451,
+      986
+    ],
+    "terrain": false
+  },
+  "hero-worn:crown#side": {
+    "file": "hero-worn-crown-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      451,
+      745,
+      834,
+      986
+    ],
+    "terrain": false
+  },
+  "hero-worn:crown#back": {
+    "file": "hero-worn-crown-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      834,
+      745,
+      1254,
+      986
+    ],
+    "terrain": false
+  },
+  "hero-worn:hood#front": {
+    "file": "hero-worn-hood-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      0,
+      986,
+      458,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero-worn:hood#side": {
+    "file": "hero-worn-hood-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      458,
+      986,
+      827,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero-worn:hood#back": {
+    "file": "hero-worn-hood-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-a.png",
+    "crop": [
+      827,
+      986,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero-worn:plume#front": {
+    "file": "hero-worn-plume-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      0,
+      0,
+      418,
+      268
+    ],
+    "terrain": false
+  },
+  "hero-worn:plume#side": {
+    "file": "hero-worn-plume-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      418,
+      0,
+      836,
+      268
+    ],
+    "terrain": false
+  },
+  "hero-worn:plume#back": {
+    "file": "hero-worn-plume-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      836,
+      0,
+      1254,
+      268
+    ],
+    "terrain": false
+  },
+  "hero-worn:band#front": {
+    "file": "hero-worn-band-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      0,
+      268,
+      421,
+      477
+    ],
+    "terrain": false
+  },
+  "hero-worn:band#side": {
+    "file": "hero-worn-band-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      421,
+      268,
+      836,
+      477
+    ],
+    "terrain": false
+  },
+  "hero-worn:band#back": {
+    "file": "hero-worn-band-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      836,
+      268,
+      1254,
+      477
+    ],
+    "terrain": false
+  },
+  "hero-worn:oni#front": {
+    "file": "hero-worn-oni-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      0,
+      477,
+      418,
+      736
+    ],
+    "terrain": false
+  },
+  "hero-worn:oni#side": {
+    "file": "hero-worn-oni-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      418,
+      477,
+      836,
+      736
+    ],
+    "terrain": false
+  },
+  "hero-worn:oni#back": {
+    "file": "hero-worn-oni-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      836,
+      477,
+      1254,
+      736
+    ],
+    "terrain": false
+  },
+  "hero-worn:cone#front": {
+    "file": "hero-worn-cone-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      0,
+      736,
+      418,
+      994
+    ],
+    "terrain": false
+  },
+  "hero-worn:cone#side": {
+    "file": "hero-worn-cone-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      418,
+      736,
+      836,
+      994
+    ],
+    "terrain": false
+  },
+  "hero-worn:cone#back": {
+    "file": "hero-worn-cone-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      836,
+      736,
+      1254,
+      994
+    ],
+    "terrain": false
+  },
+  "hero-worn:circlet#front": {
+    "file": "hero-worn-circlet-front.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      0,
+      994,
+      418,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero-worn:circlet#side": {
+    "file": "hero-worn-circlet-side.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      418,
+      994,
+      836,
+      1254
+    ],
+    "terrain": false
+  },
+  "hero-worn:circlet#back": {
+    "file": "hero-worn-circlet-back.webp",
+    "width": 256,
+    "height": 256,
+    "source": "hero-worn-b.png",
+    "crop": [
+      836,
+      994,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:town-euro-forge": {
+    "file": "hd-town-euro-forge.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      0,
+      0,
+      345,
+      313
+    ],
+    "terrain": false
+  },
+  "hd:town-euro-inn": {
+    "file": "hd-town-euro-inn.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      345,
+      0,
+      685,
+      313
+    ],
+    "terrain": false
+  },
+  "hd:town-euro-tree": {
+    "file": "hd-town-euro-tree.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      685,
+      0,
+      994,
+      313
+    ],
+    "terrain": false
+  },
+  "hd:town-euro-well": {
+    "file": "hd-town-euro-well.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      994,
+      0,
+      1254,
+      313
+    ],
+    "terrain": false
+  },
+  "hd:town-cave-forge": {
+    "file": "hd-town-cave-forge.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      0,
+      313,
+      346,
+      626
+    ],
+    "terrain": false
+  },
+  "hd:town-cave-inn": {
+    "file": "hd-town-cave-inn.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      346,
+      313,
+      695,
+      626
+    ],
+    "terrain": false
+  },
+  "hd:town-cave-tree": {
+    "file": "hd-town-cave-tree.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      695,
+      313,
+      940,
+      626
+    ],
+    "terrain": false
+  },
+  "hd:town-cave-well": {
+    "file": "hd-town-cave-well.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      940,
+      313,
+      1254,
+      626
+    ],
+    "terrain": false
+  },
+  "hd:town-edo-forge": {
+    "file": "hd-town-edo-forge.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      0,
+      626,
+      354,
+      927
+    ],
+    "terrain": false
+  },
+  "hd:town-edo-inn": {
+    "file": "hd-town-edo-inn.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      354,
+      626,
+      689,
+      927
+    ],
+    "terrain": false
+  },
+  "hd:town-edo-tree": {
+    "file": "hd-town-edo-tree.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      689,
+      626,
+      1008,
+      927
+    ],
+    "terrain": false
+  },
+  "hd:town-edo-well": {
+    "file": "hd-town-edo-well.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      1008,
+      626,
+      1254,
+      927
+    ],
+    "terrain": false
+  },
+  "hd:town-spire-forge": {
+    "file": "hd-town-spire-forge.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      0,
+      927,
+      352,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:town-spire-inn": {
+    "file": "hd-town-spire-inn.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      352,
+      927,
+      693,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:town-spire-tree": {
+    "file": "hd-town-spire-tree.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      693,
+      927,
+      1005,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:town-spire-well": {
+    "file": "hd-town-spire-well.webp",
+    "width": 384,
+    "height": 384,
+    "source": "town-structures.png",
+    "crop": [
+      1005,
+      927,
+      1254,
+      1254
+    ],
+    "terrain": false
+  },
+  "hd:chapter-temple": {
+    "file": "hd-chapter-temple.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      0,
+      0,
+      512,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-mine": {
+    "file": "hd-chapter-mine.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      512,
+      0,
+      1024,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-forest": {
+    "file": "hd-chapter-forest.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      1024,
+      0,
+      1536,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-trial": {
+    "file": "hd-chapter-trial.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      0,
+      341,
+      512,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-ordeal": {
+    "file": "hd-chapter-ordeal.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      512,
+      341,
+      1024,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-briar": {
+    "file": "hd-chapter-briar.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      1024,
+      341,
+      1536,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-lake": {
+    "file": "hd-chapter-lake.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      0,
+      683,
+      512,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:chapter-beast": {
+    "file": "hd-chapter-beast.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      512,
+      683,
+      1024,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:chapter-ninja": {
+    "file": "hd-chapter-ninja.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-a.png",
+    "crop": [
+      1024,
+      683,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:chapter-heian": {
+    "file": "hd-chapter-heian.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      0,
+      0,
+      512,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-gaol": {
+    "file": "hd-chapter-gaol.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      512,
+      0,
+      1024,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-mirror": {
+    "file": "hd-chapter-mirror.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      1024,
+      0,
+      1536,
+      341
+    ],
+    "terrain": false
+  },
+  "hd:chapter-crystal": {
+    "file": "hd-chapter-crystal.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      0,
+      341,
+      512,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-hall": {
+    "file": "hd-chapter-hall.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      512,
+      341,
+      1024,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-tower": {
+    "file": "hd-chapter-tower.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      1024,
+      341,
+      1536,
+      683
+    ],
+    "terrain": false
+  },
+  "hd:chapter-final": {
+    "file": "hd-chapter-final.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      0,
+      683,
+      512,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:chapter-chaos": {
+    "file": "hd-chapter-chaos.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      512,
+      683,
+      1024,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:chapter-vault": {
+    "file": "hd-chapter-vault.webp",
+    "width": 512,
+    "height": 342,
+    "source": "chapters-b.png",
+    "crop": [
+      1024,
+      683,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:prologue-0": {
+    "file": "hd-prologue-0.webp",
+    "width": 768,
+    "height": 512,
+    "source": "prologue-hd.png",
+    "crop": [
+      0,
+      0,
+      768,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:prologue-1": {
+    "file": "hd-prologue-1.webp",
+    "width": 768,
+    "height": 512,
+    "source": "prologue-hd.png",
+    "crop": [
+      768,
+      0,
+      1536,
+      512
+    ],
+    "terrain": false
+  },
+  "hd:prologue-2": {
+    "file": "hd-prologue-2.webp",
+    "width": 768,
+    "height": 512,
+    "source": "prologue-hd.png",
+    "crop": [
+      0,
+      512,
+      768,
+      1024
+    ],
+    "terrain": false
+  },
+  "hd:prologue-3": {
+    "file": "hd-prologue-3.webp",
+    "width": 768,
+    "height": 512,
+    "source": "prologue-hd.png",
+    "crop": [
+      768,
+      512,
+      1536,
+      1024
+    ],
+    "terrain": false
+  },
+  "scroll#1": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#2": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#3": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#4": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#5": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#6": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#7": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#8": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#9": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "scroll#10": {
+    "file": "scroll-0.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      313,
+      627,
+      583
+    ],
+    "terrain": false,
+    "aliasOf": "scroll#0"
+  },
+  "hat#0": {
+    "file": "hat-helm.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      659,
+      369,
+      940,
+      691
+    ],
+    "terrain": false,
+    "aliasOf": "hat#helm"
+  },
+  "hat#1": {
+    "file": "hat-beret.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      940,
+      369,
+      1254,
+      691
+    ],
+    "terrain": false,
+    "aliasOf": "hat#beret"
+  },
+  "hat#2": {
+    "file": "hat-rhat.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      691,
+      349,
+      981
+    ],
+    "terrain": false,
+    "aliasOf": "hat#rhat"
+  },
+  "hat#3": {
+    "file": "hat-crown.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      349,
+      691,
+      631,
+      981
+    ],
+    "terrain": false,
+    "aliasOf": "hat#crown"
+  },
+  "hat#4": {
+    "file": "hat-hood.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      631,
+      691,
+      940,
+      981
+    ],
+    "terrain": false,
+    "aliasOf": "hat#hood"
+  },
+  "hat#5": {
+    "file": "hat-plume.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      940,
+      691,
+      1254,
+      981
+    ],
+    "terrain": false,
+    "aliasOf": "hat#plume"
+  },
+  "hat#6": {
+    "file": "hat-band.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      0,
+      981,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hat#band"
+  },
+  "hat#7": {
+    "file": "hat-oni.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      313,
+      981,
+      633,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hat#oni"
+  },
+  "hat#8": {
+    "file": "hat-cone.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      633,
+      981,
+      949,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hat#cone"
+  },
+  "hat#9": {
+    "file": "hat-circlet.webp",
+    "width": 256,
+    "height": 256,
+    "source": "heian-hats.png",
+    "crop": [
+      949,
+      981,
+      1254,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hat#circlet"
+  },
+  "prop#turret": {
+    "file": "turret.webp",
+    "width": 192,
+    "height": 192,
+    "source": "monsters-a.png",
+    "crop": [
+      627,
+      627,
+      940,
+      921
+    ],
+    "terrain": false,
+    "aliasOf": "turret"
+  },
+  "tile:stone#floor1": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#floor2": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#floor3": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#corr0": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#corr1": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#corr2": {
+    "file": "tile-stone-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#floor0"
+  },
+  "tile:stone#wall": {
+    "file": "tile-stone-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      0,
+      314,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:stone#wallface"
+  },
+  "tile:stone#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:stone#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:forest#floor2": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#floor0"
+  },
+  "tile:forest#floor3": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#floor0"
+  },
+  "tile:forest#corr0": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#floor0"
+  },
+  "tile:forest#corr1": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#floor0"
+  },
+  "tile:forest#corr2": {
+    "file": "tile-forest-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#floor0"
+  },
+  "tile:forest#wall": {
+    "file": "tile-forest-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      0,
+      627,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:forest#wallface"
+  },
+  "tile:forest#blocker0": {
+    "file": "hd-block-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      890,
+      633,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-forest"
+  },
+  "tile:forest#blocker1": {
+    "file": "hd-block-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      890,
+      633,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-forest"
+  },
+  "tile:mountain#floor1": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#floor2": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#floor3": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#corr0": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#corr1": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#corr2": {
+    "file": "tile-mountain-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#floor0"
+  },
+  "tile:mountain#wall": {
+    "file": "tile-mountain-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      0,
+      940,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mountain#wallface"
+  },
+  "tile:mountain#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:mountain#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:briar#floor1": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#floor2": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#floor3": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#corr0": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#corr1": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#corr2": {
+    "file": "tile-briar-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#floor0"
+  },
+  "tile:briar#wall": {
+    "file": "tile-briar-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      0,
+      1254,
+      314
+    ],
+    "terrain": true,
+    "aliasOf": "tile:briar#wallface"
+  },
+  "tile:briar#blocker0": {
+    "file": "hd-block-briar.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      0,
+      941,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-briar"
+  },
+  "tile:briar#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:lake#floor1": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#floor2": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#floor3": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#corr0": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#corr1": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#corr2": {
+    "file": "tile-lake-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#floor0"
+  },
+  "tile:lake#wall": {
+    "file": "tile-lake-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      314,
+      314,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:lake#wallface"
+  },
+  "tile:lake#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:lake#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:beast#floor1": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#floor2": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#floor3": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#corr0": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#corr1": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#corr2": {
+    "file": "tile-beast-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#floor0"
+  },
+  "tile:beast#wall": {
+    "file": "tile-beast-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      314,
+      627,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:beast#wallface"
+  },
+  "tile:beast#blocker0": {
+    "file": "hd-block-bones.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      940,
+      941,
+      1254,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-bones"
+  },
+  "tile:beast#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:wood#floor1": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#floor2": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#floor3": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#corr0": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#corr1": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#corr2": {
+    "file": "tile-wood-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#floor0"
+  },
+  "tile:wood#wall": {
+    "file": "tile-wood-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      314,
+      940,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:wood#wallface"
+  },
+  "tile:wood#blocker0": {
+    "file": "hd-block-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      890,
+      633,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-forest"
+  },
+  "tile:wood#blocker1": {
+    "file": "hd-block-forest.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      313,
+      890,
+      633,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-forest"
+  },
+  "tile:mirror#floor1": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#floor2": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#floor3": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#corr0": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#corr1": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#corr2": {
+    "file": "tile-mirror-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#floor0"
+  },
+  "tile:mirror#wall": {
+    "file": "tile-mirror-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      314,
+      1254,
+      627
+    ],
+    "terrain": true,
+    "aliasOf": "tile:mirror#wallface"
+  },
+  "tile:mirror#blocker0": {
+    "file": "hd-block-void.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      941,
+      627,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-void"
+  },
+  "tile:mirror#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:crystal#floor2": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#floor0"
+  },
+  "tile:crystal#floor3": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#floor0"
+  },
+  "tile:crystal#corr0": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#floor0"
+  },
+  "tile:crystal#corr1": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#floor0"
+  },
+  "tile:crystal#corr2": {
+    "file": "tile-crystal-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#floor0"
+  },
+  "tile:crystal#wall": {
+    "file": "tile-crystal-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      627,
+      314,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:crystal#wallface"
+  },
+  "tile:crystal#blocker0": {
+    "file": "hd-block-ice.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      633,
+      890,
+      940,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-ice"
+  },
+  "tile:crystal#blocker1": {
+    "file": "hd-block-ice-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      941,
+      940,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-ice-rubble"
+  },
+  "tile:spire#floor1": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#floor2": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#floor3": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#corr0": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#corr1": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#corr2": {
+    "file": "tile-spire-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#floor0"
+  },
+  "tile:spire#wall": {
+    "file": "tile-spire-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      314,
+      627,
+      627,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:spire#wallface"
+  },
+  "tile:spire#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:spire#blocker1": {
+    "file": "hd-block-lion.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      627,
+      939,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-lion"
+  },
+  "tile:temple#floor2": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#floor0"
+  },
+  "tile:temple#floor3": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#floor0"
+  },
+  "tile:temple#corr0": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#floor0"
+  },
+  "tile:temple#corr1": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#floor0"
+  },
+  "tile:temple#corr2": {
+    "file": "tile-temple-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#floor0"
+  },
+  "tile:temple#wall": {
+    "file": "tile-temple-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:temple#wallface"
+  },
+  "tile:temple#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:temple#blocker1": {
+    "file": "hd-block-lion.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      627,
+      627,
+      939,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-lion"
+  },
+  "tile:greathall#floor1": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#floor2": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#floor3": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#corr0": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#corr1": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#corr2": {
+    "file": "tile-greathall-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#floor0"
+  },
+  "tile:greathall#wall": {
+    "file": "tile-greathall-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "terrain": true,
+    "aliasOf": "tile:greathall#wallface"
+  },
+  "tile:greathall#blocker0": {
+    "file": "hd-block-stone.webp",
+    "width": 192,
+    "height": 192,
+    "source": "props-items.png",
+    "crop": [
+      0,
+      890,
+      313,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-stone"
+  },
+  "tile:greathall#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  },
+  "tile:void#floor1": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#floor2": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#floor3": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#corr0": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#corr1": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#corr2": {
+    "file": "tile-void-floor0.webp",
+    "width": 256,
+    "height": 256,
+    "source": "floors.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#floor0"
+  },
+  "tile:void#wall": {
+    "file": "tile-void-wallface.webp",
+    "width": 192,
+    "height": 192,
+    "source": "walls.png",
+    "crop": [
+      0,
+      940,
+      314,
+      1254
+    ],
+    "terrain": true,
+    "aliasOf": "tile:void#wallface"
+  },
+  "tile:void#blocker0": {
+    "file": "hd-block-void.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      313,
+      941,
+      627,
+      1254
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-void"
+  },
+  "tile:void#blocker1": {
+    "file": "hd-block-rubble.webp",
+    "width": 256,
+    "height": 256,
+    "source": "skins-summons.png",
+    "crop": [
+      939,
+      627,
+      1254,
+      941
+    ],
+    "terrain": false,
+    "aliasOf": "hd:block-rubble"
+  }
+}

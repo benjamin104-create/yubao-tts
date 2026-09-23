@@ -58,6 +58,9 @@ jobs:
           # 遊戲照樣跑得動，只是玩家的體驗壞掉。實測就抓到一個：
           # 沒有「交換位置」的時候，帶著村民四十趟只有八趟走得完第一章。
           node web/story.js
+          node web/progression.js
+          node web/town-services.js
+          node web/hunters.js
           # 靜態掃：drawImage 有沒有省略目的地尺寸。省略時 canvas 會照
           # 來源圖的大小畫 —— 舊的 16px 圖剛好等於一格，所以一直看起來正常，
           # 換成 32px 之後同一行就畫成 2x2 格。跑起來只看得到已經換過的那幾張，

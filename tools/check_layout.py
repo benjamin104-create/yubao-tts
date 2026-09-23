@@ -30,6 +30,7 @@ HTML = (ROOT / 'web' / 'index.html').as_uri()
 
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 
 # 真實的視窗尺寸。桌機那幾個刻意放矮的 —— 1280x620 就是使用者回報的那一台
 # （1280 寬的螢幕扣掉瀏覽器的分頁列與網址列，剩下大約 620 高）。
@@ -204,7 +205,8 @@ def main():
             # 村莊：那顆「前往下一章」的按鈕曾經在手機上掉到摺線外
             pg.evaluate("()=>{ VILLAGE.act=1; VILLAGE.gold=3000; openVillage(); }")
             pg.wait_for_timeout(400)
-            v = pg.evaluate(PROBE, ['#vgo', '#vboard'])
+            village_controls = ['#town-exit','#town-journal','#town-action'] if pg.locator('#town-shell').is_visible() else ['#vgo','#vboard']
+            v = pg.evaluate(PROBE, village_controls)
             vf = [x for x in v['rows'] if not x['ok']]
             if vf:
                 bad += 1

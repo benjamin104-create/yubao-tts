@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 URL = (ROOT / 'web/index.html').as_uri() + '?qa=heian&seed=260829'
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 SIZES = [(360, 560, True), (390, 844, True), (1180, 820, True), (1280, 720, False)]
 STATE = '() => ({x:G.p.x,y:G.p.y,turn:G.turn,hp:G.p.hp,accepted:G.heian.accepted})'
 
@@ -113,6 +114,9 @@ def main():
         page.locator('#talkbody').wait_for(state='visible')
         initial_page = page.evaluate('() => talkPage')
         if page.evaluate('() => talkTyping'):
+            # Freeze the typewriter between observing it and sending the touch;
+            # loading HD art can otherwise finish the text before the tap arrives.
+            page.evaluate('() => { clearInterval(talkTimer); }')
             press(page, '#talknext', True)
             assert page.evaluate('() => talkPage') == initial_page
             assert not page.evaluate('() => talkTyping')

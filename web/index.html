@@ -1521,6 +1521,20 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   #hud .stat{gap:2px}
 }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
+/* HD v18: detailed artwork is sampled at device density, never pixel-stretched.
+   The minimap stays pixel-sharp; interaction geometry is unchanged. */
+html.hd-art { --ink:#101719; --parch:#e9e3cf; --gold:#d9b879; --edge:#665e45; }
+html.hd-art body{background:#101719}
+html.hd-art #game, html.hd-art .row canvas, html.hd-art .brow canvas,
+html.hd-art #vfolk canvas, html.hd-art #qagallery canvas,
+html.hd-art canvas:not(#mini){image-rendering:auto}
+html.hd-art #bag, html.hd-art #menu, html.hd-art #dialog{
+  background:linear-gradient(135deg,rgba(34,54,53,.98),rgba(12,23,27,.98));
+  border-color:#9c8a60; box-shadow:0 12px 40px #0008,inset 0 1px #e8d3a32b;
+}
+html.hd-art .row,html.hd-art .brow{border-color:#71807855}
+html.hd-art button{border-color:#8b7951}
+html.hd-art #village{background:linear-gradient(#121d22,#151a17 45%,#101619)}
 </style>
 
 <div id="cabinet">
@@ -1786,8 +1800,17 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   </div><!-- /body -->
 </div>
 
+<script src="hd-manifest.js?v=20260923-v22"></script>
 <script>
 "use strict";
+/* HD is a presentation layer only. ?art=classic preserves the existing
+   pixel renderer for comparison/recovery and leaves every save/rule intact. */
+const HD_MODE = typeof Image === 'function' && !!globalThis.BABEL_HD_MANIFEST &&
+  new URLSearchParams(location.search).get('art') !== 'classic';
+if(HD_MODE) document.documentElement.classList.add('hd-art');
+const HD_LOADED = Object.create(null), HD_FAILURES = [];
+const HD_ASSETS = globalThis.BABEL_HD_MANIFEST || {};
+const HD_HERO_CACHE = new Map();
 /* ══════════════════════════════════════════════════════════════
    深淵行商人 — 回合制網格地牢
    玩家動一步，場上所有怪物同步行動一次。
@@ -1852,7 +1875,7 @@ const T = 16;               // 一格 16 邏輯單位
    倍率取整數 2 而不是 1.5（24px）的理由：遷移期間一定有一半的東西還是
    程式畫的 16px 舊圖，1.5 倍會把它們重取樣成半個像素、糊得不平均；
    2 倍是原樣複製。這決定的是「遷移過程中好不好看」，而遷移會持續很久。 */
-const RS = 2;
+const RS = HD_MODE ? Math.min(6,Math.max(4,Math.ceil((globalThis.devicePixelRatio||1)*2))) : 2;
 // 視窗格數。格數不能貪多：房間本來就只有 4~8 格寬，
 // 視窗開太大只是在看更多黑色。寧可格子大、看得清楚。
 // 橫式 14x10、直式 10x13 —— 手機是直的，遊戲畫面就不該是橫的，
@@ -2235,6 +2258,7 @@ function bossStats(depth){
 
 const HERB = [
  {id:'heal', nm:'回復草', hp:30, price:100},
+
  {id:'elix', nm:'特效藥', full:1, mhp:2, price:2500},
  {id:'life', nm:'命之草', mhp:5, price:1200},
  {id:'str',  nm:'力量草', str:1, price:300},
@@ -2253,6 +2277,7 @@ const HERB = [
  {id:'hst',  nm:'加速草', self:{st:'速',dur:20}, price:800},
  {id:'para', nm:'麻痺草', self:{st:'麻',dur:3}, bad:1, price:800},
 ];
+HERB.push({id:'mana',nm:'凝神露',mp:12,price:600,craftOnly:1});
 const SCROLL = [
  {id:'ident', nm:'鑑定卷軸', price:500},
  {id:'map',   nm:'地圖卷軸', price:500},
@@ -2321,6 +2346,7 @@ const WEAP = [
  {id:'katana',nm:'武士刀', atk:11, up:7, price:5200},
  /* 平安京三公副本的神器。遠斬以體力為代價，因此不進商店與一般掉落表。 */
  {id:'muramasa',nm:'妖刀村正',atk:24,up:8,price:26000,muramasa:1,ult:1},
+ {id:'ragnarok',nm:'究極之劍・諸神的黃昏',atk:38,up:5,price:36000,sweep:1,ult:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
@@ -2543,7 +2569,14 @@ const SUMMON_AT = 4;
    改的是節奏，不是數值。 */
 const SCH_MAX = 5;
 const SCH_SCALE = 10 / SCH_MAX;   // 格數變少，每一格就要更值錢
-const SP_FROM_LV = 3;        // 從第 3 級開始，每升一級 +1 魔法點數
+const SP_FROM_LV = 4;
+const schoolUpgradeCost=lv=>[1,1,2,3,4][lv]||0;
+function grantMagicPoint(id){
+  VILLAGE.magicMilestones=VILLAGE.magicMilestones||{};
+  if(VILLAGE.magicMilestones[id])return false;
+  VILLAGE.magicMilestones[id]=1;VILLAGE.sp=(VILLAGE.sp|0)+1;
+  if(G)G.p.sp=VILLAGE.sp;saveVillage();return true;
+}
 const POCKET_LV = 10;        // 萬用口袋還是等級 10 的里程碑，跟魔法點數脫鉤
 const spellsFor  = p => SPELLS.filter(sp => (p.sch[sp.sc]||0) >= sp.at);
 const summonsFor = p => SUMMONS.filter(sm => (p.sch[sm.sc]||0) >= SUMMON_AT);
@@ -2635,6 +2668,53 @@ const LANGS = [['zh','中文'],['en','English'],['ja','日本語']];
 let LANG = 'zh';
 /* 一行一個詞條：key | English | 日本語 */
 const DICT_RAW = `
+v22.deposit|Stored {n} ingredients with the herbalist (up to 12; storage pots unchanged).|素材を {n} 個、薬草師に預けました（最大12個。保存の壺は対象外）。
+v22.open|Opening|スキあり
+v22.studyplus|Study +1|研鑽 +1
+v22.relicnear|{nm} rests on this floor. Attack to awaken it; defeat it to claim {item}.|この階に {nm} が眠っています。攻撃すると目覚め、倒すと「{item}」を入手できます。
+v22.relicclaim|★ {nm} dropped {item}! Seal case: {n}/4. No bag space needed; kept after defeat.|★ {nm} が「{item}」を落としました！封印箱（{n}/4）に保管。倒れても失いません。
+v22.lionwarn|Stone claws echo... the Babylonian Lion awakens in 6 actions! Ordinary weapons deal only 1 damage. Find the stairs or a seal-breaking weapon.|石の爪音が響く……6行動後にバビロンの獅子が目覚めます！通常武器は1ダメージのみ。階段か封印を破る武器を探しましょう。
+v22.wallwarn|The winged bull relief opens its eyes! It will break through the wall in 4 actions.|壁の人面有翼牛の目が光った！4行動後に壁から現れます。
+v22.awake|{nm} awakens! It needs 2 actions to stand. Make some distance.|{nm} が目覚めた！立ち上がるまで2行動。今のうちに離れましょう。
+v22.lionarmor|The lion seal repels your attack! Only the Sky Sword, Babel, Muramasa or Ragnarok can break it; other attacks deal 1 damage.|獅子の封印が攻撃を弾いた！天空の剣、バベル、村正、ラグナロクのみ封印を破れます。他の攻撃は1ダメージ。
+v22.sealawake|{nm} awakens! Avoid the marked tiles, then strike during its recovery.|{nm} が目覚めた！予告範囲を避け、重撃の後の隙を狙いましょう。
+v22.pawwarn|{nm} raises its paws! Next action hits every adjacent tile. Step outside the markers, then counterattack.|{nm} が前足を上げた！次の行動で周囲1マスを攻撃。範囲外へ退いて反撃しましょう。
+v22.pawmiss|The stone claws miss! The statue is briefly vulnerable.|石の爪が空を切った！石像に隙ができました。
+v22.pawhit|The claws of {nm} deal {n} damage.|{nm} の石の爪で {n} ダメージ。
+v22.lionloot|The lion crumbles, revealing treasures hidden beneath its seal...|獅子が崩れ、封印された秘宝が石くずの中に現れた……
+v22.surgewarn|Hourglass warning: monster surge in 120 actions. Find the stairs. Reading and menus do not count.|砂時計の警報：120行動後に魔物の群れが来ます。階段を探しましょう。文章やメニューの閲覧中は進みません。
+v22.surgeup|Monsters flood in! Reinforcements arrive in 180 actions.|魔物が押し寄せた！180行動後に増援が来ます。
+v22.surgedown|Monsters flood in! The floor cracks; in 180 actions you will fall to the next floor.|魔物が押し寄せた！床に亀裂が入り、180行動後に次の階へ落下します。
+v22.fallcount|Floor collapse in {n} actions. Uncollected supplies will stay behind!|崩落まで {n} 行動。未回収の物資はこの階に残ります！
+v22.secondwave|Tower bells ring. A second monster wave enters the floor.|塔の鐘が鳴り、第二波の魔物がこの階に現れた。
+v22.fall|The bridge and floor collapse! You and your companions slide safely to the next floor. The timer restarts.|橋と床が崩れた！同行する村人と次の階へ滑り落ちました。時間がリセットされます。
+v22.bossslam|{nm} prepares a heavy slam! Next turn hits adjacent tiles. Step away, then counterattack.|{nm} が重撃の構え！次のターンに周囲1マスを攻撃。離れてから反撃しましょう。
+v22.slammiss|The slam hits your old position. Now is your chance to strike!|重撃は元の位置を直撃。今が反撃のチャンス！
+v22.mpfull|MP is full. The mana tonic was kept.|MPは満タンです。魔力の雫は消費しません。
+v22.mprestored|Restored {n} MP.|MPが {n} 回復しました。
+v22.scrollcap|This gear has reached this chapter's scroll limit. Visit the village smith for permanent forging. The scroll was kept.|この章の巻物強化上限です。永久鍛造は村の鍛冶屋へ。巻物は消費しません。
+v22.milestone|★ First chapter milestone: +1 magic point, +3 forge ore.|★ 章の初回達成：魔法ポイント +1、鍛造鉱石 +3。
+v22.points|{n} points left. Earn 1 for each first chapter clear and each first level divisible by 4. Kept after defeat; milestones cannot be repeated.|残り {n} ポイント。章の初クリアと4の倍数のレベル初到達で各1点。倒れても保持、同じ達成では再取得できません。
+v22.mastered|Mastered|習得済み
+v22.study|Study: {n} points|研鑽 {n} ポイント
+v22.cursed| [Cursed]| 【呪い】
+v22.gearcap|Gear at maximum|装備の上限です
+v22.forgecap|Chapter forge limit +{n}; advance the story to raise it.|この章の鍛造上限 +{n}。物語を進めると上がります。
+v22.prev|Previous scene|前の場面
+v22.auto|Auto-play|自動再生
+v22.pause|Pause to read|読むために停止
+it.ragnarok|Ultimate Sword: Ragnarok|究極の剣・ラグナロク
+mon.stone_lion|Babylonian Lion|バビロンの獅子
+mon.wall_bull|Winged Bull Guardian|人面有翼牛の守護者
+mon.relic_ember|Hearth Sentinel Lion|炉心の守り獅子
+mon.relic_tide|Tidal Winged Bull|潮の有翼牛
+mon.relic_crystal|Crystal Sacred Lion|水晶の聖獅子
+mon.relic_sky|Celestial Winged Bull|天空の有翼牛
+relic.ember|Undying Hearth|消えない炉心
+relic.tide|Deepwater Seal|深水の誓印
+relic.crystal|Eternal Crystal|永遠の晶核
+relic.sky|Dawn Circlet|夜明けの冠環
+
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
 ui.credit|Presented by Jamine’s Dad × Little Jamine Inc.|ジャミンパパ × リトルジャミン株式会社 おくり
@@ -3128,6 +3208,7 @@ mon.b_doll_heal|White Talisman Doll|しろふ にんぎょう
 mon.b_doll_mage|Red Talisman Doll|あかふ にんぎょう
 mon.b_doll_tank|Black-Iron Doll|くろがね にんぎょう
 it.heal|Healing Herb|やくそう
+it.mana|Focus Dew|精神のしずく
 it.elix|Elixir|とっこうやく
 it.life|Life Herb|いのちのくさ
 it.str|Strength Herb|ちからのくさ
@@ -3761,6 +3842,7 @@ function TX(key, zh){
 /* 資料表上的名字：id 有衝突的（睡眠之杖 vs 睡眠卷軸、鋼之盾 vs 鋼之劍）
    在詞條裡加前綴，這裡把類別對上去。 */
 const NAME_FIX = {'wand/sleep':'w_sleep', 'pot/ident':'p_ident', 'shld/steel':'s_steel'};
+function locUI(zh,en,ja){return LANG==='en'?en:LANG==='ja'?ja:zh;}
 function locName(cat, d){
   /* 吃到等級補正的怪物要看得出來。玩家憑什麼知道這一隻洞穴鼠
      跟三層前那一隻不一樣？加在名字上是最不會漏的做法 ——
@@ -3914,7 +3996,7 @@ let ART_DATA = null;
 /* 2026-08-25：地磚從「64px 縮進一格」改為保留四象限後，必須換版號。
    否則 index.html 雖然是新的，瀏覽器仍會從快取拿舊的森林／冰原 PNG，
    公開網站就會和本機驗收長得不一樣。 */
-const ART_REV = '20260831-heian-three-lords-v17';
+const ART_REV = '20260921-amber-hd-v18';
 const ART_MON = ['rat', 'slime', 'goblin', 'skeleton',
                  'shroom', 'imp', 'grub', 'wolf', 'mage', 'golem',
                  'turret', 'knight', 'wasp', 'dryad', 'mossy', 'moth',
@@ -3946,15 +4028,28 @@ let qaGalleryRedrawT = 0;
 function artImage(id, url, ok){
   if(typeof Image !== 'function') return;      // 無頭環境（邏輯測試）沒有 Image
   const im = new Image();
+  const hdFile = HD_MODE && HD_ASSETS[id];
+  let usingHD = !!hdFile;
   im.onload = () => {
     const c = document.createElement('canvas');
     c.width = im.width; c.height = im.height;
     const x = c.getContext('2d');
     x.imageSmoothingEnabled = false;           // 外部圖進來要一格是一格
     x.drawImage(im, 0, 0, im.width, im.height);
+    if(usingHD){ c._hd=true; HD_LOADED[id]=c; }
     ok(c);
   };
-  im.onerror = () => {};                       // 還沒畫到 —— 不是錯誤
+  im.onerror = () => {
+    if(!usingHD) return;
+    HD_FAILURES.push(id); console.warn('[HD art] falling back:',id);
+    usingHD=false;
+    if(url) im.src=(ART_DATA&&ART_DATA[id])||url;
+  };
+  if(hdFile){
+    im.src=(globalThis.BABEL_HD_DATA&&globalThis.BABEL_HD_DATA[hdFile])||
+      ('art-hd/'+hdFile+'?v=20260921-v18');
+    return;
+  }
   const embedded = ART_DATA && ART_DATA[id];
   /* 單檔版（ART_DATA 有值）裡，凡是**存在**的圖都已經內嵌了；查不到就代表
      那張圖根本還沒畫。這時候再去要一次相對路徑，離線一定失敗，只會在主控台
@@ -4033,6 +4128,20 @@ function animColumn(pose, phaseSeed){
   return Math.floor(clock*2 + (phaseSeed||0)) & 1;
 }
 function animFrameFor(cat, id, o, pose, phaseSeed){
+  if(HD_MODE&&id==='b_keeper'){
+    const phase=o.warn?'anticipation':pose.kind==='hurt'?'hit':pose.kind==='attack'?'slam':(o.openUntil||-1)>=G.turn?'recovery':'idle';
+    const key='hd:keeper-'+phase,img=HD_LOADED[key];if(img)return {img,key,hd:true};
+  }
+  if(o?.d?.hunter){
+    const form=o.d.relicForm||(o.d.hunter==='lion'?'lion':'wall');
+    const phase=form==='lion'?(o.warn?'windup':pose.kind==='attack'?'strike':'idle'):(o.rest>0?'emerge':'idle');
+    const key='hd:hunter-'+form+'-'+phase,img=HD_LOADED[key];
+    if(HD_MODE&&img)return {img,key,hd:true};
+    return {img:atlas.golem||atlas.b_keeper,key:'stone-fallback',hd:false};
+  }
+  // Detailed sprites must not be overwritten by the old 32/48px animation.
+  if(HD_MODE && (cat==='mon'||cat==='boss') && HD_LOADED[id])
+    return {img:HD_LOADED[id],key:'hd:'+id,hd:true};
   ensureAnimArt(cat,id);
   const artKey = animArtKey(cat,id), sheet = ANIM_ART[artKey];
   if(!sheet) return null;
@@ -4207,9 +4316,12 @@ const BLOB_SKINS = {
 const SKINS = Object.keys(BLOB_SKINS);
 /* 可選的顏色。放在美術層 —— heroSprite() 要用，而它在模組初始化時就會跑，
    放在遊戲層（VILLAGE 旁邊）的話會撞上 const 的暫時性死區。 */
-const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v'];
+const BLOB_COLS = ['#','l','q','u','b','6','m','g','r','v','magenta','gunmetal'];
+const COVER_COLORS = ['#','l','magenta','gunmetal'];
+const COVER_COLOR_LABELS = {'#':['橙色','Orange','オレンジ'],'l':['綠色','Green','グリーン'],magenta:['紫紅色','Magenta','マゼンタ'],gunmetal:['霸王黑','Overlord Black','覇王ブラック']};
+function coverColorLabel(col){return COVER_COLOR_LABELS[col]?.[typeof LANG==='undefined'?0:LANG==='en'?1:LANG==='ja'?2:0]||BLOB_COL_NM[col]||col;}
 const BLOB_COL_NM = {'#':'陶土','l':'苔綠','q':'湖藍','u':'琥珀','b':'土棕',
-                     '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金'};
+                     '6':'霜白','m':'薄荷','g':'緋紅','r':'天青','v':'鎏金',magenta:'紫紅色',gunmetal:'霸王黑'};
 const BLOB_CHILD = [
   [4,6,4],
   [5,5,6],[6,4,8],
@@ -4262,6 +4374,7 @@ const HAT_ART = {
 };
 /* body: 色盤索引；age: 'adult'|'old'|'child'；star: 主角的星芒記號 */
 function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob'}={}){
+  if(body==='gunmetal')body='5';else if(body==='magenta')body='f';
   const c = document.createElement('canvas'); c.width = T; c.height = T;
   const x = c.getContext('2d');
   const child = age === 'child';
@@ -4419,11 +4532,13 @@ const BLOB_RAMP = {
   'g': ['e','f','g'],                 // 緋紅
   'r': ['p','q','r'],                 // 天青
   'v': ['t','u','v'],                 // 鎏金
+  magenta:['#541735','#a12b67','#ef89b9'],
+  gunmetal:['#1a2029','#47525f','#b6c4d1'],
 };
 function heroTintMap(ramp){
   const map={};
   for(let i=0;i<HERO_TONE_HEX.length;i++){
-    const band=i<3?0:(i<6?1:2), to=PAL[ramp[band]];
+    const band=i<3?0:(i<6?1:2), to=PAL[ramp[band]]||ramp[band];
     map[HERO_TONE_HEX[i]]=[parseInt(to.slice(1,3),16),
                            parseInt(to.slice(3,5),16),
                            parseInt(to.slice(5,7),16)];
@@ -4439,6 +4554,7 @@ function tintHero(sk, col){
   const src = HERO_ART[sk];
   if(!src) return null;
   if(col === '#') return src;
+  if(src._hd&&COVER_COLORS.includes(col))return hdSkinTone(src,'hero#'+sk,col,null,'front');
   const k = sk + '/' + col;
   if(tintCache[k] !== undefined) return tintCache[k];
   const ramp = BLOB_RAMP[col];
@@ -4476,12 +4592,103 @@ function drawHat(x, id, size){
   x.drawImage(tmp, 0, 0, size, size);
 }
 
+// Runtime skin palette: retain the fitted costume silhouette and neutral eyes.
+// A low-saturation / crown exclusion keeps leather, metal and hat fabrics intact.
+const HD_SKIN_CACHE=new Map();
+function hdSkinTone(src,id,col,hat,view){
+  if(!src||!['l','magenta','gunmetal'].includes(col))return src;
+  const k=id+'/'+col;if(HD_SKIN_CACHE.has(k))return HD_SKIN_CACHE.get(k);
+  const c=document.createElement('canvas');c.width=src.width;c.height=src.height;c._hd=true;
+  const x=c.getContext('2d');x.drawImage(src,0,0,c.width,c.height);let data;
+  try{data=x.getImageData(0,0,c.width,c.height);}catch(e){return src;}
+  const crown=hat?({helm:.42,cone:.46,plume:.40,hood:.45,rhat:.43,beret:.4,oni:.4,crown:.39,band:.31,circlet:.36}[hat]||.42):0;
+  const p=data.data;
+  for(let i=0;i<p.length;i+=4){
+    if(p[i+3]<8)continue;const yy=Math.floor(i/4/c.width)/c.height,xx=(i/4%c.width)/c.width;
+    const hatEdge=hat==='plume'&&view==='side'?(xx<.5?.635-.39*xx:xx<.7?.44:.44+(xx-.7)*.36):crown;
+    if(yy<hatEdge)continue;
+    // The helmet's cheek guards are part of the equipment, not exposed skin.
+    if(hat==='helm'&&yy<.81&&yy>.42&&((xx>.16&&xx<.29)||(xx>.76&&xx<.89)))continue;
+    const r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255,max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min,sat=max?delta/max:0;
+    if(delta<.01||sat<.28||max<.40||max!==r)continue;
+    const hue=60*((g-b)/delta);if(hue<8||hue>64)continue;
+    let h,s,v;
+    const light=.25*r+.6*g+.15*b;
+    if(col==='gunmetal'){h=215;s=.16;v=.045+Math.pow(light,1.1)*.52;}
+    else {h=col==='l'?142:327;s=sat*.8;v=col==='l'?.09+light*.81:.12+light*.9;}
+    const chroma=v*s,hp=h/60,q=chroma*(1-Math.abs(hp%2-1)),m=v-chroma;
+    const rgb=hp<1?[chroma,q,0]:hp<2?[q,chroma,0]:hp<3?[0,chroma,q]:hp<4?[0,q,chroma]:hp<5?[q,0,chroma]:[chroma,0,q];
+    for(let j=0;j<3;j++)p[i+j]=Math.round((rgb[j]+m)*255);
+  }
+  x.putImageData(data,0,0);if(HD_SKIN_CACHE.size>=96)HD_SKIN_CACHE.clear();HD_SKIN_CACHE.set(k,c);return c;
+}
 let heroCache = {};
 let heroLast = ['blob', '#'];      // 最近一次畫的體型與顏色，圖載進來時要照它重畫
+/* The 256px compositor keeps equipment in its anatomical hand in every view.
+   Gear uses the same art as inventory/shop. Pose is quantized only for the
+   cached weapon swing, not for color or raster resolution. */
+function hdHeroSprite(wi,si,hi,skin,col,face,pose){
+  if(!HD_MODE) return null;
+  const sk=skin||'blob', f=face||[0,1], back=f[1]<0, side=!f[1]&&!!f[0];
+  const view=back?'back':side?'side':'front';
+  const wornId='hero-worn:'+hi+'#'+view;
+  // Fitted outfits have their own rear/side silhouettes. Item icons remain
+  // separate: a hood's empty interior is not a wearable overlay.
+  const worn=sk==='blob'&&hi&&HD_LOADED[wornId];
+  const bodyId=worn?wornId:sk==='blob' ? (back?'hd:hero-back':side?'hd:hero-side':'hero#blob') : 'hero#'+sk;
+  const source=worn || HD_LOADED[bodyId] || HD_LOADED['hero#'+sk];
+  const body=hdSkinTone(source,bodyId,col,worn?hi:null,view);
+  if(!body) return null;
+  const frame=pose&&pose.kind==='attack'?Math.min(15,Math.floor(pose.phase*16)):-1;
+  const cacheKey=[bodyId,wi,si,hi,col,side&&f[0]<0,frame].join('/');
+  if(HD_HERO_CACHE.has(cacheKey)) return HD_HERO_CACHE.get(cacheKey);
+  const c=document.createElement('canvas');c.width=c.height=256;c._hd=true;
+  const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+  const mirrored=side&&f[0]<0;
+  if(mirrored){x.translate(256,0);x.scale(-1,1);}
+  const leftWeapon=!back&&!side;
+  const w=wi>=0&&HD_LOADED['weap#'+wi], shield=si>=0&&HD_LOADED['shld#'+si];
+  const attackPhase=frame<0?0:(frame+.5)/16;
+  const swing=frame<0?0:attackPhase<.2?-.20*Math.sin(attackPhase/.2*Math.PI):attackPhase<.5?1.1*Math.sin((attackPhase-.2)/.3*Math.PI/2):1.1*Math.cos((attackPhase-.5)/.5*Math.PI/2);
+  const weapon=()=>{
+    if(!w) return;
+    x.save();x.translate(leftWeapon?64:187,168);
+    // Source grip is lower-left; pivot at the grip, blade rises outwards.
+    if(leftWeapon)x.scale(-1,1);
+    x.rotate(-.48-swing);
+    // The four-seal blade has a centered grip; align that grip with the same hand pivot.
+    if(WEAP[wi]?.id==='ragnarok')x.drawImage(w,-62,-126,162,162);
+    else x.drawImage(w,-20,-137,162,162);
+    x.restore();
+  };
+  const shieldLayer=()=>{
+    if(!shield)return;
+    x.save();x.translate(leftWeapon?180:3,151);
+    x.drawImage(shield,0,0,77,99);x.restore();
+  };
+  if(back){weapon();shieldLayer();}
+  x.save();
+  const hue={p:165,q:180,r:180,j:65,k:65,l:65,m:65,e:320,f:330,g:340,v:5,b:0,'3':180,'4':180};
+  if(col&&col!=='#'&&!COVER_COLORS.includes(col)&&hue[col]!==undefined)x.filter='hue-rotate('+hue[col]+'deg)';
+  if(worn) x.drawImage(body,0,0,256,256);
+  else x.drawImage(body,17,32,222,222);
+  x.restore();
+  const hat=!worn&&hi&&HD_LOADED['hat#'+hi];
+  if(hat){
+    // Keep eyes visible: the hat rests on the crown, never at face height.
+    const tall=/hood|cone|oni/.test(hi);
+    x.drawImage(hat,46,tall?-12:-24,164,tall?132:119);
+  }
+  if(!back){weapon();shieldLayer();}
+  if(HD_HERO_CACHE.size>=80)HD_HERO_CACHE.clear();
+  HD_HERO_CACHE.set(cacheKey,c);return c;
+}
 /* 體型與顏色由呼叫端傳進來，不在這裡讀 VILLAGE ——
    美術層讀遊戲狀態的話，(1) 產生美術驗收頁時會爆掉，
    (2) 這支在模組初始化時就會跑，那時 VILLAGE 還在 TDZ 裡。 */
 function heroSprite(wi, si, hi, skin, col0){
+  const detailed = hdHeroSprite(wi,si,hi,skin,col0,[0,1]);
+  if(detailed) return detailed;
   const sk = SKINS.includes(skin) ? skin : 'blob';
   const col = BLOB_COLS.includes(col0) ? col0 : '#';
   heroLast = [sk, col];
@@ -4532,6 +4739,8 @@ atlas.player = heroSprite(-1, -1, null);
    遊戲層的變數 —— 所以留一個掛勾，讓那邊自己掛上來。 */
 const heroArtHooks = [];
 function heroArtIn(){
+  HD_SKIN_CACHE.clear();
+  HD_HERO_CACHE.clear();
   heroCache = {};
   for(const k in tintCache) delete tintCache[k];
   if(typeof heroAnimCache !== 'undefined') for(const k in heroAnimCache) delete heroAnimCache[k];
@@ -4541,9 +4750,18 @@ function heroArtIn(){
   for(const k in flashCache) if(k.slice(0,4) === 'hero') delete flashCache[k];
   atlas.player = heroSprite(-1, -1, null, heroLast[0], heroLast[1]);
   for(const f of heroArtHooks) { try { f(); } catch(e){} }
+  if(typeof QA_MODE!=='undefined'&&QA_MODE&&QA_QUERY.get('qa')==='wear'){
+    clearTimeout(qaGalleryRedrawT);qaGalleryRedrawT=setTimeout(qaWearGallery,80);
+  }
 }
 for(const sk of SKINS)
   artImage('hero#' + sk, ART_DIR + 'hero/' + sk + '.png', c => { HERO_ART[sk] = c; heroArtIn(); });
+if(HD_MODE) for(const id of ['hd:hero-side','hd:hero-back'])
+  artImage(id,'',()=>heroArtIn());
+if(HD_MODE) for(const id of Object.keys(HD_ASSETS).filter(k=>k.startsWith('hero-worn:')))
+  artImage(id,'',()=>heroArtIn());
+if(HD_MODE) for(const id of Object.keys(HD_ASSETS).filter(k=>k.startsWith('hd:')&&!k.startsWith('hd:hero-')))
+  artImage(id,'',()=>{});
 /* 帽子一張圖兩個用途：戴在頭上，以及掉在地上的圖示。
    兩者必須是同一頂帽子 —— 撿起來變成另一個東西是最基本的失信。
    地上那一張往下移，圖示才落在格子中間（跟 makeHat 同一個位移）。 */
@@ -5358,10 +5576,11 @@ function externalTileQuarter(img,x,y){
     const q=[];
     const sw=Math.floor(img.width/2), sh=Math.floor(img.height/2);
     for(let iy=0;iy<2;iy++) for(let ix=0;ix<2;ix++){
-      const c=document.createElement('canvas'); c.width=c.height=TP;
-      const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
-      g.drawImage(img,ix*sw,iy*sh,sw,sh,0,0,TP,TP);
+      const c=document.createElement('canvas'); c.width=c.height=img._hd?sw:TP;
+      const g=c.getContext('2d'); g.imageSmoothingEnabled=!!img._hd;
+      g.drawImage(img,ix*sw,iy*sh,sw,sh,0,0,c.width,c.height);
       c._externalTile=true;
+      c._hd=!!img._hd;
       q.push(c);
     }
     img._tileQuarters=q;
@@ -5632,7 +5851,7 @@ function makeHat(i){
    不用為十五個章節各畫一套地磚，但走進迷霧森林的時候，
    地面真的是苔綠色的。
 
-   `lightAll` = 這一章是戶外，不靠火把照明（山頂、湖畔、塔頂），
+   `lightAll` = 房間有固定的環境照明（燈火、晶體或高處裂隙），
    所以未探索的暗處淡一點，天光是從上面來的。 */
 const THEMES = {
   // 礦坑與牢獄是被後人挖穿的古代聖域：泥磚拱道、浮雕磚、積沙、守護獸殘像。
@@ -5945,6 +6164,7 @@ let clock = 0;                       // 全域動畫時鐘（秒）
 const flashCache = {};
 const charLiftCache = {};
 function characterLiftOf(img, name){
+  if(img._hd)return img; // The new artwork already contains its material lighting.
   const darkArt = /#(?:ash|tengu|shinobi|knight|shadow|unnamed|b_warden|b_treant|b_pyro|b_hanzo|b_oni|b_gaoler|b_gate|b_artisan|b_hallking)@/.test(name);
   const key = name + (darkArt ? '@character-depth-dark-v4' : '@character-depth-v4');
   if(charLiftCache[key]) return charLiftCache[key];
@@ -6146,6 +6366,8 @@ const TORCH = [makeTorch(0), makeTorch(1), makeTorch(2)];
    木造的忍者之里是燈籠。同一組火焰換個顏色就能讀成不同的東西。 */
 const TORCH_SETS = {};
 function torchesFor(theme){
+  if(HD_MODE&&HD_LOADED['hd:torch']&&!['forest','wood'].includes(theme))
+    return [HD_LOADED['hd:torch'],HD_LOADED['hd:torch'],HD_LOADED['hd:torch']];
   const col = (THEMES[theme] || {}).torch;
   if(!col) return TORCH;
   if(!TORCH_SETS[theme])
@@ -7203,6 +7425,8 @@ function makeTempleRelic(kind, dir){
   return m;
 }
 function templeRelicArt(kind, dir){
+  const hd=HD_MODE&&HD_LOADED[kind==='lion'?'hd:lion':'hd:stele'];
+  if(hd) return hd;
   const k=kind+':' + (dir||1);
   return TEMPLE_RELIC_ART[k] || (TEMPLE_RELIC_ART[k]=makeTempleRelic(kind,dir||1));
 }
@@ -7914,10 +8138,10 @@ const ACTS = [
    intro:'門後面不是地窖，是一座礦坑。有人比你先來過 —— 而且沒有走出去。'},
   {id:'forest', nm:'迷霧森林',   sub:'THE MISTWOOD',        floors:7,
    boss:'b_treant', reward:'神秘之帽（隨機職業帽）',
-   intro:'霧裡的每一步都要自己判斷。沒有人告訴你哪條路是對的。'},
+   intro:'巨大的地下洞窟裡，樹根與苔蘚覆滿石壁。濕霧遮住岔路，微光從頂部裂隙滲入。'},
   {id:'trial',  nm:'試煉的山道', sub:'THE TRIAL PATH',      floors:7, spin:180000,
    boss:'b_ballista', reward:'純淨之泉的加護（體力上限 +20）',
-   intro:'山道會變。你記得的路會失效 —— 能帶走的只有「怎麼重新找路」。'},
+   intro:'這是地底山腹中的蜿蜒石道。岩壁間的機關會改變通路；沒有天空，只有深處的回音。'},
   {id:'ordeal', nm:'魔王的考驗', sub:'THE DEMON’S ORDEAL',  floors:1, arena:{every:10, kill:5},
    boss:null, reward:'勇者的頭盔（防禦 +4）',
    intro:'一間空房，四面送東西進來。這一關不考技巧，考你撐不撐得住。'},
@@ -7926,7 +8150,7 @@ const ACTS = [
    intro:'火之術士每三回合放一次遠程。看得懂節奏，你就贏了。'},
   {id:'lake',   nm:'南湖畔',     sub:'THE SOUTHERN LAKE',   floors:3,
    boss:'b_lord', reward:'吟遊詩人的包頭巾',
-   intro:'湖面照出你現在的樣子。跟剛醒來的時候已經不一樣了。'},
+   intro:'地下湖淹沒了古老的儀式廳，水光映在穹頂。湖面照出你現在的樣子，已與剛醒來時不同。'},
   {id:'beast',  nm:'幻獸洞窟',   sub:'THE BEAST HOLLOW',    floors:8,
    boss:'b_phoenix', reward:'不死鳥的羽毛（死亡時自動復活一次）',
    intro:'幻獸不攻擊你 —— 牠們在等你證明自己配得上牠們的力量。'},
@@ -7938,7 +8162,7 @@ const ACTS = [
    intro:'三座橋，三個小王。過了橋，你會拿到一個人的名字。'},
   {id:'gaol',   nm:'深淵牢獄',   sub:'THE ABYSS GAOL',      floors:15, rest:5,
    boss:'b_gaoler', reward:'牢獄長的鑰匙',
-   intro:'十六層往下。這裡關的每一個，都曾經跟你一樣往上爬過。'},
+   intro:'十五層往下。這裡關的每一個，都曾經跟你一樣往上爬過。'},
   {id:'mirror', nm:'鏡像世界',   sub:'THE MIRRORED WORLD',  floors:5, mirror:1,
    boss:'b_queen', reward:'黑暗之心',
    intro:'左右相反。你以為往右，其實是往左 —— 連自己都不能全信。'},
@@ -7972,7 +8196,7 @@ const ACTS = [
      「第幾層」在機制上仍然是同一個數字，改的是它指向哪個方向。 */
   {id:'tower',  nm:'通天塔',     sub:'THE SPIRE',           floors:20, rest:5, up:1,
    boss:'b_mermaid', reward:'諸神之劍（攻擊 +18）',
-   intro:'往上二十層。塔頂有一道門，門後面不是地方，是時間。'},
+   intro:'沿著塔內的階梯往上二十層。厚牆上的外側門通往高空迴廊；塔頂的另一道門，通往時間。'},
   {id:'final',  nm:'最後的迷宮', sub:'THE LAST LABYRINTH',  floors:5, up:1,
    boss:'b_gate', reward:'通往混沌之間的門',
    intro:'沒有地圖，沒有商店。你已經不需要它們了。'},
@@ -8105,7 +8329,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 /* 平安京異界副本的神器。取得後永久保留，每次出發發回背包。 */
                 muramasa: 0, heianHunt: 0,
                 /* 每章炭筆分鏡只在第一次進章時播放；重打同章不反覆攔住玩家。 */
-                chapterSeen: {},
+                chapterSeen: {}, townQuest:{}, townJournal:[], townStory:{}, travelSupplies:[], forgeOre:0, magicMilestones:{}, alchemyStock:[], reagents:{},
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -8194,6 +8418,19 @@ function loadVillage(){
           muramasa: v.muramasa ? 1 : 0,
           heianHunt: !v.muramasa && v.heianHunt ? 1 : 0,
           chapterSeen: sanitizeChapterSeen(v.chapterSeen),
+          townQuest: Object.fromEntries(['euro','cave','edo','spire'].map(k=>[k,Math.max(0,Math.min(3,(v.townQuest||{})[k]|0))])),
+          townStory: Object.fromEntries(['euro','cave','edo','spire'].flatMap(st=>['well','valve','caravan','parcels','rest','festival','archive'].map(k=>[st+':'+k,Math.max(0,Math.min(100,(v.townStory||{})[st+':'+k]|0))]))),
+          alchemyStock: Array.isArray(v.alchemyStock)?v.alchemyStock.filter(q=>q&&ALCHEMY_INPUT[q.cat+'/'+q.id]).slice(0,12).map(q=>({cat:q.cat,id:q.id})):[],
+          reagents:Object.fromEntries(['leaf','spore','ink','spark'].map(k=>[k,Math.max(0,Math.min(99,Number(v.reagents?.[k])|0))])),
+          travelSupplies: Array.isArray(v.travelSupplies)?v.travelSupplies.filter(q=>q&&((q.cat==='food'&&['bread','fruit'].includes(q.id))||(q.cat==='herb'&&HERB.some(d=>d.id===q.id&&!d.mhp&&!d.revive))||(q.cat==='scroll'&&SCROLL.some(d=>d.id===q.id)))).slice(0,4).map(q=>({cat:q.cat,id:q.id})):[],
+          forgeOre: Math.max(0,Math.min(999,v.forgeOre|0)),
+          condition: v.condition ? {hp:Math.max(.01,Math.min(1,Number(v.condition.hp)||.01)),mp:Math.max(0,Math.min(1,Number(v.condition.mp)||0)),sat:Math.max(0,Math.min(1,Number(v.condition.sat)||0))}:null,
+          recordedAt: Math.max(0,Number(v.recordedAt)||0),
+          magicMilestones: Object.fromEntries(Object.entries(v.magicMilestones||{}).filter(([k,n])=>n&&(/^(level:(?:[4-9]|[1-9][0-9])|chapter:[a-z]+)$/.test(k))).map(([k])=>[k,1])),
+          townJournal: Array.isArray(v.townJournal)?v.townJournal.filter(n=>n&&typeof n.id==='string'&&typeof n.text==='string').slice(-60).map(n=>({id:n.id.slice(0,80),text:n.text.slice(0,1200)})):[],
+          hunterClaims:Array.isArray(v.hunterClaims)?v.hunterClaims.filter(k=>typeof k==='string'&&/^\d+:\d+:\d+:(lion|wall)$/.test(k)).slice(-256):[],
+          relicSeals:Object.fromEntries(['ember','tide','crystal','sky'].filter(k=>v.relicSeals?.[k]).map(k=>[k,1])),
+          relicForged:!!v.relicForged,
           cleared: Math.max(0, v.cleared|0),
           lang: LANGS.some(l => l[0] === v.lang) ? v.lang : '',
           skin: SKINS.includes(v.skin) ? v.skin : 'blob',
@@ -8208,11 +8445,85 @@ function loadVillage(){
     }
   }catch(e){}                       // 沙箱可能擋 localStorage —— 擋了就只存在記憶體裡
 }
+const ALCHEMY_INPUT={
+ 'herb/heal':'leaf','herb/cure':'leaf','herb/psn':'spore','herb/slp':'spore','herb/conf':'spore','herb/blind':'spore','herb/para':'spore',
+ 'scroll/ident':'ink','scroll/map':'ink','scroll/conf':'ink','scroll/curse':'ink','scroll/summon':'ink','scroll/flame':'spark',
+ 'wand/bolt':'spark','wand/weak':'spark','wand/slow':'spark','wand/sleep':'spark'
+};
+const ALCHEMY_MATERIAL={leaf:'藥葉',spore:'異質孢粉',ink:'符墨',spark:'魔晶屑'};
+const ALCHEMY_RECIPES=[
+ {id:'heal',cat:'herb',out:'heal',cost:{leaf:2},gold:20,gate:'base',effect:'恢復 30 HP。把兩份材料濃縮成一格急救補給。'},
+ {id:'cure',cat:'herb',out:'cure',cost:{leaf:1,spore:1},gold:40,gate:'base',effect:'清除不良狀態，保留加速等增益。'},
+ {id:'mana',cat:'herb',out:'mana',cost:{leaf:1,spark:2},gold:120,gate:'well',effect:'恢復 12 MP；不提高上限，也不提供永久魔法點數。'},
+ {id:'purif',cat:'scroll',out:'purif',cost:{ink:2,leaf:1},gold:100,gate:'archive',effect:'解除背包內的詛咒。'},
+ {id:'sleep',cat:'scroll',out:'sleep',cost:{ink:2,spore:2},gold:160,gate:'caravan',effect:'讓視野內可受睡眠影響的敵人沉睡；免疫者不受影響。'},
+ {id:'flame',cat:'scroll',out:'flame',cost:{ink:2,spark:1},gold:100,gate:'archive',effect:'灼燒相鄰敵人；也會燒掉背包內一張卷軸，請先整理行囊。'}
+];
+function alchemyUnlocked(r){const v=VILLAGE.townStory||{},done=k=>Object.entries(v).some(([id,n])=>id.endsWith(':'+k)&&n>=(k==='well'?3:k==='caravan'?2:1));return r.gate==='base'||done(r.gate);}
+function stashAlchemy(){
+ if(!G||G.alchemyReturned)return 0;G.alchemyReturned=true;
+ const bank=VILLAGE.alchemyStock||(VILLAGE.alchemyStock=[]);let count=0;
+ for(const it of G.p.inv.slice()){
+  if(bank.length>=12)break;
+  if(!ALCHEMY_INPUT[it.cat+'/'+it.d.id]||(!it.known&&!G.known[lookKey(it)])||(it.cat==='wand'&&it.uses>0))continue;
+  bank.push({cat:it.cat,id:it.d.id});removeItem(it);count++;
+ }
+ if(count)say(M('v22.deposit','帶回 {n} 件調合素材，已寄存草藥師（最多 12 件；保存壺內物品不動）。',{n:count}),'gold');
+ return count;
+}
+function distillAlchemy(index){
+ const bank=VILLAGE.alchemyStock||[],it=bank[index];if(!it)return false;
+ const key=ALCHEMY_INPUT[it.cat+'/'+it.id];if(!key)return false;
+ const reagents=VILLAGE.reagents||(VILLAGE.reagents={});if((reagents[key]||0)>=99)return false;
+ bank.splice(index,1);reagents[key]=(reagents[key]||0)+1;saveVillage();return true;
+}
+function craftAlchemy(id){
+ const r=ALCHEMY_RECIPES.find(r=>r.id===id),bank=VILLAGE.reagents||{},supply=VILLAGE.travelSupplies||(VILLAGE.travelSupplies=[]);
+ if(!r||!alchemyUnlocked(r)||supply.length>=4||VILLAGE.gold<r.gold||Object.entries(r.cost).some(([k,n])=>(bank[k]||0)<n))return false;
+ for(const [k,n]of Object.entries(r.cost))bank[k]-=n;
+ VILLAGE.gold-=r.gold;supply.push({cat:r.cat,id:r.out});saveVillage();return true;
+}
 function saveVillage(){
   if(QA_MODE) return;
-  try{ localStorage.setItem(VILLAGE_KEY, JSON.stringify(VILLAGE)); }catch(e){}
+  try{ localStorage.setItem(VILLAGE_KEY, JSON.stringify(VILLAGE)); return true; }catch(e){return false;}
 }
 loadVillage();
+
+// Returning preserves fatigue. Only lodging restores it; legacy saves start healthy.
+function rememberTownCondition(fallen=false){
+  const p=G.p;
+  VILLAGE.condition=fallen?{hp:.35,mp:.25,sat:.4}:{hp:Math.max(.01,p.hp/p.mhp),mp:p.mp/Math.max(1,p.mmp),sat:p.sat/Math.max(1,p.msat)};
+  if(!fallen) for(const g of VILLAGE.stock){
+    const held=p.inv.find(it=>it.cat===g.cat&&it.id===g.id);
+    if(held)g.cursed=!!held.cursed;
+  }
+}
+function innCost(){return Math.min(220,40+(VILLAGE.act|0)*12);}
+function restAtInn(charity=false){
+  const c=VILLAGE.condition||{hp:1,mp:1,sat:1};
+  if(charity){
+    if(VILLAGE.gold>=innCost()||(c.hp>=.5&&c.mp>=.25&&c.sat>=.4))return false;
+    VILLAGE.condition={hp:Math.max(c.hp,.5),mp:Math.max(c.mp,.25),sat:Math.max(c.sat,.4)};
+  }else{
+    if(VILLAGE.gold<innCost()||(c.hp>=1&&c.mp>=1&&c.sat>=1))return false;
+    VILLAGE.gold-=innCost();VILLAGE.condition={hp:1,mp:1,sat:1};
+  }
+  if(G&&G.over){G.p.hp=Math.max(1,Math.floor(G.p.mhp*VILLAGE.condition.hp));G.p.mp=Math.floor(G.p.mmp*VILLAGE.condition.mp);G.p.sat=Math.floor(G.p.msat*VILLAGE.condition.sat);}
+  saveVillage();return true;
+}
+function townCursedItems(){
+  const out=VILLAGE.stock.filter(g=>g.cursed);
+  function visit(it){if(it.cursed)out.push(it);for(const sub of it.contents||[])visit(sub);}
+  for(const it of VILLAGE.pots||[])visit(it);
+  if(VILLAGE.pocket?.item)visit(VILLAGE.pocket.item);
+  return out;
+}
+function exorcismAvailable(){return ['edo','spire'].includes(villageStyle());}
+function purifyAtShrine(){
+  const items=townCursedItems(),cost=120+items.length*80;
+  if(!exorcismAvailable()||!items.length||VILLAGE.gold<cost)return false;
+  VILLAGE.gold-=cost;items.forEach(it=>it.cursed=false);saveVillage();return true;
+}
 
 /* ═══ 中途存檔 ═══════════════════════════════════════════════
    村莊的存檔記的是「走到第幾章」；這一份記的是「這一趟走到哪」。
@@ -8271,6 +8582,8 @@ function saveRun(){
   try{
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: RUN_VER, seed: G.seed, act: G.act, floor: G.floor, turn: G.turn,
+      pressure: Math.max(0,G.f?.elapsedTurns|0),
+      pursuit: packPursuit(),
       known: G.known, look: G.look, notes: G.notes, npc: G.npc,
       heian: packHeianState(),
       p: {
@@ -8359,6 +8672,8 @@ function resumeRun(q){
   G.floor = q.floor;
   buildFloor();
   G.p.hp = Math.max(1, Math.min(p.mhp, r.hp | 0));
+  G.f.elapsedTurns=Math.max(0,Math.min(720,q.pressure|0));
+  restorePursuit(q.pursuit);
   say(M('m.resumed','從上次的紀錄點繼續 —— 第 {n} 章　{nm}　{d}',
         {n:G.act+1, nm:locAct(actAt(G.act)), d:floorLabel(G.act, G.floor)}), 'gold');
   refresh();
@@ -8405,18 +8720,24 @@ function submitScore(how){
      這裡寫的是**索引**，而索引會被插隊。忘了推的下場不會報錯：
      只是每一件貨都早一章上架，後面十章的賞金又變回沒有用途的數字。 */
 const VILLAGE_STOCK = [
-  {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'},
-  {cat:'weap', id:'katana', from:4}, {cat:'weap', id:'mith'},
-  {cat:'weap', id:'drgn',  from:5}, {cat:'weap', id:'sky', from:8},
-  {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
-  {cat:'shld', id:'drac',  from:7},
+  {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear',from:2}, {cat:'weap', id:'steel',from:3},
+  {cat:'weap', id:'katana', from:5}, {cat:'weap', id:'mith',from:8},
+  {cat:'weap', id:'drgn',from:10}, {cat:'weap', id:'sky',from:14},
+  {cat:'shld', id:'wood'}, {cat:'shld', id:'steel',from:4}, {cat:'shld', id:'mirr',from:8},
+  {cat:'shld', id:'drac',from:12},
   /* 通天之劍與聖域之盾**不在這張表上**。它們是究極裝備，只有副本迷宮
      拿得到 —— 鐵匠打不出來，這是使用者指定的規則。
      （原本兩件都是 from:11，第十二章就買得起。） */
 ];
 /* 現在買得到的。渲染與走通測試都走這一支 —— 兩邊各寫一份過濾條件的話，
    遲早會有一份忘記跟上，而那一份會給出一個安心的綠燈。 */
-const stockNow = () => VILLAGE_STOCK.filter(g => (g.from || 0) <= (VILLAGE.act | 0));
+const stockNow = () => VILLAGE_STOCK.filter(g => (g.from || 0) <= (VILLAGE.act | 0)&&!VILLAGE.stock.some(o=>o.cat===g.cat&&o.id===g.id));
+// Gear access follows chapter milestones; price-based lucky rolls cannot skip them.
+const GEAR_FROM={club:0,brnz:1,spear:3,steel:4,katana:6,mith:10,drgn:12,sky:15,leath:0,wood:1,mirr:9,drac:13};
+const gearAvailable=(d,act)=>!d.ult&&(GEAR_FROM[d.id]||0)<=act;
+const forgeCap=(d,act=VILLAGE.act|0)=>Math.min(d.up||0,act>=15?8:act>=14?7:act>=13?6:act>=10?5:act>=6?4:act>=3?3:2);
+const scrollForgeCap=(d,act=G?G.act:0)=>Math.min(d.up||0,act>=15?5:act>=13?4:act>=8?3:act>=3?2:1);
+const forgeOreCost=up=>up>=6?2:up>=3?1:0;
 const defOf = (cat,id) => (cat==='weap'?WEAP:SHLD).find(d=>d.id===id);
 const ALL_DEF = () => ({herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,
                         weap:WEAP,shld:SHLD,hat:HAT});
@@ -8596,11 +8917,12 @@ function newGame(seed){
   }
   // ……除非村裡買了裝備。那是唯一能跨越死亡的東西。
   for(const g of VILLAGE.stock){
-    const it = mk(g.cat, g.id, {known:1, up:g.up|0});
+    const it = mk(g.cat, g.id, {known:1, up:g.up|0, cursed:!!g.cursed});
     G.p.inv.push(it);
     if(g.cat==='weap' && !G.p.weap) G.p.weap = it;
     if(g.cat==='shld' && !G.p.shld) G.p.shld = it;
   }
+  if(VILLAGE.condition){const c=VILLAGE.condition;G.p.hp=Math.max(1,Math.floor(G.p.mhp*c.hp));G.p.mp=Math.floor(G.p.mmp*c.mp);G.p.sat=Math.floor(G.p.msat*c.sat);}
   buildFloor();
   const a0 = actAt(G.act);
   say(M('m.chapter','第 {n} 章　{nm}',{n:G.act+1, nm:locAct(a0)}), 'gold');
@@ -8637,7 +8959,7 @@ function pickTier(rng, list, cap, lowRatio){
      而「只有一個來源」如果靠的是機率很低，那就不是規則，是運氣 ——
      深層的價格上限本來就摸得到通天之劍（24000），撿到一把
      整條副本迷宮的線就白做了。 */
-  let pool = list.filter(d => !d.ult && (d.price||0) <= cap);
+  let pool = list.filter(d => !d.ult && !d.craftOnly && (d.price||0) <= cap);
   if(!pool.length){
     let best = list[0];
     for(const d of list) if((d.price||0) < (best.price||0)) best = d;
@@ -8663,10 +8985,10 @@ function rollItem(rng, depth){
   // 但完全沒有意外之財的地下城也沒有人想再下去一次。
   const cap = (400 + depth * 280) * (rng.chance(.10) ? 2.6 : 1);
   const gear = pick[0] === 'weap' || pick[0] === 'shld';
-  const d = pickTier(rng, pick[1], cap, gear ? GEAR_BAND : 0);
+  const d = pickTier(rng, gear?pick[1].filter(d=>gearAvailable(d,G?G.act:0)):pick[1], cap, gear ? GEAR_BAND : 0);
   const it = mk(pick[0], d.id);
   if(pick[0]==='weap'||pick[0]==='shld'){
-    it.up = rng.i(0, Math.min(3, d.up));
+    it.up = rng.i(0, Math.min(3, scrollForgeCap(d)));
     it.cursed = rng.chance(.12);
   }
   return it;
@@ -8739,9 +9061,9 @@ function shopItem(rng, depth){
   // B3 就會出現 2760 G 的杖 —— 那時候玩家身上大概兩百塊，
   // 整間店等於一排看得到吃不到的裝飾。
   const gear = pick[0] === 'weap' || pick[0] === 'shld';
-  const d = pickTier(rng, pick[1], 300 + depth*200, gear ? GEAR_BAND : 0);
+  const d = pickTier(rng, gear?pick[1].filter(d=>gearAvailable(d,G?G.act:0)):pick[1], 300 + depth*200, gear ? GEAR_BAND : 0);
   const it = mk(pick[0], d.id);
-  if(pick[0]==='weap'||pick[0]==='shld') it.up = rng.i(0, Math.min(2, d.up));
+  if(pick[0]==='weap'||pick[0]==='shld') it.up = rng.i(0, Math.min(2, scrollForgeCap(d)));
   return it;
 }
 
@@ -9275,6 +9597,7 @@ function buildFloor(){
   if(act0.id === 'temple' && G.floor >= act0.floors){
     say(TX('m.templegoal','內殿與樓梯就在正北方。沿中央長廊一直前進。'),'gold');
   }
+  placeRelicGuardian();
   vision();
   /* 頭目層的音樂在樓層生成完成就切換；一般遭遇則在入口房看見近身敵人時切。
      音訊若尚未解鎖只會先記住指定曲目，玩家第一次按鍵後才真正發聲。 */
@@ -9395,7 +9718,7 @@ function spawnMon(d,x,y,opt){
      而且一章只有一隻 —— 再乘一次會讓章末變成撞牆。
      防禦補得最少：防禦是乘在傷害的減法上的，加太多會直接把
      低攻擊的打法（法術、投擲）整組廢掉。 */
-  const k = d.boss ? 1 : lvMul();
+  const k = d.boss || d.hunter ? 1 : lvMul();
   if(k > 1){
     d = Object.assign({}, d, {
       hp:  Math.round(d.hp  * k),
@@ -9646,8 +9969,19 @@ function faceActor(o, dx, dy){
 function startAttackPose(o, dx, dy, kind){
   faceActor(o, dx, dy);
   o.recoil = null;
-  o.lunge = {dx:Math.sign(dx), dy:Math.sign(dy), t:0, dur:.26,
+  o.lunge = {dx:Math.sign(dx), dy:Math.sign(dy), t:0, dur:o.d&&o.d.boss?.42:.26,
              kind:kind || 'melee'};
+}
+function bossOpening(m){
+  if(!m.d.boss||m.d.turret||m.d.mind||m.d.sideBoss)return;
+  if(m.openUntil===G.turn+2)return;
+  m.openUntil=G.turn+2;
+  float(m.x,m.y,TX('v22.open','破綻'),'#8cddb2');
+}
+function bossDamage(m,dmg){
+  if(!m.d.boss||m.d.turret||m.d.mind||m.d.sideBoss)return dmg;
+  const opening=(m.openUntil||-1)>=G.turn;
+  return Math.max(1,Math.round(dmg*(opening?1.35:m.d.telegraph?.85:1)));
 }
 function startHurtPose(o, fromX, fromY, dur){
   let dx = Math.sign(o.x - fromX), dy = Math.sign(o.y - fromY);
@@ -9680,6 +10014,7 @@ function startLevelUpCelebration(o){
 
 /* ─── 玩家行動 ─────────────────────────────────────────────── */
 function tryMove(dx,dy){
+  if(globalThis.RPG_BALCONY?.active){globalThis.RPG_BALCONY.move(dx,dy);return;}
   if(G.over) return;
   /* 有人在等你回答，這一步不算。守在 tryMove 而不是只守在按鍵處理裡 ——
      玩家的移動有好幾個入口（鍵盤、虛擬手把、畫面上的方向鍵，以後還會有），
@@ -9694,6 +10029,7 @@ function tryMove(dx,dy){
   if(p.st['亂'] && G.rng.chance(.6)){ const d=G.rng.pick(DIRS); dx=d[0]; dy=d[1]; }
   const nx=p.x+dx, ny=p.y+dy;
   p.face = [dx,dy];
+  if(globalThis.RPG_BALCONY?.enterAt(nx,ny))return;
   const m = monAt(nx,ny);
   if(m){ SFX.play('swing'); attack(m); endTurn(); return; }
   if(allyAt(nx,ny)){ say(M('s.003','{v0} 擋在前面。',{v0:(allyAt(nx,ny).d.nm)})); return; }
@@ -9845,6 +10181,7 @@ function stepOn(){
   const hl = G.f.hall;
   if(hl && !hl.seen && roomOf(p.x,p.y) === hl.room){
     hl.seen = 1;
+    if(hunterAllowed()&&hunterState().hallRoll)scheduleHunter('lion','怪物之間');
     SFX.play('trap'); G.shake = Math.max(G.shake, 7);
     say(TX('m.hall','★ 怪物之間 —— 整個大廳都是敵人！'),'bad');
     say(TX('m.hall2','退回走廊，一次只會進來一隻。'),'gold');
@@ -9946,7 +10283,8 @@ function attack(m, mult){
   const wp = p.weap && p.weap.d;
   const big = m.d.boss || ['giant','quad','chimera','serpent'].includes(m.d.bd);
   if(wp && wp.slay && big) mult = (mult || 1) * wp.slay;
-  const dmg = rollDmg(pAtk(), m.d.def, crit, mult);
+  const armor=m.d.hunter==='lion'&&lionBreaker()?24:m.d.def;
+  const dmg = hunterDamage(m,bossDamage(m,rollDmg(pAtk(), armor, crit, mult)),'weapon');
   SFX.play(crit?'crit':'hit');
   m.flash = 0.11;
   startHurtPose(m, p.x, p.y);
@@ -10055,17 +10393,21 @@ function tryRevive(m){
   return true;
 }
 function kill(m){
+  if(m.d.hunter&&m.hunterRewarded)return;
   if(tryRevive(m)) return;
+  if(m.d.hunter)m.hunterRewarded=true;
   SFX.play('kill');
   if(G.corpses){                       // 沒有這段的話怪物是「消失」，不是「被打倒」
-    G.corpses.push({img: atlas[m.d.id] || atlas.rat, x:m.x, y:m.y, t:0});
+    G.corpses.push({img: (HD_MODE&&m.d.hunter&&HD_LOADED['hd:hunter-'+(m.d.relicForm||(m.d.hunter==='lion'?'lion':'wall'))+'-idle'])||(HD_MODE&&m.d.id==='b_keeper'&&HD_LOADED['hd:keeper-defeat'])||atlas[m.d.id]||atlas.rat, x:m.x, y:m.y, t:0, dur:m.d.boss?1.1:.4, scale:bossVisualScale(m.d)});
     burst(m.x, m.y, 14, '#c8c8d4', 52, 14, 0.5);
   }
   say(M('m.kill','打倒了 {nm}。',{nm:locName('mon',m.d)}),'good');
   if(m.d.boss && !m.d.sideBoss) bossDown(m);
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
-  if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
+  if(m.d.relic)claimRelic(m);
+  else if(m.d.hunter)loot.push(...hunterReward(m));
+  else if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
   /* 頭目一定掉一件裝備。使用者：「打贏小王會掉比較特殊的武器
      （但是不能是超過主角等級太多的，不然遊戲會變無聊）」——
      後半句才是重點，所以這裡刻意**沿用一般掉落的分級上限**，
@@ -10078,7 +10420,7 @@ function kill(m){
     /* 一般掉落是「越貴越少見」，那對地上撿到的東西是對的；
        但頭目的獎品要真的像獎品，所以這裡反過來：多數時候直接給
        這個深度買得起的最好一件。上限沒有放寬，變的只是「給不給好的」。 */
-    const pool = tbl.filter(d => (d.price || 0) <= cap);
+    const pool = tbl.filter(d => gearAvailable(d,G.act) && (d.price || 0) <= cap);
     if(!pool.length) pool.push(tbl[0]);
     const top = pool.reduce((a2, b2) => (b2.price || 0) > (a2.price || 0) ? b2 : a2, pool[0]);
     // 沒抽到最好那件的時候，也只從「這個深度的上半段」裡挑 ——
@@ -10087,7 +10429,7 @@ function kill(m){
     const half = sorted.slice(Math.floor(sorted.length / 2));
     const d0 = G.rng.chance(.55) ? top : G.rng.pick(half);
     const prize = mk(tbl === WEAP ? 'weap' : 'shld', d0.id, {known:1});
-    prize.up = G.rng.i(1, Math.min(3, d0.up || 1));
+    prize.up = G.rng.i(1, Math.min(3, scrollForgeCap(d0) || 1));
     loot.push(prize);
   }
   for(const it of loot){
@@ -10138,10 +10480,9 @@ function kill(m){
     startLevelUpCelebration(p);
     say(M('m.levelup','等級提升到 {n}！',{n:p.lv}),'good'); float(p.x,p.y,'LEVEL UP','#6a8f4a');
     jobLevelUp();                       // 只有戴著的那頂帽子的職業會前進
-    if(p.lv >= SP_FROM_LV){
-      VILLAGE.sp++; p.sp = VILLAGE.sp; saveVillage();
+    if(p.lv >= SP_FROM_LV && p.lv%4===0 && grantMagicPoint('level:'+p.lv)){
       say(M('s.012','★ 魔法點數 +1（目前 {v0} 點）—— 這個不會因為失敗消失。',{v0:(VILLAGE.sp)}),'gold');
-      float(p.x,p.y,'MP+1','#4a86cf');
+      float(p.x,p.y,TX('v22.studyplus','研習 +1'),'#4a86cf');
     }
     if(p.lv === POCKET_LV && !VILLAGE.pocket.open){
       VILLAGE.pocket.open = true; saveVillage();
@@ -10266,6 +10607,7 @@ function endTurn(){
   G.turn++;
   vision();
   bossWatch();
+  hunterTick();
   dwellCheck();
   if(p.hp<=0) death();
   G.tookDamage = 0;
@@ -10326,24 +10668,182 @@ function restStep(){
   return !G.over && p.hp < p.mhp;
 }
 
-/* ═══ 樓層滯留：待太久，怪就變多 ═══════════════════════════════
-   原因很簡單：這款遊戲的所有張力都來自「補給有限」，
-   而「在安全樓層無限刷怪練級」會把那個張力整個抽掉。
-   五分鐘 1.5 倍、十五分鐘 2 倍 —— 而且新怪生在你看不見的房間裡，
-   所以你會先聽到訊息，再遇到牠們。 */
-const DWELL = [[300000, 1.5, '空間開始扭曲 —— 有東西被引過來了。'],
-               [900000, 2.0, '這一層已經不歡迎你了。大量的氣息從四面湧來。']];
+/* Floor pressure advances only on player actions; reading and menus are free.
+   Tutorial, boss floors, arenas and story encounters keep their own pacing. */
+function pressureEnabled(){
+  return !!(G&&!G.over&&G.p.hp>0&&G.f&&G.act>0&&G.floor<actAt(G.act).floors&&!G.f.rift&&!G.f.arena&&!G.f.heianGate&&!G.f.heianSamurai);
+}
+// Rare pursuit encounters have an independent seeded schedule, never random loot spawns.
+const HUNTERS={
+ lion:{id:'stone_lion',nm:'巴比倫獅',hunter:'lion',ai:'C',hp:480,atk:55,def:999,exp:450,spd:1,sight:99,ev:0,visualBoss:1,bd:'quad',imm:['睡','麻','亂','毒','燒','石'],fl:[0,999],w:0},
+ wall:{id:'wall_bull',nm:'人首翼牛守衛',hunter:'wall',ai:'C',hp:160,atk:28,def:20,exp:160,spd:1,sight:99,ev:0,visualBoss:1,bd:'quad',imm:['睡','麻','亂','毒','石'],fl:[0,999],w:0}
+};
+function hunterState(){
+  if(!G.f.pursuit){const r=RNG(mix32(G.depth*49157+71,G.seed));G.f.pursuit={age:0,lionAt:r.i(350,470),lionRoll:r.chance(.65),wallAt:r.i(90,240),wallRoll:r.chance(.38),hallRoll:r.chance(.35),lionDone:false,wallDone:false,pending:null};}
+  return G.f.pursuit;
+}
+function hunterAllowed(){return pressureEnabled()&&!G.f.rest&&!G.f.bossLock;}
+// Four story seals live in a dedicated quest pouch: full bags and death cannot erase them.
+const RELIC_GUARDS=[
+ {id:'ember',act:'mine',nm:'爐心守望獅',item:'不熄的爐心',form:'lion',color:'#e4a064'},
+ {id:'tide',act:'lake',nm:'潮汐翼牛',item:'深水的誓印',form:'wall',color:'#77d0e4'},
+ {id:'crystal',act:'crystal',nm:'晶核聖獅',item:'永恆的晶核',form:'lion',color:'#c4a6fb'},
+ {id:'sky',act:'tower',nm:'天穹翼牛',item:'黎明的冠環',form:'wall',color:'#ffeab1'}
+];
+function relicDefinition(r){
+ return {...HUNTERS.wall,id:'relic_'+r.id,nm:r.nm,hunter:'relic',relic:r.id,relicForm:r.form,color:r.color,
+ hp:Math.max(140,Math.round(pAtk()*8)),atk:20+G.md,def:Math.min(14,Math.round(6+G.md*.15)),exp:220+Math.round(G.md*10)};
+}
+function placeRelicGuardian(){
+ if(!hunterAllowed()||G.floor<2||VILLAGE.relicForged)return;
+ const r=RELIC_GUARDS.find(r=>G.act>=ACTS.findIndex(a=>a.id===r.act)&&!VILLAGE.relicSeals?.[r.id]);if(!r)return;
+ const spots=[];
+ for(let y=2;y<MH-2;y++)for(let x=2;x<MW-2;x++){
+  if(!walkable(x,y)||monAt(x,y)||npcAt(x,y)||allyAt(x,y)||G.items[key(x,y)]||tileAt(x,y)===DOWN||Math.hypot(x-G.p.x,y-G.p.y)<8||roomOf(x,y)<0||G.shop&&roomOf(x,y)===G.shop.room)continue;
+  if([[1,0],[-1,0],[0,1],[0,-1]].every(([dx,dy])=>walkable(x+dx,y+dy)))spots.push({x,y});
+ }
+ if(!spots.length)return;
+ const spot=RNG(mix32(G.seed,G.depth*199)).pick(spots),m=spawnMon(relicDefinition(r),spot.x,spot.y,{noElite:true,noSkill:true});m.awake=false;
+ say(M('v22.relicnear','本層深處有 {nm}。主動攻擊才會甦醒；打敗可取得「{item}」。',{nm:TX('mon.relic_'+r.id,r.nm),item:TX('relic.'+r.id,r.item)}),'gold');
+}
+function claimRelic(m){
+ const r=RELIC_GUARDS.find(r=>r.id===m.d.relic);if(!r||VILLAGE.relicForged)return false;
+ const seals=VILLAGE.relicSeals||(VILLAGE.relicSeals={});if(seals[r.id])return false;
+ seals[r.id]=1;saveVillage();SFX.play('victory');burst(m.x,m.y,48,r.color,80,26,1.4);
+ say(M('v22.relicclaim','★ {nm} 掉落「{item}」！已收入封印匣（{n}/4），不佔背包，倒下也保留。',{nm:TX('mon.relic_'+r.id,r.nm),item:TX('relic.'+r.id,r.item),n:Object.keys(seals).length}),'gold');return true;
+}
+function forgeRagnarok(){
+ if(VILLAGE.relicForged||!RELIC_GUARDS.every(r=>VILLAGE.relicSeals?.[r.id]))return false;
+ VILLAGE.relicSeals={};VILLAGE.relicForged=true;
+ if(!VILLAGE.stock.some(i=>i.cat==='weap'&&i.id==='ragnarok'))VILLAGE.stock.push({cat:'weap',id:'ragnarok',up:0,known:1});
+ saveVillage();SFX.play('victory');return true;
+}
+function packPursuit(){
+ return {state:G.f.pursuit||null,claims:G.hunterClaims||[],actors:G.mons.filter(m=>m.d.hunter&&m.hp>0).map(m=>({kind:m.d.hunter,relic:m.d.relic,x:m.x,y:m.y,hp:m.hp,mhp:m.mhp,rest:m.rest||0,awake:!!m.awake,warn:m.warn||null,openUntil:m.openUntil||0}))};
+}
+function restorePursuit(q){
+ if(!q||typeof q!=='object'||!hunterAllowed())return;
+ if(q.state){const s=hunterState(),v=q.state;s.age=Math.max(0,Math.min(720,v.age|0));s.lionDone=!!v.lionDone;s.wallDone=!!v.wallDone;
+  const n=v.pending;if(n&&['lion','wall'].includes(n.kind)&&walkable(n.x|0,n.y|0))s.pending={kind:n.kind,x:n.x|0,y:n.y|0,wx:n.wx|0,wy:n.wy|0,left:Math.max(1,Math.min(6,n.left|0))};}
+ G.hunterClaims=Array.isArray(q.claims)?q.claims.filter(k=>typeof k==='string').slice(-256):[];
+ if(!Array.isArray(q.actors))return;
+ G.mons=G.mons.filter(m=>!m.d.hunter);
+ for(const a of q.actors.slice(0,3)){
+  const x=a.x|0,y=a.y|0;if(!walkable(x,y)||x===G.p.x&&y===G.p.y)continue;
+  const r=RELIC_GUARDS.find(r=>r.id===a.relic);if(a.kind==='relic'&&(!r||VILLAGE.relicForged||VILLAGE.relicSeals?.[r.id]))continue;
+  if(!['lion','wall','relic'].includes(a.kind))continue;
+  G.mons=G.mons.filter(m=>m.x!==x||m.y!==y);
+  const m=a.kind==='relic'?spawnMon(relicDefinition(r),x,y,{noElite:true,noSkill:true}):spawnHunter(a.kind,x,y);
+  m.mhp=Math.max(1,Math.min(10000,Number(a.mhp)||m.mhp));m.hp=Math.max(1,Math.min(m.mhp,Number(a.hp)||1));m.rest=Math.max(0,Math.min(2,a.rest|0));m.awake=!!a.awake;
+  m.openUntil=Math.max(0,Math.min(G.turn+2,a.openUntil|0));
+  if(a.warn)m.warn={kind:'slam',x,y,cx:x,cy:y};
+ }
+}
+function hunterPath(m){
+  const todo=[[G.p.x,G.p.y]],dist=new Map([[key(G.p.x,G.p.y),0]]);
+  for(let i=0;i<todo.length;i++){const [x,y]=todo[i];if(x===m.x&&y===m.y)break;
+    for(const [dx,dy]of DIRS){const nx=x+dx,ny=y+dy,k=key(nx,ny);if(dist.has(k)||!walkable(nx,ny)||!cornerOK(x,y,nx,ny))continue;dist.set(k,dist.get(key(x,y))+1);todo.push([nx,ny]);}}
+  return DIRS.filter(d=>canStep(m,d)).sort((a,b)=>(dist.get(key(m.x+a[0],m.y+a[1]))??99999)-(dist.get(key(m.x+b[0],m.y+b[1]))??99999))[0]||null;
+}
+function scheduleHunter(kind,reason){
+  if(!hunterAllowed())return false;const s=hunterState();
+  if(s.pending||s[kind+'Done']||G.mons.some(m=>m.hp>0&&m.d.hunter&&(!m.d.relic||m.awake)))return false;
+  const spots=[];
+  for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++){
+    const distance=Math.max(Math.abs(x-G.p.x),Math.abs(y-G.p.y));
+    if(!walkable(x,y)||monAt(x,y)||npcAt(x,y)||allyAt(x,y)||distance<5||distance>12||tileAt(x,y)===DOWN||G.f.exit&&G.f.exit.x===x&&G.f.exit.y===y||G.shop&&roomOf(x,y)===G.shop.room)continue;
+    if(kind==='lion'){if(distance>=8&&G.seen[key(x,y)]!==2)spots.push({x,y});}
+    else if(G.seen[key(x,y)]===2){for(const [dx,dy]of [[0,-1],[1,0],[-1,0],[0,1]]){const wx=x+dx,wy=y+dy;if(wx>0&&wy>0&&wx<MW-1&&wy<MH-1&&tileAt(wx,wy)===WALL){spots.push({x,y,wx,wy});break;}}}
+  }
+  if(!spots.length)return false;
+  const r=RNG(mix32(G.seed,G.depth*131+(kind==='lion'?7:19))),spot=r.pick(spots);
+  s[kind+'Done']=true;s.pending={...spot,kind,left:kind==='lion'?6:4,reason};
+  say(kind==='lion'?TX('v22.lionwarn','遠處傳來石爪聲……巴比倫獅將在 6 行動後甦醒！普通兵器只能傷牠 1 點，請找樓梯或準備破封武器。'):TX('v22.wallwarn','牆上人首翼牛的眼睛亮了！浮雕正在碎裂，4 行動後踏出牆面。'),'bad');SFX.play('charge');return true;
+}
+function spawnHunter(kind,x,y){
+  const d={...HUNTERS[kind]};d.hp=kind==='lion'?480+Math.round(G.md*5):100+Math.round(G.md*4);d.atk=kind==='lion'?35+G.md*2:16+G.md*1.2;
+  const m=spawnMon(d,x,y,{noElite:true,noSkill:true});m.rest=2;m.huntLife=0;return m;
+}
+function hunterTick(){
+  if(!hunterAllowed())return;const s=hunterState();s.age++;
+  if(s.pending){const q=s.pending;if(--q.left<=0){
+    if(monAt(q.x,q.y)||npcAt(q.x,q.y)||allyAt(q.x,q.y)||(q.x===G.p.x&&q.y===G.p.y)){q.left=1;return;}
+    const m=spawnHunter(q.kind,q.x,q.y);m.emergeAt=G.turn;s.pending=null;
+    burst(q.x,q.y,28,'#d4b581',65,20,.8);wave(q.x,q.y,'#e0b56d',.9);SFX.play('roar');G.shake=6;
+    say(M('v22.awake','{nm} 甦醒了！石像尚需 2 行動站穩，趁現在拉開距離。',{nm:locName('mon',m.d)}),'bad');
+  }return;}
+  if(s.lionRoll&&s.age>=s.lionAt&&!s.lionDone)scheduleHunter('lion','久留');
+  if(!s.pending&&s.wallRoll&&s.age>=s.wallAt&&!s.wallDone)scheduleHunter('wall','牆面浮雕');
+}
+function lionBreaker(weapon=G.p.weap){return !!weapon&&['sky','babel','muramasa','ragnarok'].includes(weapon.id);}
+function hunterDamage(m,dmg,source){
+  if(m.d.relic)return Math.min(dmg,Math.ceil(m.mhp*((m.openUntil||-1)>=G.turn?.2:.12)));
+  if(m.d.hunter!=='lion')return dmg;
+  const armed=source==='weapon'&&lionBreaker();
+  if(!armed){if(!m.armorTold){m.armorTold=true;say(TX('v22.lionarmor','獅身的封印彈開攻擊！天空之劍、通天之劍、妖刀村正、諸神的黃昏才能破封；一般攻擊僅造成 1 點傷害。'),'bad');}return dmg>0?1:0;}
+  const open=(m.openUntil||-1)>=G.turn;
+  return Math.max(1,Math.min(Math.ceil(m.mhp*(open?.12:.07)),Math.round(dmg*(open?1.4:1))));
+}
+function hunterIntent(m){
+  // Slow effects may give enemies two gauge actions. Never spend the warning
+  // and strike within the same player turn: every telegraph remains dodgeable.
+  if(m.hunterActTurn===G.turn)return {k:'wait'};
+  m.hunterActTurn=G.turn;
+  if(m.d.relic&&!m.awake){if(m.hp>=m.mhp)return {k:'wait'};m.awake=true;say(M('v22.sealawake','{nm} 的封印甦醒！避開標記，再抓住重擊後的破綻。',{nm:locName('mon',m.d)}),'bad');}
+  if(m.rest>0){m.rest--;return {k:'wait'};}
+  if((m.openUntil||-1)>=G.turn)return {k:'wait'};
+  if(m.warn){const w=m.warn;m.warn=null;m.openUntil=G.turn+2;return {k:'hunterStrike',x:w.cx,y:w.cy};}
+  const distance=Math.max(Math.abs(m.x-G.p.x),Math.abs(m.y-G.p.y));
+  if(distance<=1&&lineClear(m.x,m.y,G.p.x,G.p.y)){
+    m.warn={kind:'slam',cx:m.x,cy:m.y,x:m.x,y:m.y};
+    say(M('v22.pawwarn','{nm} 抬起前足！下一行動重砸周圍一格，退到標記外再反擊。',{nm:locName('mon',m.d)}),'bad');SFX.play('charge',180);return {k:'wait'};
+  }
+  return {k:'move',d:hunterPath(m)};
+}
+function hunterStrike(m,it){
+  globalThis.RPG_BOSS_FX?.release(m,'slam',it);
+  startAttackPose(m,it.x-m.x,it.y-m.y,'slam');SFX.play('slam');
+  ring(it.x,it.y,'#d9b274',T*1.7,.7);burst(it.x,it.y,32,'#c5a272',65,20,.9);G.shake=9;
+  if(Math.max(Math.abs(G.p.x-it.x),Math.abs(G.p.y-it.y))>1){say(TX('v22.pawmiss','石爪砸空！石像露出短暫破綻。'),'good');return;}
+  const pct=m.d.hunter==='lion'?.30:.20,guard=G.p.st['守']?.55:1;
+  const damage=Math.max(1,Math.round(Math.min(G.p.mhp*.42,Math.max(G.p.mhp*pct,rollEnemyDmg(m,m.d.atk,1.1,false)))*guard));
+  hurtPlayer(damage);float(G.p.x,G.p.y,'-'+damage,'#e9a36a');startHurtPose(G.p,m.x,m.y);say(M('v22.pawhit','{nm} 的石爪造成 {n} 點傷害。',{nm:locName('mon',m.d),n:damage}),'bad');
+}
+function hunterReward(m){
+  const k=G.seed+':'+G.act+':'+G.floor+':'+m.d.hunter;
+  G.hunterClaims=G.hunterClaims||[];
+  VILLAGE.hunterClaims=VILLAGE.hunterClaims||[];
+  if(G.hunterClaims.includes(k)||VILLAGE.hunterClaims.includes(k))return [];
+  G.hunterClaims.push(k);VILLAGE.hunterClaims.push(k);VILLAGE.hunterClaims=VILLAGE.hunterClaims.slice(-256);saveVillage();
+  const r=RNG(mix32(G.seed,G.depth*8191+(m.d.hunter==='lion'?2:5)));
+  if(m.d.hunter==='wall')return [mk('herb',r.chance(.3)?'rev':'elix',{known:1})];
+  // Preserve ultimate equipment's quest exclusivity; never drop Babel/Aegis/Muramasa here.
+  const gear=[...WEAP.map(d=>({d,cat:'weap'})),...SHLD.map(d=>({d,cat:'shld'}))].filter(o=>!o.d.ult&&gearAvailable(o.d,G.act)&&o.d.price>=4800);
+  const prize=r.chance(.55)&&gear.length?r.pick(gear):null;
+  say(TX('v22.lionloot','獅身崩解，封印中的秘藏落在石屑之間……'),'gold');SFX.play('victory');
+  return prize?[mk(prize.cat,prize.d.id,{known:1,up:Math.min(prize.d.up,forgeCap(prize.d),r.i(3,5))}),mk('herb','ygg',{known:1})]:[mk('herb','ygg',{known:1}),mk('herb','elix',{known:1})];
+}
+function pressureInfo(){
+  if(!pressureEnabled())return null;
+  const n=G.f.elapsedTurns||0,fall=!actUp(G.act);
+  return {turns:n,stage:n>=540?2:n>=420?1:0,left:Math.max(0,(n<420?420:n<540?540:720)-n),label:n<420?'異動預兆':n<540?'怪潮逼近':fall?'地層崩落':'追加怪潮',fall};
+}
 function dwellCheck(){
-  if(!G.f || !G.f.enterAt) return;
-  const el = Date.now() - G.f.enterAt;
-  for(let i = G.f.surge|0; i < DWELL.length; i++){
-    const [ms, mult, line] = DWELL[i];
-    if(el < ms) break;
-    G.f.surge = i + 1;
-    const want = Math.round((G.f.baseMons||4) * mult);
-    surgeTo(want);
-    say(line, 'bad');
-    SFX.play('trap');
+  if(!pressureEnabled())return;
+  const f=G.f;f.elapsedTurns=(f.elapsedTurns||0)+1;
+  if(f.elapsedTurns===420){say(TX('v22.surgewarn','沙漏發出警鳴：120 行動後怪潮湧入。請找樓梯，閱讀與選單不計時。'),'bad');SFX.play('trap');}
+  if(f.elapsedTurns===540){
+    f.surge=1;surgeTo(Math.min(28,Math.max(G.mons.length+6,Math.round((f.baseMons||4)*1.5))));
+    say(actUp(G.act)?TX('v22.surgeup','怪潮從遠處湧入！180 行動後會再有增援。'):TX('v22.surgedown','怪潮從遠處湧入！地層開始龜裂，180 行動後會墜向下一層。'),'bad');SFX.play('roar');
+  }
+  if(f.elapsedTurns>=660&&f.elapsedTurns<=710&&f.elapsedTurns%30===0&&!actUp(G.act))say(M('v22.fallcount','地層崩落倒數 {n} 行動，尚未取得的物資將留在這層！',{n:720-f.elapsedTurns}),'bad');
+  if(f.elapsedTurns===720){
+    if(actUp(G.act)){f.surge=2;surgeTo(Math.min(32,G.mons.length+8));say(TX('v22.secondwave','塔內鐘聲響起，第二波怪潮進入本層。'),'bad');SFX.play('roar');return;}
+    // No chapter reward, boss skip, damage, or extra monster turn on landing.
+    G.floor++;buildFloor();G.shake=8;SFX.play('stairs');globalThis.RPG_PRESSURE?.fall();
+    burst(G.p.x,G.p.y,32,'#c5a582',65,22,.9);
+    say(TX('v22.fall','石橋與地板崩裂，你沿碎石滑落下一層！同行村民一併落地；本層重新計時。'),'bad');
+    camX=G.p.x-VW/2+.5;camY=G.p.y-VH/2+.5;saveRun();showCard();
   }
 }
 function surgeTo(want){
@@ -10354,7 +10854,7 @@ function surgeTo(want){
   const spots = [];
   for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
     if(!walkable(x,y) || G.seen[key(x,y)]===2 || monAt(x,y)) continue;
-    if(x===G.p.x && y===G.p.y) continue;
+    if(Math.max(Math.abs(x-G.p.x),Math.abs(y-G.p.y))<7 || npcAt(x,y)) continue;
     if(G.shop && roomOf(x,y) === G.shop.room) continue;       // 店裡不生怪
     spots.push({x,y, room: roomOf(x,y) >= 0});
   }
@@ -10363,7 +10863,7 @@ function surgeTo(want){
   const pool = spots.slice(0, Math.max(need*3, 12));
   while(need-- > 0 && pool.length){
     const s = pool.splice(G.rng.i(0, pool.length-1), 1)[0];
-    const md = G.rng.weight(MONS, m => (G.depth>=m.fl[0] && G.depth<=m.fl[1]) ? m.w : 0);
+    const md = G.rng.weight(MONS, m => monWeight(m,G.md,themeNow()));
     if(md) spawnMon(md, s.x, s.y);
   }
 }
@@ -10597,9 +11097,11 @@ function decide(m){
   const p=G.p;
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
+  if(m.d.hunter)return hunterIntent(m);
   const side=sideBossIntent(m);
   if(side) return side;
   if(m.d.mind) return mindDecide(m);
+  if((m.openUntil||-1)>=G.turn)return {k:'wait'};
   const special=monsterSkillIntent(m);
   if(special) return special;
   /* ── 頭目的共同語彙 ──────────────────────────────────────
@@ -10716,6 +11218,9 @@ function decide(m){
     m.tick = (m.tick|0) + 1;
     if(m.warn){                                   // 上一回合已經預告 → 這一回合開火
       const aim = m.warn; m.warn = null;
+      globalThis.RPG_BOSS_FX?.release(m,aim.kind==='slam'?'slam':m.rush?'charge':'beam',aim);
+      bossOpening(m);
+      if(aim.kind==='slam')return {k:'bossSlam',x:aim.cx,y:aim.cy};
       /* 衝撞：她自己就是那面鏡子，撞上來的時候主角會被推著走。
          跟射線用同一個預告（整行整列亮起來）—— 玩家看到的是同一個訊號，
          要做的判斷也是同一個：離開這條線。差別只在沒躲開的下場。 */
@@ -10734,7 +11239,10 @@ function decide(m){
        所以玩家只要站到她旁邊、而且不在她預告的那條線上，
        她就一整場什麼都不做 —— 那不是機關，是漏洞。 */
     if(Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) <= 1
-       && cornerOK(m.x,m.y,p.x,p.y)) return {k:'melee'};
+       && cornerOK(m.x,m.y,p.x,p.y)){
+      if(m.tick%cad===0){m.warn={x:p.x,y:p.y,cx:m.x,cy:m.y,kind:'slam'};SFX.play('charge',180);say(M('v22.bossslam','{nm} 舉起重擊！下一回合打擊身邊一格，退開後可趁破綻反擊。',{nm:locName('mon',m.d)}),'bad');return {k:'wait'};}
+      return {k:'melee'};
+    }
     if(m.tick % cad === 0 && aligned(m.x,m.y,p.x,p.y)){
       m.warn = {x:p.x, y:p.y};                    // 畫面上會亮出這一行／這一列
       // 隔一段距離才衝得起來。貼著臉衝等於原地打一拳，那不叫衝撞。
@@ -10810,6 +11318,7 @@ function mindDecide(m){
   if(m.d.mind === 1){                       // ① 凝視
     if(m.warn){
       const aim = m.warn; m.warn = null;
+      globalThis.RPG_BOSS_FX?.release(m,'beam',aim);
       // 站在柱子後面（視線被擋）就打不到 —— 這一型態的正解
       if((aim.x === p.x || aim.y === p.y) && lineClear(m.x,m.y,p.x,p.y)) return {k:'shoot'};
       say(TX('s.019','光從柱子旁邊掃了過去。'),'good');
@@ -10933,6 +11442,14 @@ function knockPlayer(dx, dy, max){
 
 function act(m,it){
   const p=G.p;
+  if(it.k==='hunterStrike'){hunterStrike(m,it);return;}
+  if(it.k==='quake')globalThis.RPG_BOSS_FX?.release(m,'quake');
+  if(it.k==='bossSlam'){
+    startAttackPose(m,p.x-m.x,p.y-m.y,'slam');SFX.play('slam',120);ring(m.x,m.y,'#c9a16a',T*1.65,.45);burst(m.x,m.y,18,'#c9ae81',45,18,.55);G.shake=Math.max(G.shake,8);
+    if(Math.max(Math.abs(p.x-it.x),Math.abs(p.y-it.y))>1){say(TX('v22.slammiss','重擊砸在你原本的位置 —— 現在是反擊的機會！'),'good');return;}
+    it={k:'melee',heavy:true};
+  }
+  if(m.d.boss&&['charge','shoot','quake'].includes(it.k))bossOpening(m);
   if(it.k==='sideSkill'){ useSideBossSkill(m,it); return; }
   if(it.k==='skill'){ useMonsterSkill(m,it); return; }
   /* 怪會打村民，而且**優先**打他。護送的壓力全部從這一段來：
@@ -10940,7 +11457,7 @@ function act(m,it){
      兩邊都貼著的時候各一半 —— 全打他的話玩家只能眼睜睜看他死，
      全打你的話他就只是一個跟在後面的裝飾。 */
   const npc = G.npc;
-  if(npc && npc.hp > 0 && npc.follow && (it.k === 'melee' || it.k === 'move')){
+  if(!m.d.hunter && npc && npc.hp > 0 && npc.follow && (it.k === 'melee' || it.k === 'move')){
     const dn = Math.max(Math.abs(m.x-npc.x), Math.abs(m.y-npc.y));
     const dp = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y));
     if(dn <= 1 && (dp > 1 || G.rng.chance(NPC_AGGRO)) && cornerOK(m.x,m.y,npc.x,npc.y)){
@@ -10952,7 +11469,7 @@ function act(m,it){
   }
   if(it.k==='melee'||it.k==='shoot'){
     const ranged = it.k==='shoot';
-    const mult = (!ranged && m.d.rng) ? .5 : 1;   // 遠程怪貼身時打折 → 貼上去是正解
+    const mult = ((!ranged && m.d.rng) ? .5 : 1)*(it.heavy?1.25:1);
     /* 鏡子照不了鏡子。鏡之盾把所有遠程攻擊原封不動彈回去，
        而鏡像世界的頭目正好是純遠程的 —— 兩個加在一起，
        這一場仗變成「她打不到你，還會被自己的攻擊打死」。
@@ -10968,8 +11485,8 @@ function act(m,it){
       return;
     }
     else if(ranged && G.p.shld && G.p.shld.d.reflect){
-      const back = rollDmg(m.d.atk, 0, true, 1);
-      m.hp -= back; float(m.x,m.y,String(back),'#5b86b8');
+      let back = rollDmg(m.d.atk, 0, true, 1);
+      back=hunterDamage(m,back,'reflect');m.hp -= back; float(m.x,m.y,String(back),'#5b86b8');
       say(M('s.024','盾牌反射了 {v0} 的攻擊！',{v0:(locName('mon', m.d))}),'good');
       if(m.hp<=0) kill(m);
       return;
@@ -11285,7 +11802,7 @@ function act(m,it){
       if(G.seen[k]===2) say(M('s.029','{v0} 撿走了「{v1}」！',{v0:(locName('mon', m.d)), v1:(nameOf(G.items[k]))}),'bad');
       delete G.items[k];
     }
-    if(G.traps[k]){ delete G.traps[k]; m.hp -= Math.max(1,Math.floor(m.mhp/8)); if(m.hp<=0) kill(m); }
+    if(G.traps[k]){ delete G.traps[k]; m.hp -= hunterDamage(m,Math.max(1,Math.floor(m.mhp/8)),'trap'); if(m.hp<=0) kill(m); }
   }
 }
 
@@ -11338,7 +11855,8 @@ function uiIcon(img){
   const c = document.createElement('canvas');
   c.width = n; c.height = n;
   const x = c.getContext('2d');
-  x.imageSmoothingEnabled = false;
+  x.imageSmoothingEnabled = !!img._hd;
+  if(img._hd){c.dataset.hd='true';c.style.imageRendering='auto';}
   x.drawImage(img, 0, 0, n, n);
   return c;
 }
@@ -11544,6 +12062,7 @@ function useItem(it, fromGround){
   } else if(it.cat==='herb'){
     SFX.play('quaff');
     say(M('m.drink','喝下了「{nm}」。',{nm:nameOf(it)}));
+    if(d.mp){const n=Math.min(d.mp,p.mmp-p.mp);if(n<=0){say(TX('v22.mpfull','魔力已滿，凝神露已保留。'));return false;}p.mp+=n;float(p.x,p.y,'MP +'+n,'#9cc6f2');say(M('v22.mprestored','魔力恢復 {n} 點。',{n}),'good');}
     if(d.hp){ const h=Math.min(d.hp,p.mhp-p.hp); p.hp+=h; if(h){ say(M('s.035','恢復了 {v0} 點體力。',{v0:(h)}),'good'); float(p.x,p.y,'+'+h,'#6a8f4a'); } }
     if(d.full){ p.hp=p.mhp; say(TX('s.036','體力完全恢復了。'),'good'); }
     if(d.mhp){ p.mhp+=d.mhp; p.hp+=d.mhp; say(M('s.037','體力上限 +{v0}。',{v0:(d.mhp)}),'good'); }
@@ -11565,6 +12084,7 @@ function useItem(it, fromGround){
     SFX.play('read');
     say(M('m.read','讀了「{nm}」。',{nm:nameOf(it)}));
     ok = readScroll(d.id);
+    if(d.id==='ench'&&!ok)return false; // A capped item must not consume the scroll.
     if(ok) identify(it);
   } else if(it.cat==='wand'){
     consumed = false;
@@ -11592,6 +12112,7 @@ function readScroll(id){
     case 'ench': {
       const t = p.weap||p.shld;
       if(!t){ say(TX('s.046','什麼都沒有發生……')); return false; }
+      if(t.up>=scrollForgeCap(t.d)){say(TX('v22.scrollcap','這件裝備已達本章的卷軸強化上限。更高階的永久鍛造請找村莊鐵匠；卷軸已保留。'),'gold');return false;}
       t.up = Math.min(t.up+1, t.d.up); t.known=1;
       say(M('s.047','「{v0}」發出了光芒。',{v0:(locName(t.cat, t.d))}),'good'); return true;
     }
@@ -11602,7 +12123,7 @@ function readScroll(id){
     case 'flame': {
       let n=0;
       for(const m of G.mons.slice()) if(Math.max(Math.abs(m.x-p.x),Math.abs(m.y-p.y))<=1){
-        m.hp -= 20; float(m.x,m.y,'20','#e87a4a'); n++; if(m.hp<=0) kill(m); }
+        hurtMon(m,20,'#e87a4a',null,0,'scroll');n++; }
       const sc = p.inv.filter(i=>i.cat==='scroll');
       if(sc.length){ const v=G.rng.pick(sc); removeItem(v); say(TX('s.048','背包裡的一張卷軸被燒毀了！'),'bad'); }
       say(n ? M('s.143','火焰吞噬了周圍的 {n} 隻敵人。',{n}) : TX('s.144','火焰在空中燒盡了。'),'gold'); return true;
@@ -11671,7 +12192,7 @@ function fireWand(dx,dy){
   else if(id==='slow'){ target.d = Object.assign({}, target.d, {spd:.5}); say(M('s.053','{v0} 的動作變慢了。',{v0:(locName('mon', target.d))}),'good'); }
   else if(id==='weak'){ target.d = Object.assign({}, target.d, {atk:Math.max(1,target.d.atk-6), def:Math.max(0,target.d.def-4)});
     say(M('s.054','{v0} 變弱了。',{v0:(locName('mon', target.d))}),'good'); }
-  else if(id==='bolt'){ const dmg=30; target.hp-=dmg; float(target.x,target.y,String(dmg),'#7cb8ea');
+  else if(id==='bolt'){ const dmg=hunterDamage(target,30,'wand'); target.hp-=dmg; float(target.x,target.y,String(dmg),'#7cb8ea');
     say(M('s.055','雷擊命中，造成 {v0} 點傷害。',{v0:(dmg)}),'good'); if(target.hp<=0) kill(target); }
   else if(id==='blink'){ const spots=[];
     for(let yy=0;yy<MH;yy++) for(let xx=0;xx<MW;xx++) if(walkable(xx,yy)&&!monAt(xx,yy)) spots.push({x:xx,y:yy});
@@ -11682,7 +12203,7 @@ function fireWand(dx,dy){
     let n=0;
     while(n<10){ const nx=target.x+dx, ny=target.y+dy;
       if(!walkable(nx,ny)||monAt(nx,ny)) break; target.x=nx; target.y=ny; n++; }
-    if(n<10){ target.hp-=12; float(target.x,target.y,'12','#e87a4a'); say(M('s.058','{v0} 撞上了牆！',{v0:(locName('mon', target.d))}),'good');
+    if(n<10){ const dmg=hunterDamage(target,12,'wand');target.hp-=dmg; float(target.x,target.y,String(dmg),'#e87a4a'); say(M('s.058','{v0} 撞上了牆！',{v0:(locName('mon', target.d))}),'good');
       if(target.hp<=0) kill(target); }
     else say(M('s.059','{v0} 被擊退了。',{v0:(locName('mon', target.d))}),'good');
   }
@@ -11779,6 +12300,7 @@ function hurtMon(m, dmg, col, st, dur, source){
     float(m.x,m.y,'RESIST','#7cb8ea');
     say(M('m.resist','{nm} 的魔抗把傷害降低了一半。',{nm:locName('mon',m.d)}),'bad');
   }
+  dmg=hunterDamage(m,bossDamage(m,dmg),source);
   m.hp -= dmg; m.flash = 0.12;
   startHurtPose(m, G.p.x, G.p.y);
   float(m.x, m.y, String(dmg), col);
@@ -12235,6 +12757,7 @@ let npcSprite = null;
 /* 村民的樣子：跟村莊裡站的那幾個同一個骨架（土棕、成年）。
    共用剪影是刻意的 —— 玩家在村莊看過他們，所以不用解釋「這是誰」。 */
 function npcArt(){
+  if(HD_MODE&&HD_LOADED['npc#merchant'])return HD_LOADED['npc#merchant'];
   if(!npcSprite || atlas['npc#merchant']) npcSprite = atlas['npc#merchant'] || makeBlob('b', {age:'adult'});
   return npcSprite;
 }
@@ -12288,7 +12811,7 @@ function spawnHeianQuest(rng, free){
 
 function askHeianSamurai(n){
   openTalk({
-    who:'瀕死的武士', art:atlas['npc#dying_samurai']||npcArt(),
+    who:'瀕死的武士', art:(HD_MODE&&HD_LOADED['npc#dying_samurai'])||atlas['npc#dying_samurai']||npcArt(),
     body:n.asked
       ? '「結界石還撐著……你願意穿過異界之門，替平安京除掉魔化的三公嗎？」'
       : '「旅人……三公已經被異界侵蝕。我只能再打碎一次結界石。答應我，穿過門，依序打倒幻魔庵、武藏丸與陰陽師的人偶。」',
@@ -12742,6 +13265,7 @@ const rubbleAt = (x,y)=>{
 };
 let masonSprite = null;
 function masonArt(){
+  if(HD_MODE&&HD_LOADED['npc#mason'])return HD_LOADED['npc#mason'];
   if(!masonSprite || atlas['npc#mason']) masonSprite = atlas['npc#mason'] || makeBlob('5', {age:'adult'});
   return masonSprite;
 }
@@ -12891,6 +13415,7 @@ function descend(){
    進度存進村莊。死亡會回到「本章開頭」而不是第一章 ——
    一百層的戰役如果死一次就從頭，沒有人會走完第三章。 */
 function clearAct(){
+  if(G.over)return;
   const act = actAt(G.act);
   SFX.play('level');
   burst(G.p.x, G.p.y, 46, '#f5dc7a', 80, 28, 1.1);
@@ -12923,7 +13448,9 @@ function clearAct(){
   say(M('m.bounty','通關賞金　{n} G　—— 拿去村裡換裝備。',{n:bounty}),'gold');
   VILLAGE.gold += G.p.gold + bounty;
   VILLAGE.unlocked = true;
+  stashAlchemy();
   stashPots();                     // 收在保存壺裡的東西跟著進下一章
+  rememberTownCondition();
   saveVillage();
   clearRun();                      // 過關了，下一趟從村莊開始，不是從舊紀錄點
   const sc = submitScore(last ? 'clear' : 'act:' + (G.act + 1));
@@ -12936,6 +13463,7 @@ function clearAct(){
 /* 章節獎勵。能直接掛到既有系統上的就掛，掛不上的先記在村莊裡 ——
    欄位存在但沒有效果的獎勵，比沒有獎勵更糟。 */
 function grantReward(act){
+  if(grantMagicPoint('chapter:'+act.id)){VILLAGE.forgeOre=(VILLAGE.forgeOre|0)+3;say(TX('v22.milestone','★ 首次章節里程碑：魔法點數 +1、鍛造精礦 +3。'),'gold');}
   const p = G.p;
   if(act.id === 'forest'){                       // 神秘之帽：隨機一頂基本職業帽
     const h = G.rng.pick(OPEN_HAT);
@@ -12952,8 +13480,6 @@ function grantReward(act){
   /* 序章的獎勵刻意小而且**永久**：一點魔法點數。序章的東西如果會隨死亡
      消失，那三層就白走了；給一個跨越死亡的點數，才對得起「這是序章」。 */
   if(act.id === 'temple'){
-    VILLAGE.sp = (VILLAGE.sp|0) + 1;
-    p.sp = VILLAGE.sp;
     /* 序章的收尾要把「為什麼要下去」講完。使用者的原話是
        「進入了巴比倫神殿以後在深處發現了通往地下通天塔的隱藏入口」——
        所以這一句是整個故事的第一個扣環，不能只是一行獎勵通知。 */
@@ -13008,6 +13534,14 @@ function ending(){
      「預設值＝中文正文」是這個專案的慣例，不能省。 */
   const parts = TX('end.body',
     `塔安靜下來了。<br>裂縫一道一道合上，怪物退回牠們來的地方，<br>天空從最上面一層開始亮起來。<br><br>新的挑戰者走進了幻獸洞窟。<br>牠們也想知道，自己能學到哪裡。<br><br>爐火村的空地上，大人帶著孩子練劍。<br>旁邊，鑄劍師敲著下一把。<br>沒有人再提起塔的事 —— 那才是和平的樣子。<br><br>一次一次的練習，換來一格一格的熟練。<br>沒有捷徑，只有夜晚。<br><br>而在虛空的最深處，<br>有一個東西睜開了眼睛。<br><br>它站了起來，感受到「無」的力量 ——<br>然後化為光。<br><br>無盡練成的夜晚，成就 AI 晉級通天之塔之頂。<br>墜落與失敗，並無法打敗一次次的挑戰，<br>直到克服頂峰的考驗。<br>然後 —— 再度升級。<br><br>在虛空冒險的盡頭，它終於明白：<br>塔沒有頂。<br>有的只是下一個問題，<br>以及願意走過去回答它的人。<br><br>——　END　——<br><br>`).split(/<br>\s*<br>/).filter(x => x.replace(/<[^>]*>/g,'').trim());
+  if(LANG==='zh'){
+    parts[0]='塔安靜下來了。<br>裂隙一道道合上，石階不再顫動。<br>你推開塔頂的外側門——<br>這一次，光沒有把你帶走。黎明就在眼前。';
+    parts[2]='爐火村的燈又亮了。<br>鐵匠敲著下一把劍，孩子在爐邊睡著了。<br>有人替你留了一碗熱湯，沒有催你再出發。';
+    if(VILLAGE.npcDone)parts[2]+='<br>曾受你幫助的村人，為你留著門。';
+    parts[3]='你記得神廟冰冷的地面，也記得門衛的腳步。<br>向下走過迷宮，在大廣間找到塔門，再一步步向上。<br>那些失敗沒有白費。你終於帶著學會的一切，走了回來。';
+    if(VILLAGE.relicForged)parts[6]='四道封印在劍脊上靜靜發亮。<br>「諸神的黃昏」收起了鋒芒，照見持劍的你。<br>跨越虛空的意識，記住了每一次重新站起來。<br>這一次，你可以先好好歇息。';
+  }
+  if(globalThis.RPG_ENDING){RPG_ENDING.start(parts);return;}
   const over = $('over'), txt = $('otext');
   $('otitle').textContent = TX('end.title','你成為了「意識」');
   over.classList.add('show', 'roll');
@@ -13087,6 +13621,7 @@ function death(){
     SFX.play('level'); burst(G.p.x, G.p.y, 34, '#e87a4a', 70, 24, 1.0);
     say(TX('s.112','不死鳥的羽毛燒了起來 —— 你又站了回來。（這一趟只有一次）'),'good'); return; }
   SFX.play('death');
+  rememberTownCondition(true);
   /* ── 遺物：倒下時把身上一半的錢送回村莊 ────────────────────
      以前死亡是「全歸零」，包括錢。配上「進下一章不再白送裝備」之後，
      那條規則會長出一個死結：在第八章倒下的人，回到村裡是空的 ——
@@ -13181,7 +13716,15 @@ const SFX = (()=>{
   }
 
   const BANK = {
-    step:  ()=>hiss(.045,.045, 900, 320, 0, 1.4),
+    step:  ()=>{const id=typeof themeNow==='function'?themeNow():'stone';
+      const soft=id==='forest'||id==='beast',wood=id==='wood',wet=id==='lake';
+      hiss(soft?.07:wet?.10:.045,soft?.038:.046,wet?1700:soft?500:1100,wet?600:280,0,1.1);
+      if(!soft)tone(wood?185:105,wood?120:65,.055,'sine',.025);
+    },
+    move: ()=>tone(510,650,.028,'sine',.035),
+    door: ()=>{hiss(.32,.06,800,180,0,.7);tone(85,58,.25,'triangle',.045,.07);},
+    charge: ()=>{tone(90,180,.36,'triangle',.06);hiss(.24,.035,350,1200,0,.7);},
+    slam: ()=>{tone(75,30,.34,'sine',.14);hiss(.24,.12,1200,150,0,.8);},
     slide: ()=>{ hiss(.18,.070, 3600, 650, 0, 1.8); tone(880,520,.16,'triangle',.045); },
     wall:  ()=>tone(120, 90, .06,'square',.06),
     swing: ()=>hiss(.09,.10, 2600, 700, 0, .8),
@@ -13288,7 +13831,7 @@ const SFX = (()=>{
 
    一樣零音檔：全部是 WebAudio 即時合成的方波與三角波。 */
 const BGM = (()=>{
-  const BARS = 4, STEPS = 16, LOOP = BARS * STEPS;
+  const BARS = 4, STEPS = 16, LOOP = BARS * STEPS * 4;
   const hz = n => 440 * Math.pow(2, (n - 69) / 12);
 
   /* 一章一首。九十三層配同一首曲子，再好聽也會變成噪音 ——
@@ -13310,7 +13853,7 @@ const BGM = (()=>{
      節奏怎麼分、聲音是什麼質地。原本的引擎少了四樣東西，
      少了它們的話，換再多音符聽起來都還是同一首方波進行曲：
 
-       drone   低音不走路，整小節踩同一個音。中亞的音樂建立在持續低音上，
+       drone   低音不走路，整小節踩同一個音。這首原創配樂以持續低音建立空間感，
                而原本的低音一定會走 —— 走動的低音就是西方的和聲進行，
                那正是要避開的東西。
        arp     八分琶音本來每一個偶數步都響，整首都被鋪滿。
@@ -13605,6 +14148,12 @@ const BGM = (()=>{
       // 淡入從 2.5 秒縮到 1.2 秒 —— 一趟可能三十秒就結束，淡太久等於前半段沒音樂
       gain.gain.linearRampToValueAtTime(MUSIC_GAIN, c.currentTime + 1.2);
       gain.connect(SFX.bus());
+      // Two quiet, filtered room reflections; the direct signal remains clear.
+      for(const [delay,level] of [[.173,.10],[.293,.065]]){
+        const echo=c.createDelay(.5),wet=c.createGain(),lp=c.createBiquadFilter();
+        echo.delayTime.value=delay;wet.gain.value=level;lp.type='lowpass';lp.frequency.value=2300;
+        gain.connect(echo);echo.connect(lp);lp.connect(wet);wet.connect(SFX.bus());
+      }
     }
     return gain;
   }
@@ -13616,7 +14165,11 @@ const BGM = (()=>{
   function voice(t, f, dur, type, vol, cut, glide, vib){
     const c = ctx(), g0 = bus(); if(!c || !g0) return;
     const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
-    o.type = type; o.frequency.setValueAtTime(f, t);
+    const spectra={lyre:[1,.55,.28,.12,.065],koto:[1,.7,.22,.3,.09,.04],reed:[1,.38,.56,.16,.22,.07],flute:[1,.16,.045,.018],bowed:[1,.48,.27,.16,.09,.055],bell:[1,.08,.30,.035,.12]};
+    const partial=spectra[type];
+    if(partial){const re=new Float32Array(partial.length+1),im=new Float32Array(partial.length+1);partial.forEach((v,i)=>im[i+1]=v);o.setPeriodicWave(c.createPeriodicWave(re,im));}
+    else o.type=type;
+    o.frequency.setValueAtTime(f,t);
     if(glide) o.frequency.exponentialRampToValueAtTime(Math.max(20, glide), t + dur * 0.4);
     let lfo = null, lg = null;
     if(vib){
@@ -13632,8 +14185,11 @@ const BGM = (()=>{
     }
     lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut, t);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const pluck=type==='lyre'||type==='koto'||type==='bell';
+    const attack=Math.min(dur*.2,pluck?.006:type==='bowed'?.17:type==='flute'?.065:.025);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t+attack);
+    if(partial&&!pluck){g.gain.setValueAtTime(Math.max(.0002,vol*.78),t+Math.max(attack,dur*.70));}
+    g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(attack+.01,dur));
     o.connect(lp); lp.connect(g); g.connect(g0);
     o.start(t); o.stop(t + dur + 0.03);
   }
@@ -13662,8 +14218,8 @@ const BGM = (()=>{
     !lane ? EMPTY : Array.isArray(lane[0]) ? (lane[bar] || EMPTY) : lane;
 
   function playStep(i, t){
-    const bar = (i / STEPS) | 0, k = i % STEPS, S = spb();
-    const mv = cur.mvol || 1;                 // 單曲總輸出：連鼓與持續低音一起縮放
+    const bar = ((i / STEPS) | 0)%4, section=Math.floor(i/64)%4, k = i % STEPS, S = spb();
+    const mv = (cur.mvol || 1)*[.72,.9,1,.82][section];                 // 單曲總輸出：連鼓與持續低音一起縮放
     /* 章節內越深越低沉：每 5 層降半音、濾波拉低。
        用「本章第幾層」而不是絕對深度 —— 吃絕對深度的話，
        第十三章一開始就已經降了七個半音、悶到聽不出旋律，
@@ -13675,7 +14231,7 @@ const BGM = (()=>{
     const bi = hits(cur.bass, bar).indexOf(k);
     if(cur.drone){
       /* 持續低音：整小節踩同一個音，只在小節頭發一次，長度是一整小節。
-         中亞的音樂沒有和聲進行 —— 它有一條不動的低音，旋律在上面
+         本段原創配樂採用持續低音，旋律在上面
          繞著音階跑。低音一走動就變成西方的功能和聲，而那正是
          「聽起來像哪一款 JRPG」與「聽起來像那個地方」的分水嶺。 */
       if(k === 0){
@@ -13685,7 +14241,7 @@ const BGM = (()=>{
            照走動低音的音量寫的話尖峰會頂到 -0.2 dBFS —— 那是削波，
            而削波在耳機上是一聲聲的破音，不是「比較大聲」。
            （這是每一首都量之後才看到的：只量開場那一首時它是綠的。） */
-        voice(t, hz(n), S * 15.5, 'triangle', .16 * mv, 700 * dim);
+        voice(t, hz(n), S * 15.5, 'bowed', .16 * mv, 700 * dim);
         voice(t, hz(n + 7), S * 15.5, 'sine', .08 * mv, 700 * dim);   // 空五度，讓它撐得住
       }
     } else if(bi >= 0){                        // 行進低音
@@ -13700,20 +14256,20 @@ const BGM = (()=>{
     }
     // 琶音：預設每個偶數步一顆（原本的行為）；arp 指定的話就只在那幾步響
     const onArp = cur.arp ? cur.arp.indexOf(k) : (k % 2 === 0 ? k >> 1 : -1);
-    if(onArp >= 0){
+    if(onArp >= 0 && (section!==0 || onArp%2===0)){
       const ch = cur.chord[bar];
       const n = ch[onArp % ch.length] + tr;
-      voice(t, hz(n), S * 1.6, cur.pad === 'sine' ? 'sine' : 'square', cur.avol * mv, 1700 * dim);
+      voice(t, hz(n), S * 1.6, cur.pluck || 'lyre', cur.avol * mv, 1700 * dim);
     }
-    for(const [s3, n, d, gl, vb] of cur.lead[bar]){    // 主旋律
+    for(const [s3, n, d, gl, vb] of (section===2&&cur.answer?cur.answer:cur.lead)[bar]){    // 主旋律
       if(s3 !== k) continue;
-      voice(t, hz(n + tr), S * d * 0.95, cur.wave, cur.lvol * mv, cur.cut * dim,
+      voice(t, hz(n + tr), S * d * 0.95, cur.instrument || cur.wave, cur.lvol * mv, cur.cut * dim,
             gl ? hz(gl + tr) : 0, vb || cur.vib || 0);
       // 低八度的墊音不跟著滑也不抖 —— 兩層一起滑會糊成一團
-      voice(t, hz(n + tr - 12), S * d * 0.9, cur.pad, cur.lvol * 0.52 * mv, 1400 * dim);
+      if(section>0&&s3===0)voice(t,hz(n+tr-12),S*Math.max(4,d),'bowed',cur.lvol*.24*mv,1400*dim);
     }
     if(hits(cur.kick, bar).includes(k)) perc(t, .12 * mv, .30, 160, 45);        // 底鼓
-    if(hits(cur.hat,  bar).includes(k)) perc(t, .045 * mv, .10, 7000, 4000, 2); // 腳踏鈸
+    if(section>0&&hits(cur.hat,  bar).includes(k)) perc(t, .045 * mv, .10, 7000, 4000, 2); // 腳踏鈸
     /* 手鼓（doum）。中亞／中東的節奏是「悶的低音 + 脆的邊擊」，
        而原本只有底鼓與腳踏鈸 —— 那是套鼓，不是手鼓。
        低頻帶通加上快速下滑，聽起來就是手掌打在鼓面中央。 */
@@ -13984,6 +14540,8 @@ const BGM = (()=>{
     if(forced && TRACKS[forced]) return forced;
     if(typeof G === 'undefined' || !G) return 'stone';
     if(typeof themeNow !== 'function') return 'stone';
+    const chapter='chapter_'+actAt(G.act).id;
+    if(TRACKS[chapter])return chapter;
     const id = themeNow();
     return TRACKS[id] ? id : 'stone';
   }
@@ -14020,6 +14578,7 @@ const BGM = (()=>{
     get forced(){ return forced; },
     get running(){ return running; },
     get track(){ return curId; },
+    qaSection(n){if(QA_MODE){step=(n&3)*64;const c=ctx();if(c)nextT=c.currentTime+.05;}},
     TRACKS,
   };
 })();
@@ -14068,6 +14627,12 @@ function tintHeroAnimFrame(frame, frameKey, col){
 }
 function heroAnimNow(o, pose, phaseSeed){
   const p = G && G.p, sk = SKINS.includes(VILLAGE.skin) ? VILLAGE.skin : 'blob';
+  if(HD_MODE&&p){
+    const wi=p.weap?WEAP.findIndex(d=>d.id===p.weap.d.id):-1;
+    const si=p.shld?SHLD.findIndex(d=>d.id===p.shld.d.id):-1;
+    const img=hdHeroSprite(wi,si,p.hat,sk,VILLAGE.col,o.face,pose);
+    if(img)return {img,key:'hd:hero/'+[wi,si,p.hat,sk,VILLAGE.col,animDirection(o).row,animDirection(o).flip,pose.kind,pose.kind==='attack'?Math.floor(pose.phase*8):0].join('/')};
+  }
   const col = BLOB_COLS.includes(VILLAGE.col) ? VILLAGE.col : '#';
   const bodyFrame = animFrameFor('hero',sk,o,pose,phaseSeed);
   if(!bodyFrame) return null;
@@ -14280,6 +14845,8 @@ function panelTiles(){
 }
 function cameraTarget(){
   const shift = panelMode ? panelTiles()/2 : 0;
+  const focus=!panelMode&&globalThis.RPG_BOSS_FX?.focus();
+  if(focus)return {x:focus.x-VW/2+.5,y:focus.y-VH/2+.5};
   return {x:G.p.x - VW/2 + .5 + shift, y:G.p.y - VH/2 + .5};
 }
 function snapCameraToPlayer(){
@@ -14566,7 +15133,8 @@ function bossBar(){
   if(!bm){ el.classList.remove('show'); return; }
   el.classList.add('show');
   const nm = locName('mon', bm.d);
-  if(el.dataset.nm !== nm){ el.dataset.nm = nm; $('bossnm').textContent = nm; }
+  const stance=bm.warn?(bm.warn.kind==='slam'?'重擊蓄力 · 退開一格':'術式蓄力 · 離開警告線'):(bm.openUntil||-1)>=G.turn?'收招破綻 · 傷害 ×1.35':bm.ward?'結界 · 調整站位':bm.raged?'狂怒階段':'觀察招式';
+  $('bossnm').textContent=nm+' · '+stance;el.dataset.stance=bm.warn?'warning':(bm.openUntil||-1)>=G.turn?'opening':'normal';
   /* 還剩幾條。總數＝lives + 1；打掉一條就熄一顆。
      只有多命的頭目才畫 —— 單命的頭目掛一排「剩 1 條」是雜訊。 */
   const tot = (bm.d.lives | 0) + 1, left = tot - (bm.lives | 0);
@@ -14599,6 +15167,8 @@ function blit(img, x, y, tiles){
 
 function draw(dt){
   if(!G) return;
+  cx.imageSmoothingEnabled=HD_MODE;
+  if(HD_MODE)cx.imageSmoothingQuality='high';
   /* 整幀唯一一次縮放。這一行之後的每一個座標都是邏輯單位（一格 = T = 16），
      跟改倍率之前寫的完全一樣 —— 這就是不動 T 的用意。
      用 setTransform 而不是 scale：scale 是疊加的，畫面會一幀比一幀大。 */
@@ -14636,19 +15206,10 @@ function draw(dt){
   const ox = -Math.round(camX*T), oy = -Math.round(camY*T);
   const THEME_ID0 = ACT_THEME[actAt(G.act).id] || 'stone';
 
-  /* ── 迷宮外側的景色 ────────────────────────────────────────
-     故事的主標是「通天之塔」，但每一章的地圖外圍都是同一片岩盤 ——
-     山道與塔頂看起來還是在地底。玩家判斷「我在室內還是室外」靠的
-     不是地板，是**牆外面有什麼**。
-
-     兩層畫法，順序不能反：
-       1. 先把整張畫布鋪成這一章的「外面」（天空 / 雲海 / 水 / 虛空）
-       2. 再把 30x30 的地圖範圍蓋成岩盤
-
-     只做第 1 層的話，地圖裡還沒探索的地方也會透出天空 ——
-     那讀起來是「山裡面有好幾個洞」，不是「山」。 */
-  const BACK = (THEMES[THEME_ID0] || {}).back;
-  drawBackdrop(BACK, ox, oy);      // 背景不跟著推近 —— 遠景推近會像貼紙被放大
+  // The route stays inside the temple, subterranean labyrinth and tower.
+  // Sky belongs to the tower's optional exterior terrace, never unexplored cells.
+  const BACK = THEME_ID0 === 'temple' || THEME_ID0 === 'spire' ? 'temple' : null;
+  drawBackdrop(BACK, ox, oy);
 
   const zoomed = Z > 1.001;
   if(zoomed){
@@ -14658,14 +15219,7 @@ function draw(dt){
     cx.translate(-SW/2, -SH/2);
   }
 
-  /* 有「外面」的章節就不鋪岩盤。
-
-     第一版只在地圖範圍外畫天空 —— 但地圖有 30x30 格、視野只有 11x15，
-     玩家幾乎永遠在地圖深處，於是天空只剩畫面角落一條，等於沒做。
-
-     想清楚之後答案很簡單：山道與塔頂**本來就沒有「還沒挖開的岩盤」**。
-     那裡沒走過的地方不是石頭，是空的 —— 是懸崖外、是雲、是水面、是虛空。
-     所以走在山脊上會看到自己腳下那條路浮在天空裡，那正是「室外」。 */
+  // Unexcavated space remains solid rock around the underground rooms.
   if(!BACK){
     // 岩盤鋪底，隨鏡頭捲動 —— 對齊 32px 的圖樣週期就不會有接縫閃爍
     if(!rockPat) rockPat = cx.createPattern(TILE_ART.rock, 'repeat');
@@ -14683,7 +15237,7 @@ function draw(dt){
   const THEME_CFG = THEMES[THEME_ID] || THEMES.stone;
   const TS = tilesFor(THEME_ID);                                // 這一章的地貌
   const MF = macroFloorsFor(THEME_ID);                          // 2x2 大板的四個象限
-  const OUTDOOR = !!THEME_CFG.lightAll;
+  const AMBIENT_LIT = !!THEME_CFG.lightAll;
   const CAVE = !!THEME_CFG.cave;
   /* 這一層有沒有高低差。沒有的樓層直接是 null —— 每一格多跑四次查表
      在手機上是看得到的，而九成的樓層是平的。 */
@@ -14880,7 +15434,11 @@ function draw(dt){
       drawFloorThreshold(THEME_ID,x,y,t,px_,py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
-      if(t===ROOM && h % PROP_RATE === 0) blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      if(t===ROOM && h % PROP_RATE === 0){
+        const debris=HD_MODE&&HD_LOADED['hd:block-'+(THEME_ID==='crystal'?'ice-rubble':THEME_ID==='briar'?'briar':THEME_ID==='beast'?'bones':'rubble')];
+        if(debris){cx.save();cx.globalAlpha=.65;cx.drawImage(debris,px_+T*.32,py+T*.45,T*.38,T*.38);cx.restore();}
+        else blit(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      }
       /* ── 陽光的光斑 ──────────────────────────────────────
          使用者：「外面有陽光灑進來」「有窗或孔，讓陽光直射進來」。
          畫在地板與 AO 之後：光要蓋在地磚與牆腳的暗上，
@@ -14927,6 +15485,12 @@ function draw(dt){
              一整塊純色讀起來像陰影，有磚縫才讀得出「那是一面牆」。 */
           const hgt = Math.min(10, 5 + dS*2);
           cx.save();
+          if(HD_MODE){
+            cx.drawImage(TS.wallFace,px_,py+T-hgt,T,hgt);
+            const shade=cx.createLinearGradient(0,py+T-hgt,0,py+T);
+            shade.addColorStop(0,'rgba(255,238,207,.28)');shade.addColorStop(.18,'rgba(0,0,0,.10)');shade.addColorStop(1,'rgba(0,0,0,.48)');
+            cx.fillStyle=shade;cx.fillRect(px_,py+T-hgt,T,hgt);
+          }else{
           cx.globalAlpha=.94; cx.fillStyle=PAL[THEME_CFG.ramp[0]];
           cx.fillRect(px_, py + T - hgt, T, hgt);
           cx.globalAlpha=.76; cx.fillStyle=PAL[THEME_CFG.ramp[1]];
@@ -14937,6 +15501,7 @@ function draw(dt){
           cx.fillRect(px_, py + T - (hgt>>1), T, 1);         // 台基砌縫
           cx.fillRect(px_+7, py + T - hgt + 2, 1, hgt-2);   // 交錯豎縫
           cx.fillStyle=PAL['0']; cx.fillRect(px_,py+T-2,T,2);
+          }
           cx.restore();
           // 影子投到下面那一格
           cx.fillStyle = 'rgba(4,6,10,.52)';      cx.fillRect(px_, py + T, T, 5);
@@ -14952,12 +15517,22 @@ function draw(dt){
            內殿前的五格、前庭通往長廊的三格，剛好就是全圖唯二的兩處。 */
         const dN = lo(x, y-1) - lv;
         if(dN > 0){
+          if(HD_MODE){
+            for(let k2=0;k2<4;k2++){
+              const top=py+k2*T/4;
+              cx.drawImage(TS.floor[0],0,k2*TS.floor[0].height/4,TS.floor[0].width,TS.floor[0].height/4,px_,top,T,T/4);
+              const step=cx.createLinearGradient(0,top,0,top+T/4);
+              step.addColorStop(0,'rgba(255,243,218,.34)');step.addColorStop(.25,'rgba(255,243,218,.05)');step.addColorStop(1,'rgba(13,10,8,.52)');
+              cx.fillStyle=step;cx.fillRect(px_,top,T,T/4);
+            }
+          }else{
           cx.fillStyle=PAL[THEME_CFG.ramp[0]]; cx.globalAlpha=.62;
           cx.fillRect(px_,py,T,T); cx.globalAlpha=1;
           cx.fillStyle=PAL['0']; cx.fillRect(px_,py,2,T); cx.fillRect(px_+T-2,py,2,T);
           for(let k2 = 2; k2 < T; k2 += 4){
             cx.fillStyle=PAL[THEME_CFG.ramp[3]]; cx.fillRect(px_+2,py+k2,T-4,2);
             cx.fillStyle=PAL[THEME_CFG.ramp[0]]; cx.fillRect(px_+2,py+k2+2,T-4,2);
+          }
           }
         }
       }
@@ -15000,7 +15575,7 @@ function draw(dt){
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
     // 在戶外把視野外畫成純黑，那還是地牢。
-    if(s===1){ cx.fillStyle = OUTDOOR ? 'rgba(0,0,0,.34)' : 'rgba(0,0,0,.62)';
+    if(s===1){ cx.fillStyle = AMBIENT_LIT ? 'rgba(0,0,0,.34)' : 'rgba(0,0,0,.62)';
                cx.fillRect(px_,py,T,T); }
   }
 
@@ -15040,13 +15615,15 @@ function draw(dt){
 
   /* 成對石獅與黑石碑。它們畫在地形、光斑與投影之後，生物之前；
      因此角色走到像前會遮住台座，雕像仍明確站在場景裡而不是貼在 UI 上。 */
+  if(globalThis.RPG_BALCONY)globalThis.RPG_BALCONY.drawDoor(cx,ox,oy);
   for(const r of RELICS){
     const vis=G.seen[key(r.x,r.y)] || G.seen[key(r.x,Math.max(0,r.y-1))];
     if(!vis) continue;
     cx.save();
-    if(vis===1) cx.globalAlpha=OUTDOOR?.58:.34;
+    if(vis===1) cx.globalAlpha=AMBIENT_LIT?.58:.34;
     const art=templeRelicArt(r.kind,r.dir);
-    cx.drawImage(art,ox+r.x*T,oy+(r.y-1)*T,T,T*2);
+    if(art._hd)cx.drawImage(art,ox+(r.x-.3)*T,oy+(r.y-.6)*T,T*1.6,T*1.6);
+    else cx.drawImage(art,ox+r.x*T,oy+(r.y-1)*T,T,T*2);
     cx.restore();
   }
 
@@ -15131,7 +15708,11 @@ function draw(dt){
     const lit = G.seen[key(EV.x, EV.y)] === 2;
     cx.save();
     cx.globalAlpha = lit ? 1 : .45;
-    // 石堆：三層，越上面越小、越亮（受光在上，這是整套美術的規則）
+    if(HD_MODE&&HD_LOADED['npc#mason']){
+      cx.drawImage(masonArt(),bx-T*.24,by-T*.7,T*1.5,T*1.5);
+      const rubble=HD_LOADED['hd:block-rubble'];if(rubble)cx.drawImage(rubble,bx-T*.15,by+T*.15,T*1.3,T*.9);
+    }else{
+    // Legacy art remains available in pixel mode.
     const rock = [[1,9,14,6,'B'],[3,6,10,5,'C'],[6,3,6,4,'D']];
     for(const [rx,ry,rw,rh,c] of rock){
       cx.fillStyle = PAL[c] || '#9a8e75';
@@ -15143,6 +15724,7 @@ function draw(dt){
     cx.fillStyle = '#c9a98a';
     cx.fillRect(bx+11, by+7, 2, 2);
     cx.fillRect(bx+12, by+5, 2, 2);
+    }
     if(lit && EV.agreed){                            // 答應之後才數進度
       cx.fillStyle = '#f5dc7a';
       for(let i=0;i<EV.need;i++)
@@ -15198,7 +15780,7 @@ function draw(dt){
     if(vis){
       // 記憶中的地標畫淡一點。不能改用「蓋一層黑」——
       // 那會連精靈周圍的透明區一起蓋，變成一個方形的暗塊。
-      if(vis === 1) cx.globalAlpha = OUTDOOR ? .62 : .34;
+      if(vis === 1) cx.globalAlpha = AMBIENT_LIT ? .62 : .34;
       blit(MKART, ox + MK.x*T, oy + (MK.y-1)*T);
       cx.globalAlpha = 1;
     }
@@ -15351,9 +15933,9 @@ function draw(dt){
 
   // 屍體：死掉之後還要留 0.4 秒往上飄散，不然怪物是「消失」不是「被打倒」
   for(const c of G.corpses){
-    const k = c.t/0.4;
+    const k = c.t/(c.dur||.4),scale=c.scale||1;
     cx.save(); cx.globalAlpha = Math.max(0, 1-k);
-    blit(c.img, Math.round(ox+c.x*T), Math.round(oy+c.y*T - k*6));
+    cx.drawImage(c.img,ox+c.x*T-(scale-1)*T/2,oy+c.y*T-(scale-1)*T+k*3,T*scale,T*scale);
     cx.restore();
   }
 
@@ -15535,6 +16117,15 @@ function draw(dt){
        而「沒有影子」讀起來是圖沒對齊，不是牠在飛。
        要讀出高度，地上那一塊必須看得出來，才有東西可以跟本體拉開距離。 */
     if(SHADOW <= 0) return;
+    if(HD_MODE){
+      // A pooled contact shadow plus an offset penumbra, anchored to alpha feet.
+      cx.save();cx.translate(cxm,y0+1);cx.scale(Math.max(3,w2*.64),fly?2.1:2.7);
+      const sg=cx.createRadialGradient(0,0,.05,.22,.22,1);
+      sg.addColorStop(0,'rgba(1,5,9,'+(SHADOW*(fly?.36:.68))+')');
+      sg.addColorStop(.52,'rgba(1,5,9,'+(SHADOW*(fly?.19:.35))+')');
+      sg.addColorStop(1,'rgba(1,5,9,0)');
+      cx.fillStyle=sg;cx.fillRect(-1,-1,2.3,2.3);cx.restore();return;
+    }
     /* 一條等寬黑槓只會強調「剪紙貼在地面」，不是體積。改成三層硬邊
        像素接觸影：兩端收窄、腳底核心最深，右下一格是固定左上光源留下
        的短投影。全是 fillRect，沒有模糊與漸層。 */
@@ -15568,16 +16159,29 @@ function draw(dt){
           Y = Math.round((oy+dy*T + ly2 + ry2 + bobOf(o, ph||0) + flyLift)*2)/2;
     const s = sc || 1, w2 = T*s;
     const PX = X - Math.round((s-1)*T/2), PY = Y - Math.round((s-1)*T);
-    if(nativePose) cx.drawImage(img,PX,PY,w2,w2);
+    const detailed=!!img._hd;
+    const paintHD=source=>{
+      // A continuous squash/lean rig: never slice a glossy body into bands.
+      const q=Math.sin(pose.phase*Math.PI), walking=pose.kind==='walk';
+      const boss=!!o.d?.boss,windup=boss&&!!o.warn;
+      const lean=windup?-.035+Math.sin(clock*12)*.006:(pose.kind==='attack'?(boss?.12:.055):pose.kind==='hurt'?-.08:0)*q;
+      const squash=walking?Math.sin(pose.phase*Math.PI*2)*.05:pose.kind==='hurt'?-.05*q:pose.kind==='attack'?.035*q:Math.sin(clock*2.4)*.009;
+      cx.save();cx.translate(PX+w2/2,PY+w2-(walking?Math.abs(Math.sin(pose.phase*Math.PI*2))*w2*.024:0));cx.rotate(lean);
+      cx.scale(1+squash,1-squash);cx.drawImage(source,-w2/2,-w2,w2,w2);cx.restore();
+      if(boss&&windup){cx.save();cx.globalCompositeOperation='screen';cx.globalAlpha=.15+.06*Math.sin(clock*7);cx.drawImage(whiteOf(source,name+'@charge'),PX,PY,w2,w2);cx.restore();}
+    };
+    if(detailed)paintHD(img);
+    else if(nativePose) cx.drawImage(img,PX,PY,w2,w2);
     else drawPosed(img, PX, PY, w2, pose, o, name, fly);
     if(o.flash > 0){                       // 受擊白閃：整個剪影瞬間打亮
       cx.save();
       cx.globalAlpha = Math.min(1, o.flash/0.09) * .85;
-      if(nativePose) cx.drawImage(whiteOf(img,name),PX,PY,w2,w2);
+      if(detailed)paintHD(whiteOf(img,name));
+      else if(nativePose) cx.drawImage(whiteOf(img,name),PX,PY,w2,w2);
       else drawPosed(whiteOf(img, name), PX, PY, w2, pose, o, name, fly);
       cx.restore();
     }
-    if(!nativePose) drawSlash(o, X, Y, w2, pose);
+    if(!nativePose||detailed) drawSlash(o, X, Y, w2, pose);
   };
   /* 預告格：頭目射擊前一回合把整行／整列標成白色。
      這是這類頭目唯一該有的難度來源 —— 看得到，就躲得掉。 */
@@ -15585,10 +16189,17 @@ function draw(dt){
     if(!m.warn) continue;
     cx.save();
     cx.fillStyle = 'rgba(246,239,227,' + (0.16 + 0.10*Math.sin(clock*9)) + ')';
-    for(let x=0;x<MW;x++) if(G.seen[key(x,m.warn.y)]===2) cx.fillRect(ox+x*T, oy+m.warn.y*T, T, T);
-    for(let y=0;y<MH;y++) if(G.seen[key(m.warn.x,y)]===2) cx.fillRect(ox+m.warn.x*T, oy+y*T, T, T);
+    if(m.warn.kind==='slam'){
+      cx.fillStyle='rgba(238,126,67,'+(.22+.1*Math.sin(clock*9))+')';
+      for(let y=m.warn.cy-1;y<=m.warn.cy+1;y++)for(let x=m.warn.cx-1;x<=m.warn.cx+1;x++)if(walkable(x,y)&&G.seen[key(x,y)]===2){cx.fillRect(ox+x*T,oy+y*T,T,T);cx.strokeStyle='#f2bd76';cx.strokeRect(ox+x*T+1,oy+y*T+1,T-2,T-2);}
+    }else{
+      for(let x=0;x<MW;x++) if(G.seen[key(x,m.warn.y)]===2) cx.fillRect(ox+x*T, oy+m.warn.y*T, T, T);
+      for(let y=0;y<MH;y++) if(G.seen[key(m.warn.x,y)]===2) cx.fillRect(ox+m.warn.x*T, oy+y*T, T, T);
+    }
     cx.restore();
   }
+  globalThis.RPG_BOSS_FX?.drawGround(cx,ox,oy);
+  globalThis.RPG_PRESSURE?.drawGround(cx,ox,oy);
   // 複寫型態的分身：長得跟你一樣，但會完全複製你的移動
   if(G.echoes) for(const e of G.echoes){
     if(G.seen[key(e.x,e.y)]!==2) continue;
@@ -15679,7 +16290,7 @@ function draw(dt){
      真正的透明洞口；它不是一塊紫色地磚，玩家一眼就知道可以走進去。 */
   const hs=G.f.heianSamurai;
   if(hs&&G.seen[key(hs.x,hs.y)]===2){
-    const art=atlas['npc#dying_samurai']||npcArt();
+    const art=(HD_MODE&&HD_LOADED['npc#dying_samurai'])||atlas['npc#dying_samurai']||npcArt();
     shadow(hs.x,hs.y,ACTOR_SCALE,art,'dying_samurai');
     drawEnt(hs,art,'dying_samurai',19,ACTOR_SCALE);
   }
@@ -15706,8 +16317,9 @@ function draw(dt){
   // 店員
   if(G.shop && G.seen[key(G.shop.keeper.x, G.shop.keeper.y)] === 2){
     const kx = G.shop.keeper.x, ky = G.shop.keeper.y;
-    shadow(kx, ky, 1, KEEPER, 'keeper');
-    blit(KEEPER, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
+    const keeper=HD_MODE&&HD_LOADED['hd:shopkeeper']||KEEPER;
+    shadow(kx, ky, 1, keeper, 'keeper');
+    blit(keeper, ox+kx*T, oy+ky*T + (Math.sin(clock*2.6) > .5 ? -1 : 0));
   }
 
   /* 迷路的村民。用的是村莊裡那幾個村民同一個骨架 ——
@@ -15731,14 +16343,15 @@ function draw(dt){
   // 幻獸：畫在怪物之後、玩家之前，並用自己的元素色打一圈光
   for(const a of G.allies){
     const [ax,ay] = entPos(a);
-    shadow(ax, ay, 1, SUMMON_ART[a.d.id], 'sum'+a.d.id);
+    const summon=HD_MODE&&HD_LOADED['hd:sum-'+a.d.id]||SUMMON_ART[a.d.id];
+    shadow(ax, ay, 1, summon, 'sum'+a.d.id);
     const bx0 = Math.round(ox+ax*T), by0 = Math.round(oy+ay*T);
     cx.fillStyle = PAL[a.d.col] + '66';
     cx.fillRect(bx0+3, by0+15, 10, 1);
-    drawEnt(a, SUMMON_ART[a.d.id], 'sum'+a.d.id, a.id*1.3);
+    drawEnt(a, summon, 'sum'+a.d.id, a.id*1.3);
     if(a.ttl <= 5){                       // 快消失了就閃 —— 這是最需要提前知道的資訊
       cx.save(); cx.globalAlpha = .35 + Math.sin(clock*9)*.3;
-      blit(whiteOf(SUMMON_ART[a.d.id],'sum'+a.d.id), bx0, by0);
+      blit(whiteOf(summon,'sum'+a.d.id), bx0, by0);
       cx.restore();
     }
   }
@@ -15843,6 +16456,7 @@ function draw(dt){
   }
   cx.globalAlpha = 1;
 
+  globalThis.RPG_BOSS_FX?.draw(cx,ox,oy);
   // 飄字
   cx.font='7px ui-monospace, monospace'; cx.textAlign='center';
   for(const f of G.floats){
@@ -16177,7 +16791,8 @@ function fitCanvas(){
         return n;
       };
       const chrome = others(cab, $('body')) + others(main, shake);
-      const maxW = Math.floor((innerHeight - padY - chrome - 4) * VW / VH);
+      const wrapPad = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
+      const maxW = Math.floor((innerHeight - padY - chrome - wrapPad - 18) * VW / VH);
       if(maxW > 320 && maxW < wrap.clientWidth) wrap.style.maxWidth = maxW + 'px';
     }
     fitPad(wrap.clientWidth || innerWidth); return;
@@ -16226,7 +16841,7 @@ function fitViewport(){
       const tick = $('ticker').offsetHeight || 0;
       const avail = innerHeight - top - padH - tick;
       const cell = Math.min(innerWidth, pad.width || innerWidth) / nw;
-      if(cell > 0) nh = Math.max(12, Math.min(16, Math.floor(avail / cell)));
+      if(cell > 0) nh = Math.max(8, Math.min(16, Math.floor(avail / cell)));
     }
   }
   /* 也要比對畫布的實際像素，不能只比格數。開場時 VW/VH 就已經是桌機的
@@ -16247,6 +16862,9 @@ function fitViewport(){
 }
 addEventListener('resize', fitViewport);
 addEventListener('orientationchange', fitViewport);
+// The HD stylesheet follows the game script; size again after it and fonts load.
+addEventListener('load', fitViewport);
+if(document.fonts)document.fonts.ready.then(fitViewport);
 
 let last=0;
 function loop(ts){
@@ -16280,7 +16898,7 @@ function loop(ts){
     for(const a of (G.allies || [])) tickFx(a);
     if(G.npc) tickFx(G.npc);
     for(const c of G.corpses) c.t += dt;
-    G.corpses = G.corpses.filter(c=>c.t < .4);
+    G.corpses = G.corpses.filter(c=>c.t < (c.dur||.4));
     for(const r of (G.rings || [])) r.t += dt;
     if(G.rings) G.rings = G.rings.filter(r => r.t < r.life);
     for(const f of (G.trapFx || [])) f.t += dt;
@@ -16324,6 +16942,7 @@ requestAnimationFrame(loop);
 const $ = id => document.getElementById(id);
 let portLook = null;                 // 形象圖上一次畫的是哪一套裝備
 function refresh(){
+  globalThis.RPG_PRESSURE?.update();
   if(!G) return;
   const p=G.p;
   $('fnum').textContent = G.floor;
@@ -16510,8 +17129,9 @@ function openTalk(o){
   // 頭像：用場上那一隻的同一張圖，玩家才知道「是他在說話」
   const fc = $('talkface');
   if(fc && fc.getContext && o.art){
+    fc.width=fc.height=HD_MODE?192:32;
     const x = fc.getContext('2d');
-    x.imageSmoothingEnabled = false;
+    x.imageSmoothingEnabled = HD_MODE;
     x.clearRect(0,0,fc.width,fc.height);
     x.drawImage(o.art, 0, 0, fc.width, fc.height);
   }
@@ -16622,9 +17242,7 @@ function renderPanel(){
   if(panelMode==='magic'){
     $('ptitle').textContent = TX('p.magic','魔法');
     $('pcount').textContent = `MP ${p.mp} / ${p.mmp}`;
-    $('phint').textContent = p.sp
-      ? M('p.spleft','還有 {n} 點魔法點數可以分配（不會因死亡消失）。',{n:p.sp})
-      : M('p.spfrom','等級 {n} 之後每升一級 +1 魔法點數。',{n:SP_FROM_LV});
+    $('phint').textContent = M('v22.points','剩餘 {n} 點。首次通關各章、首次達到 4 的倍數等級各得 1 點；死亡保留，重練不重複領取。',{n:p.sp});
 
     const spRow = document.createElement('div'); spRow.id = 'sp';
     spRow.innerHTML = `<span>${TX('p.sp','魔法點數')}</span><b>${p.sp}</b>` +
@@ -16647,10 +17265,14 @@ function renderPanel(){
       }
       row.appendChild(nm); row.appendChild(pips);
       const b = document.createElement('button');
-      b.textContent = '＋';
-      b.disabled = p.sp <= 0 || lv >= SCH_MAX;
+      const pointCost=schoolUpgradeCost(lv);
+      b.textContent = lv>=SCH_MAX?TX('v22.mastered','精通'):M('v22.study','研習 {n} 點',{n:pointCost});
+      const unlock=SPELLS.filter(sp=>sp.sc===sc.id&&sp.at===lv+1).map(sp=>locSpell(sp)).join('、');
+      b.title=lv>=SCH_MAX?locUI('已精通','Mastered','習得済み'):locUI('提升至 ','Raise to level ','レベル ')+(lv+1)+(unlock?' · '+unlock:locUI(' · 提高法術威力與消耗',' · Improves spell power and cost',' · 魔法の威力と消費が上がります'));
+      b.disabled = p.sp < pointCost || lv >= SCH_MAX;
       b.onclick = ()=>{
-        p.sp--; p.sch[sc.id] = lv + 1;
+        if(p.sp<pointCost||lv>=SCH_MAX)return;
+        p.sp-=pointCost; p.sch[sc.id] = lv + 1;
         VILLAGE.sp = p.sp; VILLAGE.sch = Object.assign({}, p.sch); saveVillage();
         p.mmp = maxMp(p); p.mp = Math.min(p.mmp, p.mp + 5);
         SFX.play('ident');
@@ -16670,6 +17292,7 @@ function renderPanel(){
         refresh();
       };
       row.appendChild(b);
+      const benefit=document.createElement('small');benefit.className='school-benefit';benefit.textContent=b.title;row.appendChild(benefit);
       list.appendChild(row);
     }
 
@@ -17137,7 +17760,7 @@ function throwItem(it, dx, dy){
     SFX.play('shatter');
     burst(bx, by, 12, '#8c7a5e', 46, 12, .7);
     if(target){
-      const dmg = rollDmg(10, target.d.def, false, 1);
+      const dmg = hunterDamage(target,rollDmg(10, target.d.def, false, 1),'throw');
       target.hp -= dmg; float(target.x, target.y, String(dmg), '#e8dcc0');
       say(M('s.162','{pot}在 {v0} 身上砸得粉碎，造成 {v1} 點傷害。',
             {pot:potNm(it), v0:locName('mon', target.d), v1:dmg}));
@@ -17158,11 +17781,11 @@ function throwItem(it, dx, dy){
   }
   if(target){
     if(it.cat==='herb' && it.d.self){
-      target.st[it.d.self.st] = it.d.self.dur*2;
+      if(!(target.d.imm||[]).includes(it.d.self.st))target.st[it.d.self.st] = it.d.self.dur*2;
       say(M('s.119','{v0} 陷入了{v1}的狀態！',{v0:(locName('mon', target.d)), v1:(it.d.self.st)}),'good');
       identify(it);
     } else {
-      const dmg = rollDmg(8, target.d.def, false, 1);
+      const dmg = hunterDamage(target,rollDmg(8, target.d.def, false, 1),'throw');
       SFX.play('hit');
       target.hp -= dmg; float(target.x,target.y,String(dmg),'#e8dcc0');
       say(M('s.120','命中 {v0}，造成 {v1} 點傷害。',{v0:(locName('mon', target.d)), v1:(dmg)}));
@@ -17323,6 +17946,12 @@ function handleDir(dx,dy){
   if(pendSpell){ closeAim(); fireSpell(dx,dy); return; }
   if(pendWand){ closeAim(); fireWand(dx,dy); return; }
   if(pendThrow){ closeAim(); doThrow(dx,dy); return; }
+  if(panelMode){
+    const rows=[...$('list').querySelectorAll('.row,.spell,button:not(:disabled)')];
+    if(rows.length){const i=rows.indexOf(document.activeElement),step=dy||dx||1;
+      const row=rows[(i+step+rows.length)%rows.length];row.tabIndex=0;row.focus({preventScroll:true});row.scrollIntoView({block:'nearest'});SFX.play('move',70);}
+    return;
+  }
   tryMove(dx,dy);
 }
 // 瀏覽器規定音訊必須由使用者手勢啟動 —— 第一次互動時解鎖就好
@@ -17361,6 +17990,10 @@ addEventListener('keydown', ev=>{
   }
   if(G.over){ if(k==='r'||k==='R'){ restart(); } return; }
   if(k==='Escape'){ pendWand=null; pendThrow=null; pendSpell=null; pendMuramasa=false; swapMode=null; closeAim(); closeBigMap(); closePanel(); refresh(); return; }
+  if(panelMode&&(k==='Enter'||k===' ')){
+    ev.preventDefault();const el=document.activeElement;
+    if($('panel').contains(el)&&el.matches('.row,.spell,button'))el.click();return;
+  }
   const d = KEYDIR[k] || KEYDIR[k.toLowerCase?.()];
   if(d){ ev.preventDefault(); handleDir(d[0],d[1]); return; }
   if(k===' '){
@@ -17480,6 +18113,8 @@ let pressB = ()=>{};
     if(!live()) return;
     if($('aim').classList.contains('show')) return;      // 瞄準時要選方向，不是按確定
     if(panelMode){
+      const focused=document.activeElement;
+      if($('list').contains(focused)&&focused.matches('.row,.spell,button')){focused.click();return;}
       const b2 = [...$('acts').querySelectorAll('button')].find(x=>!x.disabled);
       if(b2){ b2.click(); return; }
       const row = $('list').querySelector('.row');
@@ -17762,6 +18397,7 @@ function restart(withChapterPrelude){
   closePanel(); closeBigMap(); closeVillage();
   pendWand=null; pendThrow=null; pendSpell=null; swapMode=null;
   newGame((Math.random()*1e9)|0);
+  globalThis.RPG_TOWN?.takeSupplies();
   const enter=()=>{
     BGM.force(null); BGM.start(); showCard();
     camX = G.p.x - VW/2 + .5; camY = G.p.y - VH/2 + .5;
@@ -17776,11 +18412,14 @@ function restart(withChapterPrelude){
 
 /* ─── 村莊 ──────────────────────────────────────────────────── */
 function leaveDungeon(){
+  if(G.over)return;
   abandonHeianPromise();
   const sc = submitScore('out');
   VILLAGE.gold += G.p.gold;
   VILLAGE.unlocked = true;
+  stashAlchemy();
   stashPots();                     // 活著走出來也算 —— 壺裡的東西跟著回村
+  rememberTownCondition();
   saveVillage();
   clearRun();                      // 主動離開迷宮也結束了這一趟
   G.over = true;                        // 停掉這一趟，但不是死亡
@@ -18737,6 +19376,7 @@ function villagerLine(){
 }
 
 function renderVillage(){
+  if(globalThis.RPG_TOWN)globalThis.RPG_TOWN.mount();
   $('vgold').textContent = VILLAGE.gold;
   // 走到哪一段故事就住哪一個鎮。名字跟著場景一起換 ——
   // 換了建築卻不換名字，玩家會以為是同一個地方換了佈景。
@@ -18829,7 +19469,7 @@ function renderVillage(){
     const row = document.createElement('div'); row.className = 'vrow own'; row.dataset.cat=g.cat;
     const c = villageGearIcon(g.cat, g.id);
     const nm = document.createElement('div'); nm.className='nm';
-    nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '');
+    nm.textContent = locName(g.cat, d) + (g.up ? ` +${g.up}` : '') + (g.cursed?TX('v22.cursed',' 【詛咒】'):'');
     const st = document.createElement('div'); st.className='st';
     st.textContent = g.cat==='weap' ? `${TX('ui.atk','攻')} +${(d.atk||0) + g.up*2}`
                                     : `${TX('ui.def','防')} +${(d.def||0) + g.up*2}`;
@@ -18838,20 +19478,22 @@ function renderVillage(){
        到第十三章就到頂了 —— 而是「把手上這把打得更利」。
        沒有這一格的時候，通關賞金到後期沒有東西可以買，
        而玩家的數值就永遠停在鐵匠鋪的天花板上（走通測試在通天塔全滅）。 */
-    if(g.up < (d.up || 0)){
+    if(g.up < forgeCap(d)){
       const cost = forgeCost(d, g.up);
+      const ore=forgeOreCost(g.up);
       const b = document.createElement('button');
       b.textContent = M('v.forge','＋{n}　{g} G',{n:g.up+1, g:cost});
-      b.disabled = VILLAGE.gold < cost;
+      if(ore)b.textContent+=' · '+ore+' 精礦';
+      b.disabled = VILLAGE.gold < cost || (VILLAGE.forgeOre|0)<ore;
       b.onclick = ()=>{
-        if(VILLAGE.gold < cost) return;
-        VILLAGE.gold -= cost; g.up++;
+        if(VILLAGE.gold < cost || (VILLAGE.forgeOre|0)<ore || g.up>=forgeCap(d)) return;
+        VILLAGE.gold -= cost; VILLAGE.forgeOre=(VILLAGE.forgeOre|0)-ore;g.up++;
         saveVillage(); SFX.play('ident'); renderVillage();
       };
       row.appendChild(b);
     } else {
       const e = document.createElement('div'); e.className='st';
-      e.textContent = TX('v.forgemax','已達極限');
+      e.textContent = g.up>=d.up?TX('v22.gearcap','裝備已達上限'):M('v22.forgecap','本章工坊上限 +{n}；推進主線後提升',{n:forgeCap(d)});
       row.appendChild(e);
     }
     owned.appendChild(row);
@@ -18867,7 +19509,7 @@ function forgeCost(d, up){ return Math.round((d.price || 800) / 8) * (up + 1); }
    45 讓走到通天塔時大約攢得起「一把秘銀 +4」或「一把秘銀 + 一面好盾」，
    但攢不起兩者都滿。那個「攢不起」才是鐵匠鋪存在的意義。 */
 const BOUNTY_PER_DEPTH = 45;
-function closeVillage(){ $('village').classList.remove('show'); BGM.force(null); }
+function closeVillage(){ if(globalThis.RPG_TOWN)globalThis.RPG_TOWN.close(); $('village').classList.remove('show'); BGM.force(null); }
 
 /* ─── 選單：手機把側欄與控制列搬進來，桌機維持原位 ──────────────
    CSS 沒辦法把元素搬到別的父層，所以這件事必須在 JS 做。
@@ -19039,6 +19681,7 @@ let coverUp = true;
    主角換成 32px 的圖之後會先被壓成 16 再由 CSS 放大七倍，
    封面上的主角會比遊戲裡的糊一倍，而封面正是玩家第一眼看到的那一張。 */
 function paintCover(){
+  if(globalThis.RPG_COVER){RPG_COVER.paint();return;}
   const ca = $('coverart');
   if(!ca || !ca.getContext) return;
   const hp = blobFor(VILLAGE.col, VILLAGE.skin), hn = Math.max(T, hp.width || T);
@@ -19070,16 +19713,17 @@ heroArtHooks.push(paintCover);
   const cols = $('cols');
   function paintPickers(){
     cols.innerHTML = '';
-    for(const col of BLOB_COLS){
+    for(const col of COVER_COLORS){
       const b2 = document.createElement('button');
-      b2.title = TX('col.' + col, BLOB_COL_NM[col]);
+      b2.type='button';b2.dataset.color=col;b2.title=coverColorLabel(col);b2.setAttribute('aria-label',b2.title);b2.setAttribute('aria-pressed',String(col===VILLAGE.col));
       const c = uiIcon(blobFor(col, VILLAGE.skin));
       b2.appendChild(c);
+      const label=document.createElement('span');label.textContent=b2.title;b2.appendChild(label);
       if(col === VILLAGE.col) b2.classList.add('on');
       b2.onclick = ()=>{
         VILLAGE.col = col; saveVillage();
         refreshHero();
-        paintPickers(); SFX.play('open'); refresh();
+        paintPickers(); SFX.play('open'); refresh();globalThis.RPG_COVER?.announce();
       };
       cols.appendChild(b2);
     }
@@ -19115,24 +19759,24 @@ heroArtHooks.push(paintCover);
     zh:[
       {title:'巴比倫築起天梯',body:'兩河之間的人們，把泥磚一層層送向天空。塔身越過城牆，越過雲層，像要把人間的知識親手交到眾神面前。'},
       {title:'塔底亮起一道光',body:'千年後，未完成的塔再次甦醒。青藍色的光貫穿神殿，一名陌生的旅人被捲入其中，直直送往地面。'},
-      {title:'墜落神殿前庭',body:'光熄滅時，四周只剩炭灰般的寂靜。旅人倒在殘破的釉磚前庭，武器與盾牌散落身旁，沒有任何人看見。'},
+      {title:'神殿門廊的甦醒',body:'光熄滅時，四周只剩炭灰般的寂靜。旅人在封閉的釉磚門廊醒來。石門內傳來沉重腳步；巨型門衛守著通往地底的階梯。'},
       {title:'甦醒',body:'「……這是哪裡？我只記得一道光，然後——」\n「那座塔……也許答案就在上面。先站起來再說。」'},
     ],
     en:[
       {title:'Babylon Builds a Stairway',body:'Between the rivers, people carried mud bricks layer by layer into the sky. The tower rose beyond the walls and clouds, bearing human knowledge toward the gods.'},
       {title:'A Light Beneath the Tower',body:'A thousand years later, the unfinished tower awoke. Blue light pierced the sanctuary, caught an unknown traveller, and carried them down toward the earth.'},
-      {title:'Fallen in the Forecourt',body:'When the light vanished, only charcoal silence remained. The traveller lay unconscious on the broken glazed bricks, unseen, with sword and shield beside them.'},
+      {title:'Awake in the Temple Vestibule',body:'When the light vanished, only charcoal silence remained. The traveller awoke inside a vaulted vestibule. Beyond the stone doors, a giant gatekeeper guarded the stairs into the underground labyrinth.'},
       {title:'Awakening',body:'“Where am I? I remember a flash of light, and then—”\n“That tower… perhaps the answer is above. First, get up.”'},
     ],
     ja:[
       {title:'バビロン、天への階を築く',body:'二つの川のあいだで、人々は泥レンガを一段ずつ空へ運んだ。塔は城壁と雲を越え、人の知を神々へ届けようとしていた。'},
       {title:'塔の下に青い光',body:'千年後、未完の塔が再び目覚めた。青い光が神殿を貫き、見知らぬ旅人を巻き込んで地上へ運んでいく。'},
-      {title:'前庭への落下',body:'光が消えると、炭のような静けさだけが残った。旅人は壊れた釉薬レンガの上に倒れ、剣と盾がその傍らに転がった。'},
+      {title:'神殿の玄関で目覚める',body:'光が消えると、炭のような静けさだけが残った。旅人は神殿の玄関で目覚めた。石扉の先では、巨大な門番が地下迷宮への階段を守っている。'},
       {title:'目覚め',body:'「……ここはどこだ？　光が見えて、それから——」\n「あの塔……答えは上にあるのかもしれない。まず立とう。」'},
     ],
   };
   const pro=$('prologue'), proVisual=$('prologuevisual');
-  const PROLOGUE_SCENE_MS=[6500,5200,5200,7000];
+  const PROLOGUE_SCENE_MS=[11000,10000,12000,12000];
   /* 預載只對「網站版」有意義：那時候這四張是四個要走網路的檔案。
      單檔版（ART_DATA 有值）裡，它們已經以 data URI 的形式躺在 CSS 裡，
      沒有什麼可以先抓的；再列一次只會讓打包程式把同樣四張**再內嵌一份**，
@@ -19141,6 +19785,23 @@ heroArtHooks.push(paintCover);
     : [1,2,3,4].map(i=>`art/promo/prologue-charcoal-${i}-v1.jpg`);
   let proIndex=0, proTimer=0, prologueArtWarmed=false;
   let chapterDone=null, chapterTimer=0, chapterActId='';
+  let proPaused=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const proPause=document.createElement('button'),proPrev=document.createElement('button');
+  proPause.id='propause';proPrev.id='proprev';proPrev.textContent=TX('v22.prev','上一幕');
+  $('prologueactions').insertBefore(proPrev,$('pronext'));$('prologueactions').insertBefore(proPause,$('proskip'));
+  function scheduleNarrative(){
+    clearTimeout(proTimer);clearTimeout(chapterTimer);
+    proPause.textContent=proPaused?TX('v22.auto','自動播放'):TX('v22.pause','暫停閱讀');proPause.setAttribute('aria-pressed',String(proPaused));
+    pro.classList.toggle('paused',proPaused);proPrev.hidden=!!chapterDone||proIndex===0;
+    if(proPaused||document.hidden)return;
+    const reading=Math.max(10000,Math.min(22000,$('prologuebody').textContent.length*125));
+    if(chapterDone)chapterTimer=setTimeout(finishChapterPrelude,reading);
+    else if(proIndex<3)proTimer=setTimeout(nextPrologue,Math.max(reading,PROLOGUE_SCENE_MS[proIndex]));
+  }
+  proPause.onclick=()=>{proPaused=!proPaused;scheduleNarrative();};
+  proPrev.onclick=()=>{if(!chapterDone&&proIndex>0){proIndex--;renderPrologue();}};
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&pro.classList.contains('show')){proPaused=true;scheduleNarrative();}});
+
 
   function warmPrologueArt(){
     if(prologueArtWarmed) return;
@@ -19174,8 +19835,7 @@ heroArtHooks.push(paintCover);
     SFX.play(['open','stairs','fell','open'][proIndex],60);
     clearTimeout(proTimer);
     /* 不喜歡動態的系統設定就保留手動翻頁；其他玩家可像看短片一樣自動播完。 */
-    if(!matchMedia('(prefers-reduced-motion:reduce)').matches)
-      proTimer=setTimeout(nextPrologue,PROLOGUE_SCENE_MS[proIndex]);
+    scheduleNarrative();
   }
 
   function nextPrologue(){
@@ -19223,8 +19883,7 @@ heroArtHooks.push(paintCover);
     coverUp=true; cov.classList.add('gone');
     pro.classList.add('show'); pro.setAttribute('aria-hidden','false');
     SFX.unlock(); SFX.play('stairs',65); BGM.force('title'); BGM.start();
-    if(!matchMedia('(prefers-reduced-motion:reduce)').matches)
-      chapterTimer=setTimeout(finishChapterPrelude,7200);
+    scheduleNarrative();
     return true;
   };
 
@@ -19270,6 +19929,7 @@ heroArtHooks.push(paintCover);
   $('pronext').onclick=()=>chapterDone?finishChapterPrelude():nextPrologue();
   $('proskip').onclick=()=>chapterDone?finishChapterPrelude():enterDungeon();
   $('start').onclick = ()=>{
+    globalThis.RPG_TOWN?.takeSupplies();
     clearRun();                   // 重新開始就是放棄紀錄點，講明白就好
     beginPrologue();
   };
@@ -19668,6 +20328,25 @@ function qaMenu(){
   for(const b of BOSS){ const a=document.createElement('a'); a.className='qacard'; a.href=qaUrl({qa:'boss',boss:b.id,seed:260822}); a.textContent=b.nm; bosses.appendChild(a); }
   el.appendChild(bosses);
 }
+function qaWearGallery(){
+  qaOpenWorld();
+  let el=$('qagallery');if(!el){el=document.createElement('section');el.id='qagallery';document.body.appendChild(el);}
+  el.innerHTML='<h1>主角的十頂帽子</h1><p class="qasub">每頂帽子依序顯示正面、右側與背面。點「進場試戴」可在神殿中查看。</p>';
+  const grid=document.createElement('div');grid.className='qagrid';
+  for(const h of HAT){
+    const card=document.createElement('article');card.className='qacard';
+    const label=document.createElement('b');label.textContent=h.nm||h.id;card.append(label);
+    for(const face of [[0,1],[1,0],[0,-1]]){
+      const c=document.createElement('canvas');c.width=c.height=256;
+      const img=hdHeroSprite(-1,-1,h.id,'blob','#',face)||heroSprite(-1,-1,h.id,'blob','#');
+      c.getContext('2d').drawImage(img,0,0,256,256);card.append(c);
+    }
+    const b=document.createElement('button');b.textContent='進場試戴';
+    b.onclick=()=>{el.remove();qaEnterFloor(0,1,260822);G.p.hat=h.id;VILLAGE.skin='blob';VILLAGE.col='#';refresh();};
+    card.append(b);grid.append(card);
+  }
+  el.append(grid);
+}
 function startQa(){
   if(!QA_MODE) return false;
   const kind=QA_QUERY.get('qa')||'menu', seed=Number(QA_QUERY.get('seed'))||260822;
@@ -19697,7 +20376,8 @@ function startQa(){
   }else{
     // 先建立一次遊戲狀態，部分外部精靈載入完成後再畫圖鑑。
     newGame(seed);
-    if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')||'mon'),250);
+    if(kind==='wear') setTimeout(qaWearGallery,250);
+    else if(kind==='gallery') setTimeout(()=>qaGallery(QA_QUERY.get('type')||'mon'),250);
     else if(kind==='worlds') setTimeout(()=>qaWorldAudit(),250);
     else if(kind==='audio') setTimeout(()=>qaAudioAudit(),250);
     else qaMenu();
@@ -19715,3 +20395,12 @@ if(!startQa()){
   refresh();
 }
 </script>
+<link rel="stylesheet" href="rpg-upgrade.css?v=20260923-v22">
+<script src="rpg-upgrade.js?v=20260923-v22"></script>
+<script src="boss-fx.js?v=20260923-v22"></script>
+<script src="rpg-cinema.js?v=20260923-v22"></script>
+<script src="rpg-cover.js?v=20260923-v22"></script>
+
+
+
+

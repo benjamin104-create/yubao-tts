@@ -2,6 +2,19 @@
 // items, stat changes, extra turns, or special boss damage are granted here.
 const weakened = new WeakSet();
 
+// Follow visible warning tiles, using actual walk/corner/ice rules. Never
+// dodge into an unseen tile, an enemy, or another currently warned area.
+function dodgeWarning(api,G){
+ const p=G.p;if(['睡','麻','石','纏'].some(k=>p.st[k]))return false;
+ const warnings=G.mons.filter(m=>m.warn&&G.seen[api.key(m.x,m.y)]===2);
+ const danger=(x,y)=>warnings.some(m=>m.warn.kind==='slam'?Math.max(Math.abs(x-m.warn.cx),Math.abs(y-m.warn.cy))<=1:x===m.warn.x||y===m.warn.y);
+ if(!danger(p.x,p.y))return false;
+ for(const d of api.DIRS){const x=p.x+d[0],y=p.y+d[1];if(!api.walkable(x,y)||!api.cornerOK(p.x,p.y,x,y)||api.monAt(x,y))continue;const q=api.iceMoveTarget(p.x,p.y,...d,true);
+  if(!api.walkable(q.x,q.y)||api.monAt(q.x,q.y)||G.seen[api.key(q.x,q.y)]!==2||danger(q.x,q.y))continue;
+  api.tryMove(...d);return true;
+ }return false;
+}
+
 function combatItem(api, G){
   const p = G.p;
   if(G.over || ['睡','麻','石'].some(k => p.st[k])) return false;
@@ -52,7 +65,7 @@ function combatItem(api, G){
   return false;
 }
 
-module.exports = { combatItem };
+module.exports = { combatItem, dodgeWarning };
 
 if(require.main === module){
   const assert = require('node:assert/strict');

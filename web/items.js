@@ -20,7 +20,8 @@ const AI = id => {
 };
 let pass = 0, fail = 0;
 function t(name, fn){
-  try { fn(); console.log('✓ ' + name); pass++; }
+  // Village wounds persist in play, but one test's death must not injure the next fixture.
+  try { V.condition=null; fn(); console.log('✓ ' + name); pass++; }
   catch(e){ console.log('✗ ' + name + '\n    ' + e.message); fail++; }
 }
 
@@ -824,6 +825,8 @@ t('解謎型頭目刀砍不動，只有砲座打得動', ()=>{
     api.newGame(4242);
     const G = api.G();
     G.floor = api.ACTS[act].floors; api.buildFloor();
+    // This case measures turret cooldown, not survival while standing in boss attacks.
+    G.p.hp=G.p.mhp=10000;
     return {G, boss: G.mons.find(m => m.d.boss)};
   };
   // 投石小魔王（試煉的山道）與光線人（水晶礦坑）都是解謎型
@@ -988,7 +991,7 @@ t('主動找架打的時候，回血要少於挨打', ()=>{
      修之前量到的是 **150%** —— 回到身上的血比挨的還多五成。 */
   let dmg = 0, healed = 0, turns = 0;
   for(let s = 0; s < 12; s++){
-    V.act = 0; V.stock = []; V.pots = [];
+    V.act = 0; V.stock = []; V.pots = []; V.condition=null;
     api.newGame(9000 + s);
     const G = api.G(), p = G.p;
     let prev = p.hp;

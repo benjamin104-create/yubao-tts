@@ -32,6 +32,7 @@ function fakeEl(){
     width:0, height:0, textContent:'', innerHTML:'', className:'', disabled:false,
     getContext: fakeCtx,
     appendChild(c){ this.children.push(c); return c; },
+    insertBefore(c){this.children.push(c);return c;},setAttribute(){},removeAttribute(){},
     addEventListener(){}, onclick:null, focus(){},
     querySelectorAll(){ return []; }, querySelector(){ return null; },
     closest(){ return null; }, setPointerCapture(){},
@@ -47,6 +48,7 @@ global.document = {
   documentElement: { lang: '', style:{}, scrollWidth:1280, scrollHeight:900 },
 };
 global.addEventListener = () => {};
+global.matchMedia = () => ({matches:false,addEventListener(){}});
 /* QA 快速入口會讀 location.search。預設為空 —— 無頭測試等同一般遊戲入口。
    QA_SEARCH 環境變數可以把它換掉，因為「驗收網址不准動玩家存檔」這件事
    只有在 QA_MODE 為真的時候才測得到，而 QA_MODE 是在腳本載入的當下
@@ -70,11 +72,13 @@ global.requestAnimationFrame = () => {};
 global.prompt = () => null;
 
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
-const m = html.match(/<script>\r?\n"use strict";([\s\S]*)<\/script>/);
+const m = html.match(/<script>\r?\n"use strict";([\s\S]*?)<\/script>/);
 if(!m){ console.error('index.html 裡找不到遊戲腳本'); process.exit(2); }
 
 eval(m[1] + '\n;globalThis.__api = {' +
   'G:()=>G, VILLAGE:()=>VILLAGE, newGame, tryMove, endTurn, descend, useItem,' +
+  'rememberTownCondition, innCost, restAtInn, townCursedItems, exorcismAvailable, purifyAtShrine, pressureEnabled, pressureInfo,' +
+  'HUNTERS,hunterState,hunterAllowed,scheduleHunter,spawnHunter,hunterTick,hunterDamage,hunterIntent,hunterStrike,hunterReward,lionBreaker,packPursuit,restorePursuit,RELIC_GUARDS,relicDefinition,placeRelicGuardian,claimRelic,forgeRagnarok,' +
   'DIRS, key, walkable, monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN,' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
   'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
@@ -93,7 +97,7 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'startMuramasaAim, fireMuramasa,' +
   'crispCssWidth, crispPortraitGrid, FIELD_ZOOM, ACTOR_SCALE,' +
   'POT, potPut, potTake, stashPots, throwItem, sellPrice, clearAct, leaveDungeon, removeItem,' +
-  'VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +
+  'ALCHEMY_INPUT, ALCHEMY_RECIPES, alchemyUnlocked, stashAlchemy, distillAlchemy, craftAlchemy, forgeCap, scrollForgeCap, forgeOreCost, gearAvailable, grantMagicPoint, schoolUpgradeCost, grantReward, decide, bossDamage, bossOpening, readScroll, HERB, SCROLL, VILLAGE_STOCK, stockNow, defOf, HALL_FROM, forgeCost, REFINE, refine, schFull, fireTurret, arenaTick, kill, hurtMon, bossWatch, vision,' +
   'i18n:{setLang, LANG:()=>LANG, TX, M, locName, locJob, locAbil, locSpell, locSpellD, locSummon, locAct,' +
   ' locPassive, MASTER_PASSIVE,' +
   ' MONS, BOSS, HAT, ABIL, ABIL_T, SPELLS, SUMMONS, SCHOOLS, ACTS, LOOK, DICT,' +

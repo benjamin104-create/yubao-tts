@@ -34,7 +34,7 @@ def main():
             ctx = browser.new_context(viewport={'width': 390, 'height': 844})
             page = ctx.new_page()
             page.route('**/art/boss/b_genmaan.png*', lambda r: r.abort())
-            page.goto(base + '&stage=1')
+            page.goto(base + '&stage=1&art=classic')  # Injected 48px PNG cache fixture only.
             page.wait_for_function('() => G && G.heian.active')
             page.evaluate('''() => {
               const id='b_genmaan', old=atlas[id];
@@ -62,12 +62,12 @@ def main():
                 errors = []
                 page.on('pageerror', lambda e: errors.append(str(e)))
                 page.goto(base + '&stage=3')
-                page.wait_for_function('''ids => ids.every(id=>ownArt[id] && atlas[id].width===48)
-                  && atlas['weap#9'] && atlas['weap#9'].width===32''', arg=BOSSES)
+                page.wait_for_function('''ids => ids.every(id=>ownArt[id] && atlas[id].width >= (HD_MODE?128:48))
+                  && atlas['weap#9'] && atlas['weap#9'].width >= (HD_MODE?128:32)''', arg=BOSSES)
                 assert '異界三殿' in page.locator('#zone').inner_text()
                 assert page.evaluate('() => G.mons.length') == 3
                 assert page.evaluate('''() => G.mons.every(m=>
-                  characterLiftOf(atlas[m.d.id],m.d.id).width===48)''')
+                  characterLiftOf(atlas[m.d.id],m.d.id).width >= (HD_MODE?128:48))''')
                 assert not page.locator('#tags').get_by_text('下樓', exact=True).count()
                 # All required controls must survive portrait / landscape layouts.
                 for selector in ['#btnA', '#btnB', '#cross button[aria-label="上"]',
@@ -96,7 +96,7 @@ def main():
                 assert page.evaluate('() => G.p.weap.d.id') == 'muramasa'
                 assert page.evaluate('() => JSON.stringify(localStorage)') == before_storage
                 assert not errors, errors
-                print(f'PASS {width}x{height}: 48px bosses, touch reward, distant slash, return, QA save isolation')
+                print(f'PASS {width}x{height}: HD bosses, touch reward, distant slash, return, QA save isolation')
                 ctx.close()
             browser.close()
     finally:

@@ -26,6 +26,7 @@ HTML = (ROOT / 'web' / 'index.html').as_uri()
 
 SANDBOX = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 LAUNCH = {'executable_path': SANDBOX} if os.path.exists(SANDBOX) else {}
+LAUNCH['args'] = ['--allow-file-access-from-files']
 
 HAN = re.compile(r'[㐀-鿿]')
 KANA = re.compile(r'[぀-ヿ]')
@@ -83,7 +84,14 @@ VISIBLE = """()=>{
     const cs = getComputedStyle(el);
     if(cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return;
     for(const n of el.childNodes){
-      if(n.nodeType === 3){ const t = n.textContent.trim(); if(t) out.push(t); }
+      if(n.nodeType === 3){
+        const t=n.textContent.trim();if(!t)continue;
+        const range=document.createRange();range.selectNodeContents(n);const r=range.getBoundingClientRect();
+        if(!r.width||!r.height||r.bottom<=0||r.top>=innerHeight||r.right<=0||r.left>=innerWidth)continue;
+        const hit=document.elementFromPoint(Math.max(0,Math.min(innerWidth-1,r.x+r.width/2)),Math.max(0,Math.min(innerHeight-1,r.y+r.height/2)));
+        // Transformed panels and HUD behind a full-screen overlay are not visible text.
+        if(hit&&(el.contains(hit)||hit.contains(el)))out.push(t);
+      }
       else if(n.nodeType === 1) walk(n);
     }
   };
