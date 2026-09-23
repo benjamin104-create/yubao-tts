@@ -13,7 +13,7 @@ if(await p.evaluate(()=>!!globalThis.RPG_COVER)){
 }
 await p.goto(base+'?qa=village&act=1');await p.waitForFunction(()=>HD_LOADED['hd:keeper-slam']&&HD_LOADED['hd:town-healer']&&RPG_TOWN.state&&globalThis.RPG_BOSS_FX);
 assert.equal(await p.locator('#town-world').count(),1);
-await p.evaluate(()=>{const n=RPG_TOWN.state.npcs.find(n=>n.id==='healer');RPG_TOWN.state.p.x=n.x;RPG_TOWN.state.p.y=n.y+1;});await p.locator('#town-action').click();await p.getByRole('button',{name:'魔法調合與素材寄存'}).click();assert.equal(await p.locator('.alchemy-recipes article').count(),6);
+await p.evaluate(()=>{for(const actor of RPG_TOWN.state.npcs){actor.goal=null;actor.next=999;}const n=RPG_TOWN.state.npcs.find(n=>n.id==='healer');RPG_TOWN.state.p.x=n.x;RPG_TOWN.state.p.y=n.y+.25;});await p.locator('#town-action').click();await p.getByRole('button',{name:'魔法調合與素材寄存'}).click();assert.equal(await p.locator('.alchemy-recipes article').count(),6);
 await p.screenshot({path:path.join(out,'offline-alchemy.png')});await p.keyboard.press('Escape');
 await p.goto(base+'?qa=floor&act=tower');await p.waitForFunction(()=>RPG_BALCONY.door&&HD_LOADED['hd:terrace']);
 await p.evaluate(()=>{G.mons=[];const d=RPG_BALCONY.door;G.p.x=d.x;G.p.y=d.y+1;});await p.keyboard.press('ArrowUp');await p.locator('#tower-terrace').waitFor({state:'visible'});await p.screenshot({path:path.join(out,'offline-terrace-mobile.png')});

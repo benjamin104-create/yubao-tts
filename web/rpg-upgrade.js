@@ -151,7 +151,7 @@
     const h=document.createElement('h2');h.textContent=title;modalBody.append(h);
     if(portrait){const c=document.createElement('canvas');c.width=c.height=128;c.className='town-face';const art=portraitOf(portrait);if(art)c.getContext('2d').drawImage(art,0,0,128,128);modalBody.append(c);}
     const p=document.createElement('p');p.textContent=text;modalBody.append(p);
-    for(const [label,fn]of actions){const b=document.createElement('button');b.dataset.mode=mode;b.textContent=label;b.onclick=()=>{SFX.play('open');fn();};modalActions.append(b);}
+    for(const [label,fn]of actions){const b=document.createElement('button');b.textContent=label;b.onclick=()=>{SFX.play('open');fn();};modalActions.append(b);}
     const back=document.createElement('button');back.textContent='返回村莊';back.onclick=closeModal;modalActions.append(back);
     SFX.play('talk');modal.querySelector('button').focus({preventScroll:true});
   }

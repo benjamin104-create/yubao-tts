@@ -1,6 +1,6 @@
 # 通天塔 RPG v22：三造型封面與四種主角色彩
 
-2026-09-23。本機版本，尚未部署線上。離線成品：`dist/babel-rpg-v22.html`，約 22.7 MiB。
+2026-09-24 發布候選版。離線成品：`dist/babel-rpg-v22.html`，約 22.8 MiB。正式網址：https://benjamin104-create.github.io/yubao-tts/ 。部署成功與公開網址驗證紀錄以 GitHub Actions 及 `work/publish-v22/live-report.json` 為準。
 
 同日視覺修訂：依回饋將背景改為明亮寶藍色，使用 CSS 色彩混合移除原場景的濁黃調；羽毛帽主角移至左側，魔法帽移至右側，兩者仍朝向中央。更新手機／桌面截圖與離線成品。
 
@@ -17,6 +17,9 @@
 - `node web/save.js`：17 項；`node web/render.js`：9 項；`node web/progression.js`：9 項通過。
 - `tools/check_rpg_offline.cjs`：封面三個角色、四個選色、背景內嵌，以及調合、塔外門廊、結局和既有 HD 素材完整性。
 - 截圖與測試報告保存在 `work/rpg-v22/`。手機驗證使用 Chromium 裝置尺寸模擬，尚未在實體 iPhone／Android 上測試。
+- 發布前修正村莊對話動作按鈕的未定義變數；`tools/check_town_services.py` 在手機直式、橫式與桌面以實際觸控驗證武器店、宿屋恢復、調合與村民事件，加入雲端發布檢查。
+- 48 首曲目音量、打擊與頭目音效通過瀏覽器量測。短音效改由 AudioWorklet 逐樣本取峰值，避免繪圖忙碌時漏採 70ms 打擊聲；沒有放寬音量門檻。
+- `tools/check_rpg_live.cjs` 驗證公開網址的手機封面、霸王黑保存、開場、背包／技能切換、續玩存檔與村莊調合。
 
 本次沿用既有角色和背景美術，改動構圖、程式換色與穿戴合成，沒有新增 AI 生成插畫。
 

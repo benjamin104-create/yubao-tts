@@ -1800,7 +1800,7 @@ html.hd-art #village{background:linear-gradient(#121d22,#151a17 45%,#101619)}
   </div><!-- /body -->
 </div>
 
-<script src="hd-manifest.js?v=20260923-v22"></script>
+<script src="hd-manifest.js?v=20260924-v22"></script>
 <script>
 "use strict";
 /* HD is a presentation layer only. ?art=classic preserves the existing
@@ -4771,7 +4771,9 @@ if(HD_MODE) for(const id of Object.keys(HD_ASSETS).filter(k=>k.startsWith('hd:')
    檔名用 id 不用編號：武器表的順序改過就會整批錯位。 */
 for(const [tab, into, dir] of [[WEAP, WEAP_ART, 'weapon'], [SHLD, SHLD_ART, 'shield']])
   for(const d of tab)
-    artImage(dir + '#' + d.id, ART_DIR + dir + '/' + d.id + '.png',
+    // HD equipment is composed from its manifest; legacy worn layers are optional.
+    if(!HD_MODE || (ART_DATA && ART_DATA[dir + '#' + d.id]))
+      artImage(dir + '#' + d.id, ART_DIR + dir + '/' + d.id + '.png',
              c => { into[d.id] = c; heroArtIn(); });
 for(let i = 0; i < HAT.length; i++){
   const id = HAT[i].id, idx = i;
@@ -20395,11 +20397,11 @@ if(!startQa()){
   refresh();
 }
 </script>
-<link rel="stylesheet" href="rpg-upgrade.css?v=20260923-v22">
-<script src="rpg-upgrade.js?v=20260923-v22"></script>
-<script src="boss-fx.js?v=20260923-v22"></script>
-<script src="rpg-cinema.js?v=20260923-v22"></script>
-<script src="rpg-cover.js?v=20260923-v22"></script>
+<link rel="stylesheet" href="rpg-upgrade.css?v=20260924-v22">
+<script src="rpg-upgrade.js?v=20260924-v22"></script>
+<script src="boss-fx.js?v=20260924-v22"></script>
+<script src="rpg-cinema.js?v=20260924-v22"></script>
+<script src="rpg-cover.js?v=20260924-v22"></script>
 
 
 

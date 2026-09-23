@@ -62,22 +62,36 @@ METER = """(ms)=>new Promise(done=>{
   requestAnimationFrame(tick);
 })"""
 
-SFX_PEAK = """(name)=>new Promise(done=>{
+SFX_PEAK = """async (name)=>{
   const c = SFX.ctx();
-  const an = c.createAnalyser(); an.fftSize = 2048;
-  SFX.bus().connect(an);
-  const buf = new Float32Array(an.fftSize);
-  let peak = 0;
-  SFX.play(name);
-  const t0 = performance.now();
-  const tick = ()=>{
-    an.getFloatTimeDomainData(buf);
-    for(const v of buf) if(Math.abs(v) > peak) peak = Math.abs(v);
-    if(performance.now() - t0 < 400) requestAnimationFrame(tick);
-    else { an.disconnect(); done(+(20*Math.log10(peak || 1e-9)).toFixed(1)); }
-  };
-  requestAnimationFrame(tick);
-})"""
+  // Capture every audio sample: a busy render frame can miss the entire
+  // 70 ms hit transient when sampling an AnalyserNode from requestAnimationFrame.
+  if(!window.sfxPeakMeterReady){
+    const source = `class PeakMeter extends AudioWorkletProcessor {
+      constructor(){super();this.peak=0;this.frames=0;this.sent=false;}
+      process(inputs){
+        for(const channel of inputs[0]||[])for(const v of channel)
+          this.peak=Math.max(this.peak,Math.abs(v));
+        this.frames+=128;
+        if(this.frames>=sampleRate*.4&&!this.sent){
+          this.sent=true;this.port.postMessage(this.peak);
+        }
+        return !this.sent;
+      }
+    } registerProcessor('sfx-peak-meter',PeakMeter);`;
+    const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+    try{await c.audioWorklet.addModule(url);window.sfxPeakMeterReady=true;}
+    finally{URL.revokeObjectURL(url);}
+  }
+  return new Promise((done,reject)=>{
+    const meter=new AudioWorkletNode(c,'sfx-peak-meter');
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('Audio meter timed out'));},5000);
+    function cleanup(){clearTimeout(timeout);SFX.bus().disconnect(meter);meter.disconnect();meter.port.close();}
+    meter.port.onmessage=({data:peak})=>{cleanup();done(+(20*Math.log10(peak||1e-9)).toFixed(1));};
+    SFX.bus().connect(meter);meter.connect(c.destination);
+    SFX.play(name);
+  });
+}"""
 
 
 def main():
