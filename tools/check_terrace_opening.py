@@ -14,7 +14,8 @@ def main():
         browser = pw.chromium.launch(args=['--allow-file-access-from-files'])
         try:
             for width,height in [(390,844),(360,640),(844,390),(1200,900)]:
-                page=browser.new_page(viewport={'width':width,'height':height},has_touch=True)
+                # This fixture asserts Chinese copy; CI browsers otherwise default to English.
+                page=browser.new_page(viewport={'width':width,'height':height},has_touch=True,locale='zh-TW')
                 errors=[]
                 page.on('pageerror',lambda e: errors.append(str(e)))
                 def bounds(selector):

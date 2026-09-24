@@ -10,7 +10,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 with sync_playwright() as pw:
     browser=pw.chromium.launch(args=['--allow-file-access-from-files'])
     for width,height in [(360,640),(390,844),(844,390)]:
-        page=browser.new_page(viewport={'width':width,'height':height},has_touch=True)
+        page=browser.new_page(viewport={'width':width,'height':height},has_touch=True,locale='zh-TW')
         errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(BASE+'?qa=floor&act=tower&seed=81291')
