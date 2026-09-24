@@ -35,6 +35,7 @@ LAUNCH['args'] = ['--allow-file-access-from-files']
 # 真實的視窗尺寸。桌機那幾個刻意放矮的 —— 1280x620 就是使用者回報的那一台
 # （1280 寬的螢幕扣掉瀏覽器的分頁列與網址列，剩下大約 620 高）。
 SIZES = [
+    (844, 390, 'landscape 844x390'),
     (1280, 620, 'desktop 1280x620'),
     (1366, 660, 'laptop  1366x660'),
     (1440, 720, 'laptop  1440x720'),
@@ -45,6 +46,10 @@ SIZES = [
     (360, 640, 'phone    360x640'),
     (393, 560, 'phone    393x560'),
 ]
+
+if os.environ.get('LAYOUT_ONLY'):
+    SIZES=[s for s in SIZES if '%sx%s' % (s[0],s[1])==os.environ['LAYOUT_ONLY']]
+    assert SIZES, 'Unknown viewport filter'
 
 # 非看到不可的東西。這份清單短，是因為它列的是「看不到就不能玩」的那幾個。
 MUST_SEE = ['#sign', '#hud', '#hp', '#hpbar', '#mp', '#game']
@@ -61,7 +66,7 @@ PROBE = """(sels)=>{
     if(r.width < 1 || r.height < 1) return {sel, ok:false, why:'尺寸為 0'};
     if(r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth)
       return {sel, ok:false,
-              why:'超出視窗　top ' + Math.round(r.top) + '　bottom ' + Math.round(r.bottom)
+              why:'超出視窗　left ' + Math.round(r.left) + ' right ' + Math.round(r.right) + ' top ' + Math.round(r.top) + '　bottom ' + Math.round(r.bottom)
                   + '　（視窗高 ' + innerHeight + '）'};
     // 中心點真的看得到嗎 —— 被 overflow:hidden 切掉的東西矩形還在，但畫不出來
     const hit = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2);

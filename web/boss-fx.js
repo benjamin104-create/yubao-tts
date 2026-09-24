@@ -89,3 +89,86 @@
   }
   globalThis.RPG_BOSS_FX={release,drawGround,draw,cells,focus,get active(){return QA_MODE?events.map(e=>({...e})):undefined;}};
 })();
+
+/* Player spells have distinct silhouettes and three visual beats. Pure presentation:
+   no combat RNG, costs, damage, targeting or turn scheduling is changed here. */
+(() => {
+  let owner=null,floor=null,events=[];
+  const palettes={fire:['#ff7745','#fff3c2'],aqua:['#67cbff','#efffff'],bolt:['#b5abff','#fffbdc'],wind:['#64dfba','#e6fff3'],heal:['#8ce5a4','#fff0b5'],blade:['#efc481','#fff9e8'],shadow:['#b9a1ef','#ebe8ff']};
+  const types={smash:'blade',duplex:'blade',onicut:'shadow',pyro:'fire',deluge:'aqua',pierce:'wind',m_gale:'wind',m_smite:'bolt',m_mail:'bolt',m_pyre:'fire',m_core:'fire',m_zero:'aqua',m_mirror:'aqua',m_judge:'heal',m_revive:'heal',mend:'heal',ward:'heal',guard:'blade',veil:'shadow',reflect:'aqua',clone:'shadow',foresee:'shadow',m_shift:'wind',lull:'aqua',anthem:'heal',circle:'shadow',survey:'wind'};
+  const reset=()=>{if(owner!==G||floor!==G?.f){owner=G;floor=G?.f;events=[];}};
+  types.meditate='heal';types.sageward='heal';
+  function cast(def,dx,dy){
+    if(!G)return;reset();const p=G.p,theme=def.sc||types[def.id]||'blade',k=def.k||'self',hits=[];
+    let end={x:p.x,y:p.y};
+    if(def.id==='m_gale'){
+      for(const [vx,vy]of DIRS)for(let n=1;n<=7;n++){const x=p.x+vx*n,y=p.y+vy*n;if(!walkable(x,y)||G.seen[key(x,y)]!==2)break;if(monAt(x,y))hits.push({x,y});}
+    }else if(k==='beam'||k==='blast'){
+      const range=def.id==='m_smite'?12:def.id==='gust'?8:def.sc?9:10;
+      for(let n=1;n<=range;n++){const x=p.x+dx*n,y=p.y+dy*n;if(!walkable(x,y)||G.seen[key(x,y)]!==2)break;end={x,y};const m=monAt(x,y);if(m){hits.push({x,y});if(k==='blast')break;}}
+      if(!hits.length)hits.push(end);
+    }else if(k==='room'||k==='around'){
+      for(const m of G.mons)if(m.hp>0&&G.seen[key(m.x,m.y)]===2&&(k==='room'||Math.max(Math.abs(m.x-p.x),Math.abs(m.y-p.y))<=1))hits.push({x:m.x,y:m.y});
+    }else if(k==='melee'){end={x:p.x+dx,y:p.y+dy};if(walkable(end.x,end.y))hits.push(end);}
+    else hits.push({x:p.x,y:p.y});
+    const melee=['smash','duplex','onicut','m_gale'].includes(def.id);
+    events.push({id:def.id,theme,k,melee,dx,dy,x:p.x,y:p.y,end,hits:hits.slice(0,12),start:performance.now()/1000,dur:REDUCED?.5:melee?.95:1.45,master:def.id.startsWith('m_')});
+    events=events.slice(-4);
+  }
+  function ellipse(c,x,y,r,flat,col,width){c.strokeStyle=col;c.lineWidth=width;c.beginPath();c.ellipse(x,y,r,r*flat,0,0,Math.PI*2);c.stroke();}
+  function rune(c,x,y,r,col,t){
+    ellipse(c,x,y,r,.5,col,.65);ellipse(c,x,y,r*.76,.5,col,.35);
+    c.strokeStyle=col;c.lineWidth=.7;
+    for(let i=0;i<8;i++){const a=i*Math.PI/4+t,xx=x+Math.cos(a)*r*.87,yy=y+Math.sin(a)*r*.44;c.beginPath();c.moveTo(xx-1,yy-2);c.lineTo(xx+1,yy+2);c.moveTo(xx-2,yy);c.lineTo(xx+2,yy);c.stroke();}
+  }
+  function bloom(c,x,y,r,col){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col+'80');g.addColorStop(.4,col+'30');g.addColorStop(1,col+'00');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);}
+  function lightning(c,x,y,xx,yy,col,core,phase){
+    const dx=xx-x,dy=yy-y,n=Math.hypot(dx,dy)||1,points=[];
+    for(let i=0;i<=10;i++){const t=i/10,j=i===0||i===10?0:Math.sin(i*12.7+Math.floor(phase*9))*T*.23;points.push([x+dx*t-dy/n*j,y+dy*t+dx/n*j]);}
+    for(const [w,a,color]of [[4,.22,col],[1.5,.8,col],[.5,1,core]]){c.save();c.globalAlpha*=a;c.strokeStyle=color;c.lineWidth=w;c.beginPath();points.forEach(([px,py],i)=>i?c.lineTo(px,py):c.moveTo(px,py));c.stroke();c.restore();}
+  }
+  function impact(c,e,x,y,t,col,core){
+    const rise=Math.sin(Math.PI*t),r=T*(.35+t*(e.master?1.7:1.1));
+    bloom(c,x,y,T*(e.master?1.6:1.1)*rise,col);
+    if(e.theme==='fire'&&e.k!=='self'){
+      ellipse(c,x,y,r,.45,col,1.3*(1-t)+.3);
+      for(let i=0;i<7;i++){const a=i*2.4,xx=x+Math.cos(a)*r*.6,base=y+Math.sin(a)*r*.22,h=T*(.7+(i%3)*.35)*rise;
+        const g=c.createLinearGradient(xx,base,xx,base-h);g.addColorStop(0,col);g.addColorStop(.55,core);g.addColorStop(1,col+'00');c.fillStyle=g;c.beginPath();c.moveTo(xx-3,base);c.quadraticCurveTo(xx-5,base-h*.45,xx+Math.sin(t*9+i)*4,base-h);c.quadraticCurveTo(xx+5,base-h*.3,xx+3,base);c.fill();}
+    }else if(e.theme==='aqua'&&e.k!=='self'){
+      ellipse(c,x,y,r,.5,col,.7);
+      for(let i=0;i<6;i++){const a=i*Math.PI/3,xx=x+Math.cos(a)*T*.5,yy=y+Math.sin(a)*T*.25,h=T*(.7+(i%2)*.5)*rise;c.fillStyle=col+'66';c.strokeStyle=core;c.lineWidth=.65;c.beginPath();c.moveTo(xx-3,yy);c.lineTo(xx-1,yy-h);c.lineTo(xx+4,yy-h*.5);c.lineTo(xx+3,yy);c.closePath();c.fill();c.stroke();}
+    }else if(e.theme==='bolt'&&e.k!=='self'){
+      lightning(c,x+T*.3,y-T*2*rise,x,y,col,core,t);ellipse(c,x,y,r,.5,col,.7);
+      for(let i=0;i<4;i++){const a=i*Math.PI/2+t;lightning(c,x,y,x+Math.cos(a)*r,y+Math.sin(a)*r*.5,col,core,t+i);}
+    }else if(e.theme==='wind'&&e.k!=='self'){
+      for(let i=0;i<4;i++){const yy=y-i*T*.27*rise,rr=r*(1-i*.13);c.strokeStyle=i%2?core:col;c.lineWidth=1.1;c.beginPath();c.ellipse(x,yy,rr,rr*.32,0,t*6+i,t*6+i+Math.PI*1.5);c.stroke();}
+    }else if(e.k==='self'){
+      rune(c,x,y,r,col,t*.3);
+      if(['guard','ward','veil','reflect','m_mirror','m_mail','sageward'].includes(e.id)){c.strokeStyle=core;c.lineWidth=1;c.fillStyle=col+'18';c.beginPath();c.moveTo(x,y-T*1.7*rise);c.lineTo(x+T*.7,y-T*.95);c.lineTo(x+T*.55,y);c.lineTo(x,y+T*.35);c.lineTo(x-T*.55,y);c.lineTo(x-T*.7,y-T*.95);c.closePath();c.fill();c.stroke();}
+      for(let i=0;i<8;i++){const a=i*Math.PI/4+t*2,xx=x+Math.cos(a)*T*.7,yy=y+Math.sin(a)*T*.3-T*t*1.6;c.strokeStyle=i%2?col:core;c.lineWidth=.9;c.beginPath();c.moveTo(xx-1.5,yy);c.lineTo(xx+1.5,yy);c.moveTo(xx,yy-2);c.lineTo(xx,yy+2);c.stroke();}
+    }else{
+      rune(c,x,y,r,col,t);for(let i=0;i<8;i++){const a=i*Math.PI/4;c.strokeStyle=core;c.lineWidth=.9;c.beginPath();c.moveTo(x+Math.cos(a)*r*.4,y+Math.sin(a)*r*.2);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r*.5);c.stroke();}
+    }
+  }
+  function draw(c,ox,oy){
+    if(!G)return;reset();const now=performance.now()/1000;events=events.filter(e=>now-e.start<e.dur);if(!events.length)return;
+    c.save();c.beginPath();for(let y=0;y<MH;y++)for(let x=0;x<MW;x++)if(G.seen[key(x,y)]===2)c.rect(ox+x*T,oy+y*T,T,T);c.clip();
+    for(const e of events){const t=(now-e.start)/e.dur,[col,core]=palettes[e.theme]||palettes.blade,x=ox+(e.x+.5)*T,y=oy+(e.y+.75)*T,fade=Math.min(1,t*9,Math.max(0,(1-t)*2.4));
+      c.save();c.globalCompositeOperation='screen';c.globalAlpha=fade*.78;
+      if(REDUCED){rune(c,x,y,T*.9,col,0);for(const hit of e.hits)ellipse(c,ox+(hit.x+.5)*T,oy+(hit.y+.65)*T,T*.5,.5,core,.8);c.restore();continue;}
+      rune(c,x,y,T*(.7+Math.min(t,.25)*1.2),col,t*.4);
+      if(e.melee){
+        const a=Math.atan2(e.dy,e.dx),count=e.id==='duplex'?2:e.id==='m_gale'?4:1;
+        for(let i=0;i<count;i++){const q=Math.max(0,Math.min(1,(t-i*.13)*1.8)),angle=a+(i%2?-1:1)*(-1.6+q*2.5);c.save();c.translate(x,y-T*.2);c.rotate(angle);c.globalAlpha*=Math.sin(Math.PI*q);const r=T*(e.master?2.3:1.6);c.fillStyle=col+'70';c.beginPath();c.arc(0,0,r,-.65,.65);c.quadraticCurveTo(r*.35,0,r*Math.cos(-.65),r*Math.sin(-.65));c.fill();c.strokeStyle=core;c.lineWidth=1.2;c.beginPath();c.arc(0,0,r,-.65,.65);c.stroke();c.restore();}
+      }else if(e.k==='beam'||e.k==='blast'){
+        const q=Math.max(0,Math.min(1,(t-.08)/.28)),xx=x+(e.end.x-e.x)*T*q,yy=y+(e.end.y-e.y)*T*q;
+        if(t<.55){if(e.theme==='bolt')lightning(c,x,y,xx,yy,col,core,t);
+          else{const grad=c.createLinearGradient(x,y,xx+0.01,yy+0.01);grad.addColorStop(0,col+'00');grad.addColorStop(1,col);c.strokeStyle=grad;c.lineWidth=e.theme==='wind'?2:3;c.beginPath();c.moveTo(x,y);c.lineTo(xx,yy);c.stroke();bloom(c,xx,yy,T*.8,col);c.fillStyle=core;c.beginPath();c.ellipse(xx,yy,e.theme==='aqua'?5:3,e.theme==='aqua'?1.5:3,Math.atan2(e.dy,e.dx),0,Math.PI*2);c.fill();}}
+      }
+      const start=e.melee?.18:.28;
+      if(t>start)for(const [i,hit]of e.hits.entries()){const q=(t-start-i*.008)/(1-start);if(q<0||q>1)continue;c.save();c.globalAlpha*=Math.sin(Math.PI*q);impact(c,e,ox+(hit.x+.5)*T,oy+(hit.y+.75)*T,q,col,core);c.restore();}
+      c.restore();
+    }c.restore();
+  }
+  globalThis.RPG_PLAYER_FX={cast,draw,get active(){return QA_MODE?events.map(e=>({...e})):undefined;}};
+})();

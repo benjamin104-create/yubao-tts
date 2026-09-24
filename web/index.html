@@ -1800,7 +1800,7 @@ html.hd-art #village{background:linear-gradient(#121d22,#151a17 45%,#101619)}
   </div><!-- /body -->
 </div>
 
-<script src="hd-manifest.js?v=20260924-v22"></script>
+<script src="hd-manifest.js?v=20260924-v23"></script>
 <script>
 "use strict";
 /* HD is a presentation layer only. ?art=classic preserves the existing
@@ -2387,19 +2387,11 @@ const HAT = [
   {id:'oni',   nm:'鬼面兜',   job:'oni', price:2000, jobnm:'鬼武者', hidden:1},
   {id:'cone',  nm:'術士尖帽', job:'sor', price:1900, jobnm:'術士',   hidden:1},
 ];
-/* ★ 究極頭環。使用者：「究極的低耗魔頭環也需要透過『拯救』或『解謎』得到」。
-
-   job:'none' 是這件裝備的**代價**，不是偷懶：戴上它就沒有職業，
-   於是沒有職業技能、沒有職業進度、也拿不到 Master 的永久被動。
-   換來的是每一發咒文便宜三點 —— 而咒文的花費會隨系級長（SPELL_COST_PER_LV），
-   到了後段那三點省下來的比任何一頂職業帽都多。
-   「要職業還是要魔力」變成一個真的選擇，那才配叫究極。
-
-   ult:1 讓它跟通天之劍、聖域之盾走同一條規則：不上架、不掉落、
-   而且沒帶 Token 金庫的時候會耗損。 */
+/* The earned circlet trains Sage like the other hats. Its spell discount and
+   limited-run reward remain; mastery still requires six character level-ups. */
 const CIRCLET_OFF = 3;
-HAT.push({id:'circlet', nm:'賢者頭環', job:'none', price:20000, ult:1,
-          jobnm:'見習者'});
+HAT.push({id:'circlet', nm:'賢者頭環', job:'sage', price:20000, ult:1,
+          jobnm:'賢者'});
 /* 一般的帽子池不含究極頭環 —— 它掉在地上就等於「隨便走走就撿得到」，
    而使用者指定的取得方式是拯救或解謎。 */
 const OPEN_HAT = HAT.filter(h => !h.hidden && !h.ult);
@@ -2427,6 +2419,7 @@ const MASTER_PASSIVE = {
   nin: '陷阱傷害減半',
   oni: '擊殺敵人時回復少量體力',
   sor: '魔力上限 +20%',
+  sage: '魔力上限 +10%',
 };
 /* k: melee=對面前 / self=對自己 / beam=直線貫穿 / blast=命中後爆開 / around=周圍一圈 */
 /* ── 技能的魔力代價：規則本身就是設計說明 ──────────────────────
@@ -2463,6 +2456,8 @@ const ABIL = [
 
   {job:'sor', lv:1, id:'pyro',   nm:'火之奧義', t:'atk',  mp:10,k:'beam',   desc:'直線貫穿並附加灼燒'},
   {job:'sor', lv:2, id:'reflect',nm:'咒返',     t:'def',  mp:8, k:'self',   desc:'10 回合內遠程與魔法攻擊反彈回去'},
+  {job:'sage',lv:1,id:'meditate',nm:'靜心',t:'def',mp:1,k:'self',desc:'消耗 10% 飽足與一回合，回復 12% 最大魔力（最多 18）'},
+  {job:'sage',lv:2,id:'sageward',nm:'祕法屏障',t:'def',mp:10,k:'self',desc:'3 回合傷害減半，8 回合免疫異常'},
 ];
 /* 五系奧義：該系練到 10 級才會出現，一攻一輔。
    解鎖之後就永久留在技能池裡，跟職業技能共用那 4 個格子 —— 
@@ -2587,7 +2582,8 @@ const schoolTotal = p => SCHOOLS.reduce((n,s)=> n + (p.sch[s.id]||0), 0);
    兩邊拉開的距離跟以前一樣：投資魔法還是等於「發數變多」。
    減半之後兩邊同步 —— 投資換到的是**每一發更強**，不是更多發。 */
 const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5)
-                              * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1));
+                              * (typeof hasMaster === 'function' && hasMaster('sor') ? 1.2 : 1)
+                              * (typeof hasMaster === 'function' && hasMaster('sage') ? 1.1 : 1));
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
@@ -3084,6 +3080,11 @@ mp.hnt|Sight +2|しかい +2
 mp.nin|Trap damage is halved|トラップの ダメージが はんぶんになる
 mp.oni|Regain a little HP on each kill|てきを たおすと HPが すこし かいふく
 mp.sor|Max MP +20%|さいだいMP +20%
+mp.sage|Max MP +10%|さいだいMP +10%
+v23.meditatefull|MP is already full; no resources spent.|MPは満タンです。消費しません。
+v23.meditatehungry|Meditation needs more than 10% fullness.|めいそうには満腹度が10%より多く必要です。
+v23.meditated|You regain {n} MP, spending 10% fullness.|満腹度を10%使い、MPを{n}回復した。
+v23.sageward|Arcane Ward: damage halved for 3 turns; status immunity for 8.|ひほうのけっかい：3ターン被害半減、8ターン状態異常無効。
 p.dir2|Choose a direction|ほうこうを えらぶ
 p.dpad|　(D-pad)|　（じゅうじキー）
 m.hall|★ Monster Hall - the whole room is enemies!|★ モンスターハウス —— へやじゅうが てきだ！
@@ -3160,6 +3161,7 @@ job.hnt|Hunter|かりゅうど
 job.nin|Ninja|にんじゃ
 job.oni|Oni Warrior|おにむしゃ
 job.sor|Sorcerer|じゅつし
+job.sage|Sage|けんじゃ
 hat.helm|Iron Helm|てつのかぶと
 hat.beret|Minstrel Beret|ぎんゆうのぼうし
 hat.rhat|Crimson Plume Hat|あかばねのぼうし
@@ -3278,6 +3280,10 @@ ab.onicut|Demon Cleave|おにぎり
 ab.asura|Asura|しゅら
 ab.pyro|Pyromancy|ひのおうぎ
 ab.reflect|Curse Return|じゅがえし
+ab.meditate|Meditation|めいそう
+ab.sageward|Arcane Ward|ひほうのけっかい
+d.meditate|Spend 10% fullness and one turn; restore 12% max MP (up to 18).|満腹度10%と1ターンを使い、最大MPの12%を回復（上限18）。
+d.sageward|Half damage for 3 turns; status immunity for 8 turns.|3ターン被害半減、8ターン状態異常無効。
 ab.m_judge|Holy Judgement|せいこうしんぱん
 ab.m_revive|Breath of Revival|ふっかつのいき
 ab.m_smite|Heaven's Bolt|てんらいげき
@@ -3503,7 +3509,7 @@ p.jobprog|　progress {a}/{p}|　しんちょく {a}/{p}
 p.jobnext|　(next: {nm})|　（つぎ：{nm}）
 p.jobmax|　(next: Master)|　（つぎ：マスター）
 p.jobdone|Jobs trained|そだてた しょくぎょう
-p.noabil|No job skills yet - wear a hat and fight to raise the job.|まだ しょくぎょうスキルが ない —— ぼうしを かぶって たたかおう。
+p.noabil|No job skills yet: gain two character levels while wearing a hat to raise its job rank.|ぼうしをかぶったままキャラクターが2レベル上がると、職業ランクが上がります。
 p.unloaded|not loaded|みそうび
 p.equipped|Spells carried ({n} slots)|もちだす まほう（{n}スロット）
 p.pickspell|Open the spell list below and pick one|したの「まほうリスト」で ひとつ えらぼう
@@ -8568,6 +8574,38 @@ function unpackItem(q){
   return it;
 }
 
+// Terrace discoveries belong to the journey, not to a regenerated floor.
+function terraceState(){
+  if(!G||actAt(G.act).id!=='tower')return null;
+  const id=G.act+':'+G.floor,states=G.terraces||(G.terraces={});
+  if(!states[id]){
+    let hash=(G.seed^Math.imul(G.floor,0x45d9f3b)^Math.imul(G.act+1,0x27d4eb2d))>>>0;
+    hash=Math.imul(hash^(hash>>>16),0x45d9f3b)>>>0;hash=(hash^(hash>>>16))>>>0;
+    const roll=hash%100;
+    states[id]={event:G.floor===1||roll<65?['cache','traveler','light'][hash%3]:'quiet',rare:hash%19===0,rested:false,claimed:false};
+  }
+  return states[id];
+}
+function restoreTerraces(raw){
+  G.terraces={};if(!raw||typeof raw!=='object')return;
+  for(const [id,s]of Object.entries(raw).slice(0,100)){
+    if(!/^\d+:\d+$/.test(id)||!s||!['cache','traveler','light','quiet'].includes(s.event))continue;
+    G.terraces[id]={event:s.event,rare:s.rare===true,rested:s.rested===true,claimed:s.claimed===true};
+  }
+}
+function terraceRest(){
+  const s=terraceState();if(!s||s.rested)return {ok:false,code:'used'};
+  const p=G.p,hp=Math.min(p.mhp-p.hp,Math.ceil(p.mhp*.35)),mp=Math.min(p.mmp-p.mp,Math.ceil(p.mmp*.25));
+  if(hp<=0&&mp<=0)return {ok:false,code:'full'};
+  p.hp+=hp;p.mp+=mp;s.rested=true;saveRun();refresh();return {ok:true,hp,mp};
+}
+function terraceClaim(){
+  const s=terraceState();if(!s||s.claimed||s.event==='quiet')return {ok:false,code:'empty'};
+  if(G.p.inv.length>=20)return {ok:false,code:'bag'};
+  const [cat,id]=s.event==='traveler'?['scroll','ident']:s.event==='light'?['herb','mana']:['herb',s.rare?'rev':'heal'];
+  const item=mk(cat,id,{known:1});G.p.inv.push(item);s.claimed=true;saveRun();refresh();return {ok:true,item};
+}
+
 function saveRun(){
   /* 驗收頁「完全不寫進正式存檔」—— saveVillage() 一直守著這條，
      這兩支卻漏了，於是驗收網址會偷偷吃掉玩家真正的進度：
@@ -8578,14 +8616,15 @@ function saveRun(){
 
      而驗收網址正是拿來到處亂走亂死的 —— 那是它的用途。
      村莊那一份守住了、這一份沒守，等於守了一半。 */
-  if(QA_MODE) return;
-  if(!G || G.over || G.won) return;
+  if(QA_MODE) return false;
+  if(!G || G.over || G.won) return false;
   const p = G.p;
   try{
     localStorage.setItem(RUN_KEY, JSON.stringify({
       v: RUN_VER, seed: G.seed, act: G.act, floor: G.floor, turn: G.turn,
       pressure: Math.max(0,G.f?.elapsedTurns|0),
       pursuit: packPursuit(),
+      terraces: G.terraces||{},
       known: G.known, look: G.look, notes: G.notes, npc: G.npc,
       heian: packHeianState(),
       p: {
@@ -8600,7 +8639,8 @@ function saveRun(){
         shld:p.shld ? p.inv.indexOf(p.shld) : -1,
       },
     }));
-  }catch(e){}                    // 沙箱擋了 localStorage 就當作沒有存檔
+    return true;
+  }catch(e){return false;}        // Callers can report a failed checkpoint accurately.
 }
 function loadedRun(){
   try{
@@ -8664,6 +8704,8 @@ function resumeRun(q){
   p.spells = Array.isArray(r.spells) ? r.spells.slice(0, SPELL_SLOTS) : [];
   while(p.spells.length < SPELL_SLOTS) p.spells.push(null);
   if(typeof r.hat === 'string') p.hat = r.hat;
+  if(p.hat==='circlet')p.job='sage'; // Repair old saves that stored job:none.
+  syncJobSkills(true);
   p.inv = r.inv.map(unpackItem).filter(Boolean).slice(0, 20);
   p.weap = p.inv[r.weap] || null;
   p.shld = p.inv[r.shld] || null;
@@ -8672,6 +8714,7 @@ function resumeRun(q){
   if(q.notes) G.notes = Object.assign({}, q.notes);
   G.turn = q.turn | 0;
   G.floor = q.floor;
+  restoreTerraces(q.terraces);
   buildFloor();
   G.p.hp = Math.max(1, Math.min(p.mhp, r.hp | 0));
   G.f.elapsedTurns=Math.max(0,Math.min(720,q.pressure|0));
@@ -12332,6 +12375,7 @@ function knock(m, dx, dy, n){
 
 function doSpell(sp, dx, dy){
   const p = G.p;
+  globalThis.RPG_PLAYER_FX?.cast(sp,dx,dy);
   SFX.play('cast');
   if(sp.sc !== 'heal') SFX.play('zap', 40);
   /* 詠唱的顏色取自系別 —— 火是橘的、水是藍的，
@@ -12417,6 +12461,10 @@ function doSpell(sp, dx, dy){
 let pendAbil = null;
 function useAbil(a){
   const p = G.p;
+  if(a.id==='meditate'){
+    if(p.mp>=p.mmp){say(TX('v23.meditatefull','魔力已滿，沒有消耗資源。'));return false;}
+    if(p.sat<=Math.ceil(p.msat*.10)){say(TX('v23.meditatehungry','靜心需要超過 10% 的飽足。'),'bad');return false;}
+  }
   if(a.t === 'pass'){ say(M('s.067','{v0} 是被動技能 —— 放在技能格裡就一直生效。',{v0:(a.nm)})); return false; }
   if(p.mp < abilCost(a, p)){ say(TX('m.nomp','魔力不足。'),'bad'); return false; }
   if(a.k === 'self' || a.k === 'around' || a.k === 'melee' || a.k === 'room'){
@@ -12432,9 +12480,18 @@ function fireAbil(dx,dy){
 const hasPassive = id => !!(G.p && G.p.slots.includes(id) && G.p.learned[id]);
 function doAbil(a, dx, dy){
   const p = G.p;
+  globalThis.RPG_PLAYER_FX?.cast(a,dx,dy);
   SFX.play(a.k === 'self' ? 'quaff' : 'zap');
   const front = monAt(p.x+dx, p.y+dy);
   switch(a.id){
+    case 'meditate': {
+      const n=Math.min(p.mmp-p.mp,Math.max(2,Math.min(18,Math.ceil(p.mmp*.12))));
+      p.sat-=Math.ceil(p.msat*.10);p.mp+=n;
+      say(M('v23.meditated','消耗 10% 飽足，靜心回復 {n} MP。',{n}),'good');float(p.x,p.y,'+'+n+' MP','#97dfd6');break;
+    }
+    case 'sageward':
+      p.st['守']=Math.max(p.st['守']||0,3);p.st['界']=Math.max(p.st['界']||0,8);
+      say(TX('v23.sageward','祕法屏障展開：3 回合傷害減半、8 回合免疫異常。'),'good');break;
     case 'smash':
       if(!front){ say(TX('s.069','面前沒有敵人。')); break; }
       startAttackPose(p, dx, dy, 'melee');
@@ -14141,8 +14198,23 @@ const BGM = (()=>{
   let curId = 'stone', cur = TRACKS.stone, fadeAt = 0;
   const spb = () => 60 / cur.bpm / 4;          // 一步＝十六分音符
 
-  function ctx(){ return SFX.ctx(); }
+  let renderContext=null,renderBus=null;
+  let phraseBus=null;
+  function ctx(){ return renderContext || SFX.ctx(); }
+  function voicesBus(){
+    if(renderBus)return renderBus;
+    const c=ctx(),out=bus();if(!c||!out)return null;
+    if(!phraseBus){phraseBus=c.createGain();phraseBus.connect(out);}return phraseBus;
+  }
+  function releasePhrase(){
+    if(!phraseBus)return;
+    const old=phraseBus,c=ctx();phraseBus=null;
+    old.gain.cancelScheduledValues(c.currentTime);old.gain.setValueAtTime(old.gain.value,c.currentTime);
+    old.gain.linearRampToValueAtTime(0,c.currentTime+.18);
+    setTimeout(()=>old.disconnect(),3000);
+  }
   function bus(){
+    if(renderBus)return renderBus;
     const c = ctx(); if(!c) return null;
     if(!gain){
       gain = c.createGain();
@@ -14164,12 +14236,13 @@ const BGM = (()=>{
      而人聲的滑音是「快速接上去，然後把目標音唱住」。
      vib = 顫音深度（音分）。5.5 Hz 是唱歌與弦樂的自然顫音速率；
      它從音頭之後才淡進來，因為真的歌手也是先發音、再開始抖。 */
-  function voice(t, f, dur, type, vol, cut, glide, vib){
-    const c = ctx(), g0 = bus(); if(!c || !g0) return;
+  const waveCache=new WeakMap();
+  function voice(t, f, dur, type, vol, cut, glide, vib, pan=0){
+    const c = ctx(), g0 = voicesBus(); if(!c || !g0) return;
     const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
-    const spectra={lyre:[1,.55,.28,.12,.065],koto:[1,.7,.22,.3,.09,.04],reed:[1,.38,.56,.16,.22,.07],flute:[1,.16,.045,.018],bowed:[1,.48,.27,.16,.09,.055],bell:[1,.08,.30,.035,.12]};
+    const spectra={lyre:[1,.55,.28,.12,.065],koto:[1,.7,.22,.3,.09,.04],reed:[1,.25,.28,.10,.08],flute:[1,.16,.045,.018],bowed:[1,.48,.27,.16,.09,.055],strings:[1,.30,.13,.055,.022],horn:[1,.35,.18,.06],bell:[1,.08,.30,.035,.12]};
     const partial=spectra[type];
-    if(partial){const re=new Float32Array(partial.length+1),im=new Float32Array(partial.length+1);partial.forEach((v,i)=>im[i+1]=v);o.setPeriodicWave(c.createPeriodicWave(re,im));}
+    if(partial){let waves=waveCache.get(c);if(!waves){waves={};waveCache.set(c,waves);}if(!waves[type]){const re=new Float32Array(partial.length+1),im=new Float32Array(partial.length+1);partial.forEach((v,i)=>im[i+1]=v);waves[type]=c.createPeriodicWave(re,im);}o.setPeriodicWave(waves[type]);}
     else o.type=type;
     o.frequency.setValueAtTime(f,t);
     if(glide) o.frequency.exponentialRampToValueAtTime(Math.max(20, glide), t + dur * 0.4);
@@ -14188,15 +14261,16 @@ const BGM = (()=>{
     lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut, t);
     g.gain.setValueAtTime(0.0001, t);
     const pluck=type==='lyre'||type==='koto'||type==='bell';
-    const attack=Math.min(dur*.2,pluck?.006:type==='bowed'?.17:type==='flute'?.065:.025);
+    const attack=Math.min(dur*.2,pluck?.006:type==='strings'?.24:type==='bowed'?.17:type==='flute'?.065:.025);
     g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t+attack);
     if(partial&&!pluck){g.gain.setValueAtTime(Math.max(.0002,vol*.78),t+Math.max(attack,dur*.70));}
     g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(attack+.01,dur));
-    o.connect(lp); lp.connect(g); g.connect(g0);
+    o.connect(lp); lp.connect(g);
+    if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(g0);}else g.connect(g0);
     o.start(t); o.stop(t + dur + 0.03);
   }
   function perc(t, dur, vol, f0, f1, q){
-    const c = ctx(), g0 = bus(); if(!c || !g0) return;
+    const c = ctx(), g0 = voicesBus(); if(!c || !g0) return;
     const s2 = c.createBufferSource(); s2.buffer = SFX.noise();
     if(!s2.buffer) return;
     const bp = c.createBiquadFilter();
@@ -14219,7 +14293,29 @@ const BGM = (()=>{
   const hits = (lane, bar) =>
     !lane ? EMPTY : Array.isArray(lane[0]) ? (lane[bar] || EMPTY) : lane;
 
+  // The new scores contain an entire phrase, including voicings and orchestration.
+  // No random notes or floor-dependent retuning: the melody keeps its tonal centre.
+  function playScore(i,t){
+    const b=Math.floor(i/16)%cur.score.length,k=i%16,S=spb(),bar=cur.score[b];
+    const v=(cur.mvol||1)*bar.energy,drums=bar.drums;
+    if(k===0)bar.chord.forEach((n,j)=>voice(t,hz(n),S*15.7,'strings',cur.padvol*v,1700,0,3,[-.36,.1,.36][j%3]));
+    for(const [s,n,d]of bar.bass)if(s===k)voice(t,hz(n),S*d*.92,'triangle',.22*v,720);
+    for(const [s,n,d]of bar.arp)if(s===k)voice(t,hz(n),S*d,cur.pluck,cur.avol*v,2300,0,0,s%4?-.24:.24);
+    for(const [s,n,d]of bar.lead)if(s===k){
+      voice(t,hz(n),S*d*.93,cur.instrument,cur.lvol*v,cur.cut,0,cur.vib||4,-.08);
+      if(bar.double)voice(t,hz(n-12),S*d*.9,'strings',cur.lvol*v*.19,1500,0,2,.22);
+    }
+    for(const [s,n,d]of bar.counter)if(s===k)voice(t,hz(n),S*d*.94,'flute',.027*v,2000,0,3,.3);
+    if(drums.kick.includes(k)){
+      voice(t,105,.17,'sine',.23*v,550,43);perc(t,.07,.065*v,420,80);
+    }
+    if(drums.snare.includes(k)){perc(t,.13,.075*v,1700,800,1);voice(t,175,.10,'triangle',.08*v,650,110);}
+    if(drums.hat.includes(k))perc(t,.035,.031*v,6500,4200,1.4);
+    if(drums.tom.includes(k)){voice(t,145,.19,'sine',.14*v,800,75);perc(t,.11,.06*v,850,240,1.6);}
+  }
+
   function playStep(i, t){
+    if(cur.score){playScore(i,t);return;}
     const bar = ((i / STEPS) | 0)%4, section=Math.floor(i/64)%4, k = i % STEPS, S = spb();
     const mv = (cur.mvol || 1)*[.72,.9,1,.82][section];                 // 單曲總輸出：連鼓與持續低音一起縮放
     /* 章節內越深越低沉：每 5 層降半音、濾波拉低。
@@ -14281,6 +14377,7 @@ const BGM = (()=>{
   /* 換章時換曲。做法是「壓下去 → 換 → 拉回來」而不是直接切：
      直接切會在小節中間硬接，聽起來像當掉。 */
   function swap(id){
+    releasePhrase();
     curId = id; cur = TRACKS[id] || TRACKS.stone;
     step = 0;
     const c = ctx(), g = bus();
@@ -14552,11 +14649,13 @@ const BGM = (()=>{
     const c = ctx(); if(!c){ running = false; return; }
     const w = wantId();
     if(w !== curId) swap(w);
+    // Returning from a throttled background tab must not schedule a backlog of notes.
+    if(nextT<c.currentTime-.25)nextT=c.currentTime+.025;
     // 前瞻排程：只靠 setTimeout 觸發音符會抖，必須提前把音排進音訊時鐘
     while(nextT < c.currentTime + 0.14){
       playStep(step, nextT);
       nextT += spb();
-      step = (step + 1) % LOOP;
+      step = (step + 1) % (cur.score ? cur.score.length*STEPS : LOOP);
     }
     timer = setTimeout(tick, 25);
   }
@@ -14569,7 +14668,7 @@ const BGM = (()=>{
       curId = wantId(); cur = TRACKS[curId];
       tick();
     },
-    stop(){ running = false; clearTimeout(timer); timer = null; },
+    stop(){ running = false; clearTimeout(timer); timer = null; releasePhrase(); },
     /* 指定曲目：傳 null 就交還給「跟著章節走」。
        這裡刻意不自己 start() —— 音訊必須由使用者手勢啟動，
        而且在無頭測試裡根本沒有 AudioContext。跑著就換，沒跑就等。 */
@@ -14580,7 +14679,16 @@ const BGM = (()=>{
     get forced(){ return forced; },
     get running(){ return running; },
     get track(){ return curId; },
-    qaSection(n){if(QA_MODE){step=(n&3)*64;const c=ctx();if(c)nextT=c.currentTime+.05;}},
+    qaSection(n){if(QA_MODE){step=(n&3)*(cur.score?128:64);const c=ctx();if(c)nextT=c.currentTime+.05;}},
+    async qaRender(id,bars){
+      if(!QA_MODE||!TRACKS[id]?.score)return null;
+      const saved=cur,track=TRACKS[id],count=Math.min(bars||track.score.length,track.score.length);
+      const seconds=count*4*60/track.bpm+2,c=new OfflineAudioContext(2,Math.ceil(seconds*24000),24000);
+      const g=c.createGain();g.gain.value=MUSIC_GAIN*SFX.bus().gain.value;g.connect(c.destination);
+      try{renderContext=c;renderBus=g;cur=track;for(let i=0;i<count*16;i++)playStep(i,.05+i*60/track.bpm/4);}
+      finally{cur=saved;renderContext=null;renderBus=null;}
+      return c.startRendering();
+    },
     TRACKS,
   };
 })();
@@ -16458,6 +16566,7 @@ function draw(dt){
   }
   cx.globalAlpha = 1;
 
+  globalThis.RPG_PLAYER_FX?.draw(cx,ox,oy);
   globalThis.RPG_BOSS_FX?.draw(cx,ox,oy);
   // 飄字
   cx.font='7px ui-monospace, monospace'; cx.textAlign='center';
@@ -16795,7 +16904,7 @@ function fitCanvas(){
       const chrome = others(cab, $('body')) + others(main, shake);
       const wrapPad = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
       const maxW = Math.floor((innerHeight - padY - chrome - wrapPad - 18) * VW / VH);
-      if(maxW > 320 && maxW < wrap.clientWidth) wrap.style.maxWidth = maxW + 'px';
+      if(maxW > (innerHeight<=520?160:320) && maxW < wrap.clientWidth) wrap.style.maxWidth = maxW + 'px';
     }
     fitPad(wrap.clientWidth || innerWidth); return;
   }
@@ -17409,7 +17518,7 @@ function renderPanel(){
     const known2 = ALL_ABIL().filter(a => p.learned[a.id]);
     if(!known2.length){
       const e = document.createElement('div'); e.className='hint';
-      e.textContent = TX('p.noabil','還沒學會任何職業技能 —— 戴著帽子打怪就會累積 JP。');
+      e.textContent = TX('p.noabil','還沒學會職業技能：戴著帽子每升 2 個角色等級，職業提升一級。');
       list.appendChild(e);
     } else {
       for(const a2 of known2.filter(a => p.slots.includes(a.id))){
@@ -18433,6 +18542,7 @@ function leaveDungeon(){
   openVillage();
 }
 function openVillage(){
+  closePanel();
   closeTalk(); clearMsgWin();          // 上一趟最後一句不該浮在村莊上
   renderVillage();
   BGM.force('village');
@@ -19761,20 +19871,20 @@ heroArtHooks.push(paintCover);
     zh:[
       {title:'巴比倫築起天梯',body:'兩河之間的人們，把泥磚一層層送向天空。塔身越過城牆，越過雲層，像要把人間的知識親手交到眾神面前。'},
       {title:'塔底亮起一道光',body:'千年後，未完成的塔再次甦醒。青藍色的光貫穿神殿，一名陌生的旅人被捲入其中，直直送往地面。'},
-      {title:'神殿門廊的甦醒',body:'光熄滅時，四周只剩炭灰般的寂靜。旅人在封閉的釉磚門廊醒來。石門內傳來沉重腳步；巨型門衛守著通往地底的階梯。'},
-      {title:'甦醒',body:'「……這是哪裡？我只記得一道光，然後——」\n「那座塔……也許答案就在上面。先站起來再說。」'},
+      {title:'冰冷的石磚',body:'先是指尖的冰涼，然後是火焰的聲音。\n你慢慢睜開眼。那道光不見了，眼前是一扇刻著翼獸的石門。'},
+      {title:'門後的腳步',body:'你轉向門內。沉重的腳步聲，在神廟深處停了下來。\n腳邊的裂縫透出冷風——這裡，還有通往地底的路。'},
     ],
     en:[
       {title:'Babylon Builds a Stairway',body:'Between the rivers, people carried mud bricks layer by layer into the sky. The tower rose beyond the walls and clouds, bearing human knowledge toward the gods.'},
       {title:'A Light Beneath the Tower',body:'A thousand years later, the unfinished tower awoke. Blue light pierced the sanctuary, caught an unknown traveller, and carried them down toward the earth.'},
-      {title:'Awake in the Temple Vestibule',body:'When the light vanished, only charcoal silence remained. The traveller awoke inside a vaulted vestibule. Beyond the stone doors, a giant gatekeeper guarded the stairs into the underground labyrinth.'},
-      {title:'Awakening',body:'“Where am I? I remember a flash of light, and then—”\n“That tower… perhaps the answer is above. First, get up.”'},
+      {title:'Cold Stone',body:'First, cold stone beneath your fingers. Then, the sound of fire.\nYou open your eyes. The light is gone. Winged beasts watch from a sealed door.'},
+      {title:'Footsteps Beyond the Door',body:'You turn toward the sanctuary. Somewhere within, heavy footsteps stop.\nCold air rises through a crack at your feet. There is a way beneath this place.'},
     ],
     ja:[
       {title:'バビロン、天への階を築く',body:'二つの川のあいだで、人々は泥レンガを一段ずつ空へ運んだ。塔は城壁と雲を越え、人の知を神々へ届けようとしていた。'},
       {title:'塔の下に青い光',body:'千年後、未完の塔が再び目覚めた。青い光が神殿を貫き、見知らぬ旅人を巻き込んで地上へ運んでいく。'},
-      {title:'神殿の玄関で目覚める',body:'光が消えると、炭のような静けさだけが残った。旅人は神殿の玄関で目覚めた。石扉の先では、巨大な門番が地下迷宮への階段を守っている。'},
-      {title:'目覚め',body:'「……ここはどこだ？　光が見えて、それから——」\n「あの塔……答えは上にあるのかもしれない。まず立とう。」'},
+      {title:'冷たい石床',body:'指先に冷たい石。続いて、炎の音。\n目を開くと、あの光は消えていた。翼獣を刻んだ石扉が目の前にある。'},
+      {title:'扉の向こうの足音',body:'神殿の奥を向くと、重い足音が止まった。\n足元の割れ目から冷たい風が吹く。この下にも、道がある。'},
     ],
   };
   const pro=$('prologue'), proVisual=$('prologuevisual');
@@ -20397,11 +20507,12 @@ if(!startQa()){
   refresh();
 }
 </script>
-<link rel="stylesheet" href="rpg-upgrade.css?v=20260924-v22">
-<script src="rpg-upgrade.js?v=20260924-v22"></script>
-<script src="boss-fx.js?v=20260924-v22"></script>
-<script src="rpg-cinema.js?v=20260924-v22"></script>
-<script src="rpg-cover.js?v=20260924-v22"></script>
+<link rel="stylesheet" href="rpg-upgrade.css?v=20260924-v23">
+<script src="rpg-upgrade.js?v=20260924-v23"></script>
+<script src="boss-fx.js?v=20260924-v23"></script>
+<script src="rpg-cinema.js?v=20260924-v23"></script>
+<script src="rpg-score.js?v=20260924-v23"></script>
+<script src="rpg-cover.js?v=20260924-v23"></script>
 
 
 

@@ -59,6 +59,7 @@
 (() => {
   const visual=document.getElementById('prologuevisual'),art=document.getElementById('prologueart'),hero=document.getElementById('chapterhero');
   let lastScene='';
+  const ground=document.createElement('div');ground.id='prologue-ground-shadow';visual.append(ground);
   const url=id=>{const file=HD_ASSETS[id];return file?((globalThis.BABEL_HD_DATA||{})[file]||'art-hd/'+file):null;};
   function sync(){
     const chapter=visual.className.match(/chapter-(\d+)/),scene=visual.className.match(/scene-(\d+)/);
@@ -68,14 +69,17 @@
     visual.classList.toggle('cinema-hd',!!src);
     if(chapter&&BGM.TRACKS['chapter_'+ACTS[Number(chapter[1])-1].id])BGM.force('chapter_'+ACTS[Number(chapter[1])-1].id);
     const showHero=chapter||(scene&&Number(scene[1])>=2);
-    hero.style.backgroundImage=showHero&&HD_MODE?'url("'+heroNow().toDataURL('image/png')+'")':'';
+    const openingHero=scene&&Number(scene[1])>=2?hdHeroSprite(-1,-1,null,VILLAGE.skin,VILLAGE.col,Number(scene[1])===3?[0,-1]:[0,1]):null;
+    hero.style.backgroundImage=showHero&&HD_MODE?'url("'+(openingHero||heroNow()).toDataURL('image/png')+'")':'';
     hero.style.display=showHero&&src?'block':'';
+    ground.hidden=!scene||Number(scene[1])<2;
     hero.classList.toggle('awakening',!!scene&&Number(scene[1])===2);
     hero.classList.toggle('awakened',!!scene&&Number(scene[1])===3);
   }
   // Restrict the observer to scene/class changes; style updates do not recurse.
   let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;if(!visual.dataset.syncing){visual.dataset.syncing='1';sync();queueMicrotask(()=>delete visual.dataset.syncing);}});}).observe(visual,{attributes:true,attributeFilter:['class']});
   sync();
+  heroArtHooks.push(()=>{lastScene='';sync();});
   const tabs=document.createElement('nav');tabs.id='panel-tabs';tabs.setAttribute('aria-label','道具欄分類');
   for(const [mode,label]of [['inv','背包'],['ground','腳下'],['magic','技能']]){const b=document.createElement('button');b.dataset.mode=mode;b.textContent=label;b.onclick=()=>{SFX.play('move');openPanel(mode);};tabs.append(b);}
   document.getElementById('panel').insertBefore(tabs,document.getElementById('list'));
@@ -165,7 +169,7 @@
     const ready=RELIC_GUARDS.every(r=>VILLAGE.relicSeals?.[r.id]);
     dialog('究極鍛造 · 諸神的黃昏',
       '四尊守護像，四件跨章節的封印。集齊後在此合成永久武器。\n\n'+
-      RELIC_GUARDS.map(r=>(VILLAGE.relicForged?'✦ 已融合':VILLAGE.relicSeals?.[r.id]?'◆ 已取得':'◇ 未取得')+'　'+r.item+'\n'+locAct(ACTS.find(a=>a.id===r.act))+' · '+r.nm).join('\n\n')+
+      RELIC_GUARDS.map(r=>(VILLAGE.relicForged?'◆ 已融合':VILLAGE.relicSeals?.[r.id]?'◆ 已取得':'◇ 未取得')+'　'+r.item+'\n'+locAct(ACTS.find(a=>a.id===r.act))+' · '+r.nm).join('\n\n')+
       '\n\n雕像從對應章節的第二層開始出現，主動攻擊才會甦醒。錯過的封印會在後續章節的普通樓層補現。\n材料不佔背包；合成消耗四件封印，不另收金幣。\n成品：攻擊 38、強化上限 +5、相鄰橫掃，可破巴比倫獅的封印。',
       VILLAGE.relicForged?[['查看永久裝備',shop]]:ready?[['融合四印 · 鑄成究極之劍',()=>{if(!forgeRagnarok())return;updateHud();dialog('諸神的黃昏 · 鑄成','四道光沿劍脊匯流，爐火終於安靜下來。\n\n究極之劍已加入永久裝備，下次出發可攜帶。它能破除獅身封印，但仍需閃避重擊，等待反擊的時機。',[['查看永久裝備',shop]],'smith');}]]:[], 'smith');
   }
@@ -407,10 +411,10 @@
   $id('cabinet').addEventListener('selectstart',e=>{if(!editable(e))e.preventDefault();});
 })();
 
-/* An optional exterior reached through a real wall door. Dungeon coordinates,
-   combat, inventory and turn counters remain intact while on the terrace. */
+/* A quiet exterior with persistent discoveries; exploration never advances combat. */
 (() => {
-  let root,canvas,ctx,p={x:2,y:4,face:[0,1]},held=[0,0],goBack=false,opened=false,last=0,time=0,previousMusic=null;
+  let root,canvas,ctx,p={x:2,y:4,face:[0,1]},held=[0,0],goal=null,opened=false,last=0,time=0,previousMusic=null,revealed=false,view=null,feedbackUntil=0,stick=null,stickPointer=null;
+  const tr=(zh,en,ja)=>locUI(zh,en,ja);
   const door=()=>{
     if(!G||actAt(G.act).id!=='tower')return null;
     if(G.f._terraceDoor!==undefined)return G.f._terraceDoor;
@@ -423,48 +427,99 @@
     candidates.sort((a,b)=>b.x-a.x||a.y-b.y);
     return G.f._terraceDoor=candidates[0]||null;
   };
-  function close(){opened=false;root.hidden=true;held=[0,0];goBack=false;BGM.force(previousMusic);SFX.play('door');}
+  function objects(){
+    const s=terraceState(),a=[
+      {id:'save',x:3.9,y:5.55,art:'hd:town-stele',label:tr('旅程紀錄碑','Journey stone','旅の記録碑')},
+      {id:'rest',x:6.3,y:5.45,art:'hd:town-lamp',label:s.rested?tr('火光已息','Embers spent','消えた火'):tr('風息火盆','Sheltered flame','休息の火')}
+    ];
+    if(s.event!=='quiet'&&revealed)a.push({id:'event',x:9,y:5.1,art:s.event==='traveler'?'npc#merchant':s.event==='cache'?'hd:town-crate':'hd:torch',label:s.claimed?tr('已留下足跡','A memory kept','旅の足跡'):s.event==='traveler'?tr('遠行旅人','A traveller','旅人'):s.event==='cache'?tr('石欄後的藏物','Hidden cache','隠された品'):tr('風中的浮光','Drifting light','風の光')});
+    return a;
+  }
+  function close(){opened=false;root.hidden=true;release();BGM.force(previousMusic);SFX.play('door');}
   function move(dx,dy){p.x=Math.max(1.5,Math.min(10.4,p.x+dx*.18));p.y=Math.max(3.5,Math.min(6.6,p.y+dy*.18));p.face=[dx,dy];}
+  function message(text){document.getElementById('terrace-message').textContent=text;feedbackUntil=time+8;}
+  function nearest(){return objects().filter(o=>Math.hypot(o.x-p.x,o.y-p.y)<1.1).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];}
+  function interact(){
+    held=[0,0];goal=null;const o=nearest();if(!o){message(tr('點選發光的物件，或用方向鍵靠近。','Tap a glowing object, or walk closer.','光る物をタップするか、近づいてください。'));return;}
+    if(o.id==='save'){
+      const ok=saveRun();
+      message(QA_MODE?tr('預覽模式：已觸摸紀錄碑，不會改寫正式存檔。','Preview: your real save is unchanged.','プレビュー：本編の記録は変更しません。'):ok?tr('旅程已記錄。下次從本層入口繼續，已領取的發現會保留紀錄。','Journey saved. Resume at this floor’s entrance; claimed discoveries stay claimed.','旅を記録しました。この階の入口から再開し、発見の記録も残ります。'):tr('這次未能保存，請勿關閉遊戲。','Could not save. Keep the game open.','保存できませんでした。ゲームを閉じないでください。'));SFX.play(ok?'level':'open');
+    }else if(o.id==='rest'){
+      const r=terraceRest();message(r.ok?tr('火光溫暖了身體。恢復 '+r.hp+' HP、'+r.mp+' MP；本層火盆已用盡。','The flame restores '+r.hp+' HP and '+r.mp+' MP. Its warmth is spent.','火が HP '+r.hp+'、MP '+r.mp+' を回復。この階では一度だけです。'):r.code==='full'?tr('目前體力與魔力充足，將這份溫暖留到需要時。','You are fully rested. Save this warmth for later.','体力と魔力は十分です。必要な時に使えます。'):tr('火盆已冷卻。這層的溫暖只夠使用一次。','The embers are cold. One rest per floor.','火は冷えました。この階では使用済みです。'));SFX.play(r.ok?'level':'talk');
+    }else{
+      const s=terraceState(),r=terraceClaim();
+      if(!r.ok){message(r.code==='bag'?tr('背包已滿。藏物會留在這裡，整理後再來。','Your bag is full. The discovery will wait here.','荷物がいっぱいです。品はここで待っています。'):tr('這份相遇已經留在旅程裡。','This encounter is already part of your journey.','この出会いは旅の記録に残っています。'));return;}
+      const lead=s.event==='traveler'?tr('旅人低聲說：「看到王蓄力，先離開發光的地面。」他留下一張卷軸。','“When the guardian charges, leave the glowing ground,” the traveller says, offering a scroll.','「王が力をためたら、光る床から離れるんだ」旅人は巻物を渡した。'):s.event==='light'?tr('你伸出手，浮光凝成一滴清露。','The drifting light settles in your hand as a drop of dew.','手を伸ばすと、光が一滴の露になった。'):s.rare?tr('封蠟裡竟藏著一株仍有生氣的珍草。','Inside the seal, a rare herb is still alive.','封を解くと、珍しい薬草が息づいていた。'):tr('石欄後的旅囊裡，留著前人備下的草藥。','Behind the parapet, a traveller left an herb for those who follow.','欄干の陰に、先人が残した薬草があった。');
+      message(lead+' '+tr('獲得：','Found: ','入手：')+locName(r.item.cat,r.item.d));SFX.play(s.rare?'level':'open');
+    }
+  }
   function show(){
     if(!root){
-      root=document.createElement('section');root.id='tower-terrace';root.hidden=true;root.innerHTML='<header><b id="terrace-title"></b><button id="terrace-return">走回塔門</button></header><canvas id="terrace-canvas" tabindex="0" aria-label="通天塔外側迴廊，方向鍵走動"></canvas><div id="terrace-controls"><button data-terrace="-1,0">◀</button><button data-terrace="0,-1">▲</button><button data-terrace="0,1">▼</button><button data-terrace="1,0">▶</button><span>靠近左側塔門，按 Enter 返回</span></div>';
+      root=document.createElement('section');root.id='tower-terrace';root.hidden=true;
+      root.innerHTML='<header><b id="terrace-title"></b><button id="terrace-return"></button></header><div id="terrace-brief"></div><div id="terrace-scene"><canvas id="terrace-canvas" tabindex="0"></canvas><div id="terrace-stick" role="group"><i></i><b></b></div></div><p id="terrace-message" role="status" aria-live="polite"></p><div id="terrace-controls"><span id="terrace-touch-hint"></span><button id="terrace-action"></button></div>';
       document.getElementById('cabinet').append(root);canvas=document.getElementById('terrace-canvas');ctx=canvas.getContext('2d');
-      document.getElementById('terrace-return').onclick=()=>goBack=true;
-      for(const b of root.querySelectorAll('[data-terrace]')){b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held=b.dataset.terrace.split(',').map(Number);};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>held=[0,0];}
+      document.getElementById('terrace-return').onclick=()=>{held=[0,0];goal={x:2,y:4,exit:true};};
+      document.getElementById('terrace-action').onclick=interact;
+      stick=document.getElementById('terrace-stick');
+      function steer(e){
+        const r=stick.getBoundingClientRect(),radius=r.width*.32,dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,n=Math.hypot(dx,dy),amount=Math.min(1,n/radius);
+        held=n<radius*.14?[0,0]:[dx/n*amount,dy/n*amount];goal=null;
+        stick.style.setProperty('--stick-x',held[0]*radius+'px');stick.style.setProperty('--stick-y',held[1]*radius+'px');
+      }
+      stick.onpointerdown=e=>{if(stickPointer!==null)return;e.preventDefault();e.stopPropagation();stickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);stick.classList.add('active');steer(e);};
+      stick.onpointermove=e=>{if(e.pointerId!==stickPointer)return;e.preventDefault();steer(e);};
+      stick.onpointerup=stick.onpointercancel=stick.onlostpointercapture=e=>{if(e.pointerId===stickPointer)release();};
+      canvas.onpointerdown=e=>{e.preventDefault();if(!view)return;const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+        const hit=objects().map(o=>({...o,screen:point(o)})).find(o=>Math.hypot(o.screen.x-x,o.screen.y-view.bw*.035-y)<Math.max(27,view.bw*.07));
+        if(hit){goal={x:hit.x,y:hit.y+.35};message(tr('靠近後，按右下方按鈕互動。','Walk closer, then use the action button.','近づいたら右下のボタンで調べられます。'));}else{goal={x:Math.max(1.5,Math.min(10.4,2+((x-view.ox)/view.bw-.14)/.075)),y:Math.max(3.5,Math.min(6.6,4+((y-view.oy)/view.bh-.57)/.09))};}held=[0,0];};
       requestAnimationFrame(frame);
     }
-    p={x:2,y:4,face:[0,1]};held=[0,0];goBack=false;previousMusic=BGM.forced;BGM.force('terrace');
-    root.hidden=false;opened=true;document.getElementById('terrace-title').textContent='通天塔 '+G.floor+'F · 外側迴廊';canvas.focus({preventScroll:true});SFX.play('door');
+    const s=terraceState();p={x:2,y:4,face:[0,1]};release();revealed=s.claimed;previousMusic=BGM.forced;BGM.force('terrace');
+    root.hidden=false;opened=true;document.getElementById('terrace-title').textContent=tr('通天塔 '+G.floor+'F · 風息迴廊','Tower '+G.floor+'F · Windward terrace','通天塔 '+G.floor+'F・風の回廊');
+    document.getElementById('terrace-return').textContent=tr('走回塔門','Return inside','塔内へ');
+    document.getElementById('terrace-brief').textContent=tr('記錄旅程 · 每層一次休息 · 沿石欄探索','Save your journey · One rest per floor · Explore the parapet','旅の記録・各階一度の休息・欄干を探索');
+    stick.setAttribute('aria-label',tr('拖曳搖桿自由走動，放手停止','Drag the stick to move; release to stop','スティックを動かして歩く。離すと止まる'));
+    document.getElementById('terrace-touch-hint').textContent=tr('拖曳圓盤走動 · 點物件靠近','Drag to move · Tap to approach','ドラッグで移動・タップで接近');
+    canvas.setAttribute('aria-label',tr('迴廊：點選物件走近，再按互動。','Terrace: tap an object to approach, then interact.','回廊：物をタップして近づき、調べる。'));
+    message(tr('風聲暫時蓋過塔內的腳步。碑文與微弱火光就在前方。','For a moment, the wind drowns out the tower. A carved stone and a small flame lie ahead.','風が塔の足音を消した。前方に石碑と小さな火がある。'));canvas.focus({preventScroll:true});SFX.play('door');
   }
+  function point(o){return {x:view.ox+view.bw*(.14+(o.x-2)*.075),y:view.oy+view.bh*(.57+(o.y-4)*.09)};}
   function draw(){
     const rect=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2),w=rect.width,h=rect.height;
-    if(canvas.width!==Math.round(w*d)||canvas.height!==Math.round(h*d)){canvas.width=w*d;canvas.height=h*d;}
-    ctx.setTransform(d,0,0,d,0,0);
-    ctx.fillStyle='#192534';ctx.fillRect(0,0,w,h);
-    const bg=HD_LOADED['hd:terrace'];
-    // Fit the entire painted floor into the camera so a narrow phone cannot
-    // crop away the return door or turn the walkable area into open sky.
-    const scale=Math.min(w/1536,h/1024),bw=1536*scale,bh=1024*scale,ox=(w-bw)/2,oy=(h-bh)/2;
-    if(bg)ctx.drawImage(bg,ox,oy,bw,bh);
-    const px=ox+bw*(.14+(p.x-2)*.075),py=oy+bh*(.57+(p.y-4)*.09),size=bw*.073;
-    const bob=(held[0]||held[1]||goBack)?Math.sin(time*13)*size*.025:Math.sin(time*2)*size*.005;
-    ctx.fillStyle='#17202266';ctx.beginPath();ctx.ellipse(px,py,size*.25,size*.07,0,0,Math.PI*2);ctx.fill();
-    const worn=hdHeroSprite(G.p.weap?WEAP.findIndex(a=>a.id===G.p.weap.d.id):-1,G.p.shld?SHLD.findIndex(a=>a.id===G.p.shld.d.id):-1,G.p.hat,VILLAGE.skin,VILLAGE.col,p.face)||heroNow();
-    ctx.drawImage(worn,px-size/2,py-size+bob,size,size);
-    ctx.fillStyle='#fff2cc';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('塔內',ox+bw*.12,oy+bh*.57);
-    // Gentle cloud-light drift, kept above the parapet and away from the floor.
-    const glow=ctx.createLinearGradient(ox,oy,ox+bw,oy);glow.addColorStop(0,'#ffe7ac00');glow.addColorStop(.5,'rgba(255,232,176,'+(.018+.012*Math.sin(time*.25))+')');glow.addColorStop(1,'#ffe7ac00');ctx.fillStyle=glow;ctx.fillRect(ox+bw*.29,oy,bw*.71,bh*.4);
+    if(!w||!h)return;if(canvas.width!==Math.round(w*d)||canvas.height!==Math.round(h*d)){canvas.width=w*d;canvas.height=h*d;}
+    ctx.setTransform(d,0,0,d,0,0);ctx.fillStyle='#14232e';ctx.fillRect(0,0,w,h);
+    const bg=HD_LOADED['hd:terrace'],scale=Math.min(w/1536,h/1024),bw=1536*scale,bh=1024*scale,ox=(w-bw)/2,oy=(h-bh)/2;view={bw,bh,ox,oy};
+    if(bg){ctx.save();ctx.globalAlpha=.22;ctx.filter='blur(20px)';ctx.drawImage(bg,0,0,w,h);ctx.restore();ctx.drawImage(bg,ox,oy,bw,bh);}
+    const s=terraceState(),near=nearest();
+    for(const o of [...objects(),{id:'hero',...p}].sort((a,b)=>a.y-b.y)){
+      const pt=point(o),size=bw*(o.id==='hero'?.105:o.id==='save'?.14:.12);
+      ctx.fillStyle='#17202277';ctx.beginPath();ctx.ellipse(pt.x,pt.y,size*.3,size*.09,0,0,Math.PI*2);ctx.fill();
+      if(o.id==='hero'){
+        const worn=hdHeroSprite(G.p.weap?WEAP.findIndex(a=>a.id===G.p.weap.d.id):-1,G.p.shld?SHLD.findIndex(a=>a.id===G.p.shld.d.id):-1,G.p.hat,VILLAGE.skin,VILLAGE.col,p.face)||heroNow();
+        const bob=(held[0]||held[1]||goal)?Math.sin(time*13)*size*.025:0;ctx.drawImage(worn,pt.x-size/2,pt.y-size+bob,size,size);continue;
+      }
+      const used=o.id==='rest'?s.rested:o.id==='event'?s.claimed:false,img=HD_LOADED[o.art];ctx.save();ctx.globalAlpha=used?.55:1;
+      if(!used){const glow=ctx.createRadialGradient(pt.x,pt.y-size*.5,1,pt.x,pt.y-size*.5,size*.7);glow.addColorStop(0,o.id==='save'?'#96e9ff88':'#ffe8a477');glow.addColorStop(1,'#ffe9b000');ctx.fillStyle=glow;ctx.fillRect(pt.x-size,pt.y-size*1.4,size*2,size*2);}
+      if(img)ctx.drawImage(img,pt.x-size/2,pt.y-size,size,size);ctx.restore();
+      ctx.font=(near?.id===o.id?'bold ':'')+Math.max(11,Math.min(15,bw*.025))+'px sans-serif';ctx.textAlign='center';
+      const tw=ctx.measureText(o.label).width;ctx.fillStyle='#10242ee8';ctx.fillRect(pt.x-tw/2-6,pt.y+5,tw+12,22);ctx.fillStyle=used?'#adbaa9':'#fff1c9';ctx.fillText(o.label,pt.x,pt.y+20);
+    }
+    if(!revealed&&s.event!=='quiet'){const pt=point({x:9,y:5.1});ctx.fillStyle='#fff1b8';for(let i=0;i<3;i++){ctx.globalAlpha=.4+.4*Math.sin(time*2+i);ctx.fillRect(pt.x+Math.sin(time+i)*10,pt.y-25-i*5,2,2);}ctx.globalAlpha=1;}
+    const action=document.getElementById('terrace-action');action.textContent=near?near.id==='save'?tr('記錄旅程','Save','記録する'):near.id==='rest'?tr('靠火休息','Rest','休息する'):tr('調查發現','Investigate','調べる'):tr('靠近調查','Approach','近づく');action.setAttribute('aria-disabled',String(!near));
+    if(time>feedbackUntil)document.getElementById('terrace-message').textContent=near?near.label+' · '+tr('按互動按鈕或 Enter','Use the action button or Enter','ボタンか Enter で調べる'):tr('點選物件可自動走近；沿石欄往右看看。','Tap objects to approach; explore along the parapet.','物をタップすると近づきます。欄干の右側も見てみましょう。');
   }
   function frame(ts){const dt=Math.min(.04,(ts-last)/1000||0);last=ts;time+=dt;if(opened){
-    if(goBack){const dx=2-p.x,dy=4-p.y,n=Math.hypot(dx,dy);if(n<.12)close();else{p.x+=dx/n*dt*3;p.y+=dy/n*dt*3;p.face=[-1,0];}}
-    else if(held[0]||held[1]){p.x=Math.max(1.5,Math.min(10.4,p.x+held[0]*dt*3));p.y=Math.max(3.5,Math.min(6.6,p.y+held[1]*dt*3));p.face=held;}
-    if((held[0]||held[1]||goBack)&&Math.floor(time*3)!==Math.floor((time-dt)*3))SFX.play('step',230);draw();
+    if(goal){const dx=goal.x-p.x,dy=goal.y-p.y,n=Math.hypot(dx,dy);if(n<.1){if(goal.exit)close();goal=null;}else{p.x+=dx/n*dt*3;p.y+=dy/n*dt*3;p.face=[Math.sign(dx),Math.sign(dy)];}}
+    else if(held[0]||held[1]){const n=Math.max(1,Math.hypot(...held));p.x=Math.max(1.5,Math.min(10.4,p.x+held[0]/n*dt*3));p.y=Math.max(3.5,Math.min(6.6,p.y+held[1]/n*dt*3));p.face=held;}
+    if(!revealed&&p.x>6.8&&terraceState().event!=='quiet'){revealed=true;message(tr('等等……石欄那頭有動靜。','Wait… something stirs beyond the parapet.','待って……欄干の向こうに何かいる。'));SFX.play('open');}
+    if((held[0]||held[1]||goal)&&Math.floor(time*3)!==Math.floor((time-dt)*3))SFX.play('step',230);draw();
   }requestAnimationFrame(frame);}
-  addEventListener('keydown',e=>{if(!opened)return;e.stopImmediatePropagation();const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],a:[-1,0],d:[1,0],w:[0,-1],s:[0,1]};if(dirs[e.key]){e.preventDefault();goBack=false;held=dirs[e.key];}else if(e.key==='Escape'){e.preventDefault();goBack=true;}else if(e.key==='Enter'&&Math.hypot(p.x-2,p.y-4)<1){e.preventDefault();close();}},true);
-  addEventListener('keyup',()=>{held=[0,0];});addEventListener('blur',()=>held=[0,0]);document.addEventListener('visibilitychange',()=>held=[0,0]);
+  addEventListener('keydown',e=>{if(!opened)return;e.stopImmediatePropagation();const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],a:[-1,0],d:[1,0],w:[0,-1],s:[0,1]};if(dirs[e.key]){e.preventDefault();goal=null;held=dirs[e.key];}else if(e.key==='Escape'){e.preventDefault();goal={x:2,y:4,exit:true};}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(nearest())interact();else if(Math.hypot(p.x-2,p.y-4)<1)close();else interact();}},true);
+  function release(){held=[0,0];goal=null;stickPointer=null;if(stick){stick.classList.remove('active');stick.style.setProperty('--stick-x','0px');stick.style.setProperty('--stick-y','0px');}}
+  addEventListener('keyup',()=>{if(stickPointer===null)held=[0,0];});addEventListener('blur',release);document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
   globalThis.RPG_BALCONY={get active(){return opened;},move,
-    enterAt(x,y){const d=door();if(!d||d.x!==x||d.y!==y)return false;if(monInSight()){say('敵人就在附近，先脫離戰鬥再開啟外側門。','bad');return true;}show();return true;},
-    drawDoor(c,ox,oy){const d=door();if(!d||!G.seen[key(d.x,d.y+1)])return;const x=ox+d.x*T,y=oy+d.y*T;c.save();c.fillStyle='#182338';c.fillRect(x+2,y-5,T-4,T+5);c.strokeStyle='#c4a366';c.lineWidth=1;c.strokeRect(x+2,y-5,T-4,T+5);c.fillStyle='#7e9ca4';c.fillRect(x+4,y-3,T-8,T+1);c.fillStyle='#ded095';c.fillRect(x+T-5,y+6,1,2);if(Math.hypot(G.p.x-d.x,G.p.y-d.y)<2){c.font='5px sans-serif';c.textAlign='center';c.fillStyle='#fff4cb';c.fillText('外側門 ↑',x+T/2,y-8);}c.restore();},
-    get door(){return QA_MODE?door():undefined;}
+    enterAt(x,y){const d=door();if(!d||d.x!==x||d.y!==y)return false;if(monInSight()){say(tr('敵人就在附近，先脫離戰鬥再開啟外側門。','Enemies are nearby. Leave combat before opening the terrace door.','敵が近くにいます。戦闘から離れてください。'),'bad');return true;}show();return true;},
+    drawDoor(c,ox,oy){const d=door();if(!d||!G.seen[key(d.x,d.y+1)])return;const x=ox+d.x*T,y=oy+d.y*T;c.save();c.fillStyle='#182338';c.fillRect(x+2,y-5,T-4,T+5);c.strokeStyle='#c4a366';c.lineWidth=1;c.strokeRect(x+2,y-5,T-4,T+5);c.fillStyle='#7e9ca4';c.fillRect(x+4,y-3,T-8,T+1);c.fillStyle='#ded095';c.fillRect(x+T-5,y+6,1,2);if(Math.hypot(G.p.x-d.x,G.p.y-d.y)<2){c.font='5px sans-serif';c.textAlign='center';c.fillStyle='#fff4cb';c.fillText(tr('外側門 ↑','Terrace ↑','外側の扉 ↑'),x+T/2,y-8);}c.restore();},
+    get door(){return QA_MODE?door():undefined;},get state(){return QA_MODE?{p,objects:objects(),view,revealed}:undefined;}
   };
 })();

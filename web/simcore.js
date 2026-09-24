@@ -81,10 +81,10 @@ eval(m[1] + '\n;globalThis.__api = {' +
   'HUNTERS,hunterState,hunterAllowed,scheduleHunter,spawnHunter,hunterTick,hunterDamage,hunterIntent,hunterStrike,hunterReward,lionBreaker,packPursuit,restorePursuit,RELIC_GUARDS,relicDefinition,placeRelicGuardian,claimRelic,forgeRagnarok,' +
   'DIRS, key, walkable, monAt, nameOf, pAtk, pDef, cornerOK, MW, MH, WALL, DOWN,' +
   'tileAt, rollItem, mk, WEAP, SHLD, ACTS, BOSS, absDepth, actAt, bossById,' +
-  'HAT, OPEN_HAT, ABIL, jobLv, jobRank, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
+  'HAT, OPEN_HAT, ABIL, jobLv, jobRank, jobLevelUp, wearHat, useAbil, syncJobSkills, abilCost, spellCost, maxMp, floorLabel, actUp, mk, healNpc, hatHere, restStep, dwellCheck,' +
   'buildFloor, THEME_SHAPE, ACT_THEME, iceRoughAt, iceSlickAt, iceMoveTarget, MONS, death, attack, spawnMon, fireWand, act, BGM,' +
   'bossStats, bossLive, lvMul, overLv, mk, hurtWide, knockPlayer, rollEnemyDmg,' +
-  'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,' +
+  'hookSay, saveRun, loadedRun, clearRun, resumeRun, stepOn,terraceState,restoreTerraces,terraceRest,terraceClaim,' +
   'SKINS, BLOB_SKINS, refreshHero, heroNow, heroAnimNow, heroSprite, saveVillage, loadVillage, atlas:()=>atlas,' +
   'villageStyle, VSTYLES, VNAME, VPAL, VILLAGE_SCENE_SPEC, migrateAct, VILLAGE_VER, RUN_VER,' +
   'talkOpen, answerTalk, askVillager, npcStep, splitTalk,' +

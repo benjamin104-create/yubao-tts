@@ -206,7 +206,7 @@ def main():
     if args:
         OUT = pathlib.Path(args[0])
     html = (WEB / 'index.html').read_text(encoding='utf-8')
-    for filename, tag in [('rpg-upgrade.css', 'style'), ('rpg-upgrade.js', 'script'), ('boss-fx.js', 'script'), ('rpg-cinema.js', 'script'), ('rpg-cover.js', 'script')]:
+    for filename, tag in [('rpg-upgrade.css', 'style'), ('rpg-upgrade.js', 'script'), ('boss-fx.js', 'script'), ('rpg-cinema.js', 'script'), ('rpg-score.js', 'script'), ('rpg-cover.js', 'script')]:
         pattern = (r'<link rel="stylesheet" href="' + re.escape(filename) + r'[^\"]*">'
                    if tag == 'style' else r'<script src="' + re.escape(filename) + r'[^\"]*"></script>')
         inline = '<' + tag + '>' + (WEB / filename).read_text(encoding='utf-8') + '</' + tag + '>'

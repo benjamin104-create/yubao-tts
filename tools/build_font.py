@@ -112,6 +112,11 @@ def wanted_chars():
     # 一堆只有機器人看得到的字 —— 每一個都是幾百個位元組。
     # （真的踩過：加了一條「側室夠多」的斷言，字型檢查就紅了。）
     all_text = lit + ' ' + attrs + ' ' + text
+    # These scripts now contain shipped UI and narrative, not terminal tests.
+    for filename in ['rpg-upgrade.js', 'rpg-cinema.js', 'rpg-cover.js', 'boss-fx.js']:
+        source = (ROOT / 'web' / filename).read_text(encoding='utf-8')
+        all_text += ''.join(m.group(1) or m.group(2) or m.group(3) or '' for m in re.finditer(
+            r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"|`((?:[^`\\]|\\.)*)`", source))
     # 一律附上完整的可見 ASCII：玩家會打英文名字，數字與標點到處都是
     ascii_ = ''.join(chr(c) for c in range(0x20, 0x7f))
     # 控制字元不是字。換行、tab 這些會從 HTML 的文字節點掃進來，
