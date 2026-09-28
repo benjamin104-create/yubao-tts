@@ -1800,7 +1800,7 @@ html.hd-art #village{background:linear-gradient(#121d22,#151a17 45%,#101619)}
   </div><!-- /body -->
 </div>
 
-<script src="hd-manifest.js?v=20260924-v23"></script>
+<script src="hd-manifest.js?v=20260928-v23-1"></script>
 <script>
 "use strict";
 /* HD is a presentation layer only. ?art=classic preserves the existing
@@ -16864,6 +16864,13 @@ function crispPortraitGrid(limit){
   }
   return best;
 }
+function gameViewportBottom(){
+  const v=globalThis.visualViewport;
+  if(innerWidth>620)return innerHeight;
+  const bottom=v && Math.abs(v.scale-1)<.01 ? v.offsetTop+v.height : innerHeight;
+  const cab=$('cabinet');
+  return bottom-(cab?parseFloat(getComputedStyle(cab).paddingBottom)||0:0);
+}
 function fitCanvas(){
   const wrap = $('screenwrap');
   if(!wrap || !wrap.getBoundingClientRect) return;
@@ -16912,13 +16919,13 @@ function fitCanvas(){
   const top  = wrap.getBoundingClientRect().top +
                (document.scrollingElement ? document.scrollingElement.scrollTop : 0);
   const tick = $('ticker').offsetHeight || 0;
-  const maxW = Math.floor((innerHeight - top - padH - tick) * VW / VH);
+  const maxW = Math.floor((gameViewportBottom() - top - padH - tick) * VW / VH);
   wrap.style.margin = '0 auto';
   const parentW=(wrap.parentElement&&wrap.parentElement.clientWidth)||innerWidth;
   const limit=Math.max(1,Math.min(parentW,(maxW>240?maxW:parentW)));
   const exact=crispCssWidth(VW,limit);
   wrap.style.width=exact+'px'; wrap.style.maxWidth=exact+'px';
-  fitPad(exact,padH);
+  fitPad(exact,padH-($('mobile-status-dock')?.offsetHeight||0));
 }
 /* 手把佔的橫向寬度：左緣 12 ＋ 十字（3k+8）＋ 中間留白 10 ＋ AB（2.85k+12）＋ 右緣 14。
    解出 k 就是「這個寬度塞得下的最大按鍵」。以前是寫死 46px，
@@ -16950,7 +16957,7 @@ function fitViewport(){
       const padH = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
       const top = pad.top + (document.scrollingElement ? document.scrollingElement.scrollTop : 0);
       const tick = $('ticker').offsetHeight || 0;
-      const avail = innerHeight - top - padH - tick;
+      const avail = gameViewportBottom() - top - padH - tick;
       const cell = Math.min(innerWidth, pad.width || innerWidth) / nw;
       if(cell > 0) nh = Math.max(8, Math.min(16, Math.floor(avail / cell)));
     }
@@ -20507,12 +20514,12 @@ if(!startQa()){
   refresh();
 }
 </script>
-<link rel="stylesheet" href="rpg-upgrade.css?v=20260924-v23">
-<script src="rpg-upgrade.js?v=20260924-v23"></script>
-<script src="boss-fx.js?v=20260924-v23"></script>
-<script src="rpg-cinema.js?v=20260924-v23"></script>
-<script src="rpg-score.js?v=20260924-v23"></script>
-<script src="rpg-cover.js?v=20260924-v23"></script>
+<link rel="stylesheet" href="rpg-upgrade.css?v=20260928-v23-1">
+<script src="rpg-upgrade.js?v=20260928-v23-1"></script>
+<script src="boss-fx.js?v=20260928-v23-1"></script>
+<script src="rpg-cinema.js?v=20260928-v23-1"></script>
+<script src="rpg-score.js?v=20260928-v23-1"></script>
+<script src="rpg-cover.js?v=20260928-v23-1"></script>
 
 
 

@@ -56,6 +56,35 @@
   };
 })();
 
+/* Keep the live HUD by the phone controls, outside Safari's top chrome.
+   Move the existing nodes so refresh(), localization and accessibility stay in sync. */
+(() => {
+  const hud=document.getElementById('hud'),pressure=document.getElementById('pressure-status');
+  const dock=document.createElement('div');dock.id='mobile-status-dock';
+  document.getElementById('screenwrap').append(dock);
+  let frame=0;
+  function sync(){
+    frame=0;
+    const mobile=matchMedia('(max-width:620px)').matches,v=window.visualViewport;
+    if(mobile){
+      if(hud.parentElement!==dock)dock.append(hud,pressure);
+      // Do not defeat the player's intentional pinch zoom.
+      if(!v||Math.abs(v.scale-1)<.01){
+        document.documentElement.style.setProperty('--rpg-view-height',(v?v.height:innerHeight)+'px');
+        document.documentElement.style.setProperty('--rpg-view-top',(v?v.offsetTop:0)+'px');
+      }
+    }else if(hud.parentElement===dock){
+      document.getElementById('body').before(hud,pressure);
+    }
+    fitViewport();
+  }
+  const schedule=()=>{if(!frame)frame=requestAnimationFrame(sync);};
+  addEventListener('resize',schedule);addEventListener('orientationchange',schedule);
+  window.visualViewport?.addEventListener('resize',schedule);
+  window.visualViewport?.addEventListener('scroll',schedule);
+  sync();
+})();
+
 (() => {
   const visual=document.getElementById('prologuevisual'),art=document.getElementById('prologueart'),hero=document.getElementById('chapterhero');
   let lastScene='';

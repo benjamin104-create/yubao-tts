@@ -115,6 +115,7 @@ jobs:
           # 版面：玩家非看到不可的東西有沒有真的在畫面上（九種視窗尺寸）。
           # 這一類 bug 不報錯、字也是對的、其他測試全綠 —— 只是看不到。
           python tools/check_layout.py
+          python tools/check_mobile_hud.py
           # 真正點 A 與框內翻頁按鈕，防止手機對話被遮罩困住。
           python tools/check_dialog_touch.py
           python tools/check_town_services.py
